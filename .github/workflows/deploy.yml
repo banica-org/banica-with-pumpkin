@@ -1,0 +1,29 @@
+# This workflow will build a Java project with Maven
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
+
+name: Publish
+
+on:
+  schedule:
+    # * is a special character in YAML so you have to quote this string
+    - cron: '0 9,18 * * *'
+  workflow_dispatch:
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK 8
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+          server-id: github # Value of the distributionManagement/repository/id field of the pom.xml
+          settings-path: ${{ github.workspace }} # location for the settings.xml file
+
+      - name: Deploy Java package
+        run: mvn -B deploy -s $GITHUB_WORKSPACE/settings.xml -Dspring-boot.build-image.skip=false
+        env:
+          GITHUB_TOKEN: ${{ github.token }}

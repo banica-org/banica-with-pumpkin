@@ -9,6 +9,11 @@
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
+    <properties>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+    </properties>
+
     <modules>
         <module>aurora</module>
         <module>market-generator</module>
@@ -16,5 +21,13 @@
         <module>order-book</module>
         <module>calculator</module>
     </modules>
+
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>GitHub Packages</name>
+            <url>https://maven.pkg.github.com/banica-org/banica-with-pumpkin</url>
+        </repository>
+    </distributionManagement>
 
 </project>
