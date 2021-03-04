@@ -9,7 +9,7 @@
         <artifactId>market-root</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
-    
+
     <groupId>com.market.banica</groupId>
     <artifactId>persister</artifactId>
     <version>1.0-SNAPSHOT</version>
@@ -19,4 +19,31 @@
         <maven.compiler.target>1.8</maven.compiler.target>
     </properties>
 
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>com.market.banica.persister.PersisterApplication</mainClass>
+                        </manifest>
+                    </archive>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                    <appendAssemblyId>false</appendAssemblyId>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>

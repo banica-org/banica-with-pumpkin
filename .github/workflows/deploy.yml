@@ -6,7 +6,7 @@ name: Publish
 on:
   schedule:
     # * is a special character in YAML so you have to quote this string
-    - cron: '0 9,18 * * *'
+    - cron: '0 6 * * *'
   workflow_dispatch:
 
 jobs:
@@ -23,7 +23,24 @@ jobs:
           server-id: github # Value of the distributionManagement/repository/id field of the pom.xml
           settings-path: ${{ github.workspace }} # location for the settings.xml file
 
-      - name: Deploy Java package
-        run: mvn -B deploy -s $GITHUB_WORKSPACE/settings.xml -Dspring-boot.build-image.skip=false
+      - name: Build Java packages
+        run: mvn -B install -s $GITHUB_WORKSPACE/settings.xml
         env:
           GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Build docker images
+        run: |
+          docker build -t tikvenik/aurora aurora
+          docker build -t tikvenik/calculator calculator
+          docker build -t tikvenik/market-generator market-generator
+          docker build -t tikvenik/order-book order-book
+
+      - name: Docker login
+        run: docker login -u tikvenik -p ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Publish images
+        run: |
+          docker push tikvenik/aurora
+          docker push tikvenik/calculator
+          docker push tikvenik/market-generator
+          docker push tikvenik/order-book
