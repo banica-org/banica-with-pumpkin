@@ -1,7 +1,9 @@
 package com.market.banica.calculator.controller;
 
 import com.market.banica.calculator.dto.RecipeDTO;
+import com.market.banica.calculator.service.contract.CalculatorService;
 import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,7 +16,6 @@ import javax.validation.constraints.NotBlank;
 /**
  * Date: 3/10/2021 Time: 7:44 AM
  * <p>
- * TODO: Create service for CalculatorController
  *
  * @author Vladislav_Zlatanov
  */
@@ -24,15 +25,18 @@ import javax.validation.constraints.NotBlank;
 @AllArgsConstructor
 public class CalculatorController {
 
+    @Autowired
+    CalculatorService service;
+
 
     @GetMapping("/{clientId}/{itemName}/{quantity}")
     public ResponseEntity<RecipeDTO> getRecipe(@PathVariable("clientId") @NotBlank String clientId,
                                                @PathVariable("itemName") @NotBlank String itemName,
-                                               @PathVariable("quantity") @Min(1) int quantity){
+                                               @PathVariable("quantity") @Min(1) int quantity) {
 
         //Here service should be called
         //replace new RecipeDTO with service call when service is completed
-        RecipeDTO recipeDTO = new RecipeDTO();
+        RecipeDTO recipeDTO = service.getRecipe(itemName, quantity);
 
 
         return ResponseEntity.ok().body(recipeDTO);
