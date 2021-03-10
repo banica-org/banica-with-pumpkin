@@ -1,0 +1,34 @@
+package com.market.banica.calculator.dto;
+
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+
+
+/**
+ * Date: 3/10/2021 Time: 7:31 AM
+ * <p>
+ *
+ * Class is representation of an ingredient
+ * in a recipe
+ *
+ * @author Vladislav_Zlatanov
+ */
+
+@Data
+@NoArgsConstructor
+public class IngredientDTO {
+
+    //Name of the ingredient
+    private String itemName;
+
+    //price of the ingredient
+    private BigDecimal price;
+
+    //quantity of the ingredient;
+    private double quantity;
+
+    //location from where the ingredient comes
+    private String location;
+}
