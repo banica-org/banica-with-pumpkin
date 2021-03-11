@@ -1,9 +1,8 @@
 package com.market.banica.calculator.controller;
 
-import com.market.banica.calculator.configuration.BanicaPumpkinProps;
-import com.market.banica.calculator.service.contract.BanicaPumpkinPropsConfig;
+import com.market.banica.calculator.model.Receipt;
+import com.market.banica.calculator.service.contract.ReceiptService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -16,20 +15,19 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.validation.Valid;
 
 @RestController
-@Validated
 @RequiredArgsConstructor
 @RequestMapping(value = "receipt")
 public class ReceiptController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ReceiptController.class);
 
-    private final BanicaPumpkinPropsConfig banicaPumpkinPropsConfig;
+    private final ReceiptService receiptService;
 
-@PostMapping
-public ResponseEntity<BanicaPumpkinProps> createReceipt(@Valid @RequestBody final BanicaPumpkinProps banicaPumpkinProps){
-    LOGGER.info("POST /receipt called");
+    @PostMapping
+    public ResponseEntity<Receipt> createReceipt(@Valid @RequestBody final Receipt receipt) {
+        LOGGER.info("POST /receipt called");
 
-    LOGGER.debug("Receipt controller: in createReceipt method");
-    return ResponseEntity.ok().body(banicaPumpkinPropsConfig.createReceipt(banicaPumpkinProps));
-}
+        LOGGER.debug("Receipt controller: in createReceipt method");
+        return ResponseEntity.ok().body(receiptService.createReceipt(receipt));
+    }
 }
