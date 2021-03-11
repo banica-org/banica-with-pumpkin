@@ -19,6 +19,11 @@
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
+        <protobuf-java.version>3.11.1</protobuf-java.version>
+        <grpc-all.version>1.29.0</grpc-all.version>
+        <grpc-services.version>1.29.0</grpc-services.version>
+        <javax.annotation-api.version>1.3.2</javax.annotation-api.version>
+        <lombok.version>1.18.16</lombok.version>
     </properties>
 
     <modules>
@@ -28,6 +33,46 @@
         <module>order-book</module>
         <module>calculator</module>
     </modules>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.google.protobuf</groupId>
+                <artifactId>protobuf-java</artifactId>
+                <version>${protobuf-java.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.grpc</groupId>
+                <artifactId>grpc-all</artifactId>
+                <version>${grpc-all.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.grpc</groupId>
+                <artifactId>grpc-services</artifactId>
+                <version>${grpc-services.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>javax.annotation</groupId>
+                <artifactId>javax.annotation-api</artifactId>
+                <version>${javax.annotation-api.version}</version>
+            </dependency>
+
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+    </dependencies>
 
     <distributionManagement>
         <repository>
