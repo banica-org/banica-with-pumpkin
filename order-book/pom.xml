@@ -10,7 +10,6 @@
         <version>1.0-SNAPSHOT</version>
     </parent>
 
-    <groupId>com.market.banica</groupId>
     <artifactId>order-book</artifactId>
     <version>1.0-SNAPSHOT</version>
 
