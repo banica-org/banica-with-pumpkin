@@ -1,43 +1,51 @@
 package com.market.banica.calculator.configuration;
 
+import com.market.banica.calculator.data.ReceiptsBase;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableMBeanExport;
 import org.springframework.jmx.export.annotation.ManagedOperation;
 import org.springframework.jmx.export.annotation.ManagedResource;
+import org.springframework.util.StringUtils;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Properties;
-import java.util.ResourceBundle;
+import java.util.Arrays;
 
 @Configuration
 @EnableMBeanExport
 @ManagedResource
+@RequiredArgsConstructor
 public class JMXConfig {
 
+    private final ReceiptsBase receiptsBase;
+
     @ManagedOperation
-    public void setValue(String fileName, String ingredientName, String newValue) {
+    public void setValue(String receiptName, String ingredientName, String newValue) {
 
-        try(InputStream input = this.getClass().getClassLoader().getResourceAsStream(fileName + ".properties");
-                OutputStream output = new FileOutputStream("src/main/resources/" + fileName + ".properties")) {
+        String receipt = receiptsBase.getDatabase().getProperty(receiptName);
+        String[] ingredients = receipt.split(",");
 
-            Properties props = new Properties();
-            props.load(input);
-            props.setProperty(ingredientName,newValue);
-            props.store(output, "");
-        } catch (IOException e) {
-            e.printStackTrace();
+        for (int i = 0; i < ingredients.length; i++) {
+           if(ingredients[i].startsWith(ingredientName)){
+               ingredients[i] = ingredientName + ":" + newValue;
+           }
         }
+
+        String newReceipt = StringUtils.collectionToCommaDelimitedString(Arrays.asList(ingredients));
+        receiptsBase.getDatabase().setProperty(receiptName,newReceipt);
     }
 
     @ManagedOperation
-    public String getValue(String fileName ,String ingredientName) {
+    public String getValue(String receiptName, String ingredientName) {
 
-       ResourceBundle resource = ResourceBundle.getBundle(fileName);
-        return resource.getString(ingredientName);
+        String receipt = receiptsBase.getDatabase().getProperty(receiptName);
+        String[] ingredients = receipt.split(",");
 
+        for (String ingredient : ingredients) {
+            if (ingredient.startsWith(ingredientName)) {
+                return ingredient;
+            }
+        }
+        return "Ingredient not found";
     }
 
 

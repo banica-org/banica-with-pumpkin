@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -24,10 +25,10 @@ public class ReceiptController {
     private final ReceiptService receiptService;
 
     @PostMapping
-    public ResponseEntity<Receipt> createReceipt(@Valid @RequestBody final Receipt receipt) {
+    public ResponseEntity<String> createReceipt(@Valid @RequestBody final List<Receipt> receipts) {
         LOGGER.info("POST /receipt called");
 
         LOGGER.debug("Receipt controller: in createReceipt method");
-        return ResponseEntity.ok().body(receiptService.createReceipt(receipt));
+        return ResponseEntity.ok().body(receiptService.createReceipt(receipts));
     }
 }

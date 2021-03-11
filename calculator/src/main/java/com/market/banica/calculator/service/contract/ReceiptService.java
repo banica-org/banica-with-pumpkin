@@ -2,8 +2,10 @@ package com.market.banica.calculator.service.contract;
 
 import com.market.banica.calculator.model.Receipt;
 
+import java.util.List;
+
 public interface ReceiptService {
 
-    Receipt createReceipt(Receipt receipt);
+    String createReceipt(List<Receipt> receipts);
 
 }
