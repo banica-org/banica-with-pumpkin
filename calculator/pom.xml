@@ -95,6 +95,11 @@
         <!-- dependencies for grpc -->
         <dependency>
             <groupId>io.grpc</groupId>
+            <artifactId>grpc-netty-shaded</artifactId>
+            <version>${grpc-protobuf-version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
             <artifactId>grpc-stub</artifactId>
             <version>${grpc-protobuf-version}</version>
         </dependency>
