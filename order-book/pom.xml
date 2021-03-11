@@ -17,16 +17,15 @@
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
+        <grpc.netty.version>1.36.0</grpc.netty.version>
+        <grpc.protobuf.version>1.36.0</grpc.protobuf.version>
+        <grpc.stub.version>1.36.0</grpc.stub.version>
+        <apache.annotations.version>6.0.53</apache.annotations.version>
+        <maven.os.plugin.version>1.6.2</maven.os.plugin.version>
+        <maven.protobuf.plugin.version>0.6.1</maven.protobuf.plugin.version>
     </properties>
 
     <dependencies>
-        <dependency>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-assembly-plugin</artifactId>
-            <version>3.3.0</version>
-            <type>maven-plugin</type>
-        </dependency>
-
         <!--  Spring Boot dependencies  -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -44,22 +43,22 @@
         <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-netty-shaded</artifactId>
-            <version>1.36.0</version>
+            <version>${grpc.netty.version}</version>
         </dependency>
         <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-protobuf</artifactId>
-            <version>1.36.0</version>
+            <version>${grpc.protobuf.version}</version>
         </dependency>
         <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-stub</artifactId>
-            <version>1.36.0</version>
+            <version>${grpc.stub.version}</version>
         </dependency>
         <dependency> <!-- necessary for Java 9+ -->
             <groupId>org.apache.tomcat</groupId>
             <artifactId>annotations-api</artifactId>
-            <version>6.0.53</version>
+            <version>${apache.annotations.version}</version>
             <scope>provided</scope>
         </dependency>
 
@@ -76,7 +75,7 @@
             <extension>
                 <groupId>kr.motd.maven</groupId>
                 <artifactId>os-maven-plugin</artifactId>
-                <version>1.6.2</version>
+                <version>${maven.os.plugin.version}</version>
             </extension>
         </extensions>
         <plugins>
@@ -95,7 +94,7 @@
             <plugin>
                 <groupId>org.xolstice.maven.plugins</groupId>
                 <artifactId>protobuf-maven-plugin</artifactId>
-                <version>0.6.1</version>
+                <version>${maven.protobuf.plugin.version}</version>
                 <configuration>
                     <protocArtifact>com.google.protobuf:protoc:3.12.0:exe:${os.detected.classifier}</protocArtifact>
                     <pluginId>grpc-java</pluginId>
