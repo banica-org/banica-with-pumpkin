@@ -25,25 +25,32 @@ import javax.annotation.PreDestroy;
 public class AuroraClientSideService {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuroraClientSideService.class);
 
+    /**
+     * Channel for gRPC connection with aurora
+     */
     private final ManagedChannel managedChannel;
 
+    /**
+     * @param host host where aurora is started
+     * @param port port on the server.
+     */
     @Autowired
     AuroraClientSideService(@Value("${aurora.server.host}") final String host,
-                            @Value("${aurora.server.port}") final int port){
+                            @Value("${aurora.server.port}") final int port) {
 
         LOGGER.info("Setting up connection with Aurora.");
 
-        managedChannel = ManagedChannelBuilder.forAddress(host,port)
+        managedChannel = ManagedChannelBuilder.forAddress(host, port)
                 .usePlaintext()
                 .build();
     }
 
 
-    public IngredientResponse getIngredient(String itemName, int quantity){
+    public IngredientResponse getIngredient(String itemName, int quantity) {
 
         LOGGER.debug("Inside getIngredient method");
         LOGGER.debug("Building blocking stub");
-        AuroraServiceGrpc.AuroraServiceBlockingStub blockingStub = AuroraServiceGrpc.newBlockingStub(managedChannel);
+        AuroraServiceGrpc.AuroraServiceBlockingStub blockingStub = getBlockingStub();
 
         LOGGER.debug("Building request with parameters " + itemName + " " + quantity);
         IngredientRequest request = IngredientRequest.newBuilder()
@@ -52,14 +59,19 @@ public class AuroraClientSideService {
                 .build();
 
         LOGGER.debug("Sending request to aurora.");
-        IngredientResponse ingredientResponse = blockingStub.requestIngredient(request);
 
-        return ingredientResponse;
+        return blockingStub.requestIngredient(request);
     }
 
+    private AuroraServiceGrpc.AuroraServiceBlockingStub getBlockingStub() {
+        return AuroraServiceGrpc.newBlockingStub(managedChannel);
+    }
 
+    /**
+     * Shutting down channel before spring removes bean from application context
+     */
     @PreDestroy
-    private void shutdown(){
+    private void shutdown() {
         LOGGER.info("Shutting down connection with Aurora.");
         managedChannel.shutdownNow();
     }
