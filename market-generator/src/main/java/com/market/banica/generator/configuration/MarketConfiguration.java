@@ -6,7 +6,7 @@ public interface MarketConfiguration {
                               double priceLow, double priceHigh, double priceStep,
                               int periodLow, int periodHigh, int periodStep);
 
-    void removeGoodSpecification(String origin, String name);
+    void removeGoodSpecification(String origin, String good);
 
     void updateGoodSpecification(String origin, String good,
                                  long quantityLow, long quantityHigh, long quantityStep,
