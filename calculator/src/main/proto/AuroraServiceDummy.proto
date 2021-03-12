@@ -1,0 +1,25 @@
+//Proto file is dummy not intended for use!
+syntax = "proto3";
+
+option java_package = "com.market.banica.aurora";
+option java_multiple_files = true;
+
+message IngredientRequest{
+  string itemName = 1;
+  int32 quantity = 2;
+}
+
+message Ingredient{
+  string itemName = 1;
+  int32 quantity = 2;
+  double price = 3;
+  string location = 4;
+}
+
+message IngredientResponse{
+  repeated Ingredient ingredients = 1;
+}
+
+service AuroraService{
+  rpc requestIngredient(IngredientRequest) returns(IngredientResponse);
+}
