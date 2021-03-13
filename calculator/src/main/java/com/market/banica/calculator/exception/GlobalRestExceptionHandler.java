@@ -12,10 +12,10 @@ import javax.validation.ConstraintViolationException;
 public class GlobalRestExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
-    protected ResponseEntity<Object> handleNotFoundArgument(
+    protected ResponseEntity<Object> handleIllegalArgument(
             RuntimeException ex, WebRequest request) {
         return handleExceptionInternal(ex, ex.getMessage(),
-                new HttpHeaders(), HttpStatus.NOT_FOUND, request);
+                new HttpHeaders(), HttpStatus.BAD_REQUEST, request);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)

@@ -5,7 +5,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class Receipt {
+public class Recipe {
 
     private String name;
 
