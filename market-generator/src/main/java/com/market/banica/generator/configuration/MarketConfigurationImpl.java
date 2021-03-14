@@ -20,6 +20,8 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.BiConsumer;
 
 @Component
@@ -30,6 +32,7 @@ public class MarketConfigurationImpl implements MarketConfiguration {
     private static final String ORIGIN_GOOD_PATTERN = "%s.%s";
 
     private final File file;
+    private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
     private final Map<String, GoodSpecification> goods = new HashMap<>();
 
@@ -46,22 +49,29 @@ public class MarketConfigurationImpl implements MarketConfiguration {
                                      long quantityLow, long quantityHigh, long quantityStep,
                                      double priceLow, double priceHigh, double priceStep,
                                      int periodLow, int periodHigh, int periodStep) {
-        origin = origin.toLowerCase();
-        good = good.toLowerCase();
 
-        if (doesGoodExist(String.format(ORIGIN_GOOD_PATTERN, origin, good))) {
-            throw new IllegalArgumentException(String.format("A good with name %s from %s already exists",
-                    good.toUpperCase(), origin.toUpperCase()));
+        try {
+            this.lock.writeLock().lock();
+
+            origin = origin.toLowerCase();
+            good = good.toLowerCase();
+
+            if (doesGoodExist(String.format(ORIGIN_GOOD_PATTERN, origin, good))) {
+                throw new IllegalArgumentException(String.format("A good with name %s from %s already exists",
+                        good.toUpperCase(), origin.toUpperCase()));
+            }
+
+            Properties properties = new LinkedProperties();
+
+            GoodSpecification goodSpec = new GoodSpecification(good, quantityLow, quantityHigh, quantityStep,
+                    priceLow, priceHigh, priceStep, periodLow, periodHigh, periodStep);
+
+            this.modifyProperties(goodSpec.generateProperties(origin), properties,
+                    properties::setProperty, this.file, false);
+            this.goods.put(String.format(ORIGIN_GOOD_PATTERN, origin, good), goodSpec);
+        } finally {
+            this.lock.writeLock().unlock();
         }
-
-        Properties properties = new LinkedProperties();
-
-        GoodSpecification goodSpec = new GoodSpecification(good, quantityLow, quantityHigh, quantityStep,
-                priceLow, priceHigh, priceStep, periodLow, periodHigh, periodStep);
-
-        this.modifyProperties(goodSpec.generateProperties(origin), properties,
-                properties::setProperty, this.file, false);
-        this.goods.put(String.format(ORIGIN_GOOD_PATTERN, origin, good), goodSpec);
 
 
 //        System.out.println("Adding"); TODO: replace writing in console with Logging
@@ -70,46 +80,60 @@ public class MarketConfigurationImpl implements MarketConfiguration {
     @Override
     @ManagedOperation
     public void removeGoodSpecification(String origin, String good) {
-        origin = origin.toLowerCase();
-        good = good.toLowerCase();
+        try {
+            this.lock.writeLock().lock();
 
-        if (!doesGoodExist(String.format(ORIGIN_GOOD_PATTERN, origin, good))) {
-            throw new NotFoundException(String.format("A good with name %s from %s does " +
-                    "not exist and it cannot be removed", good.toUpperCase(), origin.toUpperCase()));
-        }
-        Properties properties = new LinkedProperties();
-        Map<String, String> stringStringMap = this.goods.remove(String.format(ORIGIN_GOOD_PATTERN, origin, good)).generateProperties(origin);
-        this.modifyProperties(stringStringMap, properties,
-                (k, v) -> properties.remove(k), this.file, false);
+            origin = origin.toLowerCase();
+            good = good.toLowerCase();
 
-        this.goods.remove(String.format(ORIGIN_GOOD_PATTERN, origin, good));
+            if (!doesGoodExist(String.format(ORIGIN_GOOD_PATTERN, origin, good))) {
+                throw new NotFoundException(String.format("A good with name %s from %s does " +
+                        "not exist and it cannot be removed", good.toUpperCase(), origin.toUpperCase()));
+            }
+            Properties properties = new LinkedProperties();
+            Map<String, String> stringStringMap = this.goods.remove(String.format(ORIGIN_GOOD_PATTERN, origin, good)).generateProperties(origin);
+            this.modifyProperties(stringStringMap, properties,
+                    (k, v) -> properties.remove(k), this.file, false);
+
+            this.goods.remove(String.format(ORIGIN_GOOD_PATTERN, origin, good));
 
 //        System.out.println("Deleting"); TODO: replace writing in console with Logging
+        } finally {
+            this.lock.writeLock().unlock();
+        }
     }
 
     @Override
     @ManagedOperation
-    public void updateGoodSpecification(String origin, String good, long quantityLow, long quantityHigh, long quantityStep,
+    public void updateGoodSpecification(String origin, String good, long quantityLow, long quantityHigh,
+                                        long quantityStep,
                                         double priceLow, double priceHigh, double priceStep,
                                         int periodLow, int periodHigh, int periodStep) {
-        origin = origin.toLowerCase();
-        good = good.toLowerCase();
 
-        if (!this.doesGoodExist(String.format(ORIGIN_GOOD_PATTERN, origin, good))) {
-            throw new NotFoundException(String.format("A good with name %s from %s does not exist and cannot be updated",
-                    good.toUpperCase(), origin.toUpperCase()));
+        try {
+            this.lock.writeLock().lock();
+
+            origin = origin.toLowerCase();
+            good = good.toLowerCase();
+
+            if (!this.doesGoodExist(String.format(ORIGIN_GOOD_PATTERN, origin, good))) {
+                throw new NotFoundException(String.format("A good with name %s from %s does not exist and cannot be updated",
+                        good.toUpperCase(), origin.toUpperCase()));
+            }
+
+            Properties properties = new LinkedProperties();
+
+            GoodSpecification updatedGoodSpecification = new GoodSpecification(good, quantityLow, quantityHigh, quantityStep,
+                    priceLow, priceHigh, priceStep,
+                    periodLow, periodHigh, periodStep);
+
+            this.modifyProperties(updatedGoodSpecification.generateProperties(origin)
+                    , properties, properties::setProperty, this.file, false);
+
+            this.goods.put(String.format(ORIGIN_GOOD_PATTERN, origin, good), updatedGoodSpecification);
+        } finally {
+            this.lock.writeLock().unlock();
         }
-
-        Properties properties = new LinkedProperties();
-
-        GoodSpecification updatedGoodSpecification = new GoodSpecification(good, quantityLow, quantityHigh, quantityStep,
-                priceLow, priceHigh, priceStep,
-                periodLow, periodHigh, periodStep);
-
-        this.modifyProperties(updatedGoodSpecification.generateProperties(origin)
-                , properties, properties::setProperty, this.file, false);
-
-        this.goods.put(String.format(ORIGIN_GOOD_PATTERN, origin, good), updatedGoodSpecification);
     }
 
     private void modifyProperties(Map<String, String> propMap, Properties properties,
