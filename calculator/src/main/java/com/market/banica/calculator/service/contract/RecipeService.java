@@ -6,6 +6,12 @@ import java.util.List;
 
 public interface RecipeService {
 
-    String createRecipe(List<Recipe> recipes);
+    Recipe addRecipe(Recipe recipe);
+
+    Recipe getRecipe(String recipeName);
+
+    Recipe updateRecipe(Recipe recipe);
+
+    List<Recipe> getAllRecipes();
 
 }

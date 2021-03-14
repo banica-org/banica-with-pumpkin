@@ -12,22 +12,22 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
-import java.util.List;
+import javax.validation.constraints.NotNull;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping(value = "receipt")
-public class ReceiptController {
+@RequestMapping(value = "recipe")
+public class RecipeController {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ReceiptController.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RecipeController.class);
 
     private final RecipeService recipeService;
 
     @PostMapping
-    public ResponseEntity<String> createReceipt(@Valid @RequestBody final List<Recipe> recipes) {
-        LOGGER.info("POST /receipt called");
+    public ResponseEntity<Recipe> createRecipe( @RequestBody final Recipe recipe) {
+        LOGGER.info("POST /recipe called");
 
-        LOGGER.debug("Receipt controller: in createReceipt method");
-        return ResponseEntity.ok().body(recipeService.createRecipe(recipes));
+        LOGGER.debug("Recipe controller: in createRecipe method");
+        return ResponseEntity.ok().body(recipeService.addRecipe(recipe));
     }
 }

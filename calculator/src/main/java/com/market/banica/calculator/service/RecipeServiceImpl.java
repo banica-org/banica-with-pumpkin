@@ -1,8 +1,7 @@
 package com.market.banica.calculator.service;
 
-import com.market.banica.calculator.data.RecipesBase;
-import com.market.banica.calculator.model.Ingredient;
 import com.market.banica.calculator.model.Recipe;
+import com.market.banica.calculator.repository.RecipeRepository;
 import com.market.banica.calculator.service.contract.RecipeService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -10,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.StringJoiner;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -18,88 +17,80 @@ public class RecipeServiceImpl implements RecipeService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RecipeServiceImpl.class);
 
-    private final RecipesBase recipesBase;
+    private final RecipeRepository recipeRepository;
 
     @Override
-    public String createRecipe(List<Recipe> recipes) {
-        LOGGER.debug("Recipe service impl: In createRecipe method");
+    public Recipe addRecipe(Recipe recipe) {
+        LOGGER.debug("Recipe service impl: In addRecipe method");
 
-        validateParameterForNullAndEmpty(recipes);
+        Recipe result = recipeRepository.save(recipe);
+        LOGGER.info("Database called with save for recipe entity");
+        LOGGER.debug("Recipe with id {} successfully added", result.getId());
 
-        String recipeName = getRecipeName(recipes);
-
-        validateRecipesFromListForNullAndEmpty(recipes);
-
-        String recipe = getRecipeFromList(recipes);
-
-        writeRecipeToRecipeBase(recipeName, recipe);
-        LOGGER.debug("Recipe {} successfully created", recipeName);
-
-        return recipeName + "-" + recipe;
+        return result;
     }
 
-    private void writeRecipeToRecipeBase(String recipeName, String recipe) {
-        LOGGER.debug("Recipe service impl: In writeRecipeToRecipeBase private method");
+    @Override
+    public Recipe updateRecipe(Recipe recipe) {
+        LOGGER.debug("Recipe service impl: In updateRecipe method");
 
-        recipesBase.setPropertyWithBackUp(recipeName, recipe);
+        Recipe result = recipeRepository.save(recipe);
+        LOGGER.info("Database called with save for recipe entity");
+        LOGGER.debug("Recipe with id {} successfully updated", result.getId());
+
+        return result;
     }
 
-    private String getRecipeName(List<Recipe> recipes) {
-        LOGGER.debug("Recipe service impl: In getRecipeName private method");
+    @Override
+    public Recipe getRecipe(String recipeName) {
+        LOGGER.debug("Recipe service impl: In getRecipe method");
 
-        return recipes.get(0).getName();
+        Optional<Recipe> recipe = getRecipeFromDatabase(recipeName);
+
+        Recipe result = validateRecipeExist(recipeName, recipe);
+
+        LOGGER.debug("Recipe with id {} successfully retrieved from database", result.getId());
+        return result;
     }
 
-    private void validateParameterForNullAndEmpty(List<Recipe> recipes) {
-        LOGGER.debug("Recipe service impl: In validateParameterForNullOrEmpty private method");
+    @Override
+    public List<Recipe> getAllRecipes() {
+        LOGGER.debug("Recipe service impl: In getAllRecipes method");
 
-        if (recipes == null || recipes.size() == 0) {
+        List<Recipe>recipes = getAllRecipesFromDatabase();
 
-            LOGGER.error("Parameter {} passed to createRecipe is null or empty",recipes);
-            throw new IllegalArgumentException("Recipes should be present to create recipe");
+        LOGGER.debug("List with recipes with length {} successfully retrieved from database", recipes.size());
+        return recipes;
+    }
+
+
+    private Recipe validateRecipeExist(String recipeName, Optional<Recipe> recipe) {
+        LOGGER.debug("Recipe service impl: In validateRecipeExist private method");
+
+        if (!recipe.isPresent()) {
+
+            LOGGER.error("Recipe with name: {} not found. Exception thrown", recipeName);
+            throw new IllegalArgumentException("Recipe not found");
         }
+        return recipe.get();
     }
 
-    private void validateRecipesFromListForNullAndEmpty(List<Recipe> recipes){
-        LOGGER.debug("Recipe service impl: In validateRecipeListForNullAndEmpty private method");
+    private Optional<Recipe> getRecipeFromDatabase(String recipeName) {
+        LOGGER.debug("Recipe service impl: In getRecipeFromDatabase private method");
 
-        for (Recipe recipe : recipes) {
+        Optional<Recipe> recipe = recipeRepository.findByRecipeName(recipeName);
+        LOGGER.info("Database called with save for recipe entity");
 
-            validateIngredientsForNullOrEmpty(recipe);
-        }
+        return recipe;
     }
 
-    private String getRecipeFromList(List<Recipe> recipes) {
-        LOGGER.debug("Recipe service impl: In convertRecipesToString private method");
+    private List<Recipe> getAllRecipesFromDatabase() {
+        LOGGER.debug("Recipe service impl: In getAllRecipesFromDatabase private method");
 
-        StringJoiner stringJoiner = new StringJoiner(",");
-        for (Recipe recipe : recipes) {
+        List<Recipe> result = recipeRepository.findAll();
+        LOGGER.info("Database called with findAll for recipe entity");
 
-            convertRecipeToStringBuilder(stringJoiner, recipe);
-        }
-        return stringJoiner.toString();
-    }
-
-    private void convertRecipeToStringBuilder(StringJoiner stringJoiner, Recipe recipe) {
-        LOGGER.debug("Recipe service impl: In convertListOfRecipesToStringBuilder private method");
-
-        String delimiterRecipeIngredient = ".";
-        String delimiterIngredientQuantity = ":";
-
-        for (Ingredient ingredient : recipe.getIngredients()) {
-            stringJoiner.add(recipe.getName() + delimiterRecipeIngredient + ingredient.getName()
-                    + delimiterIngredientQuantity + ingredient.getQuantity());
-        }
-    }
-
-    private void validateIngredientsForNullOrEmpty(Recipe recipe) {
-        LOGGER.debug("Recipe service impl: In validateIngredientsForNullOrEmpty private method");
-
-        if (recipe.getIngredients() == null || recipe.getIngredients().size() == 0) {
-
-            LOGGER.error("Parameter {} passed to convertRecipesToString has null or empty fields", recipe);
-            throw new IllegalArgumentException("Ingredients should be present to create recipe");
-        }
+        return result;
     }
 
 }

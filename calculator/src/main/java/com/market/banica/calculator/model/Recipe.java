@@ -1,13 +1,54 @@
 package com.market.banica.calculator.model;
 
 import lombok.Data;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.ManyToMany;
+import java.util.ArrayList;
 import java.util.List;
 
-@Data
+@ToString
+@Entity
+@Getter
+@Setter
 public class Recipe {
 
-    private String name;
+    @Column(name = "ID", nullable = false)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    private List<Ingredient> ingredients;
+    private String recipeName;
+
+    private String ingredientName;
+
+    private Integer quantity;
+
+    @ToString.Exclude
+    @ManyToMany(cascade = CascadeType.ALL,fetch = FetchType.EAGER)
+    private List<Recipe> ingredients =  new ArrayList<>();
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Recipe recipe = (Recipe) o;
+
+        return id != null && id.equals(recipe.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return 1629938687;
+    }
 }
