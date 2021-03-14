@@ -6,19 +6,19 @@ import epam.market.banica.order.book.grpc.TickResponse;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PreDestroy;
+
 @Service
+@RequiredArgsConstructor
 public class MarketDataClient {
 
     private final ItemMarket itemMarket;
-
     private final ManagedChannel managedChannel;
-
-    //rebuild channel
-    //chek if connection is ok
 
     @Autowired
     MarketDataClient(ItemMarket itemMarket,
@@ -40,12 +40,13 @@ public class MarketDataClient {
 
                 @Override
                 public void onNext(TickResponse response) {
-                   itemMarket.getProductSet(response.getItemName());
-                    // add data from response to data structure into OrderBookServ
-                    // private final Map<String, TreeSet<Item>> allItems;
-                    // threadsave mechanism?
-                    // data request flow ? for every product
-                    // Bidirectional or servet - streaming ? when its closing
+
+                    Item item = new Item();
+                    item.setPrice(response.getPrice());
+                    item.setQuantity((int) response.getQuantity());
+                    item.getItemIDs().add(new Item.ItemID("1", response.getOrigin().toString()));
+
+                    itemMarket.getAllItemsByName(response.getItemName()).add(item);
                 }
 
                 @Override
@@ -60,13 +61,10 @@ public class MarketDataClient {
             });
         }
     }
-        // subscribe for things that are nescessery for calculator
 //        exponential backoff! check
 
-        // for every single product ?
-//        managedChannel.isShutdown();
 
-
+    @PreDestroy
     private void stop() {
         managedChannel.shutdownNow();
     }

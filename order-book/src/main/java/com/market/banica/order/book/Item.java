@@ -1,7 +1,12 @@
 package com.market.banica.order.book;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.List;
 
+@Getter
+@Setter
 public class Item implements Comparable<Item> {
 
     private double price;
@@ -9,6 +14,11 @@ public class Item implements Comparable<Item> {
     private List<ItemID> itemIDs;
 
     public static class ItemID {
+
+        public ItemID(String id, String location) {
+            this.id = id;
+            this.location = location;
+        }
 
         private String id;
         private String location;
