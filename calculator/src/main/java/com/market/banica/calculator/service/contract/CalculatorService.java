@@ -15,5 +15,5 @@ public interface CalculatorService {
      * @param quantity quantity of the item
      * @return recipe for item
      */
-    RecipeDTO getRecipe(String itemName, double quantity);
+    RecipeDTO getRecipe(String itemName, int quantity);
 }
