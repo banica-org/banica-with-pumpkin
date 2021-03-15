@@ -3,6 +3,7 @@ package com.market.banica.order.book;
 import epam.market.banica.order.book.grpc.MarketDataRequest;
 import epam.market.banica.order.book.grpc.MarketDataServiceGrpc;
 import epam.market.banica.order.book.grpc.TickResponse;
+import io.grpc.ConnectivityState;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
@@ -19,6 +20,9 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class MarketDataClient {
 
+    private static final int FAILED_ATTEMPTS = 0;
+    private static final long DEFAULT_WAIT_TIME_IN_MILLI = 1000;
+    public static final int FAILED_ATTEMPTS_LIMIT = 11;
     private final ItemMarket itemMarket;
     private final ManagedChannel managedChannel;
     private static final Logger LOGGER = LogManager.getLogger(MarketDataClient.class);
@@ -31,6 +35,15 @@ public class MarketDataClient {
                 .usePlaintext()
                 .build();
         this.itemMarket = itemMarket;
+
+        managedChannel.notifyWhenStateChanged(ConnectivityState.READY, () -> {
+            try {
+                tryReconnect(managedChannel);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        });
+
     }
 
     @PostConstruct
@@ -70,5 +83,28 @@ public class MarketDataClient {
     private void stop() throws InterruptedException {
         managedChannel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
         LOGGER.info("Server is terminated!");
+    }
+
+    private void tryReconnect(ManagedChannel channel) throws InterruptedException {
+        int failedAttempts = FAILED_ATTEMPTS;
+        long timeToWait = DEFAULT_WAIT_TIME_IN_MILLI;
+
+        while (!managedChannel.getState(true).equals(ConnectivityState.READY)) {
+
+            Thread.sleep(timeToWait);
+            if (failedAttempts < FAILED_ATTEMPTS_LIMIT){
+                failedAttempts ++;
+                timeToWait *=2;
+                System.out.println(failedAttempts);
+                System.out.println(timeToWait);
+            }
+        }
+        managedChannel.notifyWhenStateChanged(ConnectivityState.READY, () -> {
+            try {
+                tryReconnect(managedChannel);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        });
     }
 }
