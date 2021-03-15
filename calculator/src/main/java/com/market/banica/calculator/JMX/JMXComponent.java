@@ -24,6 +24,8 @@ public class JMXComponent {
 
     @ManagedOperation
     public void deleteIngredient(String recipeName, String ingredientName){
+        long start = System.currentTimeMillis();
+
         LOGGER.debug("JMXConfig: In deleteIngredient method");
         LOGGER.info("DeleteIngredient called from JMX server with parameters recipeName {},ingredientName {}",
                 recipeName, ingredientName);
@@ -44,10 +46,15 @@ public class JMXComponent {
         deleteIngredientInRecipe(bottomIngredientName,recipe);
         LOGGER.debug("Ingredient deleted from JMX server for recipe {} and ingredient {}"
                 , recipeName, ingredientName);
+
+        long stop = System.currentTimeMillis();
+        System.out.println(stop - start + "deleteIngredient");
     }
 
     @ManagedOperation
     public void addIngredient(String recipeName, String ingredientName, String quantityAsString){
+        long start = System.currentTimeMillis();
+
         LOGGER.debug("JMXConfig: In addIngredient method");
         LOGGER.info("AddIngredient called from JMX server with parameters recipeName {},ingredientName {} and newValue{}",
                 recipeName, ingredientName, quantityAsString);
@@ -67,10 +74,15 @@ public class JMXComponent {
         addIngredientToRecipe(newIngredientName,recipe,quantity);
         LOGGER.debug("Ingredient added from JMX server for recipe {} and ingredient {} with value {}"
                 , recipeName, ingredientName, quantityAsString);
+
+        long stop = System.currentTimeMillis();
+        System.out.println(stop - start + " addIngredient");
     }
 
     @ManagedOperation
     public void setIngredientQuantity(String recipeName, String ingredientName, String newValue) {
+        long start = System.currentTimeMillis();
+
         LOGGER.debug("JMXConfig: In setIngredientQuantity method");
         LOGGER.info("SetIngredientQuantity called from JMX server with parameters recipeName {},ingredientName {} and newValue{}",
                 recipeName, ingredientName, newValue);
@@ -93,10 +105,15 @@ public class JMXComponent {
         setIngredientQuantityInRecipe(bottomIngredientName,recipe,newQuantity);
         LOGGER.debug("Value set from JMX server for recipe {} and ingredient {} with value {}"
                 , recipeName, ingredientName, newValue);
+
+        long stop = System.currentTimeMillis();
+        System.out.println(stop - start + " setIngredientQuantity");
     }
 
     @ManagedOperation
     public String getIngredientQuantity(String recipeName, String ingredientName) {
+        long start = System.currentTimeMillis();
+
         LOGGER.debug("JMXConfig: In getIngredientQuantity method");
         LOGGER.info("GetIngredientQuantity called from JMX server for recipe {} and ingredient {}", recipeName, ingredientName);
 
@@ -118,6 +135,8 @@ public class JMXComponent {
 
         LOGGER.debug("Quantity checked from JMX server for recipe {} and ingredient {}. The value is {}",
                 recipeName, ingredientName, ingredientQuantity);
+        long stop = System.currentTimeMillis();
+        System.out.println(stop - start + " getIngredientQuantity");
         return ingredientQuantity;
     }
 
@@ -223,10 +242,11 @@ public class JMXComponent {
         LOGGER.debug("JMXConfig: In getIngredientQuantityFromRecipe private method");
 
         return  recipe.getIngredients().stream()
+                .filter(product->product.getIngredientName() != null)
                 .filter(ingredient -> ingredient.getIngredientName().equals(ingredientName))
+                .findAny()
                 .map(Recipe::getQuantity)
                 .map(String::valueOf)
-                .findFirst()
                 .orElse("Ingredient not found");
 
     }
