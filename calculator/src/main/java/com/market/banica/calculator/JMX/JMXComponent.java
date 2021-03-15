@@ -23,35 +23,82 @@ public class JMXComponent {
     private final RecipeService recipeService;
 
     @ManagedOperation
-    public void setValue(String recipeName, String ingredientName, String newValue) {
-        LOGGER.debug("JMXConfig: In setValue method");
-        LOGGER.info("SetValue called from JMX server with parameters recipeName {},ingredientName {} and newValue{}",
-                recipeName, ingredientName, newValue);
+    public void deleteIngredient(String recipeName, String ingredientName){
+        LOGGER.debug("JMXConfig: In deleteIngredient method");
+        LOGGER.info("DeleteIngredient called from JMX server with parameters recipeName {},ingredientName {}",
+                recipeName, ingredientName);
 
         Recipe recipe = retrieveRecipeFromDatabase(recipeName);
-
-        int newQuantity = getNewValueAsInt(newValue);
 
         String bottomIngredientName = ingredientName;
         if (isNestedIngredient(ingredientName)) {
 
             String[] ingredients = getNestedIngredientsAsStringArray(ingredientName);
-            bottomIngredientName = getLastIngredientFromChain(ingredients);
+            bottomIngredientName = getLastProductFromChain(ingredients);
 
             recipe = getBottomRecipe(recipe, ingredients);
         }
 
         validateBottomIngredientExist(recipe, bottomIngredientName);
 
-        setIngredientQuantityInRecipe(ingredientName,recipe,newQuantity);
+        deleteIngredientInRecipe(bottomIngredientName,recipe);
+        LOGGER.debug("Ingredient deleted from JMX server for recipe {} and ingredient {}"
+                , recipeName, ingredientName);
+    }
+
+    @ManagedOperation
+    public void addIngredient(String recipeName, String ingredientName, String quantityAsString){
+        LOGGER.debug("JMXConfig: In addIngredient method");
+        LOGGER.info("AddIngredient called from JMX server with parameters recipeName {},ingredientName {} and newValue{}",
+                recipeName, ingredientName, quantityAsString);
+
+        Recipe recipe = retrieveRecipeFromDatabase(recipeName);
+        int quantity = getValueAsInt(quantityAsString);
+
+        String newIngredientName = ingredientName;
+        if (isNestedIngredient(ingredientName)) {
+
+            String[] ingredients = getNestedIngredientsAsStringArray(ingredientName);
+            newIngredientName = getLastProductFromChain(ingredients);
+
+            recipe = getBottomRecipe(recipe, ingredients);
+        }
+
+        addIngredientToRecipe(newIngredientName,recipe,quantity);
+        LOGGER.debug("Ingredient added from JMX server for recipe {} and ingredient {} with value {}"
+                , recipeName, ingredientName, quantityAsString);
+    }
+
+    @ManagedOperation
+    public void setIngredientQuantity(String recipeName, String ingredientName, String newValue) {
+        LOGGER.debug("JMXConfig: In setIngredientQuantity method");
+        LOGGER.info("SetIngredientQuantity called from JMX server with parameters recipeName {},ingredientName {} and newValue{}",
+                recipeName, ingredientName, newValue);
+
+        Recipe recipe = retrieveRecipeFromDatabase(recipeName);
+
+        int newQuantity = getValueAsInt(newValue);
+
+        String bottomIngredientName = ingredientName;
+        if (isNestedIngredient(ingredientName)) {
+
+            String[] ingredients = getNestedIngredientsAsStringArray(ingredientName);
+            bottomIngredientName = getLastProductFromChain(ingredients);
+
+            recipe = getBottomRecipe(recipe, ingredients);
+        }
+
+        validateBottomIngredientExist(recipe, bottomIngredientName);
+
+        setIngredientQuantityInRecipe(bottomIngredientName,recipe,newQuantity);
         LOGGER.debug("Value set from JMX server for recipe {} and ingredient {} with value {}"
                 , recipeName, ingredientName, newValue);
     }
 
     @ManagedOperation
-    public String getValue(String recipeName, String ingredientName) {
-        LOGGER.debug("JMXConfig: In getValue method");
-        LOGGER.info("GetValue called from JMX server for recipe {} and ingredient {}", recipeName, ingredientName);
+    public String getIngredientQuantity(String recipeName, String ingredientName) {
+        LOGGER.debug("JMXConfig: In getIngredientQuantity method");
+        LOGGER.info("GetIngredientQuantity called from JMX server for recipe {} and ingredient {}", recipeName, ingredientName);
 
         Recipe recipe = retrieveRecipeFromDatabase(recipeName);
 
@@ -61,7 +108,8 @@ public class JMXComponent {
         if (isNestedIngredient(ingredientName)) {
 
             String[] ingredients = getNestedIngredientsAsStringArray(ingredientName);
-            bottomIngredientName = getLastIngredientFromChain(ingredients);
+
+            bottomIngredientName = getLastProductFromChain(ingredients);
 
             recipe = getBottomRecipe(recipe, ingredients);
         }
@@ -71,6 +119,36 @@ public class JMXComponent {
         LOGGER.debug("Quantity checked from JMX server for recipe {} and ingredient {}. The value is {}",
                 recipeName, ingredientName, ingredientQuantity);
         return ingredientQuantity;
+    }
+
+    private void deleteIngredientInRecipe(String ingredientName, Recipe recipe) {
+        LOGGER.debug("JMXConfig: In setIngredientQuantityInRecipe private method");
+
+        for(Recipe ingredient: recipe.getIngredients()){
+            if(ingredient.getIngredientName().equals(ingredientName)){
+                ingredient.setDeleted(true);
+                break;
+            }
+        }
+
+        recipeService.safeRecipe(recipe);
+    }
+
+    private void addIngredientToRecipe(String ingredientName, Recipe recipe, int quantity) {
+        LOGGER.debug("JMXConfig: In addIngredientToRecipe private method");
+
+        Recipe newIngredient = createRecipeObject(ingredientName, quantity);
+
+        recipe.getIngredients().add(newIngredient);
+
+        recipeService.safeRecipe(recipe);
+    }
+
+    private Recipe createRecipeObject(String ingredientName, int quantity) {
+        Recipe newIngredient = new Recipe();
+        newIngredient.setIngredientName(ingredientName);
+        newIngredient.setQuantity(quantity);
+        return newIngredient;
     }
 
     private void validateBottomIngredientExist(Recipe recipe, String bottomIngredientName) {
@@ -85,7 +163,7 @@ public class JMXComponent {
                 });
     }
 
-    private int getNewValueAsInt(String newValue) {
+    private int getValueAsInt(String newValue) {
         LOGGER.debug("JMXConfig: In getNewValueAsInt private method");
 
         try {
@@ -98,7 +176,7 @@ public class JMXComponent {
         throw new IllegalArgumentException("Can not convert the new value to number");
     }
 
-    private String getLastIngredientFromChain(String[] ingredients) {
+    private String getLastProductFromChain(String[] ingredients) {
         LOGGER.debug("JMXConfig: In getLastIngredientFromChain private method");
 
         return ingredients[ingredients.length-1];
@@ -113,8 +191,10 @@ public class JMXComponent {
     private Recipe getBottomRecipe(Recipe recipe, String[] ingredients) {
         LOGGER.debug("JMXConfig: In getBottomRecipe private method");
 
-        for (int i = 1; i < ingredients.length; i++) {
+        for (int i = 0; i < ingredients.length-1; i++) {
+
             recipe = getNextRecipe(recipe, ingredients[i]);
+
         }
         return recipe;
     }
@@ -129,7 +209,8 @@ public class JMXComponent {
         LOGGER.debug("JMXConfig: In getNextRecipe private method");
 
         recipe = recipe.getIngredients().stream()
-                .filter(product -> product.getIngredientName().equals(ingredient))
+                .filter(product->product.getRecipeName() != null)
+                .filter(product -> product.getRecipeName().equals(ingredient))
                 .findFirst()
                 .orElseThrow(() -> {
                     LOGGER.error("Ingredient {} not found. Exception thrown", ingredient);
@@ -152,7 +233,7 @@ public class JMXComponent {
 
     private void setIngredientQuantityInRecipe(String ingredientName, Recipe recipe, int newQuantity) {
         LOGGER.debug("JMXConfig: In setIngredientQuantityInRecipe private method");
-
+        System.out.println(ingredientName + " " + recipe.toString() +" " + newQuantity);
         for(Recipe ingredient: recipe.getIngredients()){
             if(ingredient.getIngredientName().equals(ingredientName)){
                 ingredient.setQuantity(newQuantity);
@@ -165,7 +246,6 @@ public class JMXComponent {
 
     private boolean isNestedIngredient(String ingredientName) {
         LOGGER.debug("JMXConfig: In isNestedIngredient private method");
-
-        return ingredientName.contains(".");
+        return ingredientName.contains("/");
     }
 }

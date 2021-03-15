@@ -100,7 +100,7 @@ public class RecipeServiceImpl implements RecipeService {
     private Optional<Recipe> getRecipeFromDatabase(String recipeName) {
         LOGGER.debug("Recipe service impl: In getRecipeFromDatabase private method");
 
-        Optional<Recipe> recipe = recipeRepository.findByRecipeName(recipeName);
+        Optional<Recipe> recipe = recipeRepository.findByRecipeNameAndIsDeletedFalse(recipeName);
         LOGGER.info("Database called with save for recipe entity");
 
         return recipe;
@@ -109,7 +109,7 @@ public class RecipeServiceImpl implements RecipeService {
     private List<Recipe> getAllRecipesFromDatabase() {
         LOGGER.debug("Recipe service impl: In getAllRecipesFromDatabase private method");
 
-        List<Recipe> result = recipeRepository.findAll();
+        List<Recipe> result = recipeRepository.findAllByIsDeletedFalse();
         LOGGER.info("Database called with findAll for recipe entity");
 
         return result;

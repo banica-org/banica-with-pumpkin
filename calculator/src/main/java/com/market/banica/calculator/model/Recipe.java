@@ -39,6 +39,8 @@ public class Recipe {
     @ManyToMany(cascade = CascadeType.ALL,fetch = FetchType.EAGER)
     private List<Recipe> ingredients =  new ArrayList<>();
 
+    private boolean isDeleted;
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
