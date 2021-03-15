@@ -35,7 +35,7 @@ message AuroraSubscribeResponse{
 
 service AuroraService{
 
-  rpc subscribe (AuroraSubscribeRequest) returns (stream AuroraSubscribeResponse);
+  rpc subscribeForItem (AuroraSubscribeRequest) returns (stream AuroraSubscribeResponse);
   rpc request (AuroraRequest) returns (AuroraResponse);
 
 }
