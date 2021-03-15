@@ -86,7 +86,7 @@ public class MarketSubscriptionImpl implements Subscription<MarketDataRequest, T
 
     @Override
     public String getTickResponseGoodName(TickResponse response) {
-        return response.getItemName();
+        return response.getGoodName();
     }
 
     public HashSet<StreamObserver<TickResponse>> getSubscribers(String itemName) {

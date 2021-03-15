@@ -41,8 +41,8 @@ class MarketServiceImplTest {
 
     @Test
     void subscribeForItem() {
-        List<TickResponse> ticks = Arrays.asList(TickResponse.newBuilder().setItemName("firstTick").build(),
-                TickResponse.newBuilder().setItemName("secondTick").build());
+        List<TickResponse> ticks = Arrays.asList(TickResponse.newBuilder().setGoodName("firstTick").build(),
+                TickResponse.newBuilder().setGoodName("secondTick").build());
 
         Mockito.when(marketSubscriptionServiceImpl.getRequestGoodName(MARKET_DATA_REQUEST_BANICA)).thenReturn(GOOD_BANICA);
         Mockito.when(tickGenerator.generateTicks(GOOD_BANICA)).thenReturn(ticks);

@@ -102,7 +102,7 @@ class MarketSubscriptionImplTest {
         marketSubscriptionImpl.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
 
         TickResponse tickResponse = TickResponse.newBuilder()
-                .setItemName(GOOD_BANICA)
+                .setGoodName(GOOD_BANICA)
                 .setPrice(1)
                 .setQuantity(1)
                 .build();
@@ -117,7 +117,7 @@ class MarketSubscriptionImplTest {
         marketSubscriptionImpl.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
 
         TickResponse tickResponse = TickResponse.newBuilder()
-                .setItemName(GOOD_EGGS)
+                .setGoodName(GOOD_EGGS)
                 .setPrice(1)
                 .setQuantity(1)
                 .build();
@@ -135,7 +135,7 @@ class MarketSubscriptionImplTest {
     @Test
     void getTickResponseItemNameShouldReturnTickItemName() {
         TickResponse tickResponse = TickResponse.newBuilder()
-                .setItemName(GOOD_EGGS)
+                .setGoodName(GOOD_EGGS)
                 .setPrice(1)
                 .setQuantity(1)
                 .build();
