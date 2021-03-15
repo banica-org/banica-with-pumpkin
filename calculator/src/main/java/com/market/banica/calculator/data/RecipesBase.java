@@ -68,6 +68,8 @@ public class RecipesBase {
 
     @ManagedOperation
     public void setValue(String recipeName, String ingredientName, String newValue) {
+        long start = System.currentTimeMillis();
+
         LOGGER.debug("Recipes base: In setValue method");
         LOGGER.info("SetValue called from JMX server with parameters recipeName {},ingredientName {} and newValue{}", recipeName, ingredientName, newValue);
 
@@ -92,10 +94,15 @@ public class RecipesBase {
         }
         LOGGER.info("Value set from JMX server for recipe {} and ingredient {} with value {}"
                 , recipeName, ingredientName, newValue);
+
+        long stop = System.currentTimeMillis();
+        System.out.println(stop - start + " setValue");
     }
 
     @ManagedOperation
     public String getValue(String recipeName, String ingredientName) {
+        long start = System.currentTimeMillis();
+
         LOGGER.debug("Recipes base: In getValue method");
         LOGGER.info("GetValue called from JMX server for recipe {} and ingredient {}", recipeName, ingredientName);
         String result = "Ingredient not found";
@@ -109,6 +116,9 @@ public class RecipesBase {
         result = getResultFromRecipeString(ingredientName, result, recipe);
 
         LOGGER.info("Value checked from JMX server for recipe {} and ingredient {}", recipeName, ingredientName);
+
+        long stop = System.currentTimeMillis();
+        System.out.println(stop - start + " getValue");
         return result;
     }
 
