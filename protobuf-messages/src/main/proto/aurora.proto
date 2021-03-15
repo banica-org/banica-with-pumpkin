@@ -9,6 +9,7 @@ message AuroraRequest{
     BuyGoodRequest buyGoodRequest = 1;
     SellGoodRequest sellGoodRequest = 2;
   }
+
 }
 message AuroraResponse{
 

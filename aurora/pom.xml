@@ -33,7 +33,7 @@
 
         <dependency>
             <groupId>com.market.banica</groupId>
-            <artifactId>message</artifactId>
+            <artifactId>protobuf-messages</artifactId>
         </dependency>
 
     </dependencies>
