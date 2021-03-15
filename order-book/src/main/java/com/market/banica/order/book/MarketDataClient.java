@@ -30,19 +30,13 @@ public class MarketDataClient {
     @Autowired
     MarketDataClient(ItemMarket itemMarket,
                      @Value("${grpc.server.host}") final String host,
-                     @Value("${grpc.server.port}") final int port) {
+                     @Value("${grpc.server.port}") final int port) throws InterruptedException {
         managedChannel = ManagedChannelBuilder.forAddress(host, port)
                 .usePlaintext()
                 .build();
         this.itemMarket = itemMarket;
 
-        managedChannel.notifyWhenStateChanged(ConnectivityState.READY, () -> {
-            try {
-                tryReconnect(managedChannel);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        });
+        tryReconnect(managedChannel);
 
     }
 
@@ -79,32 +73,32 @@ public class MarketDataClient {
             });
         }
     }
+
     @PreDestroy
     private void stop() throws InterruptedException {
         managedChannel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
         LOGGER.info("Server is terminated!");
     }
 
-    private void tryReconnect(ManagedChannel channel) throws InterruptedException {
+    private void tryReconnect(ManagedChannel channel) {
         int failedAttempts = FAILED_ATTEMPTS;
         long timeToWait = DEFAULT_WAIT_TIME_IN_MILLI;
 
         while (!managedChannel.getState(true).equals(ConnectivityState.READY)) {
-
-            Thread.sleep(timeToWait);
-            if (failedAttempts < FAILED_ATTEMPTS_LIMIT){
-                failedAttempts ++;
-                timeToWait *=2;
+            try {
+                Thread.sleep(timeToWait);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            if (failedAttempts < FAILED_ATTEMPTS_LIMIT) {
+                failedAttempts++;
+                timeToWait *= 2;
                 System.out.println(failedAttempts);
                 System.out.println(timeToWait);
             }
         }
         managedChannel.notifyWhenStateChanged(ConnectivityState.READY, () -> {
-            try {
-                tryReconnect(managedChannel);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            tryReconnect(managedChannel);
         });
     }
 }
