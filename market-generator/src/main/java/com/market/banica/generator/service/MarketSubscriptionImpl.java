@@ -8,12 +8,14 @@ import io.grpc.netty.shaded.io.netty.util.internal.StringUtil;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Component
 public class MarketSubscriptionImpl implements Subscription<MarketDataRequest, TickResponse> {
 
     private final Logger LOGGER = LoggerFactory.getLogger(MarketSubscriptionImpl.class);
