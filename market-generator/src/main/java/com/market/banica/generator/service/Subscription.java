@@ -2,7 +2,7 @@ package com.market.banica.generator.service;
 
 import io.grpc.stub.StreamObserver;
 
-public interface SubscriptionService<T, S> {
+public interface Subscription<T, S> {
 
     void subscribe(T request, StreamObserver<S> responseObserver);
 
@@ -10,7 +10,7 @@ public interface SubscriptionService<T, S> {
 
     void notifySubscribers(S response);
 
-    String getRequestItemName(T request);
+    String getRequestGoodName(T request);
 
-    String getTickResponseItemName(S response);
+    String getTickResponseGoodName(S response);
 }
