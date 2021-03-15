@@ -16,9 +16,9 @@ import org.springframework.stereotype.Component;
 @ManagedResource
 @ToString
 @RequiredArgsConstructor
-public class JMXConfig {
+public class JMXComponent {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(JMXConfig.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(JMXComponent.class);
 
     private final RecipeService recipeService;
 
@@ -122,7 +122,7 @@ public class JMXConfig {
     private String[] getNestedIngredientsAsStringArray(String ingredientName) {
         LOGGER.debug("JMXConfig: In getNestedIngredientsAsStringArray private method");
 
-        return ingredientName.split(".");
+        return ingredientName.split("/");
     }
 
     private Recipe getNextRecipe(Recipe recipe, String ingredient) {
@@ -160,7 +160,7 @@ public class JMXConfig {
             }
         }
 
-        recipeService.updateRecipe(recipe);
+        recipeService.safeRecipe(recipe);
     }
 
     private boolean isNestedIngredient(String ingredientName) {

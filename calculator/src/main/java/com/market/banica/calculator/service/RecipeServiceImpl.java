@@ -8,8 +8,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayDeque;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Queue;
 
 @Service
 @RequiredArgsConstructor
@@ -20,23 +24,12 @@ public class RecipeServiceImpl implements RecipeService {
     private final RecipeRepository recipeRepository;
 
     @Override
-    public Recipe addRecipe(Recipe recipe) {
-        LOGGER.debug("Recipe service impl: In addRecipe method");
+    public Recipe safeRecipe(Recipe recipe) {
+        LOGGER.debug("Recipe service impl: In safeRecipe method");
 
         Recipe result = recipeRepository.save(recipe);
         LOGGER.info("Database called with save for recipe entity");
         LOGGER.debug("Recipe with id {} successfully added", result.getId());
-
-        return result;
-    }
-
-    @Override
-    public Recipe updateRecipe(Recipe recipe) {
-        LOGGER.debug("Recipe service impl: In updateRecipe method");
-
-        Recipe result = recipeRepository.save(recipe);
-        LOGGER.info("Database called with save for recipe entity");
-        LOGGER.debug("Recipe with id {} successfully updated", result.getId());
 
         return result;
     }
@@ -54,15 +47,44 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
+    public Map<String, Integer> getAllRecipeIngredientsWithQuantities(String recipeName) {
+        LOGGER.debug("Recipe service impl: In getAllRecipeIngredientsWithQuantities method");
+
+        Recipe recipe = getRecipe(recipeName);
+
+        Map<String, Integer> result = new HashMap<>();
+
+        groupAllIngredientsFromRecipeInResultMap(result,recipe);
+
+        LOGGER.debug("Ingredients with quantities for recipe with id {} successfully retrieved from database",
+                recipe.getId());
+        return result;
+    }
+
+    @Override
     public List<Recipe> getAllRecipes() {
         LOGGER.debug("Recipe service impl: In getAllRecipes method");
 
-        List<Recipe>recipes = getAllRecipesFromDatabase();
+        List<Recipe> recipes = getAllRecipesFromDatabase();
 
         LOGGER.debug("List with recipes with length {} successfully retrieved from database", recipes.size());
         return recipes;
     }
 
+    private void groupAllIngredientsFromRecipeInResultMap(Map<String, Integer> result, Recipe recipe) {
+        LOGGER.debug("Recipe service impl: In groupAllIngredientsFromRecipeInResultMap private method");
+
+        Queue<Recipe> tempContainer = new ArrayDeque<>(recipe.getIngredients());
+
+        while (!tempContainer.isEmpty()) {
+            Recipe tempRecipe = tempContainer.remove();
+            if(tempRecipe.getIngredientName() == null){
+                tempContainer.addAll(tempRecipe.getIngredients());
+            }else{
+                result.merge(tempRecipe.getIngredientName(), tempRecipe.getQuantity(), Integer::sum);
+            }
+        }
+    }
 
     private Recipe validateRecipeExist(String recipeName, Optional<Recipe> recipe) {
         LOGGER.debug("Recipe service impl: In validateRecipeExist private method");

@@ -1,8 +1,7 @@
 package com.market.banica.calculator.model;
 
-import lombok.Data;
+import com.market.banica.calculator.annotation.ValidateRecipeSimpleOrComposite;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
@@ -21,6 +20,7 @@ import java.util.List;
 @Entity
 @Getter
 @Setter
+@ValidateRecipeSimpleOrComposite(compositeFields = {"recipeName","ingredients"}, simpleFields = {"ingredientName","quantity"})
 public class Recipe {
 
     @Column(name = "ID", nullable = false)
@@ -28,6 +28,7 @@ public class Recipe {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(unique = true)
     private String recipeName;
 
     private String ingredientName;

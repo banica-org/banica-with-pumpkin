@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 
 @RestController
 @RequiredArgsConstructor
@@ -28,6 +27,6 @@ public class RecipeController {
         LOGGER.info("POST /recipe called");
 
         LOGGER.debug("Recipe controller: in createRecipe method");
-        return ResponseEntity.ok().body(recipeService.addRecipe(recipe));
+        return ResponseEntity.ok().body(recipeService.safeRecipe(recipe));
     }
 }
