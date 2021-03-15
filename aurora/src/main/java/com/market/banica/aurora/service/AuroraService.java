@@ -15,10 +15,10 @@ public class AuroraService extends AuroraServiceGrpc.AuroraServiceImplBase {
 
     @Override
     public void request(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
-       if (Aurora.AuroraRequest.getDefaultInstance().hasBuyGoodRequest()){
-           //TODO Buy method
-       }else if (Aurora.AuroraRequest.getDefaultInstance().hasSellGoodRequest()){
-           //TODO Sell method
-       }
+        if (Aurora.AuroraRequest.getDefaultInstance().hasBuyGoodRequest()) {
+            //TODO Buy method
+        } else if (Aurora.AuroraRequest.getDefaultInstance().hasSellGoodRequest()) {
+            //TODO Sell method
+        }
     }
 }
