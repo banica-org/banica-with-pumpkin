@@ -32,40 +32,6 @@ public class RecipesBase {
 
     private Properties database = new Properties();
 
-    public void setPropertyWithBackUp(String key, String value) {
-        LOGGER.debug("Recipes base: In setPropertyWithBackUp method");
-        getDatabase().setProperty(key, value);
-        writeBackUp();
-    }
-
-    public Map<String, Map<String,String>> getAllRecipes() {
-        LOGGER.debug("Recipes base: In getAllRecipes method");
-
-        return getDatabase().entrySet().stream()
-                .collect(Collectors.toMap(
-                        entry->entry.getKey() +"",
-                        entry->getRecipe((String) entry.getKey())));
-    }
-
-    public Map<String, String> getRecipe(String recipeName) {
-        LOGGER.debug("Recipes base: In getRecipe method");
-
-        String recipeContent = getDatabase().getProperty(recipeName);
-
-        validateRecipeExist(recipeName, recipeContent);
-
-        Map<String, String> result;
-        String delimiterIngredients = ",";
-
-        if (hasRecipeMoreThanOneIngredient(recipeContent,delimiterIngredients)) {
-           result = convertArrayOfIngredientsToMap(recipeContent.split(delimiterIngredients));
-        }else{
-            result = convertArrayOfIngredientsToMap(new String[]{recipeContent});
-        }
-
-        return result;
-    }
-
     @ManagedOperation
     public void setValue(String recipeName, String ingredientName, String newValue) {
         long start = System.currentTimeMillis();
@@ -85,7 +51,7 @@ public class RecipesBase {
 
         String newRecipe;
         if (ingredientExists) {
-            updateIngredients(ingredientName, newValue, ingredients, recipeName);
+            updateIngredients(ingredientName, newValue, ingredients);
             newRecipe = createRecipeAsStringFromArray(ingredients);
             setPropertyWithBackUp(recipeName, newRecipe);
         } else {
@@ -122,6 +88,37 @@ public class RecipesBase {
         return result;
     }
 
+    @ManagedOperation
+    public void deleteValue(String recipeName, String ingredientName){
+        long start = System.currentTimeMillis();
+
+        LOGGER.debug("Recipes base: In deleteValue method");
+        LOGGER.info("DeleteValue called from JMX server for recipe {} and ingredient {}", recipeName, ingredientName);
+
+        String recipe = database.getProperty(recipeName);
+        if (recipe == null) {
+            return;
+        }
+
+        String[] ingredients = recipe.split(",");
+        boolean ingredientExists = checkIfIngredientExist(ingredientName, ingredients);
+
+
+        String newRecipe;
+        if (ingredientExists) {
+            deleteIngredient(ingredientName, ingredients);
+            newRecipe = createRecipeAsStringFromArray(ingredients);
+            setPropertyWithBackUp(recipeName, newRecipe);
+        } else {
+           return;
+        }
+        LOGGER.info("Value deleted from JMX server for recipe {} and ingredient {}"
+                , recipeName, ingredientName);
+
+        long stop = System.currentTimeMillis();
+        System.out.println(stop - start + " setValue");
+    }
+
     @PostConstruct
     public void readBackUp() {
         LOGGER.debug("Recipes base: In readBackUp method");
@@ -153,13 +150,47 @@ public class RecipesBase {
         }
     }
 
+    public void setPropertyWithBackUp(String key, String value) {
+        LOGGER.debug("Recipes base: In setPropertyWithBackUp method");
+        getDatabase().setProperty(key, value);
+        writeBackUp();
+    }
+
+    public Map<String, Map<String, String>> getAllRecipes() {
+        LOGGER.debug("Recipes base: In getAllRecipes method");
+
+        return getDatabase().entrySet().stream()
+                .collect(Collectors.toMap(
+                        entry -> entry.getKey() + "",
+                        entry -> getRecipe((String) entry.getKey())));
+    }
+
+    public Map<String, String> getRecipe(String recipeName) {
+        LOGGER.debug("Recipes base: In getRecipe method");
+
+        String recipeContent = getDatabase().getProperty(recipeName);
+
+        validateRecipeExist(recipeName, recipeContent);
+
+        Map<String, String> result;
+        String delimiterIngredients = ",";
+
+        if (hasRecipeMoreThanOneIngredient(recipeContent, delimiterIngredients)) {
+            result = convertArrayOfIngredientsToMap(recipeContent.split(delimiterIngredients));
+        } else {
+            result = convertArrayOfIngredientsToMap(new String[]{recipeContent});
+        }
+
+        return result;
+    }
+
     private void setDatabaseFromBackUp(Properties database) {
         LOGGER.debug("Recipes base: In setDatabaseFromBackUp private method");
 
         this.database = database;
     }
 
-    private boolean hasRecipeMoreThanOneIngredient(String recipeContent, String delimiterIngredients){
+    private boolean hasRecipeMoreThanOneIngredient(String recipeContent, String delimiterIngredients) {
         LOGGER.debug("Recipes base: In doesRecipeContainsOnlyOneIngredient private method");
 
         return recipeContent.contains(delimiterIngredients);
@@ -168,7 +199,7 @@ public class RecipesBase {
     private void validateRecipeExist(String recipeName, String recipeContent) {
         LOGGER.debug("Recipes base: In validateRecipeExist private method");
 
-        if(recipeContent == null){
+        if (recipeContent == null) {
 
             LOGGER.error("GetRecipe invoked with illegal parameter. Recipe with name {} does not exist", recipeName);
             throw new IllegalArgumentException("Recipe with this name does not exist");
@@ -244,12 +275,24 @@ public class RecipesBase {
         return ingredientExists;
     }
 
-    private void updateIngredients(String ingredientName, String newValue, String[] ingredients, String recipeName) {
+    private void deleteIngredient(String ingredientName, String[] ingredients) {
         LOGGER.debug("Recipes base: In updateIngredientIfExist private method");
 
         for (int i = 0; i < ingredients.length; i++) {
             if (ingredients[i].startsWith(ingredientName)) {
-                ingredients[i] = recipeName + "." + ingredientName + ":" + newValue;
+                ingredients[i] = "";//system.arraycopy from both ends
+                break;
+            }
+        }
+    }
+
+    private void updateIngredients(String ingredientName, String newValue, String[] ingredients) {
+        LOGGER.debug("Recipes base: In updateIngredientIfExist private method");
+
+        for (int i = 0; i < ingredients.length; i++) {
+            if (ingredients[i].startsWith(ingredientName)) {
+                ingredients[i] =  ingredientName + ":" + newValue;
+
             }
         }
     }
