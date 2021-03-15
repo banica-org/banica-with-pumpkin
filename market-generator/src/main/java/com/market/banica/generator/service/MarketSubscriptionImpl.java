@@ -35,7 +35,7 @@ public class MarketSubscriptionImpl implements Subscription<MarketDataRequest, T
     }
 
     @Override
-    public void unsubscribe(MarketDataRequest request, StreamObserver<TickResponse> responseObserver){
+    public void unsubscribe(MarketDataRequest request, StreamObserver<TickResponse> responseObserver) {
         String goodName = getRequestGoodName(request);
         if (!StringUtil.isNullOrEmpty(goodName)) {
             LOGGER.debug("Request to unsubscribe from {} for good: {}.", responseObserver, goodName);

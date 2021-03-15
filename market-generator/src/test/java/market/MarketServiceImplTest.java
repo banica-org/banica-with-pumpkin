@@ -49,7 +49,7 @@ class MarketServiceImplTest {
 
         marketService.subscribeForItem(MARKET_DATA_REQUEST_BANICA, subscriberOne);
 
-        verify(subscriberOne,times(2)).onNext(any());
+        verify(subscriberOne, times(2)).onNext(any());
         verify(subscriberOne, times(1)).onCompleted();
     }
 }
