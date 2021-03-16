@@ -23,14 +23,15 @@ public class MarketDataClient {
     private static final int FAILED_ATTEMPTS = 0;
     private static final long DEFAULT_WAIT_TIME_IN_MILLI = 1000;
     public static final int FAILED_ATTEMPTS_LIMIT = 11;
+
     private final ItemMarket itemMarket;
     private final ManagedChannel managedChannel;
     private static final Logger LOGGER = LogManager.getLogger(MarketDataClient.class);
 
     @Autowired
     MarketDataClient(ItemMarket itemMarket,
-                     @Value("${grpc.server.host}") final String host,
-                     @Value("${grpc.server.port}") final int port) throws InterruptedException {
+                     @Value("${aurora.server.host}") final String host,
+                     @Value("${aurora.server.port}") final int port) throws InterruptedException {
         managedChannel = ManagedChannelBuilder.forAddress(host, port)
                 .usePlaintext()
                 .build();
@@ -63,7 +64,7 @@ public class MarketDataClient {
 
                 @Override
                 public void onError(final Throwable throwable) {
-                    LOGGER.info("Unable to request");
+                    LOGGER.warn("Unable to request");
                 }
 
                 @Override
@@ -91,10 +92,16 @@ public class MarketDataClient {
                 e.printStackTrace();
             }
             if (failedAttempts < FAILED_ATTEMPTS_LIMIT) {
+
                 failedAttempts++;
                 timeToWait *= 2;
-                System.out.println(failedAttempts);
-                System.out.println(timeToWait);
+
+                LOGGER.info("Attempt number : " + failedAttempts + " failed to recconnect!");
+                LOGGER.info("Next attempt will execute in : " + timeToWait + " milliseconds");
+            }else{
+                failedAttempts++;
+                LOGGER.info("Attempts to recconnect : " + failedAttempts);
+                LOGGER.info("Next attempt will execute in : " + timeToWait + " milliseconds");
             }
         }
         managedChannel.notifyWhenStateChanged(ConnectivityState.READY, () -> {
