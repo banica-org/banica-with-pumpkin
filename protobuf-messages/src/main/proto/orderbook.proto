@@ -1,6 +1,6 @@
     syntax = "proto3";
 
-package epam.market.banica.order.book.grpc;
+    option java_package = "com.orderbook";
 
 option java_multiple_files = true;
 
