@@ -67,6 +67,11 @@
             <version>${grpc.stub.version}</version>
         </dependency>
 
+        <dependency> <!--Proto files -->
+            <groupId>com.market.banica</groupId>
+            <artifactId>protobuf-messages</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-api</artifactId>
