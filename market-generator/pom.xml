@@ -35,6 +35,11 @@
             <groupId>com.market.banica</groupId>
             <artifactId>protobuf-messages</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>com.market.banica</groupId>
+            <artifactId>common</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
