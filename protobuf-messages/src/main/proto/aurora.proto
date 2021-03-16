@@ -5,37 +5,23 @@ option java_package = "com.aurora";
 import "market.proto";
 
 message AuroraRequest{
-  oneof requests{
-    BuyGoodRequest buyGoodRequest = 1;
-    SellGoodRequest sellGoodRequest = 2;
-  }
+
+  string clientId = 1;
+  string topic = 2;
 
 }
 message AuroraResponse{
 
   oneof responses{
-    TradeActionProductRequest tradeActionProductRequest = 1;
+    TickResponse tickResponse = 2;
+    TradeActionProductResponse tradeActionProductResponse = 1;
   }
-
-}
-
-message AuroraSubscribeRequest{
-  oneof subscribeRequests{
-    MarketDataRequest marketDataRequest = 1;
-    }
-}
-
-message AuroraSubscribeResponse{
-
-  oneof subscribeResponse{
-    TickResponse ticketResponse = 1;
-    }
 
 }
 
 service AuroraService{
 
-  rpc subscribeForItem (AuroraSubscribeRequest) returns (stream AuroraSubscribeResponse);
   rpc request (AuroraRequest) returns (AuroraResponse);
+  rpc subscribe (AuroraRequest) returns (stream AuroraResponse);
 
 }

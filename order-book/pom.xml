@@ -3,13 +3,12 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
     <parent>
         <groupId>com.market.banica</groupId>
         <artifactId>market-root</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
-
+    <groupId>com.market.banica</groupId>
     <artifactId>order-book</artifactId>
     <version>1.0-SNAPSHOT</version>
 
@@ -22,15 +21,28 @@
         <apache.annotations.version>6.0.53</apache.annotations.version>
         <maven.os.plugin.version>1.6.2</maven.os.plugin.version>
         <maven.protobuf.plugin.version>0.6.1</maven.protobuf.plugin.version>
+<!--        <lombok.version>1.18.16</lombok.version>-->
+        <log4j.version>2.7</log4j.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
 
     <dependencies>
-        <!--  Spring Boot dependencies  -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-log4j2</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
+            <exclusions>
+                <exclusion>
+                    <!--  Removing general logging  -->
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-logging</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
-
         <!--  Testing dependencies  -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -54,6 +66,12 @@
             <artifactId>grpc-stub</artifactId>
             <version>${grpc.stub.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+        </dependency>
+
         <dependency> <!-- necessary for Java 9+ -->
             <groupId>org.apache.tomcat</groupId>
             <artifactId>annotations-api</artifactId>
@@ -93,7 +111,7 @@
             <plugin>
                 <groupId>org.xolstice.maven.plugins</groupId>
                 <artifactId>protobuf-maven-plugin</artifactId>
-                <version>${maven.protobuf.plugin.version}</version>
+                <version>0.6.1</version>
                 <configuration>
                     <protocArtifact>com.google.protobuf:protoc:3.12.0:exe:${os.detected.classifier}</protocArtifact>
                     <pluginId>grpc-java</pluginId>
@@ -133,5 +151,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>
