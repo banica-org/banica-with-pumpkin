@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+option java_package = "com.aurora";
+
+import "market.proto";
+import "orderbook.proto";
+
+message AuroraRequest{
+
+  string clientId = 1;
+  string topic = 2;
+
+}
+message AuroraResponse{
+
+  oneof responses{
+    TickResponse tickResponse = 2;
+    TradeActionProductResponse tradeActionProductResponse = 1;
+    ItemOrderBookResponse itemOrderBookResponse = 3;
+  }
+
+}
+
+service AuroraService{
+
+  rpc request (AuroraRequest) returns (AuroraResponse);
+  rpc subscribe (AuroraRequest) returns (stream AuroraResponse);
+
+}

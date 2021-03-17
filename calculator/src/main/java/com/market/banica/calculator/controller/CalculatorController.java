@@ -36,7 +36,7 @@ public class CalculatorController {
 
         //Here service should be called
         //replace new RecipeDTO with service call when service is completed
-        RecipeDTO recipeDTO = service.getRecipe(itemName, quantity);
+        RecipeDTO recipeDTO = service.getRecipe(clientId,itemName, quantity);
 
 
         return ResponseEntity.ok().body(recipeDTO);
