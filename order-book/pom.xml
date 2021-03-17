@@ -3,12 +3,13 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+
     <parent>
         <groupId>com.market.banica</groupId>
         <artifactId>market-root</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
-    <groupId>com.market.banica</groupId>
+
     <artifactId>order-book</artifactId>
     <version>1.0-SNAPSHOT</version>
 
@@ -19,7 +20,6 @@
         <grpc.protobuf.version>1.36.0</grpc.protobuf.version>
         <grpc.stub.version>1.36.0</grpc.stub.version>
         <apache.annotations.version>6.0.53</apache.annotations.version>
-<!--        <lombok.version>1.18.16</lombok.version>-->
         <log4j.version>2.7</log4j.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -68,6 +68,11 @@
         <dependency> <!--Proto files -->
             <groupId>com.market.banica</groupId>
             <artifactId>protobuf-messages</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.market.banica</groupId>
+            <artifactId>common</artifactId>
         </dependency>
 
         <dependency>

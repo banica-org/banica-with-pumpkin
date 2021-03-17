@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+package aurora;
+
 option java_package = "com.aurora";
 
 import "market.proto";
@@ -14,9 +16,9 @@ message AuroraRequest{
 message AuroraResponse{
 
   oneof responses{
-    TickResponse tickResponse = 2;
-    TradeActionProductResponse tradeActionProductResponse = 1;
-    ItemOrderBookResponse itemOrderBookResponse = 3;
+    market.TickResponse tickResponse = 2;
+    market.TradeActionProductResponse tradeActionProductResponse = 1;
+    orderbook.ItemOrderBookResponse itemOrderBookResponse = 3;
   }
 
 }
