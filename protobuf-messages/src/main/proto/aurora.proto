@@ -21,7 +21,7 @@ message AuroraResponse{
 
 service AuroraService{
 
-  rpc request (AuroraRequest) returns (AuroraResponse);
-  rpc subscribe (AuroraRequest) returns (stream AuroraResponse);
+  rpc request (AuroraRequest) returns (AuroraResponse) ;
+  rpc subscribe (AuroraRequest) returns (stream AuroraResponse) ;
 
 }
