@@ -26,7 +26,7 @@ public class CalculatorServiceImpl implements CalculatorService {
      * @return recipe for item
      */
     @Override
-    public RecipeDTO getRecipe(String itemName, int quantity) {
+    public RecipeDTO getRecipe(String clientId, String itemName, int quantity) {
 
         throw new FeatureNotSupportedException("Feature is not implemented yet.");
 

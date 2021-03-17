@@ -9,16 +9,12 @@ import org.springframework.stereotype.Service;
 public class AuroraService extends AuroraServiceGrpc.AuroraServiceImplBase {
 
     @Override
-    public void subscribe(Aurora.AuroraSubscribeRequest request, StreamObserver<Aurora.AuroraSubscribeResponse> responseObserver) {
-        super.subscribe(request, responseObserver);
+    public void request(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
+        super.request(request, responseObserver);
     }
 
     @Override
-    public void request(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
-        if (request.hasBuyGoodRequest()) {
-            //TODO Buy method
-        } else if (request.hasSellGoodRequest()) {
-            //TODO Sell method
-        }
+    public void subscribe(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
+        super.subscribe(request, responseObserver);
     }
 }
