@@ -2,7 +2,7 @@ package com.market.banica.generator.service;
 
 import io.grpc.stub.StreamObserver;
 
-public interface Subscription<T, S> {
+public interface SubscriptionManager<T, S> {
 
     void subscribe(T request, StreamObserver<S> responseObserver);
 

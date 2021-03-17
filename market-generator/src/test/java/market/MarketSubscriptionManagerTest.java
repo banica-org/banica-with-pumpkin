@@ -3,7 +3,7 @@ package market;
 import com.market.MarketDataRequest;
 import com.market.TickResponse;
 import com.market.banica.generator.exception.NoSuchGoodException;
-import com.market.banica.generator.service.MarketSubscriptionImpl;
+import com.market.banica.generator.service.MarketSubscriptionManager;
 import io.grpc.stub.StreamObserver;
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
@@ -20,10 +20,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
-class MarketSubscriptionImplTest {
+class MarketSubscriptionManagerTest {
 
     @InjectMocks
-    private MarketSubscriptionImpl marketSubscriptionImpl;
+    private MarketSubscriptionManager marketSubscriptionManager;
 
     private final StreamObserver<TickResponse> subscriberOne = mock(StreamObserver.class);
 
@@ -40,9 +40,9 @@ class MarketSubscriptionImplTest {
 
     @Test
     void subscribeShouldAddNewSubscriberToSubscriptions() {
-        marketSubscriptionImpl.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
+        marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
 
-        int actual = marketSubscriptionImpl.getSubscribers(MARKET_DATA_REQUEST_BANICA.getItemName()).size();
+        int actual = marketSubscriptionManager.getSubscribers(MARKET_DATA_REQUEST_BANICA.getItemName()).size();
         int expected = 1;
 
         Assert.assertEquals(expected, actual);
@@ -50,10 +50,10 @@ class MarketSubscriptionImplTest {
 
     @Test
     void subscribeShouldNotAddNewSubscriberToSubscriptionsIfIllegalGoodName() {
-        marketSubscriptionImpl.subscribe(MARKET_DATA_REQUEST_INVALID, subscriberOne);
-        marketSubscriptionImpl.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberTwo);
+        marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_INVALID, subscriberOne);
+        marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberTwo);
 
-        int actual = marketSubscriptionImpl.getSubscribers(MARKET_DATA_REQUEST_BANICA.getItemName()).size();
+        int actual = marketSubscriptionManager.getSubscribers(MARKET_DATA_REQUEST_BANICA.getItemName()).size();
         int expected = 1;
 
         Assert.assertEquals(expected, actual);
@@ -61,10 +61,10 @@ class MarketSubscriptionImplTest {
 
     @Test
     void unsubscribeShouldNotRemoveSubscriberIfIllegalGoodName() {
-        marketSubscriptionImpl.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
-        marketSubscriptionImpl.unsubscribe(MARKET_DATA_REQUEST_INVALID, subscriberOne);
+        marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
+        marketSubscriptionManager.unsubscribe(MARKET_DATA_REQUEST_INVALID, subscriberOne);
 
-        int actual = marketSubscriptionImpl.getSubscribers(MARKET_DATA_REQUEST_BANICA.getItemName()).size();
+        int actual = marketSubscriptionManager.getSubscribers(MARKET_DATA_REQUEST_BANICA.getItemName()).size();
         int expected = 1;
 
         Assert.assertEquals(expected, actual);
@@ -72,12 +72,12 @@ class MarketSubscriptionImplTest {
 
     @Test
     void unsubscribeShouldUnsubscribeTheSubscriber() {
-        marketSubscriptionImpl.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
-        marketSubscriptionImpl.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberTwo);
+        marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
+        marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberTwo);
 
-        marketSubscriptionImpl.unsubscribe(MARKET_DATA_REQUEST_BANICA, subscriberTwo);
+        marketSubscriptionManager.unsubscribe(MARKET_DATA_REQUEST_BANICA, subscriberTwo);
 
-        int actual = marketSubscriptionImpl.getSubscribers(MARKET_DATA_REQUEST_BANICA.getItemName()).size();
+        int actual = marketSubscriptionManager.getSubscribers(MARKET_DATA_REQUEST_BANICA.getItemName()).size();
         int expected = 1;
 
         Assert.assertEquals(expected, actual);
@@ -85,21 +85,21 @@ class MarketSubscriptionImplTest {
 
     @Test
     public void unsubscribeShouldRemoveMapWhenOnlyOneSubscriberInside() {
-        marketSubscriptionImpl.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
-        assertEquals(1, marketSubscriptionImpl.getSubscribers(GOOD_BANICA).size());
+        marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
+        assertEquals(1, marketSubscriptionManager.getSubscribers(GOOD_BANICA).size());
 
-        marketSubscriptionImpl.unsubscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
-        assertNull(marketSubscriptionImpl.getSubscribers(GOOD_BANICA));
+        marketSubscriptionManager.unsubscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
+        assertNull(marketSubscriptionManager.getSubscribers(GOOD_BANICA));
     }
 
     @Test
     public void unsubscribeShouldThrowNoSuchGoodException() {
-        assertThrows(NoSuchGoodException.class, () -> marketSubscriptionImpl.unsubscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne));
+        assertThrows(NoSuchGoodException.class, () -> marketSubscriptionManager.unsubscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne));
     }
 
     @Test
     void notifySubscribersShouldNotifySubscriber() {
-        marketSubscriptionImpl.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
+        marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
 
         TickResponse tickResponse = TickResponse.newBuilder()
                 .setGoodName(GOOD_BANICA)
@@ -107,14 +107,14 @@ class MarketSubscriptionImplTest {
                 .setQuantity(1)
                 .build();
 
-        marketSubscriptionImpl.notifySubscribers(tickResponse);
+        marketSubscriptionManager.notifySubscribers(tickResponse);
 
-        verify(marketSubscriptionImpl.getSubscribers(GOOD_BANICA).iterator().next(), times(1)).onNext(any());
+        verify(marketSubscriptionManager.getSubscribers(GOOD_BANICA).iterator().next(), times(1)).onNext(any());
     }
 
     @Test
     void notifySubscribersShouldNotNotifySubscriber() {
-        marketSubscriptionImpl.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
+        marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
 
         TickResponse tickResponse = TickResponse.newBuilder()
                 .setGoodName(GOOD_EGGS)
@@ -122,14 +122,14 @@ class MarketSubscriptionImplTest {
                 .setQuantity(1)
                 .build();
 
-        marketSubscriptionImpl.notifySubscribers(tickResponse);
+        marketSubscriptionManager.notifySubscribers(tickResponse);
 
-        verify(marketSubscriptionImpl.getSubscribers(GOOD_BANICA).iterator().next(), times(0)).onNext(any());
+        verify(marketSubscriptionManager.getSubscribers(GOOD_BANICA).iterator().next(), times(0)).onNext(any());
     }
 
     @Test
     void getRequestItemNameShouldReturnItemName() {
-        assertEquals(marketSubscriptionImpl.getRequestGoodName(MARKET_DATA_REQUEST_BANICA), GOOD_BANICA);
+        assertEquals(marketSubscriptionManager.getRequestGoodName(MARKET_DATA_REQUEST_BANICA), GOOD_BANICA);
     }
 
     @Test
@@ -140,15 +140,15 @@ class MarketSubscriptionImplTest {
                 .setQuantity(1)
                 .build();
 
-        assertEquals(marketSubscriptionImpl.getTickResponseGoodName(tickResponse), GOOD_EGGS);
+        assertEquals(marketSubscriptionManager.getTickResponseGoodName(tickResponse), GOOD_EGGS);
     }
 
     @Test
     void getSubscribersShouldReturnGivenSubscribers() {
-        marketSubscriptionImpl.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
-        marketSubscriptionImpl.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberTwo);
+        marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
+        marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberTwo);
 
-        HashSet<StreamObserver<TickResponse>> actual = marketSubscriptionImpl.getSubscribers(MARKET_DATA_REQUEST_BANICA.getItemName());
+        HashSet<StreamObserver<TickResponse>> actual = marketSubscriptionManager.getSubscribers(MARKET_DATA_REQUEST_BANICA.getItemName());
 
         HashSet<StreamObserver<TickResponse>> expected = new HashSet<>();
         expected.add(subscriberOne);

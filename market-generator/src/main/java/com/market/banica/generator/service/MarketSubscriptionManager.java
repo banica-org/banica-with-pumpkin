@@ -16,9 +16,9 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
-public class MarketSubscriptionImpl implements Subscription<MarketDataRequest, TickResponse> {
+public class MarketSubscriptionManager implements SubscriptionManager<MarketDataRequest, TickResponse> {
 
-    private final Logger LOGGER = LoggerFactory.getLogger(MarketSubscriptionImpl.class);
+    private final Logger LOGGER = LoggerFactory.getLogger(MarketSubscriptionManager.class);
     private final Map<String, HashSet<StreamObserver<TickResponse>>> subscriptions = new ConcurrentHashMap<>();
 
     @Override

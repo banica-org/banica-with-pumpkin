@@ -11,15 +11,15 @@ import org.springframework.stereotype.Service;
 @Service
 public class MarketServiceImpl extends MarketServiceGrpc.MarketServiceImplBase implements MarketService {
 
-    private MarketSubscriptionImpl marketSubscriptionServiceImpl;
+    private MarketSubscriptionManager marketSubscriptionManager;
 
     private TickGenerator tickGenerator;
 
     @Override
     public void subscribeForItem(MarketDataRequest request, StreamObserver<TickResponse> responseObserver) {
-        String topic = marketSubscriptionServiceImpl.getRequestGoodName(request);
+        String topic = marketSubscriptionManager.getRequestGoodName(request);
         tickGenerator.generateTicks(topic).forEach(responseObserver::onNext);
-        marketSubscriptionServiceImpl.subscribe(request, responseObserver);
+        marketSubscriptionManager.subscribe(request, responseObserver);
         responseObserver.onCompleted();
     }
 

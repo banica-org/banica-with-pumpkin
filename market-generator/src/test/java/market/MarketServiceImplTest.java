@@ -3,7 +3,7 @@ package market;
 import com.market.MarketDataRequest;
 import com.market.TickResponse;
 import com.market.banica.generator.service.MarketServiceImpl;
-import com.market.banica.generator.service.MarketSubscriptionImpl;
+import com.market.banica.generator.service.MarketSubscriptionManager;
 import com.market.banica.generator.service.TickGenerator;
 import io.grpc.stub.StreamObserver;
 import org.junit.jupiter.api.Test;
@@ -28,7 +28,7 @@ class MarketServiceImplTest {
     private MarketServiceImpl marketService;
 
     @Mock
-    private MarketSubscriptionImpl marketSubscriptionServiceImpl;
+    private MarketSubscriptionManager marketSubscriptionServiceImpl;
 
     @Mock
     private TickGenerator tickGenerator;
