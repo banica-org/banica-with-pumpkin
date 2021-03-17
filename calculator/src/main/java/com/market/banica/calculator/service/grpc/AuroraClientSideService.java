@@ -46,7 +46,7 @@ public class AuroraClientSideService {
 
         managedChannel = ManagedChannelBuilder.forAddress(host, port)
                 .usePlaintext()
-                .defaultServiceConfig(ChannelRPCConfig.getRetryingServiceConfig())
+                .defaultServiceConfig(ChannelRPCConfig.getInstance().getServiceConfig())
                 .enableRetry()
                 .build();
 

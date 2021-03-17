@@ -31,7 +31,7 @@ public class MarketDataClient {
 
         managedChannel = ManagedChannelBuilder.forAddress(host, port)
                 .usePlaintext()
-                .defaultServiceConfig(ChannelRPCConfig.getRetryingServiceConfig())
+                .defaultServiceConfig(ChannelRPCConfig.getInstance().getServiceConfig())
                 .enableRetry()
                 .build();
 

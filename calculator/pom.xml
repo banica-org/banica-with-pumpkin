@@ -23,6 +23,7 @@
         <model-mapper-version>2.3.7</model-mapper-version>
         <grpc-protobuf-version>1.36.0</grpc-protobuf-version>
         <tomcat-annotation-api-version>6.0.53</tomcat-annotation-api-version>
+        <guava.version>30.1-jre</guava.version>
     </properties>
 
     <dependencies>
@@ -114,6 +115,11 @@
             <version>${tomcat-annotation-api-version}</version>
             <scope>provided</scope>
         </dependency>
+        <dependency> <!-- Needed for gRPC ServiceConfig setup -->
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${guava.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>com.market.banica</groupId>
@@ -124,7 +130,6 @@
             <groupId>com.market.banica</groupId>
             <artifactId>common</artifactId>
         </dependency>
-
     </dependencies>
 
     <build>

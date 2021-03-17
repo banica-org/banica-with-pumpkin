@@ -10,18 +10,31 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class ChannelRPCConfig {
 
-    private ChannelRPCConfig() {
-    }
+    private static ChannelRPCConfig instance;
+    private final Map<String, ?> serviceConfig;
 
-    public static Map<String, ?> getRetryingServiceConfig() {
-        return new Gson().fromJson(
+    private ChannelRPCConfig() {
+        serviceConfig = new Gson().fromJson(
                 new JsonReader(
                         new InputStreamReader(
                                 ChannelRPCConfig.class.getResourceAsStream(
-                                        "retrying_service_config.json"),
+                                        "/retrying_service_config.json"),
                                 UTF_8)),
                 Map.class);
     }
 
+    public static ChannelRPCConfig getInstance() {
+
+        if (instance == null) {
+            instance = new ChannelRPCConfig();
+        }
+
+        return instance;
+
+    }
+
+    public Map<String, ?> getServiceConfig() {
+        return serviceConfig;
+    }
 
 }
