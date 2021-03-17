@@ -1,8 +1,10 @@
 package com.market.banica.calculator.service.grpcService;
 
-import com.market.banica.aurora.AuroraServiceGrpc;
-import com.market.banica.aurora.IngredientRequest;
-import com.market.banica.aurora.IngredientResponse;
+
+import com.aurora.Aurora;
+import com.aurora.AuroraServiceGrpc;
+import com.market.banica.calculator.exception.exceptions.BadResponseException;
+import com.orderbook.ItemOrderBookResponse;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import org.slf4j.Logger;
@@ -46,21 +48,27 @@ public class AuroraClientSideService {
     }
 
 
-    public IngredientResponse getIngredient(String itemName, int quantity) {
+    public ItemOrderBookResponse getIngredient(String message, String clientId) {
 
         LOGGER.debug("Inside getIngredient method");
         LOGGER.debug("Building blocking stub");
         AuroraServiceGrpc.AuroraServiceBlockingStub blockingStub = getBlockingStub();
 
-        LOGGER.debug("Building request with parameters " + itemName + " " + quantity);
-        IngredientRequest request = IngredientRequest.newBuilder()
-                .setItemName(itemName)
-                .setQuantity(quantity)
+        LOGGER.debug("Building request with parameters " + message);
+        Aurora.AuroraRequest request = Aurora.AuroraRequest.newBuilder()
+                .setClientId(clientId)
+                .setTopic(message)
                 .build();
 
         LOGGER.debug("Sending request to aurora.");
 
-        return blockingStub.requestIngredient(request);
+        Aurora.AuroraResponse auroraResponse = blockingStub.request(request);
+
+        if (auroraResponse.hasItemOrderBookResponse()){
+            return auroraResponse.getItemOrderBookResponse();
+        }
+
+        throw new BadResponseException("Bad message from aurora service");
     }
 
     private AuroraServiceGrpc.AuroraServiceBlockingStub getBlockingStub() {

@@ -1,8 +1,9 @@
 package com.market.banica.order.book;
 
-import epam.market.banica.order.book.grpc.MarketDataRequest;
-import epam.market.banica.order.book.grpc.MarketDataServiceGrpc;
-import epam.market.banica.order.book.grpc.TickResponse;
+import com.market.MarketServiceGrpc;
+import com.market.MarketDataRequest;
+import com.market.TickResponse;
+
 import io.grpc.ConnectivityState;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -44,12 +45,12 @@ public class MarketDataClient {
     @PostConstruct
     private void start() {
         for (String product : itemMarket.getAllProductNames()) {
-            final MarketDataServiceGrpc.MarketDataServiceStub asynchronousStub = MarketDataServiceGrpc.newStub(managedChannel);
+            final MarketServiceGrpc.MarketServiceStub asynchronousStub = MarketServiceGrpc.newStub(managedChannel);
             final MarketDataRequest request = MarketDataRequest.newBuilder()
-                    .setItemName(product)
+                    .setGoodName(product)
                     .build();
             LOGGER.info("Start gathering product data.");
-            asynchronousStub.getMarketData(request, new StreamObserver<TickResponse>() {
+            asynchronousStub.subscribeForItem(request, new StreamObserver<TickResponse>() {
 
                 @Override
                 public void onNext(TickResponse response) {
@@ -59,7 +60,7 @@ public class MarketDataClient {
                     item.getItemIDs().add(new Item.ItemID("1", response.getOrigin().toString()));
                     LOGGER.info("Products data updated!");
 
-                    itemMarket.getAllItemsByName(response.getItemName()).add(item);
+                    itemMarket.getAllItemsByName(response.getGoodName()).add(item);
                 }
 
                 @Override
