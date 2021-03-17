@@ -83,7 +83,7 @@ public class MarketSubscriptionManager implements SubscriptionManager<MarketData
 
     @Override
     public String getRequestGoodName(MarketDataRequest request) {
-        return request.getItemName();
+        return request.getGoodName();
     }
 
     @Override

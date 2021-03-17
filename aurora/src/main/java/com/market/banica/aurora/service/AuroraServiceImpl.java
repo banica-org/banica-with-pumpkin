@@ -14,7 +14,7 @@ public class AuroraServiceImpl extends AuroraServiceGrpc.AuroraServiceImplBase {
     }
 
     @Override
-    public void subscribeForItem(Aurora.AuroraSubscribeRequest request, StreamObserver<Aurora.AuroraSubscribeResponse> responseObserver) {
-        super.subscribeForItem(request, responseObserver);
+    public void subscribe(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
+        super.subscribe(request, responseObserver);
     }
 }

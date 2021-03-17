@@ -35,7 +35,7 @@ class MarketServiceImplTest {
 
     private static final String GOOD_BANICA = "Banica";
 
-    private static final MarketDataRequest MARKET_DATA_REQUEST_BANICA = MarketDataRequest.newBuilder().setItemName(GOOD_BANICA).build();
+    private static final MarketDataRequest MARKET_DATA_REQUEST_BANICA = MarketDataRequest.newBuilder().setGoodName(GOOD_BANICA).build();
 
     private final StreamObserver<TickResponse> subscriberOne = mock(StreamObserver.class);
 

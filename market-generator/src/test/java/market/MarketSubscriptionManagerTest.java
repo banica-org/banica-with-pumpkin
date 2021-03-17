@@ -33,7 +33,7 @@ class MarketSubscriptionManagerTest {
 
     private static final String GOOD_EGGS = "Eggs";
 
-    private static final MarketDataRequest MARKET_DATA_REQUEST_BANICA = MarketDataRequest.newBuilder().setItemName(GOOD_BANICA).build();
+    private static final MarketDataRequest MARKET_DATA_REQUEST_BANICA = MarketDataRequest.newBuilder().setGoodName(GOOD_BANICA).build();
 
     private static final MarketDataRequest MARKET_DATA_REQUEST_INVALID = MarketDataRequest.newBuilder().build();
 
@@ -42,7 +42,7 @@ class MarketSubscriptionManagerTest {
     void subscribeShouldAddNewSubscriberToSubscriptions() {
         marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
 
-        int actual = marketSubscriptionManager.getSubscribers(MARKET_DATA_REQUEST_BANICA.getItemName()).size();
+        int actual = marketSubscriptionManager.getSubscribers(MARKET_DATA_REQUEST_BANICA.getGoodName()).size();
         int expected = 1;
 
         Assert.assertEquals(expected, actual);
@@ -53,7 +53,7 @@ class MarketSubscriptionManagerTest {
         marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_INVALID, subscriberOne);
         marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberTwo);
 
-        int actual = marketSubscriptionManager.getSubscribers(MARKET_DATA_REQUEST_BANICA.getItemName()).size();
+        int actual = marketSubscriptionManager.getSubscribers(MARKET_DATA_REQUEST_BANICA.getGoodName()).size();
         int expected = 1;
 
         Assert.assertEquals(expected, actual);
@@ -64,7 +64,7 @@ class MarketSubscriptionManagerTest {
         marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
         marketSubscriptionManager.unsubscribe(MARKET_DATA_REQUEST_INVALID, subscriberOne);
 
-        int actual = marketSubscriptionManager.getSubscribers(MARKET_DATA_REQUEST_BANICA.getItemName()).size();
+        int actual = marketSubscriptionManager.getSubscribers(MARKET_DATA_REQUEST_BANICA.getGoodName()).size();
         int expected = 1;
 
         Assert.assertEquals(expected, actual);
@@ -77,7 +77,7 @@ class MarketSubscriptionManagerTest {
 
         marketSubscriptionManager.unsubscribe(MARKET_DATA_REQUEST_BANICA, subscriberTwo);
 
-        int actual = marketSubscriptionManager.getSubscribers(MARKET_DATA_REQUEST_BANICA.getItemName()).size();
+        int actual = marketSubscriptionManager.getSubscribers(MARKET_DATA_REQUEST_BANICA.getGoodName()).size();
         int expected = 1;
 
         Assert.assertEquals(expected, actual);
@@ -148,7 +148,7 @@ class MarketSubscriptionManagerTest {
         marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
         marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberTwo);
 
-        HashSet<StreamObserver<TickResponse>> actual = marketSubscriptionManager.getSubscribers(MARKET_DATA_REQUEST_BANICA.getItemName());
+        HashSet<StreamObserver<TickResponse>> actual = marketSubscriptionManager.getSubscribers(MARKET_DATA_REQUEST_BANICA.getGoodName());
 
         HashSet<StreamObserver<TickResponse>> expected = new HashSet<>();
         expected.add(subscriberOne);
