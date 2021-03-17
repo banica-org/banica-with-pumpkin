@@ -60,7 +60,7 @@ public class CalculatorControllerTest {
         dummyRecipe.setTotalPrice(BigDecimal.valueOf(10));
 
 
-        given(service.getRecipe(product, 100)).willReturn(dummyRecipe);
+        given(service.getRecipe(clientId,product, 100)).willReturn(dummyRecipe);
 
 
         MockHttpServletResponse response = mockMvc.perform(MockMvcRequestBuilders.get
