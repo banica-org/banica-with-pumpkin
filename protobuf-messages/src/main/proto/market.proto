@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+option java_package = "com.market";
+option java_multiple_files = true;
+
+message MarketDataRequest{
+  string clientId = 1;
+  string goodName = 2;
+}
+
+enum Origin{
+  UNSPECIFIED = 0;
+  AMERICA = 1;
+  ASIA = 2;
+  EUROPE = 3;
+}
+
+message TickResponse{
+  string goodName = 1;
+  uint64 quantity = 2;
+  double price = 3;
+  int64 timestamp = 4;
+  Origin origin = 5;
+}
+
+message CatalogueRequest{
+  string clientId = 1;
+}
+
+message CatalogueResponse{
+  repeated string foodItems = 1;
+}
+
+message BuyGoodRequest{
+  string goodName = 1;
+  int64 quantity = 2;
+  double price = 3;
+  Origin origin = 4;
+}
+message SellGoodRequest{
+  string goodName = 1;
+  int64 quantity = 2;
+  double price = 3;
+  Origin origin = 4;
+}
+message TradeActionProductResponse{
+  string message = 1 ;
+}
+
+service MarketService{
+  rpc subscribeForItem(MarketDataRequest) returns (stream TickResponse);
+  rpc requestCatalogue(CatalogueRequest) returns (CatalogueResponse);
+  rpc buyGood(BuyGoodRequest) returns (TradeActionProductResponse);
+  rpc sellGood(SellGoodRequest) returns (TradeActionProductResponse);
+}

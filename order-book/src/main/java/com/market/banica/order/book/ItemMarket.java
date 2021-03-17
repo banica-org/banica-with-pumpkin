@@ -4,10 +4,10 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class ItemMarket {
@@ -15,12 +15,15 @@ public class ItemMarket {
     private final Map<String, TreeSet<Item>> allItems;
 
     public ItemMarket() {
-        allItems = new HashMap<>();
+        allItems = new ConcurrentHashMap<>();
         addDummyData();
     }
 
     public Set<Item> getAllItemsByName(String itemName) {
         return allItems.get(itemName) == null ? Collections.emptySet() : allItems.get(itemName);
+    }
+    public Set<String> getAllProductNames(){
+        return allItems.keySet();
     }
 
     private void addDummyData() {

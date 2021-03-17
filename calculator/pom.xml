@@ -16,11 +16,13 @@
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <junit.version>5.7.0</junit.version>
+        <junit-local.version>5.7.0</junit-local.version>
         <mockito.version>3.6.28</mockito.version>
         <swagger-version>2.9.2</swagger-version>
         <log4j.version>2.7</log4j.version>
         <model-mapper-version>2.3.7</model-mapper-version>
+        <grpc-protobuf-version>1.36.0</grpc-protobuf-version>
+        <tomcat-annotation-api-version>6.0.53</tomcat-annotation-api-version>
     </properties>
 
     <dependencies>
@@ -41,7 +43,7 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>${junit.version}</version>
+            <version>${junit-local.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -90,11 +92,46 @@
             <version>${model-mapper-version}</version>
         </dependency>
 
+        <!-- dependencies for grpc -->
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-netty-shaded</artifactId>
+            <version>${grpc-protobuf-version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-stub</artifactId>
+            <version>${grpc-protobuf-version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-protobuf</artifactId>
+            <version>${grpc-protobuf-version}</version>
+        </dependency>
+        <dependency> <!-- necessary for Java 9+ -->
+            <groupId>org.apache.tomcat</groupId>
+            <artifactId>annotations-api</artifactId>
+            <version>${tomcat-annotation-api-version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.market.banica</groupId>
+            <artifactId>protobuf-messages</artifactId>
+        </dependency>
 
     </dependencies>
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <executions>
