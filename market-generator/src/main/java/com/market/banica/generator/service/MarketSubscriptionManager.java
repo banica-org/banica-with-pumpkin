@@ -2,7 +2,7 @@ package com.market.banica.generator.service;
 
 import com.market.MarketDataRequest;
 import com.market.TickResponse;
-import com.market.banica.generator.exception.NoSuchGoodException;
+import com.market.banica.generator.exception.NotFoundException;
 import io.grpc.StatusRuntimeException;
 import io.grpc.netty.shaded.io.netty.util.internal.StringUtil;
 import io.grpc.stub.StreamObserver;
@@ -29,7 +29,7 @@ public class MarketSubscriptionManager implements SubscriptionManager<MarketData
             addSubscriber(responseObserver, goodName);
         } else {
             LOGGER.warn("Illegal value {} for good by request: {}.", goodName, request);
-            throw new NoSuchGoodException("Illegal good value!");
+            throw new NotFoundException("Illegal good value!");
         }
     }
 
@@ -41,7 +41,7 @@ public class MarketSubscriptionManager implements SubscriptionManager<MarketData
             removeSubscriber(responseObserver, goodName);
         } else {
             LOGGER.warn("Illegal value {} for good by request: {}.", goodName, request);
-            throw new NoSuchGoodException("Illegal good value!");
+            throw new NotFoundException("Illegal good value!");
         }
     }
 
@@ -53,7 +53,7 @@ public class MarketSubscriptionManager implements SubscriptionManager<MarketData
             sendNotification(response, subscribers);
         } else {
             LOGGER.warn("Illegal value {} for good by response: {}.", goodName, response);
-            throw new NoSuchGoodException("Illegal good value!");
+            throw new NotFoundException("Illegal good value!");
         }
     }
 
@@ -82,7 +82,7 @@ public class MarketSubscriptionManager implements SubscriptionManager<MarketData
     private void removeSubscriber(StreamObserver<TickResponse> responseObserver, String goodName) {
         this.subscriptions.compute(goodName, (key, value) -> {
             if (this.subscriptions.get(goodName) == null) {
-                throw new NoSuchGoodException("No such good!");
+                throw new NotFoundException("No such good!");
             }
             if (value != null) {
                 if (value.size() == 1) {

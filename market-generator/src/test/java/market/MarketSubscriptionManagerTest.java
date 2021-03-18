@@ -2,10 +2,9 @@ package market;
 
 import com.market.MarketDataRequest;
 import com.market.TickResponse;
-import com.market.banica.generator.exception.NoSuchGoodException;
+import com.market.banica.generator.exception.NotFoundException;
 import com.market.banica.generator.service.MarketSubscriptionManager;
 import io.grpc.stub.StreamObserver;
-import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -13,7 +12,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.HashSet;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -37,79 +38,66 @@ class MarketSubscriptionManagerTest {
 
     private static final MarketDataRequest MARKET_DATA_REQUEST_INVALID = MarketDataRequest.newBuilder().build();
 
-
     @Test
-    void subscribeShouldAddNewSubscriberToSubscriptions() {
+    void subscribeForItemWithValidDataInputExecutesWithSuccess() {
+        // Arrange
         assertNull(marketSubscriptionManager.getSubscribers(MARKET_DATA_REQUEST_BANICA.getGoodName()));
-
         marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
-
-        int actual = marketSubscriptionManager.getSubscribers(MARKET_DATA_REQUEST_BANICA.getGoodName()).size();
         int expected = 1;
 
-        Assert.assertEquals(expected, actual);
+        // Act
+        int actual = marketSubscriptionManager.getSubscribers(MARKET_DATA_REQUEST_BANICA.getGoodName()).size();
+
+        // Assert
+        assertEquals(expected, actual);
     }
 
     @Test
-    void subscribeShouldThrowExceptionAndNotAddNewSubscriberToSubscriptionsIfIllegalGoodName() {
-        assertNull(marketSubscriptionManager.getSubscribers(MARKET_DATA_REQUEST_BANICA.getGoodName()));
-
-        marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
-
-        assertThrows(NoSuchGoodException.class, () ->  marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_INVALID, subscriberOne));
-
-        int actual = marketSubscriptionManager.getSubscribers(MARKET_DATA_REQUEST_BANICA.getGoodName()).size();
-        int expected = 1;
-
-        Assert.assertEquals(expected, actual);
+    void subscribeForItemWithInputParameterWithInvalidGoodNameThrowsException() {
+        assertThrows(NotFoundException.class, () -> marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_INVALID, subscriberOne));
     }
 
     @Test
-    void unsubscribeShouldUnsubscribeTheSubscriber() {
-        assertNull(marketSubscriptionManager.getSubscribers(MARKET_DATA_REQUEST_BANICA.getGoodName()));
-
+    void unsubscribeForItemWithValidDataInputExecutesWithSuccess() {
+        // Arrange
         marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
         marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberTwo);
+        int expected = 1;
 
+        // Act
         marketSubscriptionManager.unsubscribe(MARKET_DATA_REQUEST_BANICA, subscriberTwo);
-
         int actual = marketSubscriptionManager.getSubscribers(MARKET_DATA_REQUEST_BANICA.getGoodName()).size();
-        int expected = 1;
 
-        Assert.assertEquals(expected, actual);
+        // Assert
+        assertEquals(expected, actual);
     }
 
     @Test
-    void unsubscribeShouldThrowExceptionAndNotRemoveSubscriberIfIllegalGoodName() {
-        assertNull(marketSubscriptionManager.getSubscribers(MARKET_DATA_REQUEST_BANICA.getGoodName()));
-
-        marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
-
-        assertThrows(NoSuchGoodException.class, () ->  marketSubscriptionManager.unsubscribe(MARKET_DATA_REQUEST_INVALID, subscriberOne));
-
-        int actual = marketSubscriptionManager.getSubscribers(MARKET_DATA_REQUEST_BANICA.getGoodName()).size();
-        int expected = 1;
-
-        Assert.assertEquals(expected, actual);
+    void unsubscribeForItemWithInputParameterWithInvalidGoodNameThrowsException() {
+        assertThrows(NotFoundException.class, () -> marketSubscriptionManager.unsubscribe(MARKET_DATA_REQUEST_INVALID, subscriberOne));
     }
 
     @Test
-    public void unsubscribeShouldRemoveMapWhenOnlyOneSubscriberInside() {
+    void unsubscribeForItemWithInputParameterWithValidGoodNameRemovesSubscriber() {
+        // Arrange
         marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
         assertEquals(1, marketSubscriptionManager.getSubscribers(GOOD_BANICA).size());
 
+        // Act
         marketSubscriptionManager.unsubscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
+
+        // Assert
         assertNull(marketSubscriptionManager.getSubscribers(GOOD_BANICA));
     }
 
     @Test
-    public void unsubscribeShouldThrowNoSuchGoodExceptionIfNoSuchGoodNameInMap() {
-        assertThrows(NoSuchGoodException.class, () -> marketSubscriptionManager.unsubscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne));
+    public void unsubscribeForItemWithNonExistentGoodNameInMapThrowsException() {
+        assertThrows(NotFoundException.class, () -> marketSubscriptionManager.unsubscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne));
     }
 
-
     @Test
-    void notifySubscribersShouldNotifySubscriber() {
+    void notifySubscribersWithParameterGoodNameBanicaNotifiesSubscriberForBanica() {
+        // Arrange
         marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
 
         TickResponse tickResponse = TickResponse.newBuilder()
@@ -118,13 +106,16 @@ class MarketSubscriptionManagerTest {
                 .setQuantity(1)
                 .build();
 
+        // Act
         marketSubscriptionManager.notifySubscribers(tickResponse);
 
+        // Assert
         verify(marketSubscriptionManager.getSubscribers(GOOD_BANICA).iterator().next(), times(1)).onNext(any());
     }
 
     @Test
-    void notifySubscribersShouldNotNotifySubscriberWhenTickResponseIsForDifferentGood() {
+    void notifySubscribersWithParameterGoodNameEggsDoesNotNotifySubscriberForBanica() {
+        // Arrange
         marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
 
         TickResponse tickResponse = TickResponse.newBuilder()
@@ -132,30 +123,31 @@ class MarketSubscriptionManagerTest {
                 .setPrice(1)
                 .setQuantity(1)
                 .build();
-
+        // Act
         marketSubscriptionManager.notifySubscribers(tickResponse);
 
+        // Assert
         verify(marketSubscriptionManager.getSubscribers(GOOD_BANICA).iterator().next(), times(0)).onNext(any());
     }
 
     @Test
-    public void notifySubscribersShouldThrowNoSuchGoodExceptionIfIllegalGoodName() {
+    public void notifySubscribersForItemWithInputParameterWithInvalidGoodNameThrowsException() {
         TickResponse tickResponse = TickResponse.newBuilder()
                 .setGoodName("")
                 .setPrice(1)
                 .setQuantity(1)
                 .build();
 
-        assertThrows(NoSuchGoodException.class, () -> marketSubscriptionManager.notifySubscribers(tickResponse));
+        assertThrows(NotFoundException.class, () -> marketSubscriptionManager.notifySubscribers(tickResponse));
     }
 
     @Test
-    void getRequestItemNameShouldReturnItemName() {
-        assertEquals(marketSubscriptionManager.getRequestGoodName(MARKET_DATA_REQUEST_BANICA), GOOD_BANICA);
+    void getRequestItemNameReturnsItemName() {
+        assertEquals(GOOD_BANICA, marketSubscriptionManager.getRequestGoodName(MARKET_DATA_REQUEST_BANICA));
     }
 
     @Test
-    void getTickResponseItemNameShouldReturnTickItemName() {
+    void getTickResponseGoodNameReturnsTickGoodName() {
         TickResponse tickResponse = TickResponse.newBuilder()
                 .setGoodName(GOOD_EGGS)
                 .setPrice(1)
@@ -166,16 +158,19 @@ class MarketSubscriptionManagerTest {
     }
 
     @Test
-    void getSubscribersShouldReturnGivenSubscribers() {
+    void getSubscribersReturnsGivenSubscribers() {
+        // Arrange
         marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
         marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberTwo);
 
+        // Act
         HashSet<StreamObserver<TickResponse>> actual = marketSubscriptionManager.getSubscribers(MARKET_DATA_REQUEST_BANICA.getGoodName());
 
         HashSet<StreamObserver<TickResponse>> expected = new HashSet<>();
         expected.add(subscriberOne);
         expected.add(subscriberTwo);
 
-        Assert.assertEquals(expected, actual);
+        // Assert
+        assertEquals(expected, actual);
     }
 }
