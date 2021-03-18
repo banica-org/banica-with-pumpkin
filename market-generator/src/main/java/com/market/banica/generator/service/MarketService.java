@@ -8,5 +8,6 @@ import io.grpc.stub.StreamObserver;
 
 public interface MarketService {
     void subscribeForItem(MarketDataRequest request, StreamObserver<TickResponse> responseObserver);
+
     void requestCatalogue(CatalogueRequest request, StreamObserver<CatalogueResponse> responseObserver);
 }
