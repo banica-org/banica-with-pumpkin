@@ -7,8 +7,9 @@ import io.grpc.stub.StreamObserver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+
 @Service
-public class AuroraService extends AuroraServiceGrpc.AuroraServiceImplBase {
+public class AuroraServiceImpl extends AuroraServiceGrpc.AuroraServiceImplBase {
 
     @Autowired
     private AuroraSubscriptionManager subscriptionManager;

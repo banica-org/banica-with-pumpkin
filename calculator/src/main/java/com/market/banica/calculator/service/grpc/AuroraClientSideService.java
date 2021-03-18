@@ -1,9 +1,10 @@
-package com.market.banica.calculator.service.grpcService;
+package com.market.banica.calculator.service.grpc;
 
 
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
 import com.market.banica.calculator.exception.exceptions.BadResponseException;
+import com.market.banica.common.ChannelRPCConfig;
 import com.orderbook.ItemOrderBookResponse;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -25,6 +26,7 @@ import javax.annotation.PreDestroy;
 
 @Service
 public class AuroraClientSideService {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(AuroraClientSideService.class);
 
     /**
@@ -44,7 +46,10 @@ public class AuroraClientSideService {
 
         managedChannel = ManagedChannelBuilder.forAddress(host, port)
                 .usePlaintext()
+                .defaultServiceConfig(ChannelRPCConfig.getInstance().getServiceConfig())
+                .enableRetry()
                 .build();
+
     }
 
 
@@ -54,7 +59,7 @@ public class AuroraClientSideService {
         LOGGER.debug("Building blocking stub");
         AuroraServiceGrpc.AuroraServiceBlockingStub blockingStub = getBlockingStub();
 
-        LOGGER.debug("Building request with parameters " + message);
+        LOGGER.debug("Building request with parameters {}", message);
         Aurora.AuroraRequest request = Aurora.AuroraRequest.newBuilder()
                 .setClientId(clientId)
                 .setTopic(message)
@@ -64,7 +69,7 @@ public class AuroraClientSideService {
 
         Aurora.AuroraResponse auroraResponse = blockingStub.request(request);
 
-        if (auroraResponse.hasItemOrderBookResponse()){
+        if (auroraResponse.hasItemOrderBookResponse()) {
             return auroraResponse.getItemOrderBookResponse();
         }
 
