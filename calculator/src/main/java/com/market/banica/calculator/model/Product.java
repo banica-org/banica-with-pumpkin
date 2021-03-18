@@ -4,9 +4,7 @@ import com.market.banica.calculator.enums.UnitOfMeasure;
 import lombok.Data;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Data
@@ -17,9 +15,7 @@ public class Product {
 
     private UnitOfMeasure unitOfMeasure;
 
-    private Map<String,Integer> quantityPerParent = new HashMap<>();
-
-    private List<String> ingredients = new ArrayList<>();
+    private Map<String,Integer> ingredients = new HashMap<>();
 
     private boolean isDeleted = false;
 }

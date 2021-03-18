@@ -46,13 +46,13 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public List<ProductDto> getProduct(String productName, @Nullable String parentProductName) {
-        LOGGER.debug("Product service impl: In getRecipe method");
+        LOGGER.debug("Product service impl: In getProduct method");
 
-        Product product = recipesBase.getDatabase().get(productName);
+        Product product = getProductFromDatabase(productName);
 
         validateProductExist(productName, product);
 
-        ProductDto productDto = mapProductToProductDto(parentProductName, product);
+        ProductDto productDto = mapProductToProductDto( product);
 
         List<ProductDto> result = new ArrayList<>();
         result.add(productDto);
@@ -76,6 +76,12 @@ public class ProductServiceImpl implements ProductService {
         backUpService.writeBackUp();
     }
 
+    private Product getProductFromDatabase(String productName) {
+        LOGGER.debug("Product service impl: In getProductFromDatabase method");
+
+        return recipesBase.getDatabase().get(productName);
+    }
+
     private void createProductsInDatabase(List<Product> products) {
         LOGGER.debug("Product service impl: In createProductsInDatabase private method");
 
@@ -88,7 +94,7 @@ public class ProductServiceImpl implements ProductService {
         LOGGER.debug("Product service impl: In validateAllProductsInListAreNew private method");
 
         for(Product newProduct: products){
-            if(recipesBase.getDatabase().get(newProduct.getProductName())!= null){
+            if(getProductFromDatabase(newProduct.getProductName())!= null){
 
                 LOGGER.error("Product with name {} already exists",newProduct.getProductName());
                 throw new IllegalArgumentException("Product already exists");
@@ -116,38 +122,32 @@ public class ProductServiceImpl implements ProductService {
         LOGGER.debug("Product service impl: In groupAllIngredientsFromRecipeInResultListAsProductDtos private method");
 
         Queue<Product> tempContainer = convertListOfProductNamesInArrayDequeOfProducts(recipe);
-        Queue<String> tempParentProductNames = new ArrayDeque<>();
-
-        tempParentProductNames.add(recipe.getProductName());
 
         while (!tempContainer.isEmpty()) {
 
             Product tempProduct = tempContainer.remove();
-            String parentProductName = tempParentProductNames.poll();
 
             if (tempProduct.getIngredients().size() != 0) {
 
                 Queue<Product> tempIngredientsQueue =convertListOfProductNamesInArrayDequeOfProducts(tempProduct);
                 tempContainer.addAll(tempIngredientsQueue);
-                result.addAll(mapQueueOfProductsToListOfProductDtos(
-                        parentProductName, tempIngredientsQueue));
-                tempParentProductNames.addAll(tempProduct.getIngredients());
+                result.addAll(mapQueueOfProductsToListOfProductDtos(tempIngredientsQueue));
 
             } else {
 
-                result.add(mapProductToProductDto(parentProductName, tempProduct));
+                result.add(mapProductToProductDto( tempProduct));
             }
         }
     }
 
-    private List<ProductDto> mapQueueOfProductsToListOfProductDtos(String parentProductName, Queue<Product> tempIngredientsQueue) {
+    private List<ProductDto> mapQueueOfProductsToListOfProductDtos(Queue<Product> tempIngredientsQueue) {
         LOGGER.debug("Product service impl: In mapQueueOfProductsToListOfProductDtos private method");
 
         List<ProductDto>productDtos = new ArrayList<>();
 
         for(Product product: tempIngredientsQueue){
 
-            productDtos.add(mapProductToProductDto(parentProductName,product));
+            productDtos.add(mapProductToProductDto(product));
         }
 
         return productDtos;
@@ -156,51 +156,21 @@ public class ProductServiceImpl implements ProductService {
     private Queue<Product> convertListOfProductNamesInArrayDequeOfProducts(Product recipe) {
         LOGGER.debug("Product service impl: In convertListOfProductNamesInArrayDequeOfProducts private method");
 
-        return recipe.getIngredients().stream()
-                .map(productName -> recipesBase.getDatabase().get(productName))
+        return recipe.getIngredients().keySet().stream()
+                .map(this::getProductFromDatabase)
                 .collect(Collectors.toCollection(ArrayDeque::new));
     }
 
     // TODO matter of future update with Model Mapper, once it is merged with main, to avoid possible merge conflicts
-    private ProductDto mapProductToProductDto(String parentRecipeName, Product recipe) {
+    private ProductDto mapProductToProductDto(Product recipe) {
         LOGGER.debug("Product service impl: In mapProductToProductDto private method");
 
         ProductDto productDto = new ProductDto();
         productDto.setProductName(recipe.getProductName());
         productDto.setUnitOfMeasure(recipe.getUnitOfMeasure());
-
-        if(parentRecipeName != null) {
-
-            if (doesIngredientBelongToRecipe(parentRecipeName, recipe)) {
-
-                setQuantityPerParentWithParentForThisRecipe(parentRecipeName, recipe, productDto);
-
-            } else {
-
-                throwExceptionWhenProductDoesNotBelongToRecipe(parentRecipeName, recipe.getProductName());
-            }
-        }
+        productDto.setIngredients(recipe.getIngredients());
 
         return productDto;
-    }
-
-    private void setQuantityPerParentWithParentForThisRecipe(String parentRecipeName, Product recipe, ProductDto productDto) {
-        LOGGER.debug("Product service impl: In setQuantityPerParentWithParentForThisRecipe private method");
-
-        productDto.getQuantityPerParent().put(parentRecipeName, recipe.getQuantityPerParent().get(parentRecipeName));
-    }
-
-    private void throwExceptionWhenProductDoesNotBelongToRecipe(String recipeName, String ingredientName) {
-        LOGGER.debug("Product service impl: In throwExceptionWhenProductDoesNotBelongToRecipe private method");
-
-        LOGGER.error("Ingredient {} does not belong to recipe {}", ingredientName, recipeName);
-        throw new IllegalArgumentException("Ingredient does not belong to the recipe");
-    }
-
-    private boolean doesIngredientBelongToRecipe(String recipeName, Product ingredient) {
-        LOGGER.debug("Product service impl: In doesIngredientBelongToRecipe private method");
-
-        return ingredient.getQuantityPerParent().get(recipeName) != null;
     }
 
     private void validateParameterForNullAndEmpty(List<Product> products) {

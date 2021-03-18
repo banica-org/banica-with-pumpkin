@@ -13,6 +13,6 @@ public class ProductDto {
 
     private UnitOfMeasure unitOfMeasure;
 
-    private Map<String,Integer> quantityPerParent = new HashMap<>();
+    private Map<String,Integer> ingredients = new HashMap<>();
 
 }
