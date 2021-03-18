@@ -33,7 +33,10 @@ public class JMXServiceImpl implements JMXService {
     @Override
     @ManagedOperation
     public Map<String,Product> getDatabase(){
-      return   recipesBase.getDatabase();
+        LOGGER.debug("JMX server impl: In getDatabase method");
+        LOGGER.info("GetDatabase called from JMX server");
+
+      return recipesBase.getDatabase();
     }
 
     @Override
