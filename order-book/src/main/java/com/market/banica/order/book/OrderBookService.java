@@ -1,6 +1,10 @@
 package com.market.banica.order.book;
 
-import epam.market.banica.order.book.grpc.*;
+import com.orderbook.ItemID;
+import com.orderbook.ItemOrderBookRequest;
+import com.orderbook.ItemOrderBookResponse;
+import com.orderbook.OrderBookLayer;
+import com.orderbook.OrderBookServiceGrpc;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
