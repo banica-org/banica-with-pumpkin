@@ -1,6 +1,8 @@
 package com.market.banica.calculator.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.market.banica.calculator.data.contract.RecipesBase;
@@ -9,6 +11,7 @@ import com.market.banica.calculator.service.contract.BackUpService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -72,17 +75,6 @@ public class BackUpServiceImpl implements BackUpService {
         }
     }
 
-
-    private void createEmptyBackUpFile() {
-        LOGGER.debug("BackUp ServiceImpl: In createEmptyBackUpFile private method");
-
-        try {
-            Files.createFile(Paths.get(databaseBackUpUrl));
-        } catch (IOException e) {
-            LOGGER.error("Exception thrown during creating empty file for back-up at start up", e);
-        }
-    }
-
     private boolean doesBackUpFileExists() {
         LOGGER.debug("BackUp ServiceImpl: In doesBackUpFileNotExists private method");
 
@@ -92,7 +84,7 @@ public class BackUpServiceImpl implements BackUpService {
     private ConcurrentHashMap<String, Product> getDataFromBackUpFile(InputStream input) throws IOException {
         LOGGER.debug("BackUp ServiceImpl: In getDataFromBackUpFile private method");
 
-        return new ObjectMapper().reader().readValue(input, ConcurrentHashMap.class);
+        return new ObjectMapper().readValue(input, new TypeReference<ConcurrentHashMap<String,Product>>(){});
     }
 
     private String getStringFromMap(Map<String, Product> data, ObjectWriter objectWriter) throws JsonProcessingException {

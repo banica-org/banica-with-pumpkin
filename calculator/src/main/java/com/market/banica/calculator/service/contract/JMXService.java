@@ -2,13 +2,14 @@ package com.market.banica.calculator.service.contract;
 
 import com.market.banica.calculator.model.Product;
 
+import java.util.List;
 import java.util.Map;
 
 public interface JMXService {
 
     Map<String, Product> getDatabase();
 
-    void createProduct(String newRecipeName, String unitOfMeasure, Map<String,Integer> ingredients);
+    void createProduct(String newRecipeName, String unitOfMeasure, String ingredients);
 
     void addIngredient(String recipeName, String ingredientName, int quantity);
 

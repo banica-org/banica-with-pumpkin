@@ -5,7 +5,6 @@ import com.market.banica.calculator.enums.UnitOfMeasure;
 import com.market.banica.calculator.model.Product;
 import com.market.banica.calculator.service.contract.JMXService;
 import com.market.banica.calculator.service.contract.ProductService;
-import io.micrometer.core.lang.Nullable;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,8 +14,10 @@ import org.springframework.jmx.export.annotation.ManagedResource;
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 @EnableMBeanExport
@@ -26,6 +27,9 @@ import java.util.Optional;
 public class JMXServiceImpl implements JMXService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JMXServiceImpl.class);
+    private static final String REGEX_DELIMITER_NEW_PRODUCT_INGREDIENTS = ",";
+    private static final String REGEX_DELIMITER_NEW_PRODUCT_ENTRY_PAIRS = ":";
+    private static final String KEY_PREFIX_FOR_DELETED_PRODUCT = "deleted_";
 
     private final RecipesBase recipesBase;
     private final ProductService productService;
@@ -41,11 +45,12 @@ public class JMXServiceImpl implements JMXService {
 
     @Override
     @ManagedOperation
-    public void createProduct(String newProductName, String unitOfMeasure, Map<String, Integer> ingredients) {
+    public void createProduct(String newProductName, String unitOfMeasure, String ingredientsList) {
         LOGGER.debug("JMX server impl: In createProduct method");
         LOGGER.info("CreateProduct called from JMX server with parameters newProductName {},unitOfMeasure {}," +
-                        " ingredients {} and ingredients {}", newProductName, unitOfMeasure,
-                ingredients, ingredients);
+                        " ingredients {}", newProductName, unitOfMeasure,
+                ingredientsList);
+
         Optional<Product> product = Optional.ofNullable(getDatabase().get(newProductName));
 
         if (product.isPresent()) {
@@ -53,7 +58,10 @@ public class JMXServiceImpl implements JMXService {
             LOGGER.error("Product with name {} already exists", newProductName);
             throw new IllegalArgumentException("Product with this name already exists");
         } else {
-            createNewProduct(newProductName, unitOfMeasure, ingredients);
+
+            Product newProduct = createNewProduct(newProductName, unitOfMeasure, ingredientsList);
+
+            addProductToDatabase(newProductName, newProduct);
 
             LOGGER.info("New product created from JMX server with product name {} and unit of measure {}"
                     , newProductName, unitOfMeasure);
@@ -91,7 +99,7 @@ public class JMXServiceImpl implements JMXService {
 
         if (doesIngredientBelongToRecipe(ingredientName, parentProduct)) {
 
-            setProductQuantity(recipeName, parentProduct, newQuantity);
+            setProductQuantity(ingredientName, parentProduct, newQuantity);
 
             productService.createBackUp();
         } else {
@@ -154,20 +162,22 @@ public class JMXServiceImpl implements JMXService {
 
     @Override
     @ManagedOperation
-    public void deleteProduct(@Nullable String parentProductName, String productName) {
+    public void deleteProduct(String parentProductName, String productName) {
         LOGGER.debug("JMX server impl: In deleteIngredient method");
         LOGGER.info("DeleteIngredient called from JMX server for recipe {} and ingredient {}", parentProductName, productName);
 
         Product product = retrieveProductFromDatabase(productName);
-        Product parentProduct = retrieveProductFromDatabase(parentProductName);
 
-        if (parentProductName == null) {
+        if (Objects.equals(parentProductName, "")) {
 
-            product.setDeleted(true);
+            getDatabase().remove(productName);
+
+            addProductToDatabase(KEY_PREFIX_FOR_DELETED_PRODUCT + productName, product);
 
         } else {
+            Product parentProduct = retrieveProductFromDatabase(parentProductName);
 
-            if (doesIngredientBelongToRecipe(parentProductName, product)) {
+            if (doesIngredientBelongToRecipe(productName, parentProduct)) {
 
                 deleteParentIngredientRelationFromParentIngredients(parentProduct, product);
 
@@ -183,12 +193,18 @@ public class JMXServiceImpl implements JMXService {
                 , parentProductName, productName);
     }
 
+    private void addProductToDatabase(String newProductName, Product newProduct) {
+        LOGGER.debug("JMX server impl: In addProductToDatabase private method");
+
+        getDatabase().put(newProductName, newProduct);
+    }
+
     private Product retrieveProductFromDatabase(String productName) {
         LOGGER.debug("JMX server impl: In retrieveProductFromDatabase private method");
 
-       Optional<Product> product = Optional.ofNullable(recipesBase.getDatabase().get(productName));
+        Optional<Product> product = Optional.ofNullable(getDatabase().get(productName));
 
-       return validateProductExist(productName,product);
+        return validateProductExist(productName, product);
     }
 
     private void deleteParentIngredientRelationFromParentIngredients(Product parentProduct, Product ingredient) {
@@ -197,7 +213,7 @@ public class JMXServiceImpl implements JMXService {
         parentProduct.getIngredients().remove(ingredient.getProductName());
     }
 
-    private String throwExceptionWhenProductDoesNotBelongToRecipe(String recipeName, String ingredientName) {
+    private void throwExceptionWhenProductDoesNotBelongToRecipe(String recipeName, String ingredientName) {
         LOGGER.debug("JMX server impl: In throwExceptionWhenProductDoesNotBelongToRecipe private method");
 
         LOGGER.error("Ingredient {} does not belong to recipe {}", ingredientName, recipeName);
@@ -234,8 +250,8 @@ public class JMXServiceImpl implements JMXService {
 
     }
 
-    private void createNewProduct(String newProductName, String unitOfMeasure,
-                                  Map<String, Integer> ingredients) {
+    private Product createNewProduct(String newProductName, String unitOfMeasure,
+                                  String ingredientsList) {
         LOGGER.debug("JMX server impl: In createNewProduct private method");
 
         Product newRecipe = new Product();
@@ -244,10 +260,45 @@ public class JMXServiceImpl implements JMXService {
 
         newRecipe.setUnitOfMeasure(UnitOfMeasure.valueOf(unitOfMeasure));
 
-        if (!ingredients.isEmpty()) {
+        if (!ingredientsList.isEmpty()) {
+
+            Map<String, Integer> ingredients = convertStringOfIngredientsToMap(ingredientsList);
+
             validateProductsOfListExists(ingredients.keySet());
+
             newRecipe.setIngredients(ingredients);
         }
+
+        return newRecipe;
+    }
+
+    private Map<String, Integer> convertStringOfIngredientsToMap(String ingredientsList) {
+        LOGGER.debug("JMXConfig: In convertStringOfIngredientsToMap private method");
+
+        Map<String, Integer> ingredients = new HashMap<>();
+        String[] ingredientsAsArray = ingredientsList.split(REGEX_DELIMITER_NEW_PRODUCT_INGREDIENTS);
+
+        for (String s : ingredientsAsArray) {
+
+            String[] mapEntry = s.split(REGEX_DELIMITER_NEW_PRODUCT_ENTRY_PAIRS);
+            int quantity = getValueAsInt(mapEntry[1]);
+            ingredients.put(mapEntry[0], quantity);
+        }
+
+        return ingredients;
+    }
+
+    private int getValueAsInt(String quantity) {
+        LOGGER.debug("JMXConfig: In getValueAsInt private method");
+
+        try {
+            return Integer.parseInt(quantity);
+        } catch (NumberFormatException e) {
+            LOGGER.error("String passed is not convertible to int. String value: {}. Exception thrown", quantity);
+        } catch (NullPointerException e) {
+            LOGGER.error("String passed is null. Exception thrown");
+        }
+        throw new IllegalArgumentException("Can not convert the string to number");
     }
 
     private void validateProductsOfListExists(Collection<String> productsNames) {
