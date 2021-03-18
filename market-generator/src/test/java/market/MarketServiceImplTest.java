@@ -40,7 +40,7 @@ class MarketServiceImplTest {
     private final StreamObserver<TickResponse> subscriberOne = mock(StreamObserver.class);
 
     @Test
-    void subscribeForItem() {
+    void subscribeForItemShouldVerifyMethodCalls() {
         List<TickResponse> ticks = Arrays.asList(TickResponse.newBuilder().setGoodName("firstTick").build(),
                 TickResponse.newBuilder().setGoodName("secondTick").build());
 
@@ -48,6 +48,10 @@ class MarketServiceImplTest {
         Mockito.when(tickGenerator.generateTicks(GOOD_BANICA)).thenReturn(ticks);
 
         marketService.subscribeForItem(MARKET_DATA_REQUEST_BANICA, subscriberOne);
+
+
+        verify(tickGenerator, times(1)).generateTicks(GOOD_BANICA);
+        verify(marketSubscriptionServiceImpl, times(1)).subscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
 
         verify(subscriberOne, times(2)).onNext(any());
         verify(subscriberOne, times(1)).onCompleted();

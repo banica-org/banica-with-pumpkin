@@ -40,6 +40,8 @@ class MarketSubscriptionManagerTest {
 
     @Test
     void subscribeShouldAddNewSubscriberToSubscriptions() {
+        assertNull(marketSubscriptionManager.getSubscribers(MARKET_DATA_REQUEST_BANICA.getGoodName()));
+
         marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
 
         int actual = marketSubscriptionManager.getSubscribers(MARKET_DATA_REQUEST_BANICA.getGoodName()).size();
@@ -49,20 +51,12 @@ class MarketSubscriptionManagerTest {
     }
 
     @Test
-    void subscribeShouldNotAddNewSubscriberToSubscriptionsIfIllegalGoodName() {
-        marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_INVALID, subscriberOne);
-        marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberTwo);
+    void subscribeShouldThrowExceptionAndNotAddNewSubscriberToSubscriptionsIfIllegalGoodName() {
+        assertNull(marketSubscriptionManager.getSubscribers(MARKET_DATA_REQUEST_BANICA.getGoodName()));
 
-        int actual = marketSubscriptionManager.getSubscribers(MARKET_DATA_REQUEST_BANICA.getGoodName()).size();
-        int expected = 1;
-
-        Assert.assertEquals(expected, actual);
-    }
-
-    @Test
-    void unsubscribeShouldNotRemoveSubscriberIfIllegalGoodName() {
         marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
-        marketSubscriptionManager.unsubscribe(MARKET_DATA_REQUEST_INVALID, subscriberOne);
+
+        assertThrows(NoSuchGoodException.class, () ->  marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_INVALID, subscriberOne));
 
         int actual = marketSubscriptionManager.getSubscribers(MARKET_DATA_REQUEST_BANICA.getGoodName()).size();
         int expected = 1;
@@ -72,10 +66,26 @@ class MarketSubscriptionManagerTest {
 
     @Test
     void unsubscribeShouldUnsubscribeTheSubscriber() {
+        assertNull(marketSubscriptionManager.getSubscribers(MARKET_DATA_REQUEST_BANICA.getGoodName()));
+
         marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
         marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberTwo);
 
         marketSubscriptionManager.unsubscribe(MARKET_DATA_REQUEST_BANICA, subscriberTwo);
+
+        int actual = marketSubscriptionManager.getSubscribers(MARKET_DATA_REQUEST_BANICA.getGoodName()).size();
+        int expected = 1;
+
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    void unsubscribeShouldThrowExceptionAndNotRemoveSubscriberIfIllegalGoodName() {
+        assertNull(marketSubscriptionManager.getSubscribers(MARKET_DATA_REQUEST_BANICA.getGoodName()));
+
+        marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
+
+        assertThrows(NoSuchGoodException.class, () ->  marketSubscriptionManager.unsubscribe(MARKET_DATA_REQUEST_INVALID, subscriberOne));
 
         int actual = marketSubscriptionManager.getSubscribers(MARKET_DATA_REQUEST_BANICA.getGoodName()).size();
         int expected = 1;
@@ -93,9 +103,10 @@ class MarketSubscriptionManagerTest {
     }
 
     @Test
-    public void unsubscribeShouldThrowNoSuchGoodException() {
+    public void unsubscribeShouldThrowNoSuchGoodExceptionIfNoSuchGoodNameInMap() {
         assertThrows(NoSuchGoodException.class, () -> marketSubscriptionManager.unsubscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne));
     }
+
 
     @Test
     void notifySubscribersShouldNotifySubscriber() {
@@ -113,7 +124,7 @@ class MarketSubscriptionManagerTest {
     }
 
     @Test
-    void notifySubscribersShouldNotNotifySubscriber() {
+    void notifySubscribersShouldNotNotifySubscriberWhenTickResponseIsForDifferentGood() {
         marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
 
         TickResponse tickResponse = TickResponse.newBuilder()
@@ -125,6 +136,17 @@ class MarketSubscriptionManagerTest {
         marketSubscriptionManager.notifySubscribers(tickResponse);
 
         verify(marketSubscriptionManager.getSubscribers(GOOD_BANICA).iterator().next(), times(0)).onNext(any());
+    }
+
+    @Test
+    public void notifySubscribersShouldThrowNoSuchGoodExceptionIfIllegalGoodName() {
+        TickResponse tickResponse = TickResponse.newBuilder()
+                .setGoodName("")
+                .setPrice(1)
+                .setQuantity(1)
+                .build();
+
+        assertThrows(NoSuchGoodException.class, () -> marketSubscriptionManager.notifySubscribers(tickResponse));
     }
 
     @Test

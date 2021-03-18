@@ -26,13 +26,10 @@ public class MarketSubscriptionManager implements SubscriptionManager<MarketData
         String goodName = getRequestGoodName(request);
         if (!StringUtil.isNullOrEmpty(goodName)) {
             LOGGER.debug("{} Requested for subscription for good: {}.", responseObserver, goodName);
-            subscriptions.compute(goodName, (key, value) -> {
-                value = (value == null ? new HashSet<>() : value);
-                value.add(responseObserver);
-                return value;
-            });
+            addSubscriber(responseObserver, goodName);
         } else {
             LOGGER.warn("Illegal value {} for good by request: {}.", goodName, request);
+            throw new NoSuchGoodException("Illegal good value!");
         }
     }
 
@@ -41,22 +38,10 @@ public class MarketSubscriptionManager implements SubscriptionManager<MarketData
         String goodName = getRequestGoodName(request);
         if (!StringUtil.isNullOrEmpty(goodName)) {
             LOGGER.debug("Request to unsubscribe from {} for good: {}.", responseObserver, goodName);
-            this.subscriptions.compute(goodName, (key, value) -> {
-                if (this.subscriptions.get(goodName) == null) {
-                    throw new NoSuchGoodException("No such good!");
-                }
-                if (value != null) {
-                    if (value.size() == 1) {
-                        return this.subscriptions.remove(goodName);
-                    } else {
-                        value.remove(responseObserver);
-                    }
-                    LOGGER.info("{} Unsubscribed successfully for good: {}.", responseObserver, goodName);
-                }
-                return value;
-            });
+            removeSubscriber(responseObserver, goodName);
         } else {
             LOGGER.warn("Illegal value {} for good by request: {}.", goodName, request);
+            throw new NoSuchGoodException("Illegal good value!");
         }
     }
 
@@ -65,19 +50,10 @@ public class MarketSubscriptionManager implements SubscriptionManager<MarketData
         String goodName = getTickResponseGoodName(response);
         if (!StringUtil.isNullOrEmpty(goodName)) {
             Set<StreamObserver<TickResponse>> subscribers = subscriptions.get(goodName);
-            if (subscribers != null) {
-                subscribers.forEach(subscriber -> {
-                    try {
-                        subscriber.onNext(response);
-                    } catch (StatusRuntimeException e) {
-                        LOGGER.debug("Subscriber {} unsubscribed.", subscriber);
-                        subscribers.remove(subscriber);
-                    }
-                });
-                LOGGER.debug("Notified subscribers successfully with: {}.", response);
-            }
+            sendNotification(response, subscribers);
         } else {
             LOGGER.warn("Illegal value {} for good by response: {}.", goodName, response);
+            throw new NoSuchGoodException("Illegal good value!");
         }
     }
 
@@ -93,5 +69,44 @@ public class MarketSubscriptionManager implements SubscriptionManager<MarketData
 
     public HashSet<StreamObserver<TickResponse>> getSubscribers(String itemName) {
         return subscriptions.get(itemName);
+    }
+
+    private void addSubscriber(StreamObserver<TickResponse> responseObserver, String goodName) {
+        subscriptions.compute(goodName, (key, value) -> {
+            value = (value == null ? new HashSet<>() : value);
+            value.add(responseObserver);
+            return value;
+        });
+    }
+
+    private void removeSubscriber(StreamObserver<TickResponse> responseObserver, String goodName) {
+        this.subscriptions.compute(goodName, (key, value) -> {
+            if (this.subscriptions.get(goodName) == null) {
+                throw new NoSuchGoodException("No such good!");
+            }
+            if (value != null) {
+                if (value.size() == 1) {
+                    return this.subscriptions.remove(goodName);
+                } else {
+                    value.remove(responseObserver);
+                }
+                LOGGER.info("{} Unsubscribed successfully for good: {}.", responseObserver, goodName);
+            }
+            return value;
+        });
+    }
+
+    private void sendNotification(TickResponse response, Set<StreamObserver<TickResponse>> subscribers) {
+        if (subscribers != null) {
+            subscribers.forEach(subscriber -> {
+                try {
+                    subscriber.onNext(response);
+                } catch (StatusRuntimeException e) {
+                    LOGGER.debug("Subscriber {} unsubscribed.", subscriber);
+                    subscribers.remove(subscriber);
+                }
+            });
+            LOGGER.debug("Notified subscribers successfully with: {}.", response);
+        }
     }
 }
