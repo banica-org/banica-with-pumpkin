@@ -46,12 +46,6 @@ public class BackUpServiceImpl implements BackUpService {
         }
     }
 
-    private ConcurrentHashMap<String, Product> getDataFromBackUpFile(InputStream input) throws IOException {
-        LOGGER.debug("BackUp ServiceImpl: In getDataFromBackUpFile private method");
-
-        return new ObjectMapper().reader().readValue(input, ConcurrentHashMap.class);
-    }
-
     @Override
     public void writeBackUp() {
         LOGGER.debug("BackUp ServiceImpl: In writeBackUp method");
@@ -59,8 +53,7 @@ public class BackUpServiceImpl implements BackUpService {
         Map<String, Product> data = getDataFromDatabase();
         ObjectWriter objectWriter = new ObjectMapper().writerWithDefaultPrettyPrinter();
 
-        try (OutputStream output = new FileOutputStream("calculator/target/" + getClass()
-                .getSimpleName())) {
+        try (OutputStream output = new FileOutputStream("calculator/target/backUpRecipeBase")) {
 
             String jsonData = getStringFromMap(data, objectWriter);
 
@@ -71,6 +64,12 @@ public class BackUpServiceImpl implements BackUpService {
         } catch (IOException e) {
             LOGGER.error("Exception thrown during writing back-up for database file: {}", database.getDatabase(), e);
         }
+    }
+
+    private ConcurrentHashMap<String, Product> getDataFromBackUpFile(InputStream input) throws IOException {
+        LOGGER.debug("BackUp ServiceImpl: In getDataFromBackUpFile private method");
+
+        return new ObjectMapper().reader().readValue(input, ConcurrentHashMap.class);
     }
 
     private String getStringFromMap(Map<String, Product> data, ObjectWriter objectWriter) throws JsonProcessingException {
