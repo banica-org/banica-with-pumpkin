@@ -1,10 +1,9 @@
 package com.market.banica.order.book;
 
-import com.market.MarketServiceGrpc;
 import com.market.MarketDataRequest;
+import com.market.MarketServiceGrpc;
 import com.market.TickResponse;
-
-import io.grpc.ConnectivityState;
+import com.market.banica.common.ChannelRPCConfig;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
@@ -21,10 +20,6 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class MarketDataClient {
 
-    private static final int FAILED_ATTEMPTS = 0;
-    private static final long DEFAULT_WAIT_TIME_IN_MILLI = 1000;
-    public static final int FAILED_ATTEMPTS_LIMIT = 11;
-
     private final ItemMarket itemMarket;
     private final ManagedChannel managedChannel;
     private static final Logger LOGGER = LogManager.getLogger(MarketDataClient.class);
@@ -32,13 +27,15 @@ public class MarketDataClient {
     @Autowired
     MarketDataClient(ItemMarket itemMarket,
                      @Value("${aurora.server.host}") final String host,
-                     @Value("${aurora.server.port}") final int port) throws InterruptedException {
+                     @Value("${aurora.server.port}") final int port) {
+
         managedChannel = ManagedChannelBuilder.forAddress(host, port)
                 .usePlaintext()
+                .defaultServiceConfig(ChannelRPCConfig.getInstance().getServiceConfig())
+                .enableRetry()
                 .build();
-        this.itemMarket = itemMarket;
 
-        tryReconnect(managedChannel);
+        this.itemMarket = itemMarket;
 
     }
 
@@ -82,31 +79,4 @@ public class MarketDataClient {
         LOGGER.info("Server is terminated!");
     }
 
-    private void tryReconnect(ManagedChannel channel) {
-        int failedAttempts = FAILED_ATTEMPTS;
-        long timeToWait = DEFAULT_WAIT_TIME_IN_MILLI;
-
-        while (!managedChannel.getState(true).equals(ConnectivityState.READY)) {
-            try {
-                Thread.sleep(timeToWait);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            if (failedAttempts < FAILED_ATTEMPTS_LIMIT) {
-
-                failedAttempts++;
-                timeToWait *= 2;
-
-                LOGGER.info("Attempt number : " + failedAttempts + " failed to recconnect!");
-                LOGGER.info("Next attempt will execute in : " + timeToWait + " milliseconds");
-            }else{
-                failedAttempts++;
-                LOGGER.info("Attempts to recconnect : " + failedAttempts);
-                LOGGER.info("Next attempt will execute in : " + timeToWait + " milliseconds");
-            }
-        }
-        managedChannel.notifyWhenStateChanged(ConnectivityState.READY, () -> {
-            tryReconnect(managedChannel);
-        });
-    }
 }

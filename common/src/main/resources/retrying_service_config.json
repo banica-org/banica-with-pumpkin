@@ -1,0 +1,29 @@
+{
+  "methodConfig": [
+    {
+      "name": [
+        {
+          "service": "aurora.AuroraService"
+        },
+        {
+          "service": "market.MarketService"
+        },
+        {
+          "service": "orderbook.OrderBookService"
+        }
+      ],
+      "retryPolicy": {
+        "maxAttempts": 5,
+        "initialBackoff": "0.5s",
+        "maxBackoff": "30s",
+        "backoffMultiplier": 2,
+        "retryableStatusCodes": [
+          "UNAVAILABLE",
+          "NOT_FOUND",
+          "DEADLINE_EXCEEDED",
+          "DATA_LOSS"
+        ]
+      }
+    }
+  ]
+}
