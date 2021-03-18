@@ -10,11 +10,11 @@ public interface JMXService {
 
     void createProduct(String newRecipeName, String unitOfMeasure, Map<String,Integer> ingredients);
 
-    void addIngredient(String recipeName, String ingredientName, String quantityAsString);
+    void addIngredient(String recipeName, String ingredientName, int quantity);
 
-    void setProductQuantity(String recipeName, String ingredientName, String newValue);
+    void setProductQuantity(String recipeName, String ingredientName, int newQuantity);
 
-    String getProductQuantity(String recipeName, String ingredientName);
+    int getProductQuantity(String recipeName, String ingredientName);
 
     String getUnitOfMeasure(String productName);
 

@@ -9,6 +9,7 @@ import com.market.banica.calculator.service.contract.BackUpService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -18,6 +19,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -27,6 +30,8 @@ public class BackUpServiceImpl implements BackUpService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BackUpServiceImpl.class);
 
+    @Value("${database.backup.url}")
+    private String databaseBackUpUrl;
     private final RecipesBase database;
 
     @Override
@@ -34,15 +39,17 @@ public class BackUpServiceImpl implements BackUpService {
     public void readBackUp() {
         LOGGER.debug("BackUp ServiceImpl: In readBackUp method");
 
-        try (InputStream input = new FileInputStream("calculator/target/backUpRecipeBase")) {
+        if (doesBackUpFileExists()) {
+            try (InputStream input = new FileInputStream(databaseBackUpUrl)) {
 
-            ConcurrentHashMap<String, Product> data = getDataFromBackUpFile(input);
+                    ConcurrentHashMap<String, Product> data = getDataFromBackUpFile(input);
 
-            setDatabaseFromBackUp(data);
+                    setDatabaseFromBackUp(data);
 
-            LOGGER.info("Recipes database set from exterior file at location {}", "calculator/target/backUpRecipeBase" );
-        } catch (IOException e) {
-            LOGGER.error("Exception thrown during reading back-up at start up", e);
+                LOGGER.info("Recipes database set from exterior file at location {}",databaseBackUpUrl);
+            } catch (IOException e) {
+                LOGGER.error("Exception thrown during reading back-up at start up", e);
+            }
         }
     }
 
@@ -53,17 +60,33 @@ public class BackUpServiceImpl implements BackUpService {
         Map<String, Product> data = getDataFromDatabase();
         ObjectWriter objectWriter = new ObjectMapper().writerWithDefaultPrettyPrinter();
 
-        try (OutputStream output = new FileOutputStream("calculator/target/backUpRecipeBase")) {
+        try (OutputStream output = new FileOutputStream(databaseBackUpUrl)) {
 
             String jsonData = getStringFromMap(data, objectWriter);
 
             output.write(jsonData.getBytes(StandardCharsets.UTF_8));
 
-            LOGGER.info("Recipes database back-up created in exterior file at location {}", "calculator/target/" + getClass()
-                    .getSimpleName());
+            LOGGER.info("Recipes database back-up created in exterior file at location {}", databaseBackUpUrl);
         } catch (IOException e) {
             LOGGER.error("Exception thrown during writing back-up for database file: {}", database.getDatabase(), e);
         }
+    }
+
+
+    private void createEmptyBackUpFile() {
+        LOGGER.debug("BackUp ServiceImpl: In createEmptyBackUpFile private method");
+
+        try {
+            Files.createFile(Paths.get(databaseBackUpUrl));
+        } catch (IOException e) {
+            LOGGER.error("Exception thrown during creating empty file for back-up at start up", e);
+        }
+    }
+
+    private boolean doesBackUpFileExists() {
+        LOGGER.debug("BackUp ServiceImpl: In doesBackUpFileNotExists private method");
+
+        return !Files.notExists(Paths.get(databaseBackUpUrl));
     }
 
     private ConcurrentHashMap<String, Product> getDataFromBackUpFile(InputStream input) throws IOException {
