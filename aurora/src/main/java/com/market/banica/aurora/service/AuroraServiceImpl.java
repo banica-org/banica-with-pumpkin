@@ -5,8 +5,9 @@ import com.aurora.AuroraServiceGrpc;
 import io.grpc.stub.StreamObserver;
 import org.springframework.stereotype.Service;
 
+
 @Service
-public class AuroraService extends AuroraServiceGrpc.AuroraServiceImplBase {
+public class AuroraServiceImpl extends AuroraServiceGrpc.AuroraServiceImplBase {
 
     @Override
     public void request(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
