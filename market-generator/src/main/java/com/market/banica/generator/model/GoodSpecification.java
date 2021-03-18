@@ -23,17 +23,17 @@ public class GoodSpecification {
     private final int periodStep;
 
     public Map<String, String> generateProperties(String origin) {
-        Map<String, String> pMap = new LinkedHashMap<>();
-        pMap.put(createKeyString(origin, "quantityrange", "low"), String.valueOf(getQuantityLow()));
-        pMap.put(createKeyString(origin, "quantityrange", "high"), String.valueOf(getQuantityHigh()));
-        pMap.put(createKeyString(origin, "quantityrange", "step"), String.valueOf(getQuantityStep()));
-        pMap.put(createKeyString(origin, "pricerange", "low"), String.valueOf(getPriceLow()));
-        pMap.put(createKeyString(origin, "pricerange", "high"), String.valueOf(getPriceHigh()));
-        pMap.put(createKeyString(origin, "pricerange", "step"), String.valueOf(getPriceStep()));
-        pMap.put(createKeyString(origin, "tickrange", "low"), String.valueOf(getPeriodLow()));
-        pMap.put(createKeyString(origin, "tickrange", "high"), String.valueOf(getPeriodHigh()));
-        pMap.put(createKeyString(origin, "tickrange", "step"), String.valueOf(getPeriodStep()));
-        return pMap;
+        Map<String, String> propertiesMap = new LinkedHashMap<>();
+        propertiesMap.put(createKeyString(origin, "quantityrange", "low"), String.valueOf(getQuantityLow()));
+        propertiesMap.put(createKeyString(origin, "quantityrange", "high"), String.valueOf(getQuantityHigh()));
+        propertiesMap.put(createKeyString(origin, "quantityrange", "step"), String.valueOf(getQuantityStep()));
+        propertiesMap.put(createKeyString(origin, "pricerange", "low"), String.valueOf(getPriceLow()));
+        propertiesMap.put(createKeyString(origin, "pricerange", "high"), String.valueOf(getPriceHigh()));
+        propertiesMap.put(createKeyString(origin, "pricerange", "step"), String.valueOf(getPriceStep()));
+        propertiesMap.put(createKeyString(origin, "tickrange", "low"), String.valueOf(getPeriodLow()));
+        propertiesMap.put(createKeyString(origin, "tickrange", "high"), String.valueOf(getPeriodHigh()));
+        propertiesMap.put(createKeyString(origin, "tickrange", "step"), String.valueOf(getPeriodStep()));
+        return propertiesMap;
     }
 
     private String createKeyString(String origin, String property, String range) {

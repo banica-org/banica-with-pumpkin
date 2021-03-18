@@ -3,7 +3,7 @@ package com.market.banica.calculator.service;
 import com.market.banica.calculator.dto.RecipeDTO;
 import com.market.banica.calculator.exception.exceptions.FeatureNotSupportedException;
 import com.market.banica.calculator.service.contract.CalculatorService;
-import com.market.banica.calculator.service.grpcService.AuroraClientSideService;
+import com.market.banica.calculator.service.grpc.AuroraClientSideService;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

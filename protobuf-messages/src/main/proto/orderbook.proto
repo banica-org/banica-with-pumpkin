@@ -1,6 +1,8 @@
-    syntax = "proto3";
+syntax = "proto3";
 
-    option java_package = "com.orderbook";
+package orderbook;
+
+option java_package = "com.orderbook";
 
 option java_multiple_files = true;
 
