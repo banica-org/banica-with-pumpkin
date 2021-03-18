@@ -25,10 +25,6 @@ public class MarketChannelManager {
         marketChannels.remove(channelName);
     }
 
-    public void restartChanel(String channelName, String host, int port) {
-        removeChanel(channelName);
-        createChannel(channelName, host, port);
-    }
 
     private void shutdownChanel(String channelName) {
         ManagedChannel channel = marketChannels.get(channelName);

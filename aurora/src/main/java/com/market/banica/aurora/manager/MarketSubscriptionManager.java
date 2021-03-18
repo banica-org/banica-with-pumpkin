@@ -1,12 +1,11 @@
-package com.market.banica.aurora.service;
+package com.market.banica.aurora.manager;
 
 import com.aurora.Aurora;
 import com.market.MarketDataRequest;
 import com.market.TickResponse;
 import com.market.banica.aurora.channel.MarketChannelManager;
 import com.market.banica.aurora.client.MarketClient;
-import com.market.banica.aurora.observers.MarketTickResponseObserver;
-import io.grpc.Status;
+import com.market.banica.aurora.observer.MarketTickResponseObserver;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,13 +19,10 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Component
-public class AuroraSubscriptionManager {
+public class MarketSubscriptionManager {
+
     public static final String DELIMITER = "/";
     public static final String ASTERISK = "*";
-    public static final String EUROPE_HEADER = "Europe";
-    public static final String ASIA_HEADER = "Asia";
-    public static final String AMERICA_HEADER = "America";
-    public static final String ORDER_BOOK_HEADER = "OrderBook";
 
     private MarketChannelManager marketChannelManager;
 
@@ -37,51 +33,15 @@ public class AuroraSubscriptionManager {
     private ReentrantLock lock;
 
     @Autowired
-    public AuroraSubscriptionManager(MarketChannelManager marketChannelManager, MarketClient marketClient) {
+    public MarketSubscriptionManager(MarketChannelManager marketChannelManager, MarketClient marketClient) {
         this.marketChannelManager = marketChannelManager;
         this.marketClient = marketClient;
         this.lock = new ReentrantLock(true);
     }
 
-    public void subscribe(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
-
-        String header = extractHeader(request);
-
-        if (!isValidRequest(header, responseObserver)) {
-            return;
-        }
-
-        if (header.equalsIgnoreCase(ORDER_BOOK_HEADER)) {
-            subscribeForOrderBookUpdate(request, responseObserver);
-        } else {
-            subscribeForItem(request, responseObserver);
-        }
-    }
-
-    private String extractHeader(Aurora.AuroraRequest request) {
-        return request.getTopic().split(DELIMITER)[0];
-
-    }
-
-    private boolean isValidRequest(String header, StreamObserver<Aurora.AuroraResponse> responseObserver) {
 
 
-        if (!isValidHeader(header)) {
-            responseObserver.onError(Status.INVALID_ARGUMENT.withDescription("Request has invalid header data!").asRuntimeException());
-            return false;
-        }
-        return true;
-    }
-
-    private boolean isValidHeader(String header) {
-        return header.equalsIgnoreCase(EUROPE_HEADER) ||
-                header.equalsIgnoreCase(ASIA_HEADER) ||
-                header.equalsIgnoreCase(AMERICA_HEADER) ||
-                header.equalsIgnoreCase(ORDER_BOOK_HEADER) ||
-                header.equals(ASTERISK);
-    }
-
-    private void subscribeForItem(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
+    public void subscribeForGood(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
 
         String requestOriginName = extractMarketOrigin(request.getTopic());
         String requestGoodName = extractGood(request.getTopic());
@@ -119,7 +79,7 @@ public class AuroraSubscriptionManager {
     }
 
     private Set<MarketDataRequest> mapWildcard(String possibleMarketData, Set<String> getPossibleMarketData, Function<String, String> marketDataMapping, String clientId, String goodName) {
-        if (possibleMarketData.equals("*")) {
+        if (possibleMarketData.equals(ASTERISK)) {
             return getPossibleMarketData
                     .stream()
                     .map(data ->
@@ -137,7 +97,6 @@ public class AuroraSubscriptionManager {
 
     }
 
-
     public void notifyObservers(TickResponse tickResponse, MarketTickResponseObserver marketTickResponseObserver) {
         StreamObserver<Aurora.AuroraResponse> auroraResponseStreamObserver = observersMap.get(marketTickResponseObserver);
         try {
@@ -153,10 +112,6 @@ public class AuroraSubscriptionManager {
     }
 
     public void unsubscribe(MarketTickResponseObserver marketTickResponseObserver) {
-      observersMap.remove(marketTickResponseObserver);
-    }
-
-    private void subscribeForOrderBookUpdate(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
-
+        observersMap.remove(marketTickResponseObserver);
     }
 }

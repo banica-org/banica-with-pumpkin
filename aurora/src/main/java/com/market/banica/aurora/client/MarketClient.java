@@ -5,7 +5,7 @@ import com.market.CatalogueResponse;
 import com.market.MarketDataRequest;
 import com.market.MarketServiceGrpc;
 import com.market.banica.aurora.channel.MarketChannelManager;
-import com.market.banica.aurora.observers.MarketTickResponseObserver;
+import com.market.banica.aurora.observer.MarketTickResponseObserver;
 import io.grpc.ManagedChannel;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;

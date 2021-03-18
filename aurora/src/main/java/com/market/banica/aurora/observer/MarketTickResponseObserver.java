@@ -1,7 +1,7 @@
-package com.market.banica.aurora.observers;
+package com.market.banica.aurora.observer;
 
 import com.market.TickResponse;
-import com.market.banica.aurora.service.AuroraSubscriptionManager;
+import com.market.banica.aurora.manager.MarketSubscriptionManager;
 import io.grpc.stub.StreamObserver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -9,12 +9,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class MarketTickResponseObserver implements StreamObserver<TickResponse> {
 
-    public final AuroraSubscriptionManager subscriptionManager;
+    public final MarketSubscriptionManager subscriptionManager;
 
     public String topic;
 
     @Autowired
-    public MarketTickResponseObserver(AuroraSubscriptionManager subscriptionManager) {
+    public MarketTickResponseObserver(MarketSubscriptionManager subscriptionManager) {
         this.subscriptionManager = subscriptionManager;
     }
 
