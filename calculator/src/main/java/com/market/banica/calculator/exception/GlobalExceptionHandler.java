@@ -2,7 +2,6 @@ package com.market.banica.calculator.exception;
 
 import com.market.banica.calculator.exception.exceptions.BadResponseException;
 import com.market.banica.calculator.exception.exceptions.FeatureNotSupportedException;
-import com.market.banica.calculator.service.grpcService.AuroraClientSideService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
