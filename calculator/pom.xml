@@ -22,6 +22,8 @@
         <log4j.version>2.7</log4j.version>
         <model-mapper-version>2.3.7</model-mapper-version>
         <fasterXML-version>2.12.2</fasterXML-version>
+        <grpc-protobuf-version>1.36.0</grpc-protobuf-version>
+        <tomcat-annotation-api-version>6.0.53</tomcat-annotation-api-version>
     </properties>
 
     <dependencies>
@@ -102,14 +104,68 @@
             <version>${fasterXML-version}</version>
         </dependency>
 
+        <!-- dependencies for grpc -->
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-netty-shaded</artifactId>
+            <version>${grpc-protobuf-version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-stub</artifactId>
+            <version>${grpc-protobuf-version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-protobuf</artifactId>
+            <version>${grpc-protobuf-version}</version>
+        </dependency>
+        <dependency> <!-- necessary for Java 9+ -->
+            <groupId>org.apache.tomcat</groupId>
+            <artifactId>annotations-api</artifactId>
+            <version>${tomcat-annotation-api-version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+        <groupId>com.market.banica</groupId>
+        <artifactId>protobuf-messages</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>
         <plugins>
             <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>2.4.2</version>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>com.market.banica.calculator.CalculatorApplication</mainClass>
+                        </manifest>
+                    </archive>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                    <appendAssemblyId>false</appendAssemblyId>
+                </configuration>
             </plugin>
         </plugins>
     </build>
