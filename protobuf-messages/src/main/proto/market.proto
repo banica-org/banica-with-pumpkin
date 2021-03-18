@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+package market;
+
 option java_package = "com.market";
 option java_multiple_files = true;
 
@@ -37,12 +39,14 @@ message BuyGoodRequest{
   double price = 3;
   Origin origin = 4;
 }
+
 message SellGoodRequest{
   string goodName = 1;
   int64 quantity = 2;
   double price = 3;
   Origin origin = 4;
 }
+
 message TradeActionProductResponse{
   string message = 1 ;
 }
