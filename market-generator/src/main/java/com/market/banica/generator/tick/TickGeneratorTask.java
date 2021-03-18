@@ -3,6 +3,8 @@ package com.market.banica.generator.tick;
 
 import com.market.banica.generator.model.GoodSpecification;
 import lombok.Getter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executors;
@@ -11,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 
 @Getter
 public class TickGeneratorTask implements Runnable {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TickGeneratorTask.class);
 
     private GoodSpecification goodSpecification;
     private final String originGood;
@@ -48,7 +51,7 @@ public class TickGeneratorTask implements Runnable {
                 scheduledExecutorService.schedule(this, periodGood, TimeUnit.SECONDS);
 
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                LOGGER.error("An error occurred while starting tick generation for {}!", nameGood);
             }
         }
 

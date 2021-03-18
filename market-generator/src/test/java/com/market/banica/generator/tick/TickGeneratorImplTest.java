@@ -5,6 +5,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.HashMap;
@@ -14,6 +15,8 @@ import java.util.concurrent.BlockingQueue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -42,7 +45,7 @@ public class TickGeneratorImplTest {
 
 
     @Test
-    public void startTickGeneration_Test() {
+    public void startTickGenerationWithValidDataAddsGood() {
         //Arrange
         when(goodSpecification.getPeriodHigh()).thenReturn(8);
         when(goodSpecification.getPeriodLow()).thenReturn(5);
@@ -57,14 +60,15 @@ public class TickGeneratorImplTest {
         //Act
         tickGenerator.startTickGeneration(GOOD, goodSpecification);
 
+        //Assert
         assertEquals(1, tickGenerator.getTickGeneratorTasks().size());
         assertTrue(this.tickGenerator.getTickGeneratorTasks().containsKey("egg"));
     }
 
-
     @Test
-    public void stopTickGeneration_Test() {
+    public void stopTickGenerationWithValidDataRemovesGood() {
 
+        //Arrange
         when(goodSpecification.getPeriodHigh()).thenReturn(8);
         when(goodSpecification.getPeriodLow()).thenReturn(5);
         when(goodSpecification.getPeriodStep()).thenReturn(1);
@@ -75,16 +79,20 @@ public class TickGeneratorImplTest {
         when(goodSpecification.getQuantityLow()).thenReturn((long) 1);
         when(goodSpecification.getQuantityStep()).thenReturn((long) 1);
 
+        //Act
         tickGenerator.startTickGeneration(GOOD, goodSpecification);
 
         tickGenerator.stopTickGeneration(GOOD);
+
+        //Assert
         assertEquals(0, tickGenerator.getTickGeneratorTasks().size());
         assertFalse(this.tickGenerator.getTickGeneratorTasks().containsKey("egg"));
     }
 
     @Test
-    public void updateTickGeneration_Test() {
+    public void updateTickGenerationWithValidDataUpdatesGood() {
 
+        //Arrange
         when(goodSpecification.getPeriodHigh()).thenReturn(8);
         when(goodSpecification.getPeriodLow()).thenReturn(5);
         when(goodSpecification.getPeriodStep()).thenReturn(1);
@@ -94,15 +102,18 @@ public class TickGeneratorImplTest {
         when(goodSpecification.getQuantityHigh()).thenReturn((long) 4);
         when(goodSpecification.getQuantityLow()).thenReturn((long) 1);
         when(goodSpecification.getQuantityStep()).thenReturn((long) 1);
-
-        tickGenerator.startTickGeneration(GOOD, goodSpecification);
 
         GoodSpecification goodSpecificationUpdated = new GoodSpecification(GOOD,
                 1, 10, 1,
                 1, 6, 1,
                 1, 8, 1);
 
+        //Act
+        tickGenerator.startTickGeneration(GOOD, goodSpecification);
+
         tickGenerator.updateTickGeneration(GOOD, goodSpecificationUpdated);
+
+        //Assert
         assertEquals(8, tickGenerator.getTickGeneratorTasks()
                 .get(GOOD).getGoodSpecification().getPeriodHigh());
 
