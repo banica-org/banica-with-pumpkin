@@ -2,7 +2,7 @@ package com.market.banica.calculator.service.contract;
 
 import com.market.banica.calculator.dto.ProductDto;
 import com.market.banica.calculator.model.Product;
-import io.micrometer.core.lang.Nullable;
+import org.springframework.lang.Nullable;
 
 import java.util.List;
 
