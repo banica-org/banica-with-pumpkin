@@ -4,7 +4,6 @@ import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
 
 import com.market.TickResponse;
-import io.grpc.ConnectivityState;
 import com.market.banica.common.ChannelRPCConfig;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -19,16 +18,16 @@ import javax.annotation.PreDestroy;
 import java.util.concurrent.TimeUnit;
 
 @Service
-public class MarketDataClient {
+public class AuroraClient {
 
     private final ItemMarket itemMarket;
     private final ManagedChannel managedChannel;
-    private static final Logger LOGGER = LogManager.getLogger(MarketDataClient.class);
+    private static final Logger LOGGER = LogManager.getLogger(AuroraClient.class);
 
     @Autowired
-    MarketDataClient(ItemMarket itemMarket,
-                     @Value("${aurora.server.host}") final String host,
-                     @Value("${aurora.server.port}") final int port) {
+    AuroraClient(ItemMarket itemMarket,
+                 @Value("${aurora.server.host}") final String host,
+                 @Value("${aurora.server.port}") final int port) {
 
         managedChannel = ManagedChannelBuilder.forAddress(host, port)
                 .usePlaintext()
