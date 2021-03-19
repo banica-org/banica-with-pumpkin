@@ -68,18 +68,14 @@ public class MarketConfigurationImpl implements MarketConfiguration {
             boolean condition = this.doesGoodExist(String.format(ORIGIN_GOOD_PATTERN,
                     origin, good));
 
-            this.modifyProperty(origin, good,
+            GoodSpecification goodSpecification = this.modifyProperty(origin, good,
                     new IllegalArgumentException(errorMessage),
                     condition,
                     quantityLow, quantityHigh, quantityStep,
                     priceLow, priceHigh, priceStep,
                     periodLow, periodHigh, periodStep, append, properties, properties::setProperty, loggerMessage);
 
-            GoodSpecification goodSpecification = new GoodSpecification(String.format(ORIGIN_GOOD_PATTERN,
-                    origin, good), quantityLow, quantityHigh, quantityStep, priceLow, priceHigh, priceStep,
-                    periodLow, periodHigh, periodStep);
-            tickGenerator.startTickGeneration(good, goodSpecification);
-
+            tickGenerator.startTickGeneration(String.format("%s/%s", origin, good), goodSpecification);
         } finally {
             this.lock.writeLock().unlock();
         }
@@ -104,6 +100,7 @@ public class MarketConfigurationImpl implements MarketConfiguration {
             this.modifyProperties(removedGoodSpecification, properties,
                     (k, v) -> properties.remove(k), this.file, false);
 
+            this.tickGenerator.stopTickGeneration(good);
             LOGGER.info("Removing an existing goodSpecification.");
         } finally {
             this.lock.writeLock().unlock();
@@ -133,12 +130,14 @@ public class MarketConfigurationImpl implements MarketConfiguration {
                     origin, good));
 
 
-            this.modifyProperty(origin, good,
+            GoodSpecification goodSpecification = this.modifyProperty(origin, good,
                     new NotFoundException(errorMessage),
                     condition,
                     quantityLow, quantityHigh, quantityStep,
                     priceLow, priceHigh, priceStep,
                     periodLow, periodHigh, periodStep, append, properties, properties::setProperty, loggerMessage);
+
+            this.tickGenerator.updateTickGeneration(good, goodSpecification);
         } finally {
             this.lock.writeLock().unlock();
         }
@@ -153,12 +152,12 @@ public class MarketConfigurationImpl implements MarketConfiguration {
         }
     }
 
-    private void modifyProperty(String origin, String good,
-                                RuntimeException exception, boolean condition,
-                                long quantityLow, long quantityHigh, long quantityStep,
-                                double priceLow, double priceHigh, double priceStep,
-                                int periodLow, int periodHigh, int periodStep, boolean append,
-                                Properties properties, BiConsumer<String, String> function, String loggerMessage) {
+    private GoodSpecification modifyProperty(String origin, String good,
+                                             RuntimeException exception, boolean condition,
+                                             long quantityLow, long quantityHigh, long quantityStep,
+                                             double priceLow, double priceHigh, double priceStep,
+                                             int periodLow, int periodHigh, int periodStep, boolean append,
+                                             Properties properties, BiConsumer<String, String> function, String loggerMessage) {
 
         if (condition) {
             throw exception;
@@ -177,6 +176,7 @@ public class MarketConfigurationImpl implements MarketConfiguration {
         this.goods.put(String.format(ORIGIN_GOOD_PATTERN, origin, good), goodSpecification);
 
         LOGGER.info(loggerMessage);
+        return goodSpecification;
     }
 
     private void validateGoodSpecification(GoodSpecification goodSpecification) {

@@ -21,22 +21,23 @@ import java.util.concurrent.LinkedBlockingQueue;
 @Component
 public class TickGeneratorImpl implements TickGenerator {
     private static final Logger LOGGER = LoggerFactory.getLogger(TickGeneratorImpl.class);
-
+    //europe.eggs
     private final Map<String, TickGeneratorTask> tickGeneratorTasks;
-    private final String originGood;
+//    private final String originGood;
 
     @Autowired
     public TickGeneratorImpl(/*String originGood*/) {
         this.tickGeneratorTasks = new HashMap<>();
 //        this.originGood = originGood;
-        this.originGood = "europe";
+//        this.originGood = "europe";
     }
 
     @Override
     public void startTickGeneration(String nameGood, GoodSpecification goodSpecification) {
         if (!tickGeneratorTasks.containsKey(nameGood)) {
             BlockingQueue<MarketTick> tickBlockingQueue = new LinkedBlockingQueue<>(20);
-            TickGeneratorTask tickGeneratorTask = new TickGeneratorTask(goodSpecification, originGood,
+            TickGeneratorTask tickGeneratorTask = new TickGeneratorTask(goodSpecification,
+                    nameGood.split("/")[0]/*originGood*/,
                     nameGood, tickBlockingQueue);
             tickGeneratorTasks.put(nameGood, tickGeneratorTask);
             tickGeneratorTask.run();
@@ -61,11 +62,12 @@ public class TickGeneratorImpl implements TickGenerator {
             LOGGER.info("Updated good specification for {}!", nameGood);
         }
     }
+
     @Override
     public List<TickResponse> generateTicks(String nameGood) {
         BlockingQueue<MarketTick> queueTicks = tickGeneratorTasks.get(nameGood).getTickBlockingQueue();
-        List<TickResponse> listTicks= new ArrayList();
-        while (!queueTicks.isEmpty()){
+        List<TickResponse> listTicks = new ArrayList<>();
+        while (!queueTicks.isEmpty()) {
             Date date = new Date();
             MarketTick marketTick = queueTicks.remove();
             TickResponse tickResponse = TickResponse.newBuilder()

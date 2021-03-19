@@ -22,33 +22,89 @@ public class AuroraApplication {
     public static void main(String[] args) {
         SpringApplication.run(AuroraApplication.class, args);
 
-      /*  Date date = new Date();
-
-        long time = System.currentTimeMillis();
-        System.out.println(new Date(date.getTime()));*/
-
-//
-//        int port = 8082;
-        int port = 8083;
-        ManagedChannel channel =
-                ManagedChannelBuilder.forAddress("localhost", port)
+        int portAmerica = 8081;
+        int portAsia = 8082;
+        int portEurope = 8083;
+        ManagedChannel channelAsia =
+                ManagedChannelBuilder.forAddress("localhost", portAsia)
+                        .usePlaintext()
+                        .defaultServiceConfig(ChannelRPCConfig.getInstance().getServiceConfig())
+                        .enableRetry()
+                        .build();
+        System.out.println("-------");
+        ManagedChannel channelAmerica =
+                ManagedChannelBuilder.forAddress("localhost", portAmerica)
+                        .usePlaintext()
+                        .defaultServiceConfig(ChannelRPCConfig.getInstance().getServiceConfig())
+                        .enableRetry()
+                        .build();
+        System.out.println("-------");
+        ManagedChannel channelEurope =
+                ManagedChannelBuilder.forAddress("localhost", portEurope)
                         .usePlaintext()
                         .defaultServiceConfig(ChannelRPCConfig.getInstance().getServiceConfig())
                         .enableRetry()
                         .build();
 
 
-        MarketServiceGrpc.MarketServiceStub marketServiceStub =
-                MarketServiceGrpc.newStub(channel);
+        MarketServiceGrpc.MarketServiceStub marketServiceStubAsia =
+                MarketServiceGrpc.newStub(channelAsia);
 
-        MarketDataRequest request =
-                MarketDataRequest.newBuilder().setClientId("1").setGoodName("europe/eggs").build();
+        MarketServiceGrpc.MarketServiceStub marketServiceStubAmerica =
+                MarketServiceGrpc.newStub(channelAmerica);
 
-        marketServiceStub.subscribeForItem(request, new StreamObserver<TickResponse>() {
+        MarketServiceGrpc.MarketServiceStub marketServiceStubEurope =
+                MarketServiceGrpc.newStub(channelEurope);
+
+        MarketDataRequest requestAsia =
+                MarketDataRequest.newBuilder().setClientId("1").setGoodName("asia/eggs").build();
+
+        MarketDataRequest requestAmerica =
+                MarketDataRequest.newBuilder().setClientId("2").setGoodName("america/eggs").build();
+
+        MarketDataRequest requestEurope =
+                MarketDataRequest.newBuilder().setClientId("3").setGoodName("europe/eggs").build();
+
+
+        marketServiceStubAsia.subscribeForItem(requestAsia, new StreamObserver<TickResponse>() {
             @Override
             public void onNext(TickResponse tickResponse) {
-                System.out.println(tickResponse.getGoodName());
+                System.out.println(tickResponse.getGoodName() + " - "
+                        + tickResponse.getOrigin());
             }
+
+            @Override
+            public void onError(Throwable throwable) {
+
+            }
+
+            @Override
+            public void onCompleted() {
+
+            }
+        });
+        marketServiceStubAmerica.subscribeForItem(requestAmerica, new StreamObserver<TickResponse>() {
+            @Override
+            public void onNext(TickResponse tickResponse) {
+                System.out.println(tickResponse.getGoodName() + " - "
+                        + tickResponse.getOrigin());
+            }
+
+            @Override
+            public void onError(Throwable throwable) {
+
+            }
+
+            @Override
+            public void onCompleted() {
+
+            }
+        });
+        marketServiceStubEurope.subscribeForItem(requestEurope, new StreamObserver<TickResponse>() {
+            @Override
+            public void onNext(TickResponse tickResponse) {
+                System.out.println(tickResponse.getGoodName() + " - "
+                        + tickResponse.getOrigin());            }
 
             @Override
             public void onError(Throwable throwable) {
