@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package orderbook;
+
+option java_package = "com.orderbook";
+
+option java_multiple_files = true;
+
+message ItemOrderBookRequest {
+  string item_name = 1;
+  string client_id = 2;
+}
+
+message ItemOrderBookResponse {
+  string item_name = 1;
+  repeated OrderBookLayer orderbook_layers = 2;
+}
+
+message OrderBookLayer {
+  double price = 1;
+  int32 quantity = 2;
+  repeated ItemID item_ids = 3;
+}
+
+message ItemID {
+  string id = 1;
+  string location = 2;
+}
+
+service OrderBookService {
+  rpc getOrderBookItemLayers(ItemOrderBookRequest) returns (ItemOrderBookResponse);
+}

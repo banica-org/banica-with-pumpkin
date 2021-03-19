@@ -16,7 +16,7 @@
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <junit.version>5.7.0</junit.version>
+        <junit-local.version>5.7.0</junit-local.version>
         <mockito.version>3.6.28</mockito.version>
         <swagger-version>2.9.2</swagger-version>
         <log4j.version>2.7</log4j.version>
@@ -24,6 +24,7 @@
         <fasterXML-version>2.12.2</fasterXML-version>
         <grpc-protobuf-version>1.36.0</grpc-protobuf-version>
         <tomcat-annotation-api-version>6.0.53</tomcat-annotation-api-version>
+        <guava.version>30.1-jre</guava.version>
     </properties>
 
     <dependencies>
@@ -42,14 +43,9 @@
         </dependency>
 
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
-        </dependency>
-
-        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>${junit.version}</version>
+            <version>${junit-local.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -120,13 +116,28 @@
             <artifactId>grpc-protobuf</artifactId>
             <version>${grpc-protobuf-version}</version>
         </dependency>
+
         <dependency> <!-- necessary for Java 9+ -->
             <groupId>org.apache.tomcat</groupId>
             <artifactId>annotations-api</artifactId>
             <version>${tomcat-annotation-api-version}</version>
             <scope>provided</scope>
         </dependency>
+        <dependency> <!-- Needed for gRPC ServiceConfig setup -->
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${guava.version}</version>
+        </dependency>
 
+        <dependency>
+            <groupId>com.market.banica</groupId>
+            <artifactId>protobuf-messages</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.market.banica</groupId>
+            <artifactId>common</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
