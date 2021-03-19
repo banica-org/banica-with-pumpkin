@@ -30,12 +30,12 @@
 
     <modules>
         <module>protobuf-messages</module>
+        <module>common</module>
         <module>aurora</module>
         <module>market-generator</module>
         <module>persister</module>
         <module>order-book</module>
         <module>calculator</module>
-        <module>common</module>
     </modules>
 
     <dependencyManagement>

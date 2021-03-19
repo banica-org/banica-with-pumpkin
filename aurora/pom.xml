@@ -50,6 +50,11 @@
             <version>2.10.0</version>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>com.market.banica</groupId>
+            <artifactId>common</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

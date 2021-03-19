@@ -2,7 +2,7 @@ package market;
 
 import com.market.MarketDataRequest;
 import com.market.TickResponse;
-import com.market.banica.generator.service.MarketServiceImpl;
+import com.market.banica.generator.service.MarketService;
 import com.market.banica.generator.service.MarketSubscriptionManager;
 import com.market.banica.generator.service.TickGenerator;
 import io.grpc.stub.StreamObserver;
@@ -22,10 +22,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
-class MarketServiceImplTest {
+class MarketServiceTest {
 
     @InjectMocks
-    private MarketServiceImpl marketService;
+    private MarketService marketService;
 
     @Mock
     private MarketSubscriptionManager marketSubscriptionServiceImpl;

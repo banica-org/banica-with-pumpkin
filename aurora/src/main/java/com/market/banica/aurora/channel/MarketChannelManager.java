@@ -1,9 +1,12 @@
 package com.market.banica.aurora.channel;
 
+import com.market.banica.common.ChannelRPCConfig;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -15,18 +18,21 @@ public class MarketChannelManager {
     private final Map<String, ManagedChannel> marketChannels = new HashMap<>();
 
 
+
+
     public void createChannel(String channelName, String host, int port) {
-        ManagedChannel channel = ManagedChannelBuilder.forAddress(host, port).usePlaintext().build();
+        System.out.println();
+        ManagedChannel channel = ManagedChannelBuilder
+                .forAddress(host, port)
+                .usePlaintext()
+                .defaultServiceConfig(ChannelRPCConfig.getInstance().getServiceConfig())
+                .build();
         marketChannels.put(channelName, channel);
     }
 
-    public void removeChanel(String channelName) {
-        shutdownChanel(channelName);
-        marketChannels.remove(channelName);
-    }
 
 
-    private void shutdownChanel(String channelName) {
+    public void shutdownChannel(String channelName) {
         ManagedChannel channel = marketChannels.get(channelName);
         if (channel == null) {
             throw new IllegalArgumentException("MarketChannel with given name does not exist!");

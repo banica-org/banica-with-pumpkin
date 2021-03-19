@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 
 
 @Service
-public class AuroraServiceImpl extends AuroraServiceGrpc.AuroraServiceImplBase {
+public class AuroraService extends AuroraServiceGrpc.AuroraServiceImplBase {
 
     @Autowired
     private AuroraSubscriptionManager subscriptionManager;
