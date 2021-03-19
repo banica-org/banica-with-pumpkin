@@ -23,7 +23,7 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 class MarketSubscriptionManagerTest {
 
-    @InjectMocks
+   /* @InjectMocks
     private MarketSubscriptionManager marketSubscriptionManager;
 
     private final StreamObserver<TickResponse> subscriberOne = mock(StreamObserver.class);
@@ -172,5 +172,5 @@ class MarketSubscriptionManagerTest {
 
         // Assert
         assertEquals(expected, actual);
-    }
+    }*/
 }

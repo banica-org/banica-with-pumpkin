@@ -48,8 +48,9 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
 
     @Override
     public void subscribeForItem(MarketDataRequest request, StreamObserver<TickResponse> responseObserver) {
-        String goodName = marketSubscriptionManager.getRequestGoodName(request);
-        tickGenerator.generateTicks(goodName).forEach(responseObserver::onNext);
+//        String goodName = marketSubscriptionManager.getRequestGoodName(request);
+        //europe.eggs
+        tickGenerator.generateTicks(request.getGoodName()).forEach(responseObserver::onNext);
         marketSubscriptionManager.subscribe(request, responseObserver);
         responseObserver.onCompleted();
     }
