@@ -37,11 +37,11 @@ public class TickGeneratorImplTest {
     private TickGeneratorImpl tickGenerator;
 
 
-    @Before
+  /*  @Before
     public void initialize() throws InterruptedException {
         tickBlockingQueue.put(marketTick);
-        tickGenerator = new TickGeneratorImpl(ORIGIN, tickBlockingQueue);
-    }
+        tickGenerator = new TickGeneratorImpl(ORIGIN);
+    }*/
 
 
     @Test

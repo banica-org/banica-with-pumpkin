@@ -4,7 +4,7 @@ import com.market.MarketDataRequest;
 import com.market.TickResponse;
 import com.market.banica.generator.service.MarketService;
 import com.market.banica.generator.service.MarketSubscriptionManager;
-import com.market.banica.generator.service.TickGenerator;
+import com.market.banica.generator.tick.TickGenerator;
 import io.grpc.stub.StreamObserver;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

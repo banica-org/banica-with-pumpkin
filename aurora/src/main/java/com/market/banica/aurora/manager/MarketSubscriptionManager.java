@@ -40,7 +40,6 @@ public class MarketSubscriptionManager {
     }
 
 
-
     public void subscribeForGood(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
 
         String requestOriginName = extractMarketOrigin(request.getTopic());
@@ -48,7 +47,8 @@ public class MarketSubscriptionManager {
 
         Set<MarketDataRequest> marketDataRequests;
         Set<String> strings = marketChannelManager.getMarketChannels().keySet();
-        marketDataRequests = mapWildcard(requestOriginName, strings, (marketName) -> marketName + DELIMITER + requestGoodName, request.getClientId(), request.getTopic());
+        marketDataRequests = mapWildcard(requestOriginName, strings, (marketName) -> marketName + DELIMITER + requestGoodName,
+                request.getClientId(), request.getTopic());
 
         marketDataRequests.forEach(marketDataRequest -> {
 
@@ -57,7 +57,8 @@ public class MarketSubscriptionManager {
 
             Set<MarketDataRequest> newMarketDataRequests;
 
-            newMarketDataRequests = mapWildcard(marketGoodName, marketClient.getMarketCatalogue(marketOriginName), (goodName) -> marketOriginName + DELIMITER + goodName, marketDataRequest.getClientId(), marketDataRequest.getGoodName());
+            newMarketDataRequests = mapWildcard(marketGoodName, marketClient.getMarketCatalogue(marketOriginName),
+                    (goodName) -> marketOriginName + DELIMITER + goodName, marketDataRequest.getClientId(), marketDataRequest.getGoodName());
 
             newMarketDataRequests.forEach(dataRequest -> {
                 MarketTickResponseObserver marketTickResponseObserver = new MarketTickResponseObserver(this);
@@ -68,6 +69,24 @@ public class MarketSubscriptionManager {
 
         });
 
+    }
+
+    public void notifyObservers(TickResponse tickResponse, MarketTickResponseObserver marketTickResponseObserver) {
+        StreamObserver<Aurora.AuroraResponse> auroraResponseStreamObserver = observersMap.get(marketTickResponseObserver);
+        try {
+            lock.lock();
+            Aurora.AuroraResponse auroraResponse = Aurora.AuroraResponse.newBuilder().setTickResponse(tickResponse).build();
+            auroraResponseStreamObserver.onNext(auroraResponse);
+        } catch (StatusRuntimeException e) {
+            observersMap.remove(auroraResponseStreamObserver);
+        } finally {
+            lock.unlock();
+        }
+
+    }
+
+    public void unsubscribe(MarketTickResponseObserver marketTickResponseObserver) {
+        observersMap.remove(marketTickResponseObserver);
     }
 
     private String extractMarketOrigin(String topic) {
@@ -97,21 +116,4 @@ public class MarketSubscriptionManager {
 
     }
 
-    public void notifyObservers(TickResponse tickResponse, MarketTickResponseObserver marketTickResponseObserver) {
-        StreamObserver<Aurora.AuroraResponse> auroraResponseStreamObserver = observersMap.get(marketTickResponseObserver);
-        try {
-            lock.lock();
-            Aurora.AuroraResponse auroraResponse = Aurora.AuroraResponse.newBuilder().setTickResponse(tickResponse).build();
-            auroraResponseStreamObserver.onNext(auroraResponse);
-        } catch (StatusRuntimeException e) {
-            observersMap.remove(auroraResponseStreamObserver);
-        } finally {
-            lock.unlock();
-        }
-
-    }
-
-    public void unsubscribe(MarketTickResponseObserver marketTickResponseObserver) {
-        observersMap.remove(marketTickResponseObserver);
-    }
 }
