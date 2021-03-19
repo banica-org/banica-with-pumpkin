@@ -3,8 +3,8 @@ package com.market.banica.calculator.service;
 import com.market.banica.calculator.data.contract.RecipesBase;
 import com.market.banica.calculator.enums.UnitOfMeasure;
 import com.market.banica.calculator.model.Product;
+import com.market.banica.calculator.service.contract.BackUpService;
 import com.market.banica.calculator.service.contract.JMXService;
-import com.market.banica.calculator.service.contract.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +18,6 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 
 @EnableMBeanExport
 @ManagedResource
@@ -32,7 +31,7 @@ public class JMXServiceImpl implements JMXService {
     private static final String KEY_PREFIX_FOR_DELETED_PRODUCT = "deleted_";
 
     private final RecipesBase recipesBase;
-    private final ProductService productService;
+    private final BackUpService backUpService;
 
     @Override
     @ManagedOperation
@@ -50,23 +49,20 @@ public class JMXServiceImpl implements JMXService {
                 ingredientsList);
         LOGGER.info("CreateProduct called from JMX server");
 
-        Optional<Product> product = Optional.ofNullable(getDatabase().get(newProductName));
-
-        if (product.isPresent()) {
+        if (doesProductExists(newProductName)) {
 
             LOGGER.error("Product with name {} already exists", newProductName);
             throw new IllegalArgumentException("Product with this name already exists");
-        } else {
-
-            Product newProduct = createNewProduct(newProductName, unitOfMeasure, ingredientsList);
-
-            addProductToDatabase(newProductName, newProduct);
-
-            LOGGER.debug("New product created from JMX server with product name {} and unit of measure {}"
-                    , newProductName, unitOfMeasure);
-
-            productService.createBackUp();
         }
+
+        Product newProduct = createNewProduct(newProductName, unitOfMeasure, ingredientsList);
+
+        addProductToDatabase(newProductName, newProduct);
+
+        LOGGER.debug("New product created from JMX server with product name {} and unit of measure {}"
+                , newProductName, unitOfMeasure);
+
+        backUpService.writeBackUp();
     }
 
     @Override
@@ -76,12 +72,17 @@ public class JMXServiceImpl implements JMXService {
                 recipeName, ingredientName, quantity);
         LOGGER.info("AddIngredient called from JMX server");
 
-        retrieveProductFromDatabase(ingredientName);
+        if (!doesProductExists(ingredientName)) {
+
+            LOGGER.error("Product with name {} does not exists", ingredientName);
+            throw new IllegalArgumentException("Product with this name does not exists");
+        }
+
         Product recipe = retrieveProductFromDatabase(recipeName);
 
         recipe.getIngredients().put(ingredientName, quantity);
 
-        productService.createBackUp();
+        backUpService.writeBackUp();
 
         LOGGER.debug("Ingredient added from JMX server for recipeName {} and ingredientName {} with quantity {}"
                 , recipeName, ingredientName, quantity);
@@ -91,20 +92,17 @@ public class JMXServiceImpl implements JMXService {
     @ManagedOperation
     public void setProductQuantity(String recipeName, String ingredientName, int newQuantity) {
         LOGGER.debug("In setProductQuantity method with parameters: recipeName {},ingredientName {}" +
-        " and newQuantity {}", recipeName, ingredientName, newQuantity);
+                " and newQuantity {}", recipeName, ingredientName, newQuantity);
         LOGGER.info("SetProductQuantity called from JMX server");
 
         Product parentProduct = retrieveProductFromDatabase(recipeName);
 
-        if (doesIngredientBelongToRecipe(ingredientName, parentProduct)) {
+        validateIngredientBelongToRecipe(ingredientName, parentProduct);
 
-            setProductQuantity(ingredientName, parentProduct, newQuantity);
+        setProductQuantity(ingredientName, parentProduct, newQuantity);
 
-            productService.createBackUp();
-        } else {
+        backUpService.writeBackUp();
 
-            throwExceptionWhenProductDoesNotBelongToRecipe(recipeName, ingredientName);
-        }
 
         LOGGER.debug("Value set from JMX server for recipeName {} and ingredientName {} with newQuantity {}"
                 , recipeName, ingredientName, newQuantity);
@@ -118,16 +116,10 @@ public class JMXServiceImpl implements JMXService {
 
         Product parentProduct = retrieveProductFromDatabase(recipeName);
 
-        if (doesIngredientBelongToRecipe(ingredientName, parentProduct)) {
+        validateIngredientBelongToRecipe(ingredientName, parentProduct);
 
-            LOGGER.debug("Value checked from JMX server for recipeName {} and ingredientName {}", recipeName, ingredientName);
-            return getProductQuantity(ingredientName, parentProduct);
-
-        } else {
-
-            LOGGER.error("Ingredient {} does not belong to recipe {}", ingredientName, recipeName);
-            throw new IllegalArgumentException("Ingredient does not belong to the recipe");
-        }
+        LOGGER.debug("Value checked from JMX server for recipeName {} and ingredientName {}", recipeName, ingredientName);
+        return getProductQuantity(ingredientName, parentProduct);
     }
 
     @Override
@@ -152,7 +144,7 @@ public class JMXServiceImpl implements JMXService {
 
         product.setUnitOfMeasure(UnitOfMeasure.valueOf(unitOfMeasure.toUpperCase(Locale.ROOT)));
 
-        productService.createBackUp();
+        backUpService.writeBackUp();
 
         LOGGER.debug("UnitOfMeasure set from JMX server for product with name {}" +
                 " and new unitOfMeasure {}", productName, unitOfMeasure);
@@ -173,22 +165,28 @@ public class JMXServiceImpl implements JMXService {
             addProductToDatabase(KEY_PREFIX_FOR_DELETED_PRODUCT + productName, product);
 
         } else {
+
             Product parentProduct = retrieveProductFromDatabase(parentProductName);
 
-            if (doesIngredientBelongToRecipe(productName, parentProduct)) {
+            validateIngredientBelongToRecipe(productName, parentProduct);
 
-                deleteParentIngredientRelationFromParentIngredients(parentProduct, product);
-
-            } else {
-
-                throwExceptionWhenProductDoesNotBelongToRecipe(parentProductName, productName);
-            }
+            deleteParentIngredientRelationFromParentIngredients(parentProduct, product);
         }
 
-        productService.createBackUp();
+        backUpService.writeBackUp();
 
         LOGGER.debug("Product deleted from JMX server for parentProductName {} and productName {}"
                 , parentProductName, productName);
+    }
+
+    private void validateIngredientBelongToRecipe(String productName, Product parentProduct) {
+        LOGGER.debug("In validateIngredientBelongToRecipe private method");
+
+        if (parentProduct.getIngredients().get(productName) == null) {
+
+            LOGGER.error("Ingredient {} does not belong to recipe {}", productName, parentProduct.getProductName());
+            throw new IllegalArgumentException("Ingredient does not belong to the recipe");
+        }
     }
 
     private void addProductToDatabase(String newProductName, Product newProduct) {
@@ -200,22 +198,19 @@ public class JMXServiceImpl implements JMXService {
     private Product retrieveProductFromDatabase(String productName) {
         LOGGER.debug("In retrieveProductFromDatabase private method");
 
-        Optional<Product> product = Optional.ofNullable(getDatabase().get(productName));
+        if (!doesProductExists(productName)) {
 
-        return validateProductExist(productName, product);
+            LOGGER.error("Product with name {} does not exist", productName);
+            throw new IllegalArgumentException("Product with this name does not exist");
+        }
+
+        return getDatabase().get(productName);
     }
 
     private void deleteParentIngredientRelationFromParentIngredients(Product parentProduct, Product ingredient) {
         LOGGER.debug("In deleteParentIngredientRelationFromQuantityPerParent private method");
 
         parentProduct.getIngredients().remove(ingredient.getProductName());
-    }
-
-    private void throwExceptionWhenProductDoesNotBelongToRecipe(String recipeName, String ingredientName) {
-        LOGGER.debug("In throwExceptionWhenProductDoesNotBelongToRecipe private method");
-
-        LOGGER.error("Ingredient {} does not belong to recipe {}", ingredientName, recipeName);
-        throw new IllegalArgumentException("Ingredient does not belong to the recipe");
     }
 
     private int getProductQuantity(String ingredientName, Product parentProduct) {
@@ -230,22 +225,10 @@ public class JMXServiceImpl implements JMXService {
         parentProduct.getIngredients().put(product, newQuantity);
     }
 
-    private boolean doesIngredientBelongToRecipe(String productName, Product parentProduct) {
-        LOGGER.debug("In doesIngredientBelongToRecipe private method");
-
-        return parentProduct.getIngredients().get(productName) != null;
-    }
-
-    private Product validateProductExist(String productName, Optional<Product> product) {
+    private boolean doesProductExists(String productName) {
         LOGGER.debug("In validateProductExist private method");
 
-        if (product.isPresent()) {
-            return product.get();
-        }
-
-        LOGGER.error("Product with name {} does not exist", productName);
-        throw new IllegalArgumentException("Product with this name does not exist");
-
+        return getDatabase().containsKey(productName);
     }
 
     private Product createNewProduct(String newProductName, String unitOfMeasure,
