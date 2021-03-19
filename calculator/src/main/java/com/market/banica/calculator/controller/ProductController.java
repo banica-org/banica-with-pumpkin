@@ -24,10 +24,10 @@ public class ProductController {
     private final ProductService productService;
 
     @PostMapping
-    public ResponseEntity<Product> createRecipe( @RequestBody final List<Product> products) {
+    public Product createRecipe( @RequestBody final List<Product> products) {
         LOGGER.info("POST /recipe called");
 
         LOGGER.debug("Recipe controller: in createRecipe method");
-        return ResponseEntity.ok().body(productService.createProduct(products));
+        return productService.createProduct(products);
     }
 }

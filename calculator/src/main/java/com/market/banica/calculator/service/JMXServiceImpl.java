@@ -37,7 +37,6 @@ public class JMXServiceImpl implements JMXService {
     @Override
     @ManagedOperation
     public Map<String, Product> getDatabase() {
-        LOGGER.debug("JMX server impl: In getDatabase method");
         LOGGER.info("GetDatabase called from JMX server");
 
         return recipesBase.getDatabase();
@@ -46,10 +45,10 @@ public class JMXServiceImpl implements JMXService {
     @Override
     @ManagedOperation
     public void createProduct(String newProductName, String unitOfMeasure, String ingredientsList) {
-        LOGGER.debug("JMX server impl: In createProduct method");
-        LOGGER.info("CreateProduct called from JMX server with parameters newProductName {},unitOfMeasure {}," +
-                        " ingredients {}", newProductName, unitOfMeasure,
+        LOGGER.debug("in createProduct method with parameters: newProductName {},unitOfMeasure {}," +
+                        " ingredientsList {}", newProductName, unitOfMeasure,
                 ingredientsList);
+        LOGGER.info("CreateProduct called from JMX server");
 
         Optional<Product> product = Optional.ofNullable(getDatabase().get(newProductName));
 
@@ -63,7 +62,7 @@ public class JMXServiceImpl implements JMXService {
 
             addProductToDatabase(newProductName, newProduct);
 
-            LOGGER.info("New product created from JMX server with product name {} and unit of measure {}"
+            LOGGER.debug("New product created from JMX server with product name {} and unit of measure {}"
                     , newProductName, unitOfMeasure);
 
             productService.createBackUp();
@@ -73,9 +72,9 @@ public class JMXServiceImpl implements JMXService {
     @Override
     @ManagedOperation
     public void addIngredient(String recipeName, String ingredientName, int quantity) {
-        LOGGER.debug("JMX server impl: In addIngredient method");
-        LOGGER.info("AddIngredient called from JMX server with parameters recipeName {},ingredientName {} and quantityAsString {}",
+        LOGGER.debug("In addIngredient method with parameters: recipeName {},ingredientName {} and quantity {}" +
                 recipeName, ingredientName, quantity);
+        LOGGER.info("AddIngredient called from JMX server");
 
         retrieveProductFromDatabase(ingredientName);
         Product recipe = retrieveProductFromDatabase(recipeName);
@@ -84,16 +83,16 @@ public class JMXServiceImpl implements JMXService {
 
         productService.createBackUp();
 
-        LOGGER.info("Ingredient added from JMX server for recipe {} and ingredient {} with value {}"
+        LOGGER.debug("Ingredient added from JMX server for recipeName {} and ingredientName {} with quantity {}"
                 , recipeName, ingredientName, quantity);
     }
 
     @Override
     @ManagedOperation
     public void setProductQuantity(String recipeName, String ingredientName, int newQuantity) {
-        LOGGER.debug("JMX server impl: In setProductQuantity method");
-        LOGGER.info("SetProductQuantity called from JMX server with parameters recipeName {},ingredientName {}" +
-                " and newValue {}", recipeName, ingredientName, newQuantity);
+        LOGGER.debug("In setProductQuantity method with parameters: recipeName {},ingredientName {}" +
+        " and newQuantity {}", recipeName, ingredientName, newQuantity);
+        LOGGER.info("SetProductQuantity called from JMX server");
 
         Product parentProduct = retrieveProductFromDatabase(recipeName);
 
@@ -107,21 +106,21 @@ public class JMXServiceImpl implements JMXService {
             throwExceptionWhenProductDoesNotBelongToRecipe(recipeName, ingredientName);
         }
 
-        LOGGER.info("Value set from JMX server for recipe {} and ingredient {} with value {}"
+        LOGGER.debug("Value set from JMX server for recipeName {} and ingredientName {} with newQuantity {}"
                 , recipeName, ingredientName, newQuantity);
     }
 
     @Override
     @ManagedOperation
     public int getProductQuantity(String recipeName, String ingredientName) {
-        LOGGER.debug("JMX server impl: In getProductQuantity method");
-        LOGGER.info("GetProductQuantity called from JMX server for recipe {} and ingredient {}", recipeName, ingredientName);
+        LOGGER.debug("In getProductQuantity method with parameters: recipeName {} and ingredientName {}", recipeName, ingredientName);
+        LOGGER.info("GetProductQuantity called from JMX server");
 
         Product parentProduct = retrieveProductFromDatabase(recipeName);
 
         if (doesIngredientBelongToRecipe(ingredientName, parentProduct)) {
 
-            LOGGER.info("Value checked from JMX server for recipe {} and ingredient {}", recipeName, ingredientName);
+            LOGGER.debug("Value checked from JMX server for recipeName {} and ingredientName {}", recipeName, ingredientName);
             return getProductQuantity(ingredientName, parentProduct);
 
         } else {
@@ -134,21 +133,20 @@ public class JMXServiceImpl implements JMXService {
     @Override
     @ManagedOperation
     public String getUnitOfMeasure(String productName) {
-        LOGGER.debug("JMX server impl: In getUnitOfMeasure method");
-        LOGGER.info("GetUnitOfMeasure called from JMX server for product with name: {}", productName);
+        LOGGER.debug("In getUnitOfMeasure method with parameters: productName {}", productName);
+        LOGGER.info("GetUnitOfMeasure called from JMX server");
 
         Product product = retrieveProductFromDatabase(productName);
 
-        LOGGER.info("UnitOfMeasure checked from JMX server for product with name {}", productName);
+        LOGGER.debug("UnitOfMeasure checked from JMX server for product with name {}", productName);
         return product.getUnitOfMeasure().toString();
     }
 
     @Override
     @ManagedOperation
     public void setUnitOfMeasure(String productName, String unitOfMeasure) {
-        LOGGER.debug("JMX server impl: In setUnitOfMeasure method");
-        LOGGER.info("SetUnitOfMeasure called from JMX server for product with name: {} " +
-                "and new UnitOfMeasure: {}", productName, unitOfMeasure);
+        LOGGER.debug("In setUnitOfMeasure method with parameters: productName {} and unitOfMeasure {}", productName, unitOfMeasure);
+        LOGGER.info("SetUnitOfMeasure called from JMX server");
 
         Product product = retrieveProductFromDatabase(productName);
 
@@ -156,15 +154,15 @@ public class JMXServiceImpl implements JMXService {
 
         productService.createBackUp();
 
-        LOGGER.info("UnitOfMeasure set from JMX server for product with name {}" +
+        LOGGER.debug("UnitOfMeasure set from JMX server for product with name {}" +
                 " and new unitOfMeasure {}", productName, unitOfMeasure);
     }
 
     @Override
     @ManagedOperation
     public void deleteProduct(String parentProductName, String productName) {
-        LOGGER.debug("JMX server impl: In deleteIngredient method");
-        LOGGER.info("DeleteIngredient called from JMX server for recipe {} and ingredient {}", parentProductName, productName);
+        LOGGER.debug("In deleteIngredient method with parameters: parentProductName {} and productName {}", parentProductName, productName);
+        LOGGER.info("DeleteIngredient called from JMX server");
 
         Product product = retrieveProductFromDatabase(productName);
 
@@ -189,18 +187,18 @@ public class JMXServiceImpl implements JMXService {
 
         productService.createBackUp();
 
-        LOGGER.info("Product deleted from JMX server for recipe {} and ingredient {}"
+        LOGGER.debug("Product deleted from JMX server for parentProductName {} and productName {}"
                 , parentProductName, productName);
     }
 
     private void addProductToDatabase(String newProductName, Product newProduct) {
-        LOGGER.debug("JMX server impl: In addProductToDatabase private method");
+        LOGGER.debug("In addProductToDatabase private method");
 
         getDatabase().put(newProductName, newProduct);
     }
 
     private Product retrieveProductFromDatabase(String productName) {
-        LOGGER.debug("JMX server impl: In retrieveProductFromDatabase private method");
+        LOGGER.debug("In retrieveProductFromDatabase private method");
 
         Optional<Product> product = Optional.ofNullable(getDatabase().get(productName));
 
@@ -208,38 +206,38 @@ public class JMXServiceImpl implements JMXService {
     }
 
     private void deleteParentIngredientRelationFromParentIngredients(Product parentProduct, Product ingredient) {
-        LOGGER.debug("JMX server impl: In deleteParentIngredientRelationFromQuantityPerParent private method");
+        LOGGER.debug("In deleteParentIngredientRelationFromQuantityPerParent private method");
 
         parentProduct.getIngredients().remove(ingredient.getProductName());
     }
 
     private void throwExceptionWhenProductDoesNotBelongToRecipe(String recipeName, String ingredientName) {
-        LOGGER.debug("JMX server impl: In throwExceptionWhenProductDoesNotBelongToRecipe private method");
+        LOGGER.debug("In throwExceptionWhenProductDoesNotBelongToRecipe private method");
 
         LOGGER.error("Ingredient {} does not belong to recipe {}", ingredientName, recipeName);
         throw new IllegalArgumentException("Ingredient does not belong to the recipe");
     }
 
     private int getProductQuantity(String ingredientName, Product parentProduct) {
-        LOGGER.debug("JMX server impl: In getProductQuantity private method");
+        LOGGER.debug("In getProductQuantity private method");
 
         return parentProduct.getIngredients().get(ingredientName);
     }
 
     private void setProductQuantity(String product, Product parentProduct, int newQuantity) {
-        LOGGER.debug("JMX server impl: In setProductQuantity private method");
+        LOGGER.debug("In setProductQuantity private method");
 
         parentProduct.getIngredients().put(product, newQuantity);
     }
 
     private boolean doesIngredientBelongToRecipe(String productName, Product parentProduct) {
-        LOGGER.debug("JMX server impl: In doesIngredientBelongToRecipe private method");
+        LOGGER.debug("In doesIngredientBelongToRecipe private method");
 
         return parentProduct.getIngredients().get(productName) != null;
     }
 
     private Product validateProductExist(String productName, Optional<Product> product) {
-        LOGGER.debug("JMX server impl: In validateProductExist private method");
+        LOGGER.debug("In validateProductExist private method");
 
         if (product.isPresent()) {
             return product.get();
@@ -251,8 +249,8 @@ public class JMXServiceImpl implements JMXService {
     }
 
     private Product createNewProduct(String newProductName, String unitOfMeasure,
-                                  String ingredientsList) {
-        LOGGER.debug("JMX server impl: In createNewProduct private method");
+                                     String ingredientsList) {
+        LOGGER.debug("In createNewProduct private method");
 
         Product newRecipe = new Product();
 
@@ -273,7 +271,7 @@ public class JMXServiceImpl implements JMXService {
     }
 
     private Map<String, Integer> convertStringOfIngredientsToMap(String ingredientsList) {
-        LOGGER.debug("JMXConfig: In convertStringOfIngredientsToMap private method");
+        LOGGER.debug("In convertStringOfIngredientsToMap private method");
 
         Map<String, Integer> ingredients = new HashMap<>();
         String[] ingredientsAsArray = ingredientsList.split(REGEX_DELIMITER_NEW_PRODUCT_INGREDIENTS);
@@ -289,7 +287,7 @@ public class JMXServiceImpl implements JMXService {
     }
 
     private int getValueAsInt(String quantity) {
-        LOGGER.debug("JMXConfig: In getValueAsInt private method");
+        LOGGER.debug("In getValueAsInt private method");
 
         try {
             return Integer.parseInt(quantity);
@@ -302,7 +300,7 @@ public class JMXServiceImpl implements JMXService {
     }
 
     private void validateProductsOfListExists(Collection<String> productsNames) {
-        LOGGER.debug("JMX server impl: In validateProductsOfListExists private method");
+        LOGGER.debug("In validateProductsOfListExists private method");
 
         for (String productName : productsNames) {
 

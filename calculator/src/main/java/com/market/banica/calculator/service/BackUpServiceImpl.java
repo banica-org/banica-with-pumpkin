@@ -21,11 +21,15 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 @Service
 @RequiredArgsConstructor
@@ -40,7 +44,7 @@ public class BackUpServiceImpl implements BackUpService {
     @Override
     @PostConstruct
     public void readBackUp() {
-        LOGGER.debug("BackUp ServiceImpl: In readBackUp method");
+        LOGGER.debug("In readBackUp method");
 
         if (doesBackUpFileExists()) {
             try (InputStream input = new FileInputStream(databaseBackUpUrl)) {
@@ -58,16 +62,16 @@ public class BackUpServiceImpl implements BackUpService {
 
     @Override
     public void writeBackUp() {
-        LOGGER.debug("BackUp ServiceImpl: In writeBackUp method");
+        LOGGER.debug("In writeBackUp method");
 
         Map<String, Product> data = getDataFromDatabase();
         ObjectWriter objectWriter = new ObjectMapper().writerWithDefaultPrettyPrinter();
 
-        try (OutputStream output = new FileOutputStream(databaseBackUpUrl)) {
+        try ( Writer output = new OutputStreamWriter(new FileOutputStream(databaseBackUpUrl), UTF_8)) {
 
             String jsonData = getStringFromMap(data, objectWriter);
 
-            output.write(jsonData.getBytes(StandardCharsets.UTF_8));
+            output.write(jsonData);
 
             LOGGER.info("Recipes database back-up created in exterior file at location {}", databaseBackUpUrl);
         } catch (IOException e) {
@@ -76,31 +80,31 @@ public class BackUpServiceImpl implements BackUpService {
     }
 
     private boolean doesBackUpFileExists() {
-        LOGGER.debug("BackUp ServiceImpl: In doesBackUpFileNotExists private method");
+        LOGGER.debug("In doesBackUpFileNotExists private method");
 
         return !Files.notExists(Paths.get(databaseBackUpUrl));
     }
 
     private ConcurrentHashMap<String, Product> getDataFromBackUpFile(InputStream input) throws IOException {
-        LOGGER.debug("BackUp ServiceImpl: In getDataFromBackUpFile private method");
+        LOGGER.debug("In getDataFromBackUpFile private method");
 
         return new ObjectMapper().readValue(input, new TypeReference<ConcurrentHashMap<String,Product>>(){});
     }
 
     private String getStringFromMap(Map<String, Product> data, ObjectWriter objectWriter) throws JsonProcessingException {
-        LOGGER.debug("BackUp ServiceImpl: In getStringFromMap private method");
+        LOGGER.debug("In getStringFromMap private method");
 
         return objectWriter.writeValueAsString(data);
     }
 
     private Map<String, Product> getDataFromDatabase() {
-        LOGGER.debug("BackUp ServiceImpl: In getDataFromDatabase private method");
+        LOGGER.debug("In getDataFromDatabase private method");
 
         return database.getDatabase();
     }
 
     private void setDatabaseFromBackUp(Map<String, Product> data) {
-        LOGGER.debug("BackUp ServiceImpl: In setDatabaseFromBackUp private method");
+        LOGGER.debug("In setDatabaseFromBackUp private method");
 
         database.getDatabase().putAll(data);
     }
