@@ -3,6 +3,7 @@ package com.market.banica.generator.configuration;
 import com.market.banica.generator.exception.NotFoundException;
 import com.market.banica.generator.model.GoodSpecification;
 import com.market.banica.generator.property.LinkedProperties;
+import com.market.banica.generator.tick.TickGeneratorImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +18,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -33,12 +35,15 @@ public class MarketConfigurationImpl implements MarketConfiguration {
     private final File file;
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final Logger LOGGER = LoggerFactory.getLogger(MarketConfigurationImpl.class);
+    private final TickGeneratorImpl tickGenerator;
 
     private final Map<String, GoodSpecification> goods = new HashMap<>();
 
     @Autowired
-    public MarketConfigurationImpl(@Value("${market.properties.file.path}") String path) {
+    public MarketConfigurationImpl(@Value("${market.properties.file.path}") String path,
+                                   TickGeneratorImpl tickGenerator) {
         this.file = new File(path);
+        this.tickGenerator = tickGenerator;
     }
 
     @Override
@@ -50,13 +55,13 @@ public class MarketConfigurationImpl implements MarketConfiguration {
 
         try {
             this.lock.writeLock().lock();
-
             String errorMessage = String.format("A good with name %s from %s already exists",
                     good.toUpperCase(), origin.toUpperCase());
             String loggerMessage = "Creating and adding a new goodSpecification.";
 
             origin = origin.toLowerCase(Locale.getDefault());
             good = good.toLowerCase(Locale.getDefault());
+
 
             Properties properties = new LinkedProperties();
             boolean append = false;
@@ -69,6 +74,11 @@ public class MarketConfigurationImpl implements MarketConfiguration {
                     quantityLow, quantityHigh, quantityStep,
                     priceLow, priceHigh, priceStep,
                     periodLow, periodHigh, periodStep, append, properties, properties::setProperty, loggerMessage);
+
+            GoodSpecification goodSpecification = new GoodSpecification(String.format(ORIGIN_GOOD_PATTERN,
+                    origin, good), quantityLow, quantityHigh, quantityStep, priceLow, priceHigh, priceStep,
+                    periodLow, periodHigh, periodStep);
+            tickGenerator.startTickGeneration(good, goodSpecification);
 
         } finally {
             this.lock.writeLock().unlock();
@@ -131,6 +141,15 @@ public class MarketConfigurationImpl implements MarketConfiguration {
                     periodLow, periodHigh, periodStep, append, properties, properties::setProperty, loggerMessage);
         } finally {
             this.lock.writeLock().unlock();
+        }
+    }
+
+    public Map<String, GoodSpecification> getGoods() {
+        try {
+            this.lock.readLock().lock();
+            return Collections.unmodifiableMap(this.goods);
+        } finally {
+            this.lock.readLock().unlock();
         }
     }
 

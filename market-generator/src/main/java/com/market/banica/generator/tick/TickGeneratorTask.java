@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -27,7 +28,7 @@ public class TickGeneratorTask implements Runnable {
         this.goodSpecification = goodSpecification;
         this.originGood = originGood;
         this.nameGood = nameGood;
-        this.tickBlockingQueue = tickBlockingQueue;
+        this.tickBlockingQueue = new LinkedBlockingQueue<>(20);
         this.scheduledExecutorService = Executors.newScheduledThreadPool(1);
         isStopped = false;
     }
