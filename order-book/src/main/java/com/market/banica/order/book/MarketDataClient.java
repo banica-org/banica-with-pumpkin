@@ -1,9 +1,9 @@
 package com.market.banica.order.book;
 
-import com.market.MarketServiceGrpc;
-import com.market.MarketDataRequest;
-import com.market.TickResponse;
+import com.aurora.Aurora;
+import com.aurora.AuroraServiceGrpc;
 
+import com.market.TickResponse;
 import io.grpc.ConnectivityState;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -14,8 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -42,39 +42,48 @@ public class MarketDataClient {
 
     }
 
-    @PostConstruct
-    private void start() {
+    private void start() throws InterruptedException {
         for (String product : itemMarket.getAllProductNames()) {
-            final MarketServiceGrpc.MarketServiceStub asynchronousStub = MarketServiceGrpc.newStub(managedChannel);
-            final MarketDataRequest request = MarketDataRequest.newBuilder()
-                    .setGoodName(product)
+            final AuroraServiceGrpc.AuroraServiceStub asynchronousStub = AuroraServiceGrpc.newStub(managedChannel);
+            final Aurora.AuroraRequest request = Aurora.AuroraRequest.newBuilder()
+                    .setTopic("market/" + product)
+                    .setClientId("OrderBook")
                     .build();
             LOGGER.info("Start gathering product data.");
-            asynchronousStub.subscribeForItem(request, new StreamObserver<TickResponse>() {
+            asynchronousStub.subscribe(request, new StreamObserver<Aurora.AuroraResponse>() {
 
                 @Override
-                public void onNext(TickResponse response) {
-                    Item item = new Item();
-                    item.setPrice(response.getPrice());
-                    item.setQuantity((int) response.getQuantity());
-                    item.getItemIDs().add(new Item.ItemID("1", response.getOrigin().toString()));
-                    LOGGER.info("Products data updated!");
+                public void onNext(Aurora.AuroraResponse response) {
+                    if (response.hasTickResponse()) {
+                        TickResponse tickResponse = response.getTickResponse();
+                        Item item = new Item();
+                        item.setPrice(tickResponse.getPrice());
+                        item.setQuantity((int) tickResponse.getQuantity());
+                        item.getItemIDs().add(new Item.ItemID("1", tickResponse.getOrigin().toString()));
+                        itemMarket.getAllItemsByName(tickResponse.getGoodName()).add(item);
 
-                    itemMarket.getAllItemsByName(response.getGoodName()).add(item);
+                        LOGGER.info("Products data updated!");
+                    } else {
+                        throw new RuntimeException("Content is not correct!");
+                    }
                 }
 
                 @Override
                 public void onError(final Throwable throwable) {
                     LOGGER.warn("Unable to request");
+                    LOGGER.info(throwable);
+                    throwable.printStackTrace();
                 }
 
                 @Override
                 public void onCompleted() {
                     LOGGER.info("Market data gathered");
                 }
+
             });
         }
     }
+
 
     @PreDestroy
     private void stop() throws InterruptedException {
@@ -99,7 +108,7 @@ public class MarketDataClient {
 
                 LOGGER.info("Attempt number : " + failedAttempts + " failed to recconnect!");
                 LOGGER.info("Next attempt will execute in : " + timeToWait + " milliseconds");
-            }else{
+            } else {
                 failedAttempts++;
                 LOGGER.info("Attempts to recconnect : " + failedAttempts);
                 LOGGER.info("Next attempt will execute in : " + timeToWait + " milliseconds");
