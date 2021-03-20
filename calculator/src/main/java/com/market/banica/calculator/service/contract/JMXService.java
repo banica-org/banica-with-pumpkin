@@ -2,7 +2,6 @@ package com.market.banica.calculator.service.contract;
 
 import com.market.banica.calculator.model.Product;
 
-import java.util.List;
 import java.util.Map;
 
 public interface JMXService {
@@ -21,5 +20,7 @@ public interface JMXService {
 
     void setUnitOfMeasure(String productName, String unitOfMeasure);
 
-    void deleteProduct(String recipeName, String ingredientName);
+    void deleteProductFromDatabase(String ingredientName);
+
+    void deleteProductFromParentIngredients(String parentProductName, String productName);
 }
