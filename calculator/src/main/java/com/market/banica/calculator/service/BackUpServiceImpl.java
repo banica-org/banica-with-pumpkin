@@ -45,11 +45,11 @@ public class BackUpServiceImpl implements BackUpService {
         if (doesBackUpFileExists()) {
             try (InputStream input = new FileInputStream(databaseBackUpUrl)) {
 
-                    ConcurrentHashMap<String, Product> data = getDataFromBackUpFile(input);
+                ConcurrentHashMap<String, Product> data = getDataFromBackUpFile(input);
 
-                    setDatabaseFromBackUp(data);
+                setDatabaseFromBackUp(data);
 
-                LOGGER.info("Recipes database set from exterior file at location {}",databaseBackUpUrl);
+                LOGGER.info("Recipes database set from exterior file at location {}", databaseBackUpUrl);
             } catch (IOException e) {
                 LOGGER.error("Exception thrown during reading back-up at start up", e);
             }
@@ -63,7 +63,7 @@ public class BackUpServiceImpl implements BackUpService {
         Map<String, Product> data = getDataFromDatabase();
         ObjectWriter objectWriter = new ObjectMapper().writerWithDefaultPrettyPrinter();
 
-        try ( Writer output = new OutputStreamWriter(new FileOutputStream(databaseBackUpUrl), UTF_8)) {
+        try (Writer output = new OutputStreamWriter(new FileOutputStream(databaseBackUpUrl), UTF_8)) {
 
             String jsonData = getStringFromMap(data, objectWriter);
 
@@ -84,7 +84,8 @@ public class BackUpServiceImpl implements BackUpService {
     private ConcurrentHashMap<String, Product> getDataFromBackUpFile(InputStream input) throws IOException {
         LOGGER.debug("In getDataFromBackUpFile private method");
 
-        return new ObjectMapper().readValue(input, new TypeReference<ConcurrentHashMap<String,Product>>(){});
+        return new ObjectMapper().readValue(input, new TypeReference<ConcurrentHashMap<String, Product>>() {
+        });
     }
 
     private String getStringFromMap(Map<String, Product> data, ObjectWriter objectWriter) throws JsonProcessingException {

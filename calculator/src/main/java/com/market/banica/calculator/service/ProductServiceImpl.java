@@ -36,7 +36,7 @@ public class ProductServiceImpl implements ProductService {
 
         createProductsInDatabase(products);
 
-        createBackUp();
+        backUpService.writeBackUp();
 
         String recipeName = getRecipeName(products);
 
@@ -68,13 +68,6 @@ public class ProductServiceImpl implements ProductService {
     //TODO to be implemented once expectations are clear
     @Override
     public void getAllProducts(){}
-
-    @Override
-    public void createBackUp() {
-        LOGGER.debug("In createBackUp method");
-
-        backUpService.writeBackUp();
-    }
 
     private Product getProductFromDatabase(String productName) {
         LOGGER.debug("In getProductFromDatabase method");

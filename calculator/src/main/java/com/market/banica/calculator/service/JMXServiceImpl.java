@@ -67,59 +67,59 @@ public class JMXServiceImpl implements JMXService {
 
     @Override
     @ManagedOperation
-    public void addIngredient(String recipeName, String ingredientName, int quantity) {
+    public void addIngredient(String parentProductName, String productName, int quantity) {
         LOGGER.debug("In addIngredient method with parameters: recipeName {},ingredientName {} and quantity {}" +
-                recipeName, ingredientName, quantity);
+                parentProductName, productName, quantity);
         LOGGER.info("AddIngredient called from JMX server");
 
-        if (!doesProductExists(ingredientName)) {
+        if (!doesProductExists(productName)) {
 
-            LOGGER.error("Product with name {} does not exists", ingredientName);
+            LOGGER.error("Product with name {} does not exists", productName);
             throw new IllegalArgumentException("Product with this name does not exists");
         }
 
-        Product recipe = retrieveProductFromDatabase(recipeName);
+        Product recipe = retrieveProductFromDatabase(parentProductName);
 
-        recipe.getIngredients().put(ingredientName, quantity);
+        recipe.getIngredients().put(productName, quantity);
 
         backUpService.writeBackUp();
 
         LOGGER.debug("Ingredient added from JMX server for recipeName {} and ingredientName {} with quantity {}"
-                , recipeName, ingredientName, quantity);
+                , parentProductName, productName, quantity);
     }
 
     @Override
     @ManagedOperation
-    public void setProductQuantity(String recipeName, String ingredientName, int newQuantity) {
+    public void setProductQuantity(String parentProductName, String productName, int newQuantity) {
         LOGGER.debug("In setProductQuantity method with parameters: recipeName {},ingredientName {}" +
-                " and newQuantity {}", recipeName, ingredientName, newQuantity);
+                " and newQuantity {}", parentProductName, productName, newQuantity);
         LOGGER.info("SetProductQuantity called from JMX server");
 
-        Product parentProduct = retrieveProductFromDatabase(recipeName);
+        Product parentProduct = retrieveProductFromDatabase(parentProductName);
 
-        validateIngredientBelongToRecipe(ingredientName, parentProduct);
+        validateIngredientBelongToRecipe(productName, parentProduct);
 
-        setProductQuantity(ingredientName, parentProduct, newQuantity);
+        setProductQuantity(productName, parentProduct, newQuantity);
 
         backUpService.writeBackUp();
 
 
         LOGGER.debug("Value set from JMX server for recipeName {} and ingredientName {} with newQuantity {}"
-                , recipeName, ingredientName, newQuantity);
+                , parentProductName, productName, newQuantity);
     }
 
     @Override
     @ManagedOperation
-    public int getProductQuantity(String recipeName, String ingredientName) {
-        LOGGER.debug("In getProductQuantity method with parameters: recipeName {} and ingredientName {}", recipeName, ingredientName);
+    public int getProductQuantity(String parentProductName, String productName) {
+        LOGGER.debug("In getProductQuantity method with parameters: recipeName {} and ingredientName {}", parentProductName, productName);
         LOGGER.info("GetProductQuantity called from JMX server");
 
-        Product parentProduct = retrieveProductFromDatabase(recipeName);
+        Product parentProduct = retrieveProductFromDatabase(parentProductName);
 
-        validateIngredientBelongToRecipe(ingredientName, parentProduct);
+        validateIngredientBelongToRecipe(productName, parentProduct);
 
-        LOGGER.debug("Value checked from JMX server for recipeName {} and ingredientName {}", recipeName, ingredientName);
-        return getProductQuantity(ingredientName, parentProduct);
+        LOGGER.debug("Value checked from JMX server for recipeName {} and ingredientName {}", parentProductName, productName);
+        return getProductQuantity(productName, parentProduct);
     }
 
     @Override
@@ -207,10 +207,10 @@ public class JMXServiceImpl implements JMXService {
         return getDatabase().get(productName);
     }
 
-    private void deleteParentIngredientRelationFromParentIngredients(Product parentProduct, Product ingredient) {
+    private void deleteParentIngredientRelationFromParentIngredients(Product parentProduct, Product product) {
         LOGGER.debug("In deleteParentIngredientRelationFromQuantityPerParent private method");
 
-        parentProduct.getIngredients().remove(ingredient.getProductName());
+        parentProduct.getIngredients().remove(product.getProductName());
     }
 
     private int getProductQuantity(String ingredientName, Product parentProduct) {
@@ -219,10 +219,10 @@ public class JMXServiceImpl implements JMXService {
         return parentProduct.getIngredients().get(ingredientName);
     }
 
-    private void setProductQuantity(String product, Product parentProduct, int newQuantity) {
+    private void setProductQuantity(String productName, Product parentProduct, int newQuantity) {
         LOGGER.debug("In setProductQuantity private method");
 
-        parentProduct.getIngredients().put(product, newQuantity);
+        parentProduct.getIngredients().put(productName, newQuantity);
     }
 
     private boolean doesProductExists(String productName) {
