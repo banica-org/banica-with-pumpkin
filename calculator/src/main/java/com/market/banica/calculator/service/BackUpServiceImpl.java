@@ -7,8 +7,6 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import com.market.banica.calculator.data.contract.ProductBase;
 import com.market.banica.calculator.model.Product;
 import com.market.banica.calculator.service.contract.BackUpService;
-import lombok.AccessLevel;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,14 +14,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -45,6 +42,7 @@ public class BackUpServiceImpl implements BackUpService {
         LOGGER.debug("In readBackUp method");
 
         if (doesBackUpFileExists()) {
+
             try (InputStream input = new FileInputStream(databaseBackUpUrl)) {
 
                 ConcurrentHashMap<String, Product> data = getDataFromBackUpFile(input);
@@ -55,6 +53,9 @@ public class BackUpServiceImpl implements BackUpService {
             } catch (IOException e) {
                 LOGGER.error("Exception thrown during reading back-up at start up", e);
             }
+        }else{
+
+            createEmptyBackUpFile();
         }
     }
 
@@ -78,10 +79,19 @@ public class BackUpServiceImpl implements BackUpService {
         }
     }
 
+    private void createEmptyBackUpFile() {
+        try (Writer ignored = new OutputStreamWriter(
+                new FileOutputStream(databaseBackUpUrl,true), UTF_8)) {
+
+        } catch (IOException e) {
+            LOGGER.error("Exception thrown during creating empty file for database back-up", e);
+        }
+    }
+
     private boolean doesBackUpFileExists() {
         LOGGER.debug("In doesBackUpFileNotExists private method");
 
-        return !Files.notExists(Paths.get(databaseBackUpUrl));
+        return new File(databaseBackUpUrl).length() != 0;
     }
 
     private ConcurrentHashMap<String, Product> getDataFromBackUpFile(InputStream input) throws IOException {
@@ -89,7 +99,7 @@ public class BackUpServiceImpl implements BackUpService {
 
         return new ObjectMapper().readValue(input,
                 new TypeReference<ConcurrentHashMap<String, Product>>() {
-        });
+                });
     }
 
     private String getStringFromMap(Map<String, Product> data, ObjectWriter objectWriter)

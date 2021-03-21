@@ -4,7 +4,7 @@ import com.market.banica.calculator.model.Product;
 
 import java.util.Map;
 
-public interface JMXService {
+public interface JMXServiceMBean {
 
     Map<String, Product> getDatabase();
 

@@ -4,7 +4,7 @@ import com.market.banica.calculator.data.contract.ProductBase;
 import com.market.banica.calculator.enums.UnitOfMeasure;
 import com.market.banica.calculator.model.Product;
 import com.market.banica.calculator.service.contract.BackUpService;
-import com.market.banica.calculator.service.contract.JMXService;
+import com.market.banica.calculator.service.contract.JMXServiceMBean;
 import com.market.banica.calculator.service.contract.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -22,7 +22,7 @@ import java.util.Map;
 @ManagedResource
 @Service
 @RequiredArgsConstructor
-public class JMXServiceImpl implements JMXService {
+public class JMXServiceImpl implements JMXServiceMBean {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JMXServiceImpl.class);
     private static final String REGEX_DELIMITER_NEW_PRODUCT_INGREDIENTS = ",";
