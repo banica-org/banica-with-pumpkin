@@ -4,9 +4,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import com.market.banica.calculator.data.contract.RecipesBase;
+import com.market.banica.calculator.data.contract.ProductBase;
 import com.market.banica.calculator.model.Product;
 import com.market.banica.calculator.service.contract.BackUpService;
+import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +37,7 @@ public class BackUpServiceImpl implements BackUpService {
 
     @Value("${database.backup.url}")
     private String databaseBackUpUrl;
-    private final RecipesBase database;
+    private final ProductBase productBase;
 
     @Override
     @PostConstruct
@@ -71,7 +73,8 @@ public class BackUpServiceImpl implements BackUpService {
 
             LOGGER.info("Recipes database back-up created in exterior file at location {}", databaseBackUpUrl);
         } catch (IOException e) {
-            LOGGER.error("Exception thrown during writing back-up for database file: {}", database.getDatabase(), e);
+            LOGGER.error("Exception thrown during writing back-up for database file: {}",
+                    productBase.getDatabase(), e);
         }
     }
 
@@ -84,11 +87,13 @@ public class BackUpServiceImpl implements BackUpService {
     private ConcurrentHashMap<String, Product> getDataFromBackUpFile(InputStream input) throws IOException {
         LOGGER.debug("In getDataFromBackUpFile private method");
 
-        return new ObjectMapper().readValue(input, new TypeReference<ConcurrentHashMap<String, Product>>() {
+        return new ObjectMapper().readValue(input,
+                new TypeReference<ConcurrentHashMap<String, Product>>() {
         });
     }
 
-    private String getStringFromMap(Map<String, Product> data, ObjectWriter objectWriter) throws JsonProcessingException {
+    private String getStringFromMap(Map<String, Product> data, ObjectWriter objectWriter)
+            throws JsonProcessingException {
         LOGGER.debug("In getStringFromMap private method");
 
         return objectWriter.writeValueAsString(data);
@@ -97,12 +102,12 @@ public class BackUpServiceImpl implements BackUpService {
     private Map<String, Product> getDataFromDatabase() {
         LOGGER.debug("In getDataFromDatabase private method");
 
-        return database.getDatabase();
+        return productBase.getDatabase();
     }
 
     private void setDatabaseFromBackUp(Map<String, Product> data) {
         LOGGER.debug("In setDatabaseFromBackUp private method");
 
-        database.getDatabase().putAll(data);
+        productBase.getDatabase().putAll(data);
     }
 }

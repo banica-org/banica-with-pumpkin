@@ -1,10 +1,10 @@
 package com.market.banica.calculator.service;
 
-import com.market.banica.calculator.data.contract.RecipesBase;
 import com.market.banica.calculator.enums.UnitOfMeasure;
 import com.market.banica.calculator.model.Product;
 import com.market.banica.calculator.service.contract.BackUpService;
 import com.market.banica.calculator.service.contract.JMXService;
+import com.market.banica.calculator.service.contract.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,7 +13,6 @@ import org.springframework.jmx.export.annotation.ManagedOperation;
 import org.springframework.jmx.export.annotation.ManagedResource;
 import org.springframework.stereotype.Service;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -29,15 +28,15 @@ public class JMXServiceImpl implements JMXService {
     private static final String REGEX_DELIMITER_NEW_PRODUCT_ENTRY_PAIRS = ":";
     private static final String KEY_PREFIX_FOR_DELETED_PRODUCT = "deleted_";
 
-    private final RecipesBase recipesBase;
     private final BackUpService backUpService;
+    private final ProductService productService;
 
     @Override
     @ManagedOperation
     public Map<String, Product> getDatabase() {
         LOGGER.info("GetDatabase called from JMX server");
 
-        return recipesBase.getDatabase();
+        return productService.getProductBase();
     }
 
     @Override
@@ -48,11 +47,15 @@ public class JMXServiceImpl implements JMXService {
                 ingredientsList);
         LOGGER.info("CreateProduct called from JMX server");
 
-        validateProductDoNotExist(newProductName);
+        if (productService.doesProductExists(newProductName)) {
+
+            LOGGER.error("Product with name {} already exists", newProductName);
+            throw new IllegalArgumentException("Product with this name already exists");
+        }
 
         Product newProduct = createNewProduct(newProductName, unitOfMeasure, ingredientsList);
 
-        addProductToDatabase(newProductName, newProduct);
+        productService.addProductToDatabase(newProductName, newProduct);
 
         LOGGER.debug("New product created from JMX server with product name {} and unit of measure {}"
                 , newProductName, unitOfMeasure);
@@ -67,9 +70,9 @@ public class JMXServiceImpl implements JMXService {
                 parentProductName, productName, quantity);
         LOGGER.info("AddIngredient called from JMX server");
 
-        validateProductExist(productName);
+        productService.validateProductExists(productName);
 
-        Product parentProduct = retrieveProductFromDatabase(parentProductName);
+        Product parentProduct = productService.getProductFromDatabase(parentProductName);
 
         parentProduct.getIngredients().put(productName, quantity);
 
@@ -86,7 +89,7 @@ public class JMXServiceImpl implements JMXService {
                 " and newQuantity {}", parentProductName, productName, newQuantity);
         LOGGER.info("SetProductQuantity called from JMX server");
 
-        Product parentProduct = retrieveProductFromDatabase(parentProductName);
+        Product parentProduct = productService.getProductFromDatabase(parentProductName);
 
         validateProductBelongToParentProductIngredients(productName, parentProduct);
 
@@ -105,7 +108,7 @@ public class JMXServiceImpl implements JMXService {
         LOGGER.debug("In getProductQuantity method with parameters: parentProductName {} and productName {}", parentProductName, productName);
         LOGGER.info("GetProductQuantity called from JMX server");
 
-        Product parentProduct = retrieveProductFromDatabase(parentProductName);
+        Product parentProduct = productService.getProductFromDatabase(parentProductName);
 
         validateProductBelongToParentProductIngredients(productName, parentProduct);
 
@@ -119,7 +122,7 @@ public class JMXServiceImpl implements JMXService {
         LOGGER.debug("In getUnitOfMeasure method with parameters: productName {}", productName);
         LOGGER.info("GetUnitOfMeasure called from JMX server");
 
-        Product product = retrieveProductFromDatabase(productName);
+        Product product = productService.getProductFromDatabase(productName);
 
         LOGGER.debug("UnitOfMeasure checked from JMX server for product {}", productName);
         return product.getUnitOfMeasure().toString();
@@ -131,7 +134,7 @@ public class JMXServiceImpl implements JMXService {
         LOGGER.debug("In setUnitOfMeasure method with parameters: productName {} and unitOfMeasure {}", productName, unitOfMeasure);
         LOGGER.info("SetUnitOfMeasure called from JMX server");
 
-        Product product = retrieveProductFromDatabase(productName);
+        Product product = productService.getProductFromDatabase(productName);
 
         product.setUnitOfMeasure(UnitOfMeasure.valueOf(unitOfMeasure.toUpperCase(Locale.ROOT)));
 
@@ -147,11 +150,11 @@ public class JMXServiceImpl implements JMXService {
         LOGGER.debug("In deleteProductFromDatabase method with parameters: productName {}", productName);
         LOGGER.info("DeleteProductFromDatabase called from JMX server");
 
-        validateProductExist(productName);
+        productService.validateProductExists(productName);
 
         Product product = getDatabase().remove(productName);
 
-        addProductToDatabase(KEY_PREFIX_FOR_DELETED_PRODUCT + productName, product);
+        productService.addProductToDatabase(KEY_PREFIX_FOR_DELETED_PRODUCT + productName, product);
 
         backUpService.writeBackUp();
 
@@ -164,7 +167,7 @@ public class JMXServiceImpl implements JMXService {
         LOGGER.debug("In deleteIngredient method with parameters: parentProductName {} and productName {}", parentProductName, productName);
         LOGGER.info("DeleteIngredient called from JMX server");
 
-        Product parentProduct = retrieveProductFromDatabase(parentProductName);
+        Product parentProduct = productService.getProductFromDatabase(parentProductName);
 
         validateProductBelongToParentProductIngredients(productName, parentProduct);
 
@@ -187,40 +190,6 @@ public class JMXServiceImpl implements JMXService {
         }
     }
 
-    private void addProductToDatabase(String newProductName, Product newProduct) {
-        LOGGER.debug("In addProductToDatabase private method");
-
-        getDatabase().put(newProductName, newProduct);
-    }
-
-    private Product retrieveProductFromDatabase(String productName) {
-        LOGGER.debug("In retrieveProductFromDatabase private method");
-
-        validateProductExist(productName);
-
-        return getDatabase().get(productName);
-    }
-
-    private void validateProductDoNotExist(String newProductName) {
-        LOGGER.debug("In validateProductDoNotExist private method");
-
-        if (doesProductExists(newProductName)) {
-
-            LOGGER.error("Product with name {} already exists", newProductName);
-            throw new IllegalArgumentException("Product with this name already exists");
-        }
-    }
-
-    private void validateProductExist(String productName) {
-        LOGGER.debug("In validateProductExist private method");
-
-        if (!doesProductExists(productName)) {
-
-            LOGGER.error("Product with name {} does not exist", productName);
-            throw new IllegalArgumentException("Product with this name does not exist");
-        }
-    }
-
     private void removeProductFromParentProductIngredients(Product parentProduct, String productName) {
         LOGGER.debug("In removeIngredientFromParentIngredients private method");
 
@@ -237,12 +206,6 @@ public class JMXServiceImpl implements JMXService {
         LOGGER.debug("In setProductQuantity private method");
 
         parentProduct.getIngredients().put(productName, newQuantity);
-    }
-
-    private boolean doesProductExists(String productName) {
-        LOGGER.debug("In doesProductExists private method");
-
-        return getDatabase().containsKey(productName);
     }
 
     private Product createNewProduct(String newProductName, String unitOfMeasure,
@@ -272,7 +235,7 @@ public class JMXServiceImpl implements JMXService {
 
         Map<String, Integer> ingredients = convertStringOfIngredientsToMap(ingredientsMap);
 
-        validateProductsOfListExists(ingredients.keySet());
+        productService.validateProductsOfListExists(ingredients.keySet());
 
         return ingredients;
     }
@@ -304,14 +267,5 @@ public class JMXServiceImpl implements JMXService {
             LOGGER.error("String passed is null. Exception thrown");
         }
         throw new IllegalArgumentException("Can not convert the string to number");
-    }
-
-    private void validateProductsOfListExists(Collection<String> productsNames) {
-        LOGGER.debug("In validateProductsOfListExists private method");
-
-        for (String productName : productsNames) {
-
-            validateProductExist(productName);
-        }
     }
 }
