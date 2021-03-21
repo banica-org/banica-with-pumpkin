@@ -20,7 +20,6 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Getter
 public class ProductServiceImpl implements ProductService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProductServiceImpl.class);

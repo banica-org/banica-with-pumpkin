@@ -1,5 +1,6 @@
 package com.market.banica.calculator.service;
 
+import com.market.banica.calculator.data.contract.ProductBase;
 import com.market.banica.calculator.enums.UnitOfMeasure;
 import com.market.banica.calculator.model.Product;
 import com.market.banica.calculator.service.contract.BackUpService;
@@ -30,13 +31,14 @@ public class JMXServiceImpl implements JMXService {
 
     private final BackUpService backUpService;
     private final ProductService productService;
+    private final ProductBase productBase;
 
     @Override
     @ManagedOperation
     public Map<String, Product> getDatabase() {
         LOGGER.info("GetDatabase called from JMX server");
 
-        return productService.getProductBase();
+        return productBase.getDatabase();
     }
 
     @Override

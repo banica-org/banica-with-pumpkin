@@ -2,15 +2,12 @@ package com.market.banica.calculator.service.contract;
 
 import com.market.banica.calculator.dto.ProductDto;
 import com.market.banica.calculator.model.Product;
-import org.springframework.lang.Nullable;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 public interface ProductService {
-
-    Map<String, Product> getProductBase();
 
     Product createProduct(List<Product> products);
 
