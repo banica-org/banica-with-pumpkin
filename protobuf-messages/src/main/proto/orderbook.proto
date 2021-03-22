@@ -2,8 +2,9 @@ syntax = "proto3";
 
 package orderbook;
 
-option java_package = "com.orderbook";
+import "market.proto";
 
+option java_package = "com.orderbook";
 option java_multiple_files = true;
 
 message ItemOrderBookRequest {
@@ -19,14 +20,18 @@ message ItemOrderBookResponse {
 message OrderBookLayer {
   double price = 1;
   int32 quantity = 2;
-  repeated ItemID item_ids = 3;
+  market.Origin origin = 3;
 }
 
-message ItemID {
-  string id = 1;
-  string location = 2;
+message InterestsRequest {
+  repeated string item_names = 1;
+  string client_id = 2;
+}
+
+message InterestsResponse {
 }
 
 service OrderBookService {
   rpc getOrderBookItemLayers(ItemOrderBookRequest) returns (ItemOrderBookResponse);
+  rpc announceItemInterest(InterestsRequest) returns (InterestsResponse);
 }
