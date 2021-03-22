@@ -1,10 +1,15 @@
-package com.market.banica.order.book;
+package com.market.banica.order.book.service.grpc;
 
-import com.orderbook.ItemID;
+import com.market.banica.order.book.exception.TrackingException;
+import com.market.banica.order.book.model.Item;
+import com.market.banica.order.book.model.ItemMarket;
+import com.orderbook.InterestsRequest;
+import com.orderbook.InterestsResponse;
 import com.orderbook.ItemOrderBookRequest;
 import com.orderbook.ItemOrderBookResponse;
 import com.orderbook.OrderBookLayer;
 import com.orderbook.OrderBookServiceGrpc;
+import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,17 +24,19 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OrderBookService.class);
 
+    private final AuroraClient auroraClient;
     private final ItemMarket itemMarket;
 
     @Autowired
-    private OrderBookService(final ItemMarket itemMarket) {
+    private OrderBookService(final AuroraClient auroraClient, final ItemMarket itemMarket) {
+        this.auroraClient = auroraClient;
         this.itemMarket = itemMarket;
     }
 
     @Override
     public void getOrderBookItemLayers(ItemOrderBookRequest request, StreamObserver<ItemOrderBookResponse> responseObserver) {
 
-        Set<Item> result = itemMarket.getAllItemsByName(request.getItemName());
+        Set<Item> result = itemMarket.getItemSetByName(request.getItemName());
 
         responseObserver.onNext(ItemOrderBookResponse.newBuilder()
                 .setItemName(request.getItemName())
@@ -37,19 +44,32 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
                         .map(item -> OrderBookLayer.newBuilder()
                                 .setPrice(item.getPrice())
                                 .setQuantity(item.getQuantity())
-                                .addAllItemIds(item.getItemIDs().stream()
-                                        .map(itemID -> ItemID.newBuilder()
-                                                .setId(itemID.getId())
-                                                .setLocation(itemID.getLocation())
-                                                .build())
-                                        .collect(Collectors.toList()))
+                                .setOrigin(item.getOrigin())
                                 .build()).collect(Collectors.toList()))
                 .build());
-
 
         responseObserver.onCompleted();
 
         LOGGER.info("Get orderbook item layers by client id: {}", request.getClientId());
+
+    }
+
+    @Override
+    public void announceItemInterest(InterestsRequest request, StreamObserver<InterestsResponse> responseObserver) {
+
+        try {
+
+            auroraClient.updateItems(request.getItemNamesList(), request.getClientId());
+            responseObserver.onNext(InterestsResponse.newBuilder().build());
+            responseObserver.onCompleted();
+            LOGGER.info("Announce item interests by client id: {}", request.getClientId());
+
+        } catch (TrackingException e) {
+
+            LOGGER.warn("Announce item interests by client id: {} has failed with items: {}", request.getClientId(), request.getItemNamesList());
+            responseObserver.onError(Status.INVALID_ARGUMENT.withDescription("Invalid item list").asException());
+
+        }
 
     }
 
