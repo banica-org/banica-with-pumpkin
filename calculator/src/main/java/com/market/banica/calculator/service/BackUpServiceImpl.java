@@ -43,7 +43,7 @@ public class BackUpServiceImpl implements BackUpService {
 
         if (doesBackUpFileExists()) {
 
-            try (InputStream input = new FileInputStream(databaseBackUpUrl)) {
+            try ( InputStream input = new FileInputStream(databaseBackUpUrl)) {
 
                 ConcurrentHashMap<String, Product> data = getDataFromBackUpFile(input);
 
@@ -53,7 +53,7 @@ public class BackUpServiceImpl implements BackUpService {
             } catch (IOException e) {
                 LOGGER.error("Exception thrown during reading back-up at start up", e);
             }
-        }else{
+        } else {
 
             createEmptyBackUpFile();
         }
@@ -80,8 +80,10 @@ public class BackUpServiceImpl implements BackUpService {
     }
 
     private void createEmptyBackUpFile() {
+        LOGGER.debug("In createEmptyBackUpFile private method");
+
         try (Writer ignored = new OutputStreamWriter(
-                new FileOutputStream(databaseBackUpUrl,true), UTF_8)) {
+                new FileOutputStream(databaseBackUpUrl, true), UTF_8)) {
 
         } catch (IOException e) {
             LOGGER.error("Exception thrown during creating empty file for database back-up", e);
@@ -89,7 +91,7 @@ public class BackUpServiceImpl implements BackUpService {
     }
 
     private boolean doesBackUpFileExists() {
-        LOGGER.debug("In doesBackUpFileNotExists private method");
+        LOGGER.debug("In doesBackUpFileExists private method");
 
         return new File(databaseBackUpUrl).length() != 0;
     }
