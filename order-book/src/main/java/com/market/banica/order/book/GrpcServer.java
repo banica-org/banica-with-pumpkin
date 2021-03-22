@@ -27,7 +27,7 @@ public class GrpcServer {
     @Autowired
     private GrpcServer(
             @Value("${application.executor.pool.size}") final int applicationExecutorPoolSize,
-            @Value("${grpc.server.port}") final int port,
+            @Value("${orderbook.server.port}") final int port,
             final OrderBookService orderBookService) {
         applicationExecutor = Executors.newFixedThreadPool(applicationExecutorPoolSize);
         server = NettyServerBuilder.forPort(port)

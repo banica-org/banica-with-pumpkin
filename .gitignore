@@ -1,3 +1,7 @@
+/logs/
+/calculator/logs
+/order-book/logs
+
 ### Build ###
 target/
 !.mvn/wrapper/maven-wrapper.jar
