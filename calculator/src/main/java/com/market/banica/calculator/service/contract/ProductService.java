@@ -9,6 +9,9 @@ public interface ProductService {
 
     Product createProduct(List<Product> products);
 
+    Product createProduct(String newProductName, String unitOfMeasure,
+                          String ingredientsMap);
+
     List<Product> getProductAsListProduct(String recipeName);
 
     void getAllProductsAsListProduct();
@@ -21,6 +24,5 @@ public interface ProductService {
 
     Product getProductFromDatabase(String productName);
 
-    void addProductToDatabase(String newProductName, Product newProduct);
-
+    void writeProductToDatabase(String newProductName, Product newProduct);
 }

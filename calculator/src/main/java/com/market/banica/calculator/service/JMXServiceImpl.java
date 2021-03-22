@@ -3,7 +3,6 @@ package com.market.banica.calculator.service;
 import com.market.banica.calculator.data.contract.ProductBase;
 import com.market.banica.calculator.enums.UnitOfMeasure;
 import com.market.banica.calculator.model.Product;
-import com.market.banica.calculator.service.contract.BackUpService;
 import com.market.banica.calculator.service.contract.JMXServiceMBean;
 import com.market.banica.calculator.service.contract.ProductService;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +13,6 @@ import org.springframework.jmx.export.annotation.ManagedOperation;
 import org.springframework.jmx.export.annotation.ManagedResource;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
@@ -25,11 +23,8 @@ import java.util.Map;
 public class JMXServiceImpl implements JMXServiceMBean {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JMXServiceImpl.class);
-    private static final String REGEX_DELIMITER_NEW_PRODUCT_INGREDIENTS = ",";
-    private static final String REGEX_DELIMITER_NEW_PRODUCT_ENTRY_PAIRS = ":";
     private static final String KEY_PREFIX_FOR_DELETED_PRODUCT = "deleted_";
 
-    private final BackUpService backUpService;
     private final ProductService productService;
     private final ProductBase productBase;
 
@@ -55,14 +50,12 @@ public class JMXServiceImpl implements JMXServiceMBean {
             throw new IllegalArgumentException("Product with this name already exists");
         }
 
-        Product newProduct = createNewProduct(newProductName, unitOfMeasure, ingredientsList);
+        Product newProduct = productService.createProduct(newProductName, unitOfMeasure, ingredientsList);
 
-        productService.addProductToDatabase(newProductName, newProduct);
+        productService.writeProductToDatabase(newProductName, newProduct);
 
         LOGGER.debug("New product created from JMX server with product name {} and unit of measure {}"
                 , newProductName, unitOfMeasure);
-
-        backUpService.writeBackUp();
     }
 
     @Override
@@ -78,7 +71,7 @@ public class JMXServiceImpl implements JMXServiceMBean {
 
         parentProduct.getIngredients().put(productName, quantity);
 
-        backUpService.writeBackUp();
+        productService.writeProductToDatabase(parentProductName, parentProduct);
 
         LOGGER.debug("Product {} added from JMX server to ingredients of parent product {} with quantity {}"
                 , productName, parentProductName, quantity);
@@ -97,7 +90,7 @@ public class JMXServiceImpl implements JMXServiceMBean {
 
         setProductQuantity(productName, parentProduct, newQuantity);
 
-        backUpService.writeBackUp();
+        productService.writeProductToDatabase(parentProductName, parentProduct);
 
 
         LOGGER.debug("Quantity set from JMX server to new quantity {} for product {} with parent product {}",
@@ -140,7 +133,7 @@ public class JMXServiceImpl implements JMXServiceMBean {
 
         product.setUnitOfMeasure(UnitOfMeasure.valueOf(unitOfMeasure.toUpperCase(Locale.ROOT)));
 
-        backUpService.writeBackUp();
+        productService.writeProductToDatabase(productName, product);
 
         LOGGER.debug("UnitOfMeasure set from JMX server for product {}" +
                 " with new unitOfMeasure {}", productName, unitOfMeasure);
@@ -156,9 +149,7 @@ public class JMXServiceImpl implements JMXServiceMBean {
 
         Product product = getDatabase().remove(productName);
 
-        productService.addProductToDatabase(KEY_PREFIX_FOR_DELETED_PRODUCT + productName, product);
-
-        backUpService.writeBackUp();
+        productService.writeProductToDatabase(KEY_PREFIX_FOR_DELETED_PRODUCT + productName, product);
 
         LOGGER.debug("Product {} deleted from JMX server", productName);
     }
@@ -175,7 +166,7 @@ public class JMXServiceImpl implements JMXServiceMBean {
 
         removeProductFromParentProductIngredients(parentProduct, productName);
 
-        backUpService.writeBackUp();
+        productService.writeProductToDatabase(parentProductName, parentProduct);
 
         LOGGER.debug("Product deleted from JMX server for parent product {} and product {}"
                 , parentProductName, productName);
@@ -210,64 +201,5 @@ public class JMXServiceImpl implements JMXServiceMBean {
         parentProduct.getIngredients().put(productName, newQuantity);
     }
 
-    private Product createNewProduct(String newProductName, String unitOfMeasure,
-                                     String ingredientsMap) {
-        LOGGER.debug("In createNewProduct private method");
 
-        Product newProduct = new Product();
-
-        newProduct.setProductName(newProductName);
-
-        newProduct.setUnitOfMeasure(UnitOfMeasure.valueOf(unitOfMeasure));
-
-        Map<String, Integer> ingredients = new HashMap<>();
-
-        if (!ingredientsMap.isEmpty()) {
-
-            ingredients = setCompositeProductIngredients(ingredientsMap);
-        }
-
-        newProduct.setIngredients(ingredients);
-
-        return newProduct;
-    }
-
-    private Map<String, Integer> setCompositeProductIngredients(String ingredientsMap) {
-        LOGGER.debug("In setCompositeProductIngredients private method");
-
-        Map<String, Integer> ingredients = convertStringOfIngredientsToMap(ingredientsMap);
-
-        productService.validateProductsOfListExists(ingredients.keySet());
-
-        return ingredients;
-    }
-
-    private Map<String, Integer> convertStringOfIngredientsToMap(String ingredientsMap) {
-        LOGGER.debug("In convertStringOfIngredientsToMap private method");
-
-        Map<String, Integer> ingredients = new HashMap<>();
-        String[] ingredientsAsArray = ingredientsMap.split(REGEX_DELIMITER_NEW_PRODUCT_INGREDIENTS);
-
-        for (String s : ingredientsAsArray) {
-
-            String[] mapEntry = s.split(REGEX_DELIMITER_NEW_PRODUCT_ENTRY_PAIRS);
-            int quantity = getValueAsInt(mapEntry[1]);
-            ingredients.put(mapEntry[0], quantity);
-        }
-
-        return ingredients;
-    }
-
-    private int getValueAsInt(String quantity) {
-        LOGGER.debug("In getValueAsInt private method");
-
-        try {
-            return Integer.parseInt(quantity);
-        } catch (NumberFormatException e) {
-            LOGGER.error("String passed is not convertible to int. String value: {}. Exception thrown", quantity);
-        } catch (NullPointerException e) {
-            LOGGER.error("String passed is null. Exception thrown");
-        }
-        throw new IllegalArgumentException("Can not convert the string to number");
-    }
 }

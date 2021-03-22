@@ -1,6 +1,7 @@
 package com.market.banica.calculator.service;
 
 import com.market.banica.calculator.data.contract.ProductBase;
+import com.market.banica.calculator.enums.UnitOfMeasure;
 import com.market.banica.calculator.model.Product;
 import com.market.banica.calculator.service.contract.BackUpService;
 import com.market.banica.calculator.service.contract.ProductService;
@@ -12,7 +13,9 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.stream.Collectors;
 
@@ -21,6 +24,8 @@ import java.util.stream.Collectors;
 public class ProductServiceImpl implements ProductService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProductServiceImpl.class);
+    private static final String REGEX_DELIMITER_NEW_PRODUCT_INGREDIENTS = ",";
+    private static final String REGEX_DELIMITER_NEW_PRODUCT_ENTRY_PAIRS = ":";
 
     private final BackUpService backUpService;
     private final ProductBase productBase;
@@ -35,12 +40,35 @@ public class ProductServiceImpl implements ProductService {
 
         createProductsInDatabase(products);
 
-        backUpService.writeBackUp();
+//        backUpService.writeBackUp();
 
         String productName = getProductName(products);
 
         LOGGER.debug("Product {} successfully created", productName);
         return productBase.getDatabase().get(productName);
+    }
+
+    @Override
+    public Product createProduct(String newProductName, String unitOfMeasure,
+                                 String ingredientsMap) {
+        LOGGER.debug("In createProduct method");
+
+        Product newProduct = new Product();
+
+        newProduct.setProductName(newProductName);
+
+        newProduct.setUnitOfMeasure(UnitOfMeasure.valueOf(unitOfMeasure));
+
+        Map<String, Integer> ingredients = new HashMap<>();
+
+        if (!ingredientsMap.isEmpty()) {
+
+            ingredients = setCompositeProductIngredients(ingredientsMap);
+        }
+
+        newProduct.setIngredients(ingredients);
+
+        return newProduct;
     }
 
     @Override
@@ -76,10 +104,11 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public void addProductToDatabase(String newProductName, Product newProduct) {
-        LOGGER.debug("In addProductToDatabase method");
+    public void writeProductToDatabase(String newProductName, Product newProduct) {
+        LOGGER.debug("In writeProductToDatabase method");
 
         productBase.getDatabase().put(newProductName, newProduct);
+        backUpService.writeBackUp();
     }
 
     @Override
@@ -110,11 +139,50 @@ public class ProductServiceImpl implements ProductService {
         return productBase.getDatabase().containsKey(productName);
     }
 
+    private Map<String, Integer> setCompositeProductIngredients(String ingredientsMap) {
+        LOGGER.debug("In setCompositeProductIngredients private method");
+
+        Map<String, Integer> ingredients = convertStringOfIngredientsToMap(ingredientsMap);
+
+        validateProductsOfListExists(ingredients.keySet());
+
+        return ingredients;
+    }
+
+    private Map<String, Integer> convertStringOfIngredientsToMap(String ingredientsMap) {
+        LOGGER.debug("In convertStringOfIngredientsToMap private method");
+
+        Map<String, Integer> ingredients = new HashMap<>();
+        String[] ingredientsAsArray = ingredientsMap.split(REGEX_DELIMITER_NEW_PRODUCT_INGREDIENTS);
+
+        for (String s : ingredientsAsArray) {
+
+            String[] mapEntry = s.split(REGEX_DELIMITER_NEW_PRODUCT_ENTRY_PAIRS);
+            int quantity = getValueAsInt(mapEntry[1]);
+            ingredients.put(mapEntry[0], quantity);
+        }
+
+        return ingredients;
+    }
+
+    private int getValueAsInt(String quantity) {
+        LOGGER.debug("In getValueAsInt private method");
+
+        try {
+            return Integer.parseInt(quantity);
+        } catch (NumberFormatException e) {
+            LOGGER.error("String passed is not convertible to int. String value: {}. Exception thrown", quantity);
+        } catch (NullPointerException e) {
+            LOGGER.error("String passed is null. Exception thrown");
+        }
+        throw new IllegalArgumentException("Can not convert the string to number");
+    }
+
     private void createProductsInDatabase(List<Product> products) {
         LOGGER.debug("In createProductsInDatabase private method");
 
         for(Product product: products){
-           addProductToDatabase(product.getProductName(),product);
+           writeProductToDatabase(product.getProductName(),product);
         }
     }
 
