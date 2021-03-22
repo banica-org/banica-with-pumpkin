@@ -1,11 +1,9 @@
 package com.market.banica.calculator.service;
 
 import com.market.banica.calculator.data.contract.ProductBase;
-import com.market.banica.calculator.dto.ProductDto;
 import com.market.banica.calculator.model.Product;
 import com.market.banica.calculator.service.contract.BackUpService;
 import com.market.banica.calculator.service.contract.ProductService;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,29 +44,27 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public List<ProductDto> getProductAsListProductDto(String productName) {
-        LOGGER.debug("In getProductAsListProductDto method with parameters:productName {}"
+    public List<Product> getProductAsListProduct(String productName) {
+        LOGGER.debug("In getProductAsListProduct method with parameters:productName {}"
                 ,productName);
 
         Product product = getProductFromDatabase(productName);
 
-        ProductDto productDto = mapProductToProductDto( product);
+        List<Product> result = new ArrayList<>();
 
-        List<ProductDto> result = new ArrayList<>();
-
-        result.add(productDto);
+        result.add(product);
 
         if (!product.getIngredients().isEmpty()) {
-            addAllIngredientsFromProductInListAsProductDto(result, product);
+            addAllIngredientsFromProductInListAsProduct(result, product);
         }
 
-        LOGGER.debug("GetProductAsListProductDto with product name {} successfully invoked", productName);
+        LOGGER.debug("GetProductAsListProduct with product name {} successfully invoked", productName);
         return result;
     }
 
     //TODO to be implemented once expectations are clear
     @Override
-    public void getAllProductsAsListProductDto(){}
+    public void getAllProductsAsListProduct(){}
 
     @Override
     public Product getProductFromDatabase(String productName) {
@@ -140,8 +136,8 @@ public class ProductServiceImpl implements ProductService {
         return products.get(0).getProductName();
     }
 
-    private void addAllIngredientsFromProductInListAsProductDto(List<ProductDto> result, Product recipe) {
-        LOGGER.debug("In addAllIngredientsFromProductInListAsProductDto private method");
+    private void addAllIngredientsFromProductInListAsProduct(List<Product> result, Product recipe) {
+        LOGGER.debug("In addAllIngredientsFromProductInListAsProduct private method");
 
         Queue<Product> tempContainer = convertListOfProductNamesInQueueOfProducts(recipe);
 
@@ -155,26 +151,13 @@ public class ProductServiceImpl implements ProductService {
 
                 tempContainer.addAll(tempIngredientsQueue);
 
-                result.addAll(mapQueueOfProductsToListOfProductDto(tempIngredientsQueue));
+                result.addAll(tempIngredientsQueue);
 
             } else {
 
-                result.add(mapProductToProductDto( tempProduct));
+                result.add( tempProduct);
             }
         }
-    }
-
-    private List<ProductDto> mapQueueOfProductsToListOfProductDto(Queue<Product> tempIngredientsQueue) {
-        LOGGER.debug("In mapQueueOfProductsToListOfProductDto private method");
-
-        List<ProductDto>productDto = new ArrayList<>();
-
-        for(Product product: tempIngredientsQueue){
-
-            productDto.add(mapProductToProductDto(product));
-        }
-
-        return productDto;
     }
 
     private Queue<Product> convertListOfProductNamesInQueueOfProducts(Product recipe) {
@@ -183,18 +166,6 @@ public class ProductServiceImpl implements ProductService {
         return recipe.getIngredients().keySet().stream()
                 .map(this::getProductFromDatabase)
                 .collect(Collectors.toCollection(ArrayDeque::new));
-    }
-
-    // TODO matter of future update with Model Mapper, once it is merged with main, to avoid possible merge conflicts
-    private ProductDto mapProductToProductDto(Product recipe) {
-        LOGGER.debug("In mapProductToProductDto private method");
-
-        ProductDto productDto = new ProductDto();
-        productDto.setProductName(recipe.getProductName());
-        productDto.setUnitOfMeasure(recipe.getUnitOfMeasure());
-        productDto.setIngredients(recipe.getIngredients());
-
-        return productDto;
     }
 
     private void validateParameterForNullAndEmpty(List<Product> products) {

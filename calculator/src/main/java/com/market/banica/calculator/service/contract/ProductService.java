@@ -1,19 +1,17 @@
 package com.market.banica.calculator.service.contract;
 
-import com.market.banica.calculator.dto.ProductDto;
 import com.market.banica.calculator.model.Product;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 public interface ProductService {
 
     Product createProduct(List<Product> products);
 
-    List<ProductDto> getProductAsListProductDto(String recipeName);
+    List<Product> getProductAsListProduct(String recipeName);
 
-    void getAllProductsAsListProductDto();
+    void getAllProductsAsListProduct();
 
     void validateProductsOfListExists(Collection<String> productsNames);
 
