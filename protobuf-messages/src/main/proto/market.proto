@@ -27,6 +27,7 @@ message TickResponse{
 
 message CatalogueRequest{
   string clientId = 1;
+//  CatalogueRequest may accept originName as well
 }
 
 message CatalogueResponse{

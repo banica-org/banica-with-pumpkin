@@ -28,24 +28,6 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
         this.tickGenerator = tickGenerator;
     }
 
-    /* public MarketService(MarketSubscriptionManager marketSubscriptionManager) {
-        this.marketSubscriptionManager = marketSubscriptionManager;
-        tickGenerator = new TickGenerator() {
-            @Override
-            public List<TickResponse> generateTicks(String topic) {
-                List<TickResponse> list = new ArrayList<>();
-                Random r = new Random();
-                String name = topic.split("/")[1];
-                for (int i = 0; i < 10; i++) {
-                    list.add(TickResponse.newBuilder().setGoodName(name + (i + 1))
-                            .setQuantity(r.nextInt(3))
-                            .setPrice(r.nextDouble()).build());
-                }
-                return list;
-            }
-        };
-    }*/
-
     @Override
     public void subscribeForItem(MarketDataRequest request, StreamObserver<TickResponse> responseObserver) {
 //        String goodName = marketSubscriptionManager.getRequestGoodName(request);
@@ -57,6 +39,10 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
 
     @Override
     public void requestCatalogue(CatalogueRequest request, StreamObserver<CatalogueResponse> responseObserver) {
-        super.requestCatalogue(request, responseObserver);
+        int[] index = new int[1];
+        List<String> marketCatalogue = tickGenerator.getMarketCatalogue(request.getClientId());
+        CatalogueResponse build = CatalogueResponse.newBuilder().addAllFoodItems(marketCatalogue).build();
+        responseObserver.onNext(build);
+        responseObserver.onCompleted();
     }
 }
