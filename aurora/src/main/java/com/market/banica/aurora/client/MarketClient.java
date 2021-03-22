@@ -23,7 +23,8 @@ public class MarketClient {
 
     public void subscribeForMarketGood(MarketDataRequest request, MarketTickResponseObserver responseObserver) {
 
-        MarketDataRequest marketDataRequest = MarketDataRequest.newBuilder().setGoodName(getGood(request)).build();
+//        MarketDataRequest marketDataRequest = MarketDataRequest.newBuilder().setGoodName(getGood(request)).build();
+        MarketDataRequest marketDataRequest = MarketDataRequest.newBuilder().setGoodName(request.getGoodName()).build();
 
         ManagedChannel channel = marketChannelManager.getMarketChannel(getOrigin(request));
 
@@ -32,10 +33,10 @@ public class MarketClient {
         marketServiceStub.subscribeForItem(marketDataRequest,responseObserver);
     }
 
-    public Set<String> getMarketCatalogue(String marketOrigin) {
+    public Set<String> getMarketCatalogue(String marketOrigin, String good) {
 
         CatalogueResponse catalogueResponse = MarketServiceGrpc.newBlockingStub(marketChannelManager.getMarketChannel(marketOrigin))
-                .requestCatalogue(CatalogueRequest.newBuilder().build());
+                .requestCatalogue(CatalogueRequest.newBuilder().setClientId(marketOrigin).build());
 
         return new HashSet<>(catalogueResponse.getFoodItemsList());
     }

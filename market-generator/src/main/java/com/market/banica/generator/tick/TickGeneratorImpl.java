@@ -14,8 +14,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.stream.Collectors;
 
 @Getter
 @Component
@@ -40,7 +42,8 @@ public class TickGeneratorImpl implements TickGenerator {
                     nameGood.split("/")[0]/*originGood*/,
                     nameGood, tickBlockingQueue);
             tickGeneratorTasks.put(nameGood, tickGeneratorTask);
-            tickGeneratorTask.run();
+            new Thread(tickGeneratorTask).start();
+//            tickGeneratorTask.run();
             LOGGER.info("Started new tick generation for {}!", nameGood);
         }
         // europe.eggs
@@ -65,6 +68,9 @@ public class TickGeneratorImpl implements TickGenerator {
 
     @Override
     public List<TickResponse> generateTicks(String nameGood) {
+        if (!tickGeneratorTasks.containsKey(nameGood)) {
+            return new ArrayList<>();
+        }
         BlockingQueue<MarketTick> queueTicks = tickGeneratorTasks.get(nameGood).getTickBlockingQueue();
         List<TickResponse> listTicks = new ArrayList<>();
         while (!queueTicks.isEmpty()) {
@@ -80,5 +86,11 @@ public class TickGeneratorImpl implements TickGenerator {
             listTicks.add(tickResponse);
         }
         return listTicks;
+    }
+
+    public List<String> getMarketCatalogue(String marketName) {
+        List<String> collect = this.tickGeneratorTasks.keySet().stream().filter(k -> k.split("/")[0].equals(marketName)).map(k -> k.split("/")[1])
+                .collect(Collectors.toList());
+        return collect;
     }
 }

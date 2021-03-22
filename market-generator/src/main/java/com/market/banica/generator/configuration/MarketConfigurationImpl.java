@@ -100,7 +100,7 @@ public class MarketConfigurationImpl implements MarketConfiguration {
             this.modifyProperties(removedGoodSpecification, properties,
                     (k, v) -> properties.remove(k), this.file, false);
 
-            this.tickGenerator.stopTickGeneration(good);
+            this.tickGenerator.stopTickGeneration(String.format("%s/%s", origin, good));
             LOGGER.info("Removing an existing goodSpecification.");
         } finally {
             this.lock.writeLock().unlock();
@@ -137,7 +137,7 @@ public class MarketConfigurationImpl implements MarketConfiguration {
                     priceLow, priceHigh, priceStep,
                     periodLow, periodHigh, periodStep, append, properties, properties::setProperty, loggerMessage);
 
-            this.tickGenerator.updateTickGeneration(good, goodSpecification);
+            this.tickGenerator.updateTickGeneration(String.format("%s/%s", origin, good), goodSpecification);
         } finally {
             this.lock.writeLock().unlock();
         }

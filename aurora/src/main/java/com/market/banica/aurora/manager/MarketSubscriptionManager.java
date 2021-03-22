@@ -11,6 +11,8 @@ import io.grpc.stub.StreamObserver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Set;
@@ -57,16 +59,13 @@ public class MarketSubscriptionManager {
 
             Set<MarketDataRequest> newMarketDataRequests;
 
-            newMarketDataRequests = mapWildcard(marketGoodName, marketClient.getMarketCatalogue(marketOriginName),
+            newMarketDataRequests = mapWildcard(marketGoodName, marketClient.getMarketCatalogue(marketOriginName, marketGoodName),
                     (goodName) -> marketOriginName + DELIMITER + goodName, marketDataRequest.getClientId(), marketDataRequest.getGoodName());
-
             newMarketDataRequests.forEach(dataRequest -> {
                 MarketTickResponseObserver marketTickResponseObserver = new MarketTickResponseObserver(this);
                 observersMap.put(marketTickResponseObserver, responseObserver);
                 marketClient.subscribeForMarketGood(dataRequest, marketTickResponseObserver);
             });
-
-
         });
 
     }
@@ -97,7 +96,10 @@ public class MarketSubscriptionManager {
         return topic.split(DELIMITER)[1];
     }
 
-    private Set<MarketDataRequest> mapWildcard(String possibleMarketData, Set<String> getPossibleMarketData, Function<String, String> marketDataMapping, String clientId, String goodName) {
+    private Set<MarketDataRequest> mapWildcard(String possibleMarketData,
+                                               Set<String> getPossibleMarketData,
+                                               Function<String, String> marketDataMapping,
+                                               String clientId, String goodName) {
         if (possibleMarketData.equals(ASTERISK)) {
             return getPossibleMarketData
                     .stream()
@@ -116,4 +118,17 @@ public class MarketSubscriptionManager {
 
     }
 
+    @PostConstruct
+    private void initializeMarketChannels() {
+        this.marketChannelManager.createChannel("europe", "localhost", 8083);
+        this.marketChannelManager.createChannel("asia", "localhost", 8082);
+        this.marketChannelManager.createChannel("america", "localhost", 8081);
+    }
+
+    @PreDestroy
+    private void destroyMarketChannels() {
+        this.marketChannelManager.shutdownChannel("europe");
+        this.marketChannelManager.shutdownChannel("asia");
+        this.marketChannelManager.shutdownChannel("america");
+    }
 }
