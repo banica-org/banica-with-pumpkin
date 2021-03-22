@@ -1,5 +1,3 @@
-calculator/logs
-
 ### Build ###
 target/
 !.mvn/wrapper/maven-wrapper.jar
