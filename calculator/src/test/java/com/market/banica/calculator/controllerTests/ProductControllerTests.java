@@ -55,7 +55,7 @@ public class ProductControllerTests {
         //when
         MockHttpServletResponse response = mockMvc.perform(
                 post("/product")
-                       .contentType(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonResponseListProduct.write(products).getJson())
                         .accept(MediaType.APPLICATION_JSON))
                 .andReturn().getResponse();

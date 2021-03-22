@@ -3,7 +3,6 @@ package com.market.banica.calculator.service.grpc;
 
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
-import com.market.banica.calculator.exception.exceptions.BadResponseException;
 import com.market.banica.common.ChannelRPCConfig;
 import com.orderbook.ItemOrderBookResponse;
 import io.grpc.ManagedChannel;
@@ -55,17 +54,17 @@ public class AuroraClientSideService {
 
     public ItemOrderBookResponse getIngredient(String message, String clientId) {
 
-        LOGGER.debug("Inside getIngredient method");
-        LOGGER.debug("Building blocking stub");
+        LOGGER.info("Inside getIngredient method");
+        LOGGER.info("Building blocking stub");
         AuroraServiceGrpc.AuroraServiceBlockingStub blockingStub = getBlockingStub();
 
-        LOGGER.debug("Building request with parameters {}", message);
+        LOGGER.info("Building request with parameters {}", message);
         Aurora.AuroraRequest request = Aurora.AuroraRequest.newBuilder()
                 .setClientId(clientId)
                 .setTopic(message)
                 .build();
 
-        LOGGER.debug("Sending request to aurora.");
+        LOGGER.info("Sending request to aurora.");
 
         Aurora.AuroraResponse auroraResponse = blockingStub.request(request);
 
@@ -73,7 +72,7 @@ public class AuroraClientSideService {
             return auroraResponse.getItemOrderBookResponse();
         }
 
-        throw new BadResponseException("Bad message from aurora service");
+        return auroraResponse.getItemOrderBookResponse();
     }
 
     private AuroraServiceGrpc.AuroraServiceBlockingStub getBlockingStub() {

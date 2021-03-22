@@ -30,7 +30,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler({BadResponseException.class})
-    public void badAuroraResponse(BadResponseException exception){
-        LOGGER.warn("Exception caught: {}" ,exception.getMessage());
+    public void badAuroraResponse(BadResponseException exception) {
+        LOGGER.warn("Exception caught: {}", exception.getMessage());
     }
 }

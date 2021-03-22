@@ -74,7 +74,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public List<Product> getProductAsListProduct(String productName) {
         LOGGER.debug("In getProductAsListProduct method with parameters:productName {}"
-                ,productName);
+                , productName);
 
         Product product = getProductFromDatabase(productName);
 
@@ -92,7 +92,8 @@ public class ProductServiceImpl implements ProductService {
 
     //TODO to be implemented once expectations are clear
     @Override
-    public void getAllProductsAsListProduct(){}
+    public void getAllProductsAsListProduct() {
+    }
 
     @Override
     public Product getProductFromDatabase(String productName) {
@@ -181,18 +182,18 @@ public class ProductServiceImpl implements ProductService {
     private void createProductsInDatabase(List<Product> products) {
         LOGGER.debug("In createProductsInDatabase private method");
 
-        for(Product product: products){
-           writeProductToDatabase(product.getProductName(),product);
+        for (Product product : products) {
+            writeProductToDatabase(product.getProductName(), product);
         }
     }
 
     private void validateAllProductsInListAreNew(List<Product> products) {
         LOGGER.debug("In validateAllProductsInListAreNew private method");
 
-        for(Product newProduct: products){
-            if(doesProductExists(newProduct.getProductName())){
+        for (Product newProduct : products) {
+            if (doesProductExists(newProduct.getProductName())) {
 
-                LOGGER.error("Product with name {} already exists",newProduct.getProductName());
+                LOGGER.error("Product with name {} already exists", newProduct.getProductName());
                 throw new IllegalArgumentException("Product already exists");
             }
         }
@@ -223,7 +224,7 @@ public class ProductServiceImpl implements ProductService {
 
             } else {
 
-                result.add( tempProduct);
+                result.add(tempProduct);
             }
         }
     }

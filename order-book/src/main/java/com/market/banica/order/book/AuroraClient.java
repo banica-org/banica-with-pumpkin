@@ -2,7 +2,6 @@ package com.market.banica.order.book;
 
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
-
 import com.market.TickResponse;
 import com.market.banica.common.ChannelRPCConfig;
 import io.grpc.ManagedChannel;
@@ -20,12 +19,12 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class AuroraClient {
 
-    private final ItemMarket itemMarket;
-    private final ManagedChannel managedChannel;
     private static final Logger LOGGER = LogManager.getLogger(AuroraClient.class);
+    private final ItemMarketService itemMarketService;
+    private final ManagedChannel managedChannel;
 
     @Autowired
-    AuroraClient(ItemMarket itemMarket,
+    AuroraClient(ItemMarketService itemMarketService,
                  @Value("${aurora.server.host}") final String host,
                  @Value("${aurora.server.port}") final int port) {
 
@@ -35,12 +34,12 @@ public class AuroraClient {
                 .enableRetry()
                 .build();
 
-        this.itemMarket = itemMarket;
+        this.itemMarketService = itemMarketService;
 
     }
 
     private void start() throws InterruptedException {
-        for (String product : itemMarket.getAllProductNames()) {
+        for (String product : itemMarketService.getAllProductNames()) {
             final AuroraServiceGrpc.AuroraServiceStub asynchronousStub = AuroraServiceGrpc.newStub(managedChannel);
             final Aurora.AuroraRequest request = Aurora.AuroraRequest.newBuilder()
                     .setTopic("market/" + product)
@@ -56,8 +55,8 @@ public class AuroraClient {
                         Item item = new Item();
                         item.setPrice(tickResponse.getPrice());
                         item.setQuantity((int) tickResponse.getQuantity());
-                        item.getItemIDs().add(new Item.ItemID("1", tickResponse.getOrigin().toString()));
-                        itemMarket.getAllItemsByName(tickResponse.getGoodName()).add(item);
+                        item.setOrigin(tickResponse.getOrigin());
+                        itemMarketService.getItemSetByName(tickResponse.getGoodName()).add(item);
 
                         LOGGER.info("Products data updated!");
                     } else {

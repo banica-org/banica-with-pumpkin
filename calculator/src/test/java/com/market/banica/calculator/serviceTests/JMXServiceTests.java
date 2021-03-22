@@ -44,7 +44,7 @@ public class JMXServiceTests {
         product.setUnitOfMeasure(UnitOfMeasure.GRAM);
         when(productService.doesProductExists(product.getProductName())).thenReturn(false);
         when(productService.createProduct(product.getProductName(),
-                product.getUnitOfMeasure().toString(),"")).thenReturn(product);
+                product.getUnitOfMeasure().toString(), "")).thenReturn(product);
         doNothing().when(productService).writeProductToDatabase(product.getProductName(), product);
 
         //when
@@ -53,7 +53,7 @@ public class JMXServiceTests {
         //then
         verify(productService, times(1)).writeProductToDatabase(product.getProductName(), product);
         verify(productService, times(1)).createProduct(product.getProductName(),
-                product.getUnitOfMeasure().toString(),"");
+                product.getUnitOfMeasure().toString(), "");
         verify(productService, times(1)).doesProductExists(product.getProductName());
         verifyNoMoreInteractions(productService, productBase);
 
@@ -66,8 +66,8 @@ public class JMXServiceTests {
         product.setProductName("productName");
         product.setUnitOfMeasure(UnitOfMeasure.GRAM);
         Map<String, Integer> ingredients = new HashMap<>();
-        ingredients.put("kori",50);
-        ingredients.put("water",120);
+        ingredients.put("kori", 50);
+        ingredients.put("water", 120);
         product.setIngredients(ingredients);
         String ingredientsMap = "kori:50,water:120";
         when(productService.doesProductExists(product.getProductName())).thenReturn(false);
@@ -82,7 +82,7 @@ public class JMXServiceTests {
         verify(productService, times(1)).writeProductToDatabase(product.getProductName(), product);
         verify(productService, times(1)).doesProductExists(product.getProductName());
         verify(productService, times(1)).createProduct(
-                product.getProductName(),product.getUnitOfMeasure().toString(), "kori:50,water:120");
+                product.getProductName(), product.getUnitOfMeasure().toString(), "kori:50,water:120");
         verifyNoMoreInteractions(productService, productBase);
 
     }

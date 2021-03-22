@@ -1,6 +1,5 @@
 package com.market.banica.order.book;
 
-import com.orderbook.ItemID;
 import com.orderbook.ItemOrderBookRequest;
 import com.orderbook.ItemOrderBookResponse;
 import com.orderbook.OrderBookLayer;
@@ -19,38 +18,27 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OrderBookService.class);
 
-    private final ItemMarket itemMarket;
+    private final ItemMarketService itemMarketService;
 
     @Autowired
-    private OrderBookService(final ItemMarket itemMarket) {
-        this.itemMarket = itemMarket;
+    private OrderBookService(final ItemMarketService itemMarketService) {
+        this.itemMarketService = itemMarketService;
     }
 
     @Override
     public void getOrderBookItemLayers(ItemOrderBookRequest request, StreamObserver<ItemOrderBookResponse> responseObserver) {
-
-        Set<Item> result = itemMarket.getAllItemsByName(request.getItemName());
-
+        Set<Item> result = itemMarketService.getItemSetByName(request.getItemName());
         responseObserver.onNext(ItemOrderBookResponse.newBuilder()
                 .setItemName(request.getItemName())
                 .addAllOrderbookLayers(result.stream()
                         .map(item -> OrderBookLayer.newBuilder()
                                 .setPrice(item.getPrice())
                                 .setQuantity(item.getQuantity())
-                                .addAllItemIds(item.getItemIDs().stream()
-                                        .map(itemID -> ItemID.newBuilder()
-                                                .setId(itemID.getId())
-                                                .setLocation(itemID.getLocation())
-                                                .build())
-                                        .collect(Collectors.toList()))
+                                .setOrigin(item.getOrigin())
                                 .build()).collect(Collectors.toList()))
                 .build());
-
-
         responseObserver.onCompleted();
-
         LOGGER.info("Get orderbook item layers by client id: {}", request.getClientId());
-
     }
 
 }

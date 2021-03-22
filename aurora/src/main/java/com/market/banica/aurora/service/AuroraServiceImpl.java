@@ -20,8 +20,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class AuroraServiceImpl extends AuroraServiceGrpc.AuroraServiceImplBase {
 
-    private final ManagedChannel managedChannel;
     private static final Logger LOGGER = LogManager.getLogger(AuroraServiceImpl.class);
+    private final ManagedChannel managedChannel;
     ManagedChannel orderBookChannel;
 
     @Autowired
@@ -40,9 +40,9 @@ public class AuroraServiceImpl extends AuroraServiceGrpc.AuroraServiceImplBase {
 
     @Override
     public void request(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
-        LOGGER.info("Received request from client {}.",request.getClientId());
+        LOGGER.info("Received request from client {}.", request.getClientId());
 
-        if (request.getTopic().contains("order-book")){
+        if (request.getTopic().contains("order-book")) {
             OrderBookServiceGrpc.OrderBookServiceBlockingStub stub = OrderBookServiceGrpc.newBlockingStub(this.managedChannel);
 
             Pair<String, Long> pair = this.harvestData(request);
@@ -63,7 +63,7 @@ public class AuroraServiceImpl extends AuroraServiceGrpc.AuroraServiceImplBase {
         super.request(request, responseObserver);
     }
 
-    private Pair<String,Long> harvestData(Aurora.AuroraRequest request){
+    private Pair<String, Long> harvestData(Aurora.AuroraRequest request) {
         String topic = request.getTopic();
 
         String[] split = topic.split("/");
@@ -72,7 +72,7 @@ public class AuroraServiceImpl extends AuroraServiceGrpc.AuroraServiceImplBase {
 
         Long quantity = Long.parseLong(split[2]);
 
-        return new Pair<>(productName,quantity);
+        return new Pair<>(productName, quantity);
     }
 
     @Override

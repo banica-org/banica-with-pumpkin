@@ -2,7 +2,6 @@ package com.market.banica.calculator.service;
 
 import com.market.banica.calculator.dto.IngredientDTO;
 import com.market.banica.calculator.dto.RecipeDTO;
-import com.market.banica.calculator.exception.exceptions.FeatureNotSupportedException;
 import com.market.banica.calculator.model.Product;
 import com.market.banica.calculator.service.contract.CalculatorService;
 import com.market.banica.calculator.service.contract.ProductService;
@@ -40,15 +39,17 @@ public class CalculatorServiceImpl implements CalculatorService {
     AuroraClientSideService auroraService;
 
 
+    //TODO: UN HARDCODE QUANTITY.
     public RecipeDTO dummyRecipe(String clientId, String itemName, int quantity) {
 
         List<Product> listProduct = recipes.getProductAsListProduct(itemName);
+
         LOGGER.info("Received list from product service with size {}", listProduct.size());
 
         Map<String, List<OrderBookLayer>> ingredients = new HashMap<>();
 
         for (Product product : listProduct) {
-            ItemOrderBookResponse ingredient = auroraService.getIngredient(this.generateAuroraMessage(product), clientId);
+            ItemOrderBookResponse ingredient = auroraService.getIngredient(this.generateAuroraMessage(product, quantity), clientId);
 
             ingredients.put(ingredient.getItemName(), ingredient.getOrderbookLayersList());
         }
@@ -86,8 +87,8 @@ public class CalculatorServiceImpl implements CalculatorService {
         return ingredientDTOSet;
     }
 
-    private String generateAuroraMessage(Product product) {
-        return String.format("order-book/{}/{}", product.getProductName(), product.getUnitOfMeasure());
+    private String generateAuroraMessage(Product product, int quatity) {
+        return String.format("order-book/%s/%s", product.getProductName(), quatity);
     }
 
     /**
@@ -98,7 +99,9 @@ public class CalculatorServiceImpl implements CalculatorService {
     @Override
     public RecipeDTO getRecipe(String clientId, String itemName, int quantity) {
 
-        throw new FeatureNotSupportedException("Feature is not implemented yet.");
+        return dummyRecipe(clientId, itemName, quantity);
+
+//        throw new FeatureNotSupportedException("Feature is not implemented yet.")
 
         //Due the connection is fake atm.
         //method will fail because of the lack of real connection to aurora service.
@@ -109,7 +112,7 @@ public class CalculatorServiceImpl implements CalculatorService {
 
         //call aurora service for specific ingredient price.
 
-        //IngredientResponse ingredients = auroraService.getIngredient(ingredient, quantity);
+        //IngredientResponse ingredients = auroraService.getIngredient(ingredient, quantity)
 
     }
 }
