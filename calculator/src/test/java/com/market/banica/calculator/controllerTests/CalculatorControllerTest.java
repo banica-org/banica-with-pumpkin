@@ -1,6 +1,7 @@
-package com.market.banica.calculator.controller;
+package com.market.banica.calculator.controllerTests;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.market.banica.calculator.controller.CalculatorController;
 import com.market.banica.calculator.dto.RecipeDTO;
 import com.market.banica.calculator.service.contract.CalculatorService;
 import org.junit.jupiter.api.BeforeEach;
