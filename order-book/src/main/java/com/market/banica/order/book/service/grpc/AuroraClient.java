@@ -23,6 +23,8 @@ import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -99,7 +101,13 @@ public class AuroraClient {
                     item.setQuantity(tickResponse.getQuantity());
                     item.setOrigin(tickResponse.getOrigin());
 
-                    itemMarket.getItemSetByName(tickResponse.getGoodName()).add(item);
+                    Optional<Set<Item>> itemSet = itemMarket.getItemSetByName(tickResponse.getGoodName());
+                    if (itemSet.isPresent()) {
+                        itemSet.get().add(item);
+                    } else {
+                        LOGGER.error("Item: {} is not being tracked and cannot be added to itemMarket!",
+                                tickResponse.getGoodName());
+                    }
 
                     LOGGER.info("Products data updated!");
                 } else {

@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -36,17 +37,24 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
     @Override
     public void getOrderBookItemLayers(ItemOrderBookRequest request, StreamObserver<ItemOrderBookResponse> responseObserver) {
 
-        Set<Item> result = itemMarket.getItemSetByName(request.getItemName());
+        Optional<Set<Item>> result = itemMarket.getItemSetByName(request.getItemName());
 
-        responseObserver.onNext(ItemOrderBookResponse.newBuilder()
-                .setItemName(request.getItemName())
-                .addAllOrderbookLayers(result.stream()
-                        .map(item -> OrderBookLayer.newBuilder()
-                                .setPrice(item.getPrice())
-                                .setQuantity(item.getQuantity())
-                                .setOrigin(item.getOrigin())
-                                .build()).collect(Collectors.toList()))
-                .build());
+        if (result.isPresent()) {
+            responseObserver.onNext(ItemOrderBookResponse.newBuilder()
+                    .setItemName(request.getItemName())
+                    .addAllOrderbookLayers(result.get().stream()
+                            .map(item -> OrderBookLayer.newBuilder()
+                                    .setPrice(item.getPrice())
+                                    .setQuantity(item.getQuantity())
+                                    .setOrigin(item.getOrigin())
+                                    .build()).collect(Collectors.toList()))
+                    .build());
+        } else {
+            responseObserver.onNext(ItemOrderBookResponse.newBuilder()
+                    .setItemName(request.getItemName())
+                    .build());
+        }
+
 
         responseObserver.onCompleted();
 

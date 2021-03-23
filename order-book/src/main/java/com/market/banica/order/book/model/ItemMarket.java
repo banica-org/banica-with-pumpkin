@@ -4,8 +4,8 @@ import com.market.Origin;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
@@ -21,8 +21,8 @@ public class ItemMarket {
         addDummyData();
     }
 
-    public Set<Item> getItemSetByName(String itemName) {
-        return allItems.getOrDefault(itemName, new TreeSet<>());
+    public Optional<Set<Item>> getItemSetByName(String itemName) {
+        return Optional.of(allItems.get(itemName));
     }
 
     public Set<String> getItemNameSet() {
