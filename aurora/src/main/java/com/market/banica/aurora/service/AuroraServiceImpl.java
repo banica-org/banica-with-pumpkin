@@ -2,7 +2,10 @@ package com.market.banica.aurora.service;
 
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
+import com.google.common.base.CharMatcher;
 import com.market.banica.common.ChannelRPCConfig;
+import com.orderbook.InterestsRequest;
+import com.orderbook.InterestsResponse;
 import com.orderbook.ItemOrderBookRequest;
 import com.orderbook.ItemOrderBookResponse;
 import com.orderbook.OrderBookServiceGrpc;
@@ -15,6 +18,10 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 
 @Service
@@ -42,22 +49,40 @@ public class AuroraServiceImpl extends AuroraServiceGrpc.AuroraServiceImplBase {
     public void request(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
         LOGGER.info("Received request from client {}.", request.getClientId());
 
-        if (request.getTopic().contains("order-book")) {
-            OrderBookServiceGrpc.OrderBookServiceBlockingStub stub = OrderBookServiceGrpc.newBlockingStub(this.managedChannel);
+        if (request.getTopic().contains("orderbook")) {
+            if (CharMatcher.is('/').countIn(request.getTopic()) > 1){
+                OrderBookServiceGrpc.OrderBookServiceBlockingStub stub = OrderBookServiceGrpc.newBlockingStub(this.managedChannel);
 
-            Pair<String, Long> pair = this.harvestData(request);
+                Pair<String, Long> pair = this.harvestData(request);
 
-            ItemOrderBookResponse orderBookResponse = stub.getOrderBookItemLayers(ItemOrderBookRequest.newBuilder()
-                    .setClientId(request.getClientId())
-                    .setItemName(pair.getKey())
-                    .setQuantity(pair.getValue())
-                    .build());
+                ItemOrderBookResponse orderBookResponse = stub.getOrderBookItemLayers(ItemOrderBookRequest.newBuilder()
+                        .setClientId(request.getClientId())
+                        .setItemName(pair.getKey())
+                        .setQuantity(pair.getValue())
+                        .build());
 
-            responseObserver.onNext(Aurora.AuroraResponse.newBuilder().
-                    setItemOrderBookResponse(orderBookResponse).
-                    build());
+                responseObserver.onNext(Aurora.AuroraResponse.newBuilder().
+                        setItemOrderBookResponse(orderBookResponse).
+                        build());
 
-            responseObserver.onCompleted();
+                responseObserver.onCompleted();
+            } else {
+                OrderBookServiceGrpc.OrderBookServiceBlockingStub stub = OrderBookServiceGrpc.newBlockingStub(this.managedChannel);
+
+                final String[] interests = request.getTopic().substring(request.getTopic().indexOf("/")).split(",");
+
+                InterestsResponse interestsResponse = stub.announceItemInterest(InterestsRequest.newBuilder()
+                        .addAllItemNames(Arrays.asList(interests))
+                        .setClientId(request.getClientId())
+                        .build());
+
+                responseObserver.onNext(Aurora.AuroraResponse.newBuilder()
+                        .setInterestsResponse(interestsResponse)
+                        .build());
+
+                responseObserver.onCompleted();
+            }
+
         }
 
         super.request(request, responseObserver);

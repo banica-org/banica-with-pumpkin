@@ -77,18 +77,24 @@ public class CalculatorServiceImpl implements CalculatorService {
         for (Map.Entry<String, List<OrderBookLayer>> entry : entries) {
             IngredientDTO ingredientDTO = new IngredientDTO();
 
-            ingredientDTO.setItemName(entry.getKey());
-            ingredientDTO.setLocation(entry.getValue().get(0).getOrigin());
-            ingredientDTO.setPrice(BigDecimal.valueOf(entry.getValue().get(0).getPrice()));
-            ingredientDTO.setQuantity(entry.getValue().get(0).getQuantity());
+            List<OrderBookLayer> items = entry.getValue();
 
-            ingredientDTOSet.add(ingredientDTO);
+            if (!items.isEmpty()) {
+                ingredientDTO.setItemName(entry.getKey());
+                ingredientDTO.setLocation(items.get(0).getOrigin());
+                ingredientDTO.setPrice(BigDecimal.valueOf(items.get(0).getPrice()));
+                ingredientDTO.setQuantity(items.get(0).getQuantity());
+
+                ingredientDTOSet.add(ingredientDTO);
+            }
+
+
         }
         return ingredientDTOSet;
     }
 
     private String generateAuroraMessage(Product product, int quatity) {
-        return String.format("order-book/%s/%s", product.getProductName(), quatity);
+        return String.format("%s/%s", product.getProductName(), quatity);
     }
 
     /**

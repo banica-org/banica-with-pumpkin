@@ -28,7 +28,7 @@ public class IngredientDTO {
     private BigDecimal price;
 
     //quantity of the ingredient
-    private int quantity;
+    private long quantity;
 
     //location from where the ingredient comes
     private Origin location;

@@ -1,6 +1,7 @@
 package com.market.banica.order.book;
 
 import com.market.Origin;
+import com.market.banica.order.book.model.Item;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;

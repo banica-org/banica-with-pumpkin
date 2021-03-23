@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 @Component
@@ -52,6 +53,7 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
         } else {
             responseObserver.onNext(ItemOrderBookResponse.newBuilder()
                     .setItemName(request.getItemName())
+                    .addAllOrderbookLayers(new TreeSet<>())
                     .build());
         }
 
