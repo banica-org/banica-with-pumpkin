@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class AuroraClientSideService {
 
-    private static final String MARKET_TOPIC_PREFIX = "market/";
+    private static final String ORDERBOOK_TOPIC_PREFIX = "orderbook/";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AuroraClientSideService.class);
 
@@ -67,7 +67,7 @@ public class AuroraClientSideService {
         LOGGER.debug("Building request with parameters {}", message);
         Aurora.AuroraRequest request = Aurora.AuroraRequest.newBuilder()
                 .setClientId(clientId)
-                .setTopic(MARKET_TOPIC_PREFIX + message)
+                .setTopic(ORDERBOOK_TOPIC_PREFIX + message)
                 .build();
 
         Aurora.AuroraResponse auroraResponse = blockingStub.request(request);
@@ -87,7 +87,7 @@ public class AuroraClientSideService {
         LOGGER.debug("Building request with parameters {}", message);
         Aurora.AuroraRequest request = Aurora.AuroraRequest.newBuilder()
                 .setClientId(clientId)
-                .setTopic(MARKET_TOPIC_PREFIX + message)
+                .setTopic(ORDERBOOK_TOPIC_PREFIX + message)
                 .build();
 
         LOGGER.debug("Sending request to aurora.");
