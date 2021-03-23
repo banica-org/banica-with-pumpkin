@@ -66,7 +66,7 @@ public class ProductServiceImpl implements ProductService {
 
         newProduct.setProductName(newProductName);
 
-        newProduct.setUnitOfMeasure(UnitOfMeasure.valueOf(unitOfMeasure));
+        newProduct.setUnitOfMeasure(UnitOfMeasure.valueOf(unitOfMeasure.toUpperCase(Locale.ROOT)));
 
         Map<String, Integer> ingredients = new HashMap<>();
 
