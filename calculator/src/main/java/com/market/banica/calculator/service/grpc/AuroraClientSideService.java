@@ -15,6 +15,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PreDestroy;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -26,6 +28,8 @@ import javax.annotation.PreDestroy;
 
 @Service
 public class AuroraClientSideService {
+
+    private static final String ORDERBOOK_TOPIC_PREFIX = "orderbook/";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AuroraClientSideService.class);
 
@@ -52,6 +56,27 @@ public class AuroraClientSideService {
 
     }
 
+    public void announceInterests(List<String> products, String clientId) {
+
+        LOGGER.debug("Inside announceInterests method");
+        LOGGER.debug("Building blocking stub");
+        AuroraServiceGrpc.AuroraServiceBlockingStub blockingStub = getBlockingStub();
+
+        String message = String.join(",", products);
+
+        LOGGER.debug("Building request with parameters {}", message);
+        Aurora.AuroraRequest request = Aurora.AuroraRequest.newBuilder()
+                .setClientId(clientId)
+                .setTopic(ORDERBOOK_TOPIC_PREFIX + message)
+                .build();
+
+        Aurora.AuroraResponse auroraResponse = blockingStub.request(request);
+
+        if (!auroraResponse.hasInterestsResponse()) {
+            throw new BadResponseException("Bad message from aurora service");
+        }
+
+    }
 
     public ItemOrderBookResponse getIngredient(String message, String clientId) {
 
@@ -62,18 +87,19 @@ public class AuroraClientSideService {
         LOGGER.debug("Building request with parameters {}", message);
         Aurora.AuroraRequest request = Aurora.AuroraRequest.newBuilder()
                 .setClientId(clientId)
-                .setTopic(message)
+                .setTopic(ORDERBOOK_TOPIC_PREFIX + message)
                 .build();
 
         LOGGER.debug("Sending request to aurora.");
 
         Aurora.AuroraResponse auroraResponse = blockingStub.request(request);
 
-        if (auroraResponse.hasItemOrderBookResponse()) {
-            return auroraResponse.getItemOrderBookResponse();
+        if (!auroraResponse.hasItemOrderBookResponse()) {
+            throw new BadResponseException("Bad message from aurora service");
         }
 
-        throw new BadResponseException("Bad message from aurora service");
+        return auroraResponse.getItemOrderBookResponse();
+
     }
 
     private AuroraServiceGrpc.AuroraServiceBlockingStub getBlockingStub() {
@@ -84,9 +110,9 @@ public class AuroraClientSideService {
      * Shutting down channel before spring removes bean from application context
      */
     @PreDestroy
-    private void shutdown() {
+    private void shutdown() throws InterruptedException {
         LOGGER.info("Shutting down connection with Aurora.");
-        managedChannel.shutdownNow();
+        managedChannel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
 
 }

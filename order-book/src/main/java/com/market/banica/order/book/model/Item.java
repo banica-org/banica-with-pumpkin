@@ -1,13 +1,12 @@
-package com.market.banica.order.book;
+package com.market.banica.order.book.model;
 
 
+import com.market.Origin;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.util.List;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -17,19 +16,8 @@ import java.util.List;
 public class Item implements Comparable<Item> {
 
     private double price;
-    private int quantity;
-    private List<ItemID> itemIDs;
-
-    @AllArgsConstructor
-    @NoArgsConstructor
-    @Getter
-    @Setter
-    public static class ItemID {
-
-        private String id;
-        private String location;
-
-    }
+    private long quantity;
+    private Origin origin;
 
     @Override
     public int compareTo(Item other) {
