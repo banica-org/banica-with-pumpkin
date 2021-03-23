@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Queue;
 import java.util.stream.Collectors;
@@ -40,8 +41,6 @@ public class ProductServiceImpl implements ProductService {
 
         createProductsInDatabase(products);
 
-//        backUpService.writeBackUp();
-
         String productName = getProductName(products);
 
         LOGGER.debug("Product {} successfully created", productName);
@@ -49,9 +48,16 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Product createProduct(String newProductName, String unitOfMeasure,
-                                 String ingredientsMap) {
-        LOGGER.debug("In createProduct method");
+    public void createProduct(String newProductName, String unitOfMeasure,
+                              String ingredientsMap) {
+        LOGGER.debug("In createProduct method with parameters: newProductName {}, unitOfMeasure {} and ingredientsMap {}"
+                ,newProductName,unitOfMeasure,ingredientsMap);
+
+        if (doesProductExists(newProductName)) {
+
+            LOGGER.error("Product with name {} already exists", newProductName);
+            throw new IllegalArgumentException("Product with this name already exists");
+        }
 
         Product newProduct = new Product();
 
@@ -68,7 +74,91 @@ public class ProductServiceImpl implements ProductService {
 
         newProduct.setIngredients(ingredients);
 
-        return newProduct;
+        writeProductToDatabase(newProductName, newProduct);
+    }
+
+    @Override
+    public void addIngredient(String parentProductName, String productName, int quantity) {
+        LOGGER.debug("In addIngredient method with parameters: parentProductName {},productName {} and quantity {}" +
+                parentProductName, productName, quantity);
+
+        validateProductExists(productName);
+
+        Product parentProduct = getProductFromDatabase(parentProductName);
+
+        parentProduct.getIngredients().put(productName, quantity);
+
+        writeProductToDatabase(parentProductName, parentProduct);
+    }
+
+    @Override
+    public void setProductQuantity(String parentProductName, String productName, int newQuantity) {
+        LOGGER.debug("In setProductQuantity method with parameters: parentProductName {},productName {}" +
+                " and newQuantity {}", parentProductName, productName, newQuantity);
+
+        Product parentProduct = getProductFromDatabase(parentProductName);
+
+        validateProductBelongToParentProductIngredients(productName, parentProduct);
+
+        parentProduct.getIngredients().put(productName, newQuantity);
+
+        writeProductToDatabase(parentProductName, parentProduct);
+    }
+
+    @Override
+    public int getProductQuantity(String parentProductName, String productName) {
+        LOGGER.debug("In getProductQuantity method with parameters: parentProductName {} and productName {}"
+                , parentProductName, productName);
+
+        Product parentProduct = getProductFromDatabase(parentProductName);
+
+        validateProductBelongToParentProductIngredients(productName, parentProduct);
+
+        return parentProduct.getIngredients().get(productName);
+    }
+
+    @Override
+    public String getUnitOfMeasure(String productName) {
+        LOGGER.debug("In getUnitOfMeasure method with parameters: productName {}", productName);
+
+        Product product = getProductFromDatabase(productName);
+
+        return product.getUnitOfMeasure().toString();
+    }
+
+    @Override
+    public void setUnitOfMeasure(String productName, String unitOfMeasure) {
+        LOGGER.debug("In setUnitOfMeasure method with parameters: productName {} and unitOfMeasure {}", productName, unitOfMeasure);
+
+        Product product = getProductFromDatabase(productName);
+
+        product.setUnitOfMeasure(UnitOfMeasure.valueOf(unitOfMeasure.toUpperCase(Locale.ROOT)));
+
+        writeProductToDatabase(productName, product);
+    }
+
+    @Override
+    public void deleteProductFromDatabase(String productName) {
+        LOGGER.debug("In deleteProductFromDatabase method with parameters: productName {}", productName);
+
+        validateProductExists(productName);
+
+        productBase.getDatabase().remove(productName);
+
+        backUpService.writeBackUp();
+    }
+
+    @Override
+    public void deleteProductFromParentIngredients(String parentProductName, String productName) {
+        LOGGER.debug("In deleteIngredient method with parameters: parentProductName {} and productName {}", parentProductName, productName);
+
+        Product parentProduct = getProductFromDatabase(parentProductName);
+
+        validateProductBelongToParentProductIngredients(productName, parentProduct);
+
+        parentProduct.getIngredients().remove(productName);
+
+        writeProductToDatabase(parentProductName, parentProduct);
     }
 
     @Override
@@ -95,26 +185,24 @@ public class ProductServiceImpl implements ProductService {
     public void getAllProductsAsListProduct() {
     }
 
-    @Override
-    public Product getProductFromDatabase(String productName) {
-        LOGGER.debug("In getProductFromDatabase method");
+    private Product getProductFromDatabase(String productName) {
+        LOGGER.debug("In getProductFromDatabase private method");
 
         validateProductExists(productName);
 
         return productBase.getDatabase().get(productName);
     }
 
-    @Override
-    public void writeProductToDatabase(String newProductName, Product newProduct) {
-        LOGGER.debug("In writeProductToDatabase method");
+    private void writeProductToDatabase(String newProductName, Product newProduct) {
+        LOGGER.debug("In writeProductToDatabase private method");
 
         productBase.getDatabase().put(newProductName, newProduct);
+
         backUpService.writeBackUp();
     }
 
-    @Override
-    public void validateProductsOfListExists(Collection<String> productsNames) {
-        LOGGER.debug("In validateProductsOfListExists method");
+    private void validateProductsOfListExists(Collection<String> productsNames) {
+        LOGGER.debug("In validateProductsOfListExists private method");
 
         for (String productName : productsNames) {
 
@@ -122,9 +210,8 @@ public class ProductServiceImpl implements ProductService {
         }
     }
 
-    @Override
-    public void validateProductExists(String productName) {
-        LOGGER.debug("In validateProductExists method");
+    private void validateProductExists(String productName) {
+        LOGGER.debug("In validateProductExists private method");
 
         if (!doesProductExists(productName)) {
 
@@ -133,9 +220,8 @@ public class ProductServiceImpl implements ProductService {
         }
     }
 
-    @Override
-    public boolean doesProductExists(String productName) {
-        LOGGER.debug("In doesProductExists method");
+    private boolean doesProductExists(String productName) {
+        LOGGER.debug("In doesProductExists private method");
 
         return productBase.getDatabase().containsKey(productName);
     }
@@ -247,4 +333,13 @@ public class ProductServiceImpl implements ProductService {
         }
     }
 
+    private void validateProductBelongToParentProductIngredients(String productName, Product parentProduct) {
+        LOGGER.debug("In validateProductBelongToParentProductIngredients private method");
+
+        if (!parentProduct.getIngredients().containsKey(productName)) {
+
+            LOGGER.error("Product {} does not belong to ingredients of parent product {}", productName, parentProduct.getProductName());
+            throw new IllegalArgumentException("Product does not belong to ingredients of the parent product");
+        }
+    }
 }
