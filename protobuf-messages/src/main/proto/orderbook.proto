@@ -20,7 +20,7 @@ message ItemOrderBookResponse {
 
 message OrderBookLayer {
   double price = 1;
-  int32 quantity = 2;
+  int64 quantity = 2;
   market.Origin origin = 3;
 }
 

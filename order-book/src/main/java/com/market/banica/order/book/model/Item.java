@@ -1,4 +1,4 @@
-package com.market.banica.order.book;
+package com.market.banica.order.book.model;
 
 
 import com.market.Origin;
@@ -16,7 +16,7 @@ import lombok.Setter;
 public class Item implements Comparable<Item> {
 
     private double price;
-    private int quantity;
+    private long quantity;
     private Origin origin;
 
     @Override
