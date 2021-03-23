@@ -23,15 +23,11 @@ import java.util.stream.Collectors;
 @Component
 public class TickGeneratorImpl implements TickGenerator {
     private static final Logger LOGGER = LoggerFactory.getLogger(TickGeneratorImpl.class);
-    //europe.eggs
     private final Map<String, TickGeneratorTask> tickGeneratorTasks;
-//    private final String originGood;
 
     @Autowired
-    public TickGeneratorImpl(/*String originGood*/) {
+    public TickGeneratorImpl() {
         this.tickGeneratorTasks = new HashMap<>();
-//        this.originGood = originGood;
-//        this.originGood = "europe";
     }
 
     @Override
@@ -43,10 +39,8 @@ public class TickGeneratorImpl implements TickGenerator {
                     nameGood, tickBlockingQueue);
             tickGeneratorTasks.put(nameGood, tickGeneratorTask);
             new Thread(tickGeneratorTask).start();
-//            tickGeneratorTask.run();
             LOGGER.info("Started new tick generation for {}!", nameGood);
         }
-        // europe.eggs
     }
 
     @Override

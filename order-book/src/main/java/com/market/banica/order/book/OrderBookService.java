@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Component
+//@Component
 public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplBase {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OrderBookService.class);

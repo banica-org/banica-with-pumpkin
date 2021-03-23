@@ -11,8 +11,6 @@ import io.grpc.stub.StreamObserver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Set;
@@ -26,13 +24,13 @@ public class MarketSubscriptionManager {
     public static final String DELIMITER = "/";
     public static final String ASTERISK = "*";
 
-    private MarketChannelManager marketChannelManager;
+    private final MarketChannelManager marketChannelManager;
 
-    private MarketClient marketClient;
+    private final MarketClient marketClient;
 
     private HashMap<StreamObserver<?>, StreamObserver<Aurora.AuroraResponse>> observersMap = new HashMap<>();
 
-    private ReentrantLock lock;
+    private final ReentrantLock lock;
 
     @Autowired
     public MarketSubscriptionManager(MarketChannelManager marketChannelManager, MarketClient marketClient) {
@@ -59,7 +57,7 @@ public class MarketSubscriptionManager {
 
             Set<MarketDataRequest> newMarketDataRequests;
 
-            newMarketDataRequests = mapWildcard(marketGoodName, marketClient.getMarketCatalogue(marketOriginName, marketGoodName),
+            newMarketDataRequests = mapWildcard(marketGoodName, marketClient.getMarketCatalogue(marketDataRequest),
                     (goodName) -> marketOriginName + DELIMITER + goodName, marketDataRequest.getClientId(), marketDataRequest.getGoodName());
             newMarketDataRequests.forEach(dataRequest -> {
                 MarketTickResponseObserver marketTickResponseObserver = new MarketTickResponseObserver(this);
@@ -118,17 +116,4 @@ public class MarketSubscriptionManager {
 
     }
 
-    @PostConstruct
-    private void initializeMarketChannels() {
-        this.marketChannelManager.createChannel("europe", "localhost", 8083);
-        this.marketChannelManager.createChannel("asia", "localhost", 8082);
-        this.marketChannelManager.createChannel("america", "localhost", 8081);
-    }
-
-    @PreDestroy
-    private void destroyMarketChannels() {
-        this.marketChannelManager.shutdownChannel("europe");
-        this.marketChannelManager.shutdownChannel("asia");
-        this.marketChannelManager.shutdownChannel("america");
-    }
 }

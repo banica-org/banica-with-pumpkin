@@ -8,6 +8,5 @@ import org.springframework.stereotype.Component;
 public class OrderBookSubscriptionManager {
 
     public void subscribeForOrderBookUpdate(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
-        //TO DO
     }
 }

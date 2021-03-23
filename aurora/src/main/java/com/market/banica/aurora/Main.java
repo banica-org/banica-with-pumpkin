@@ -30,63 +30,63 @@ public class Main implements CommandLineRunner {
         int line = Integer.parseInt(scanner.nextLine());
         while (line != 0) {
             int[] count = new int[1];
-//            if (line == 1) {
-//                auroraService.subscribe(asiaBuilder, new StreamObserver<Aurora.AuroraResponse>() {
-//                    @Override
-//                    public void onNext(Aurora.AuroraResponse auroraResponse) {
-//                        System.out.println(auroraResponse.toString());
-//                        count[0]++;
-//                    }
-//
-//                    @Override
-//                    public void onError(Throwable throwable) {
-//
-//                    }
-//
-//                    @Override
-//                    public void onCompleted() {
-//
-//                    }
-//                });
-//            } else if (line == 2) {
-//                auroraService.subscribe(europeBuilder, new StreamObserver<Aurora.AuroraResponse>() {
-//                    @Override
-//                    public void onNext(Aurora.AuroraResponse auroraResponse) {
-//                        System.out.println(auroraResponse.toString());
-//                        count[0]++;
-//                    }
-//
-//                    @Override
-//                    public void onError(Throwable throwable) {
-//
-//                    }
-//
-//                    @Override
-//                    public void onCompleted() {
-//
-//                    }
-//                });
-//            } else if (line == 3) {
-//                auroraService.subscribe(americaBuilder, new StreamObserver<Aurora.AuroraResponse>() {
-//                    @Override
-//                    public void onNext(Aurora.AuroraResponse auroraResponse) {
-//                        System.out.println(auroraResponse.toString());
-//                        count[0]++;
-//                    }
-//
-//                    @Override
-//                    public void onError(Throwable throwable) {
-//
-//                    }
-//
-//                    @Override
-//                    public void onCompleted() {
-//
-//                    }
-//                });
-//            }
+            if (line == 1) {
+                auroraService.subscribe(asiaBuilder, new StreamObserver<Aurora.AuroraResponse>() {
+                    @Override
+                    public void onNext(Aurora.AuroraResponse auroraResponse) {
+                        System.out.println(auroraResponse.toString());
+                        count[0]++;
+                    }
 
-            auroraService.subscribe(test, new StreamObserver<Aurora.AuroraResponse>() {
+                    @Override
+                    public void onError(Throwable throwable) {
+
+                    }
+
+                    @Override
+                    public void onCompleted() {
+
+                    }
+                });
+            } else if (line == 2) {
+                auroraService.subscribe(europeBuilder, new StreamObserver<Aurora.AuroraResponse>() {
+                    @Override
+                    public void onNext(Aurora.AuroraResponse auroraResponse) {
+                        System.out.println(auroraResponse.toString());
+                        count[0]++;
+                    }
+
+                    @Override
+                    public void onError(Throwable throwable) {
+
+                    }
+
+                    @Override
+                    public void onCompleted() {
+
+                    }
+                });
+            } else if (line == 3) {
+                auroraService.subscribe(americaBuilder, new StreamObserver<Aurora.AuroraResponse>() {
+                    @Override
+                    public void onNext(Aurora.AuroraResponse auroraResponse) {
+                        System.out.println(auroraResponse.toString());
+                        count[0]++;
+                    }
+
+                    @Override
+                    public void onError(Throwable throwable) {
+
+                    }
+
+                    @Override
+                    public void onCompleted() {
+
+                    }
+                });
+            }
+
+          /*  auroraService.subscribe(test, new StreamObserver<Aurora.AuroraResponse>() {
                 @Override
                 public void onNext(Aurora.AuroraResponse auroraResponse) {
                     System.out.println(auroraResponse.toString());
@@ -102,7 +102,7 @@ public class Main implements CommandLineRunner {
                 public void onCompleted() {
 
                 }
-            });
+            });*/
 
 
 
