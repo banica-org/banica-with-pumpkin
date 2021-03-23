@@ -86,6 +86,7 @@ public class AuroraClient {
         }
     }
 
+    //TODO:
     private void startMarketStream(Aurora.AuroraRequest request) {
 
         LOGGER.info("Start item tracking: {}", request.getTopic());

@@ -140,6 +140,7 @@ public class ProductServiceImpl implements ProductService {
         writeProductToDatabase(productName, product);
     }
 
+    //TODO: Add announcement to auroraClientSideService
     @Override
     public void deleteProductFromDatabase(String productName) {
         LOGGER.debug("In deleteProductFromDatabase method with parameters: productName {}", productName);
@@ -198,6 +199,7 @@ public class ProductServiceImpl implements ProductService {
         return productBase.getDatabase().get(productName);
     }
 
+    //TODO: Add announcement to auroraClientSideService
     private void writeProductToDatabase(String newProductName, Product newProduct) {
         LOGGER.debug("In writeProductToDatabase private method");
 
