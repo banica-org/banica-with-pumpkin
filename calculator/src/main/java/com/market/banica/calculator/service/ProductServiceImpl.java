@@ -32,7 +32,7 @@ public class ProductServiceImpl implements ProductService {
 
     private final BackUpService backUpService;
     private final ProductBase productBase;
-    private final AuroraClientSideService auroraClientSideService;
+    //private final AuroraClientSideService auroraClientSideService;
 
     @Override
     public Product createProduct(List<Product> products) {
@@ -148,7 +148,7 @@ public class ProductServiceImpl implements ProductService {
 
         productBase.getDatabase().remove(productName);
 
-        auroraClientSideService.announceInterests( new ArrayList<>(productBase.getDatabase().keySet()), "JMX");
+       // auroraClientSideService.announceInterests( new ArrayList<>(productBase.getDatabase().keySet()), "JMX");
 
         backUpService.writeBackUp();
     }
@@ -201,13 +201,13 @@ public class ProductServiceImpl implements ProductService {
     private void writeProductToDatabase(String newProductName, Product newProduct) {
         LOGGER.debug("In writeProductToDatabase private method");
 
-        if (!productBase.getDatabase().containsKey(newProductName)) {
-
-            List<String> result = new ArrayList<>(productBase.getDatabase().keySet());
-            result.add(newProductName);
-
-            auroraClientSideService.announceInterests(result, "JMX");
-        }
+//        if (!productBase.getDatabase().containsKey(newProductName)) {
+//
+//            List<String> result = new ArrayList<>(productBase.getDatabase().keySet());
+//            result.add(newProductName);
+//
+//            auroraClientSideService.announceInterests(result, "JMX");
+//        }
         productBase.getDatabase().put(newProductName, newProduct);
 
 

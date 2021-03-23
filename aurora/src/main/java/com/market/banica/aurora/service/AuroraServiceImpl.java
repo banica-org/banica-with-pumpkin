@@ -69,10 +69,12 @@ public class AuroraServiceImpl extends AuroraServiceGrpc.AuroraServiceImplBase {
             } else {
                 OrderBookServiceGrpc.OrderBookServiceBlockingStub stub = OrderBookServiceGrpc.newBlockingStub(this.managedChannel);
 
-                final String[] interests = request.getTopic().substring(request.getTopic().indexOf("/")).split(",");
+                final String[] interests = request.getTopic().split("/");
+
+                String[] result = interests[1].split(",");
 
                 InterestsResponse interestsResponse = stub.announceItemInterest(InterestsRequest.newBuilder()
-                        .addAllItemNames(Arrays.asList(interests))
+                        .addAllItemNames(Arrays.asList(result))
                         .setClientId(request.getClientId())
                         .build());
 

@@ -143,7 +143,7 @@ public class AuroraClient {
             }
 
             Context.CancellableContext cancelledStub = cancellableStubs.remove(product);
-            cancelledStub.cancel(new StoppedStreamException("Stopped tracking stream for: " + product));
+            //cancelledStub.cancel(new StoppedStreamException("Stopped tracking stream for: " + product));
             itemMarket.removeUntrackedItem(product);
 
         }

@@ -68,7 +68,7 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
     public void announceItemInterest(InterestsRequest request, StreamObserver<InterestsResponse> responseObserver) {
 
         try {
-
+            LOGGER.info("request data : {}", request.getItemNamesList());
             auroraClient.updateItems(request.getItemNamesList(), request.getClientId());
             responseObserver.onNext(InterestsResponse.newBuilder().build());
             responseObserver.onCompleted();
