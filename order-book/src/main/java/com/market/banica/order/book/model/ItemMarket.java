@@ -29,6 +29,14 @@ public class ItemMarket {
         return allItems.keySet();
     }
 
+    public void addTrackedItem(String itemName) {
+        allItems.put(itemName, new TreeSet<>());
+    }
+
+    public void removeUntrackedItem(String itemName) {
+        allItems.remove(itemName);
+    }
+
     private void addDummyData() {
 
         TreeSet<Item> cheeseItems = new TreeSet<>();

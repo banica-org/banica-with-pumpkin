@@ -78,6 +78,7 @@ public class AuroraClient {
 
             Context.CancellableContext withCancellation = Context.current().withCancellation();
             cancellableStubs.put(product, withCancellation);
+            itemMarket.addTrackedItem(product);
             withCancellation.run(() -> startMarketStream(request));
 
         }
@@ -130,8 +131,8 @@ public class AuroraClient {
             }
 
             Context.CancellableContext cancelledStub = cancellableStubs.remove(product);
-
             cancelledStub.cancel(new StoppedStreamException("Stopped tracking stream for: " + product));
+            itemMarket.removeUntrackedItem(product);
 
         }
     }
