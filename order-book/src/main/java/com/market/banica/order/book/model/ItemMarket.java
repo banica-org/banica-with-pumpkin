@@ -22,7 +22,7 @@ public class ItemMarket {
     }
 
     public Set<Item> getItemSetByName(String itemName) {
-        return allItems.get(itemName) == null ? Collections.emptySet() : allItems.get(itemName);
+        return allItems.getOrDefault(itemName, new TreeSet<>());
     }
 
     public Set<String> getItemNameSet() {

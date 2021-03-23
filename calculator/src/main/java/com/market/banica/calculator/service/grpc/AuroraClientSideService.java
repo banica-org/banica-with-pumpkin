@@ -72,11 +72,9 @@ public class AuroraClientSideService {
 
         Aurora.AuroraResponse auroraResponse = blockingStub.request(request);
 
-        if (auroraResponse.hasInterestsResponse()) {
-            return;
+        if (!auroraResponse.hasInterestsResponse()) {
+            throw new BadResponseException("Bad message from aurora service");
         }
-
-        throw new BadResponseException("Bad message from aurora service");
 
     }
 
@@ -96,11 +94,12 @@ public class AuroraClientSideService {
 
         Aurora.AuroraResponse auroraResponse = blockingStub.request(request);
 
-        if (auroraResponse.hasItemOrderBookResponse()) {
-            return auroraResponse.getItemOrderBookResponse();
+        if (!auroraResponse.hasItemOrderBookResponse()) {
+            throw new BadResponseException("Bad message from aurora service");
         }
 
-        throw new BadResponseException("Bad message from aurora service");
+        return auroraResponse.getItemOrderBookResponse();
+
     }
 
     private AuroraServiceGrpc.AuroraServiceBlockingStub getBlockingStub() {

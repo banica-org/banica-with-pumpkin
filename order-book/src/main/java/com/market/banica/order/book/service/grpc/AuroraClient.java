@@ -5,6 +5,7 @@ import com.aurora.AuroraServiceGrpc;
 import com.market.TickResponse;
 import com.market.banica.common.ChannelRPCConfig;
 import com.market.banica.order.book.exception.IncorrectResponseException;
+import com.market.banica.order.book.exception.StoppedStreamException;
 import com.market.banica.order.book.exception.TrackingException;
 import com.market.banica.order.book.model.Item;
 import com.market.banica.order.book.model.ItemMarket;
@@ -129,7 +130,8 @@ public class AuroraClient {
             }
 
             Context.CancellableContext cancelledStub = cancellableStubs.remove(product);
-            cancelledStub.cancel(null);
+
+            cancelledStub.cancel(new StoppedStreamException("Stopped tracking stream for: " + product));
 
         }
     }
