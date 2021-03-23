@@ -34,9 +34,9 @@ public class AuroraSubscriptionManager {
         }
 
         if (header.equalsIgnoreCase(ORDER_BOOK_HEADER)) {
-           this.orderBookSubscriptionManager.subscribeForOrderBookUpdate(request, responseObserver);
+            this.orderBookSubscriptionManager.subscribeForOrderBookUpdate(request, responseObserver);
         } else {
-           marketSubscriptionManager.subscribeForGood(request, responseObserver);
+            marketSubscriptionManager.subscribeForGood(request, responseObserver);
         }
     }
 
@@ -54,6 +54,7 @@ public class AuroraSubscriptionManager {
         }
         return true;
     }
+
     private boolean isValidHeader(String header) {
         return header.equalsIgnoreCase(EUROPE_HEADER) ||
                 header.equalsIgnoreCase(ASIA_HEADER) ||
@@ -61,6 +62,4 @@ public class AuroraSubscriptionManager {
                 header.equalsIgnoreCase(ORDER_BOOK_HEADER) ||
                 header.equals(ASTERISK);
     }
-
-
 }

@@ -46,17 +46,6 @@ public class TickGeneratorImplTest {
 
     @Test
     public void startTickGenerationWithValidDataAddsGood() {
-        //Arrange
-        when(goodSpecification.getPeriodHigh()).thenReturn(8);
-        when(goodSpecification.getPeriodLow()).thenReturn(5);
-        when(goodSpecification.getPeriodStep()).thenReturn(1);
-        when(goodSpecification.getPriceLow()).thenReturn(4.0);
-        when(goodSpecification.getPriceHigh()).thenReturn(5.0);
-        when(goodSpecification.getPriceStep()).thenReturn(1.0);
-        when(goodSpecification.getQuantityHigh()).thenReturn((long) 1);
-        when(goodSpecification.getQuantityLow()).thenReturn((long) 4);
-        when(goodSpecification.getQuantityStep()).thenReturn((long) 1);
-
         //Act
         tickGenerator.startTickGeneration(GOOD, goodSpecification);
 
@@ -67,18 +56,6 @@ public class TickGeneratorImplTest {
 
     @Test
     public void stopTickGenerationWithValidDataRemovesGood() {
-
-        //Arrange
-        when(goodSpecification.getPeriodHigh()).thenReturn(8);
-        when(goodSpecification.getPeriodLow()).thenReturn(5);
-        when(goodSpecification.getPeriodStep()).thenReturn(1);
-        when(goodSpecification.getPriceLow()).thenReturn(4.0);
-        when(goodSpecification.getPriceHigh()).thenReturn(5.0);
-        when(goodSpecification.getPriceStep()).thenReturn(1.0);
-        when(goodSpecification.getQuantityHigh()).thenReturn((long) 4);
-        when(goodSpecification.getQuantityLow()).thenReturn((long) 1);
-        when(goodSpecification.getQuantityStep()).thenReturn((long) 1);
-
         //Act
         tickGenerator.startTickGeneration(GOOD, goodSpecification);
 
@@ -91,18 +68,6 @@ public class TickGeneratorImplTest {
 
     @Test
     public void updateTickGenerationWithValidDataUpdatesGood() {
-
-        //Arrange
-        when(goodSpecification.getPeriodHigh()).thenReturn(8);
-        when(goodSpecification.getPeriodLow()).thenReturn(5);
-        when(goodSpecification.getPeriodStep()).thenReturn(1);
-        when(goodSpecification.getPriceLow()).thenReturn(4.0);
-        when(goodSpecification.getPriceHigh()).thenReturn(5.0);
-        when(goodSpecification.getPriceStep()).thenReturn(1.0);
-        when(goodSpecification.getQuantityHigh()).thenReturn((long) 4);
-        when(goodSpecification.getQuantityLow()).thenReturn((long) 1);
-        when(goodSpecification.getQuantityStep()).thenReturn((long) 1);
-
         GoodSpecification goodSpecificationUpdated = new GoodSpecification(GOOD,
                 1, 10, 1,
                 1, 6, 1,

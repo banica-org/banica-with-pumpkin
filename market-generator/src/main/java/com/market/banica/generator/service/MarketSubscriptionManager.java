@@ -4,7 +4,6 @@ import com.market.MarketDataRequest;
 import com.market.TickResponse;
 import com.market.banica.generator.exception.NotFoundException;
 import io.grpc.StatusRuntimeException;
-import io.grpc.netty.shaded.io.netty.util.internal.StringUtil;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +23,7 @@ public class MarketSubscriptionManager implements SubscriptionManager<MarketData
     @Override
     public void subscribe(MarketDataRequest request, StreamObserver<TickResponse> responseObserver) {
         String goodName = getRequestGoodName(request);
-        if (!StringUtil.isNullOrEmpty(goodName)) {
+        if (!validateStringData(goodName)) {
             LOGGER.debug("{} Requested for subscription for good: {}.", responseObserver, goodName);
             addSubscriber(responseObserver, goodName);
         } else {
@@ -36,7 +35,7 @@ public class MarketSubscriptionManager implements SubscriptionManager<MarketData
     @Override
     public void unsubscribe(MarketDataRequest request, StreamObserver<TickResponse> responseObserver) {
         String goodName = getRequestGoodName(request);
-        if (!StringUtil.isNullOrEmpty(goodName)) {
+        if (!validateStringData(goodName)) {
             LOGGER.debug("Request to unsubscribe from {} for good: {}.", responseObserver, goodName);
             removeSubscriber(responseObserver, goodName);
         } else {
@@ -48,13 +47,17 @@ public class MarketSubscriptionManager implements SubscriptionManager<MarketData
     @Override
     public void notifySubscribers(TickResponse response) {
         String goodName = getTickResponseGoodName(response);
-        if (!StringUtil.isNullOrEmpty(goodName)) {
+        if (!validateStringData(goodName)) {
             Set<StreamObserver<TickResponse>> subscribers = subscriptions.get(goodName);
             sendNotification(response, subscribers);
         } else {
             LOGGER.warn("Illegal value {} for good by response: {}.", goodName, response);
             throw new NotFoundException("Illegal good value!");
         }
+    }
+
+    private boolean validateStringData(String goodName) {
+        return goodName == null || goodName.trim().isEmpty();
     }
 
     @Override

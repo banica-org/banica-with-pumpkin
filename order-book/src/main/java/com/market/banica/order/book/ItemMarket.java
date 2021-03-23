@@ -9,7 +9,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Component
+//@Component
 public class ItemMarket {
 
     private final Map<String, TreeSet<Item>> allItems;

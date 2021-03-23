@@ -143,15 +143,6 @@ public class MarketConfigurationImpl implements MarketConfiguration {
         }
     }
 
-    public Map<String, GoodSpecification> getGoods() {
-        try {
-            this.lock.readLock().lock();
-            return Collections.unmodifiableMap(this.goods);
-        } finally {
-            this.lock.readLock().unlock();
-        }
-    }
-
     private GoodSpecification modifyProperty(String origin, String good,
                                              RuntimeException exception, boolean condition,
                                              long quantityLow, long quantityHigh, long quantityStep,

@@ -17,7 +17,7 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.concurrent.TimeUnit;
 
-@Service
+//@Service
 public class MarketDataClient {
 
     private final ItemMarket itemMarket;

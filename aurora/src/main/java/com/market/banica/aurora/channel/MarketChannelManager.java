@@ -18,8 +18,6 @@ public class MarketChannelManager {
     private final Map<String, ManagedChannel> marketChannels = new HashMap<>();
 
 
-
-
     public void createChannel(String channelName, String host, int port) {
         System.out.println();
         ManagedChannel channel = ManagedChannelBuilder
@@ -29,7 +27,6 @@ public class MarketChannelManager {
                 .build();
         marketChannels.put(channelName, channel);
     }
-
 
 
     public void shutdownChannel(String channelName) {
@@ -57,5 +54,18 @@ public class MarketChannelManager {
         return this.marketChannels.get(marketOrigin);
     }
 
+    @PostConstruct
+    private void initializeMarketChannels() {
+        this.createChannel("europe", "localhost", 8083);
+        this.createChannel("asia", "localhost", 8082);
+        this.createChannel("america", "localhost", 8081);
+    }
+
+    @PreDestroy
+    private void destroyMarketChannels() {
+        this.shutdownChannel("europe");
+        this.shutdownChannel("asia");
+        this.shutdownChannel("america");
+    }
 
 }

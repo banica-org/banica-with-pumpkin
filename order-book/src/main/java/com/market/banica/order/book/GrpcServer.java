@@ -15,7 +15,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-@Component
+//@Component
 public class GrpcServer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GrpcServer.class);

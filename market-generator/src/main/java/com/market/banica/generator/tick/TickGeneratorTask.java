@@ -21,9 +21,7 @@ public class TickGeneratorTask implements Runnable {
     private final String nameGood;
     private final BlockingQueue<MarketTick> tickBlockingQueue;
     private final ScheduledExecutorService scheduledExecutorService;
-    // if variable is static - it will affect all instances the class, not just the
-    // current one(as expected)
-    private volatile /*static*/ boolean isStopped;
+    private volatile boolean isStopped;
 
     public TickGeneratorTask(GoodSpecification goodSpecification, String originGood,
                              String nameGood, BlockingQueue<MarketTick> tickBlockingQueue) {

@@ -6,8 +6,8 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public class MarketTick {
-    private String origin;
-    private String good;
-    private long amount;
-    private double price;
+    private final String origin;
+    private final String good;
+    private final long amount;
+    private final double price;
 }
