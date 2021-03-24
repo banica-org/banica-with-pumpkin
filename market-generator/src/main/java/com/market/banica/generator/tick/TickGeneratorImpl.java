@@ -14,15 +14,14 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.Collectors;
 
 @Getter
 @Component
 public class TickGeneratorImpl implements TickGenerator {
     private static final Logger LOGGER = LoggerFactory.getLogger(TickGeneratorImpl.class);
+
     private final Map<String, TickGeneratorTask> tickGeneratorTasks;
 
     @Autowired
@@ -33,12 +32,11 @@ public class TickGeneratorImpl implements TickGenerator {
     @Override
     public void startTickGeneration(String nameGood, GoodSpecification goodSpecification) {
         if (!tickGeneratorTasks.containsKey(nameGood)) {
-            BlockingQueue<MarketTick> tickBlockingQueue = new LinkedBlockingQueue<>(20);
             TickGeneratorTask tickGeneratorTask = new TickGeneratorTask(goodSpecification,
-                    nameGood.split("/")[0]/*originGood*/,
-                    nameGood, tickBlockingQueue);
+                    nameGood.split("/")[0],
+                    nameGood);
             tickGeneratorTasks.put(nameGood, tickGeneratorTask);
-            new Thread(tickGeneratorTask).start();
+            tickGeneratorTasks.get(nameGood).run();
             LOGGER.info("Started new tick generation for {}!", nameGood);
         }
     }
@@ -83,8 +81,9 @@ public class TickGeneratorImpl implements TickGenerator {
     }
 
     public List<String> getMarketCatalogue(String marketName) {
-        List<String> collect = this.tickGeneratorTasks.keySet().stream().filter(k -> k.split("/")[0].equals(marketName)).map(k -> k.split("/")[1])
+        return this.tickGeneratorTasks.keySet().stream()
+                .filter(k -> k.split("/")[0].equals(marketName))
+                .map(k -> k.split("/")[1])
                 .collect(Collectors.toList());
-        return collect;
     }
 }

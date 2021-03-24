@@ -1,61 +1,47 @@
 package com.market.banica.generator.tick;
 
+import com.market.TickResponse;
 import com.market.banica.generator.model.GoodSpecification;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.BlockingQueue;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TickGeneratorImplTest {
-    private static final String ORIGIN = "Europe";
-    private static final String GOOD = "egg";
-    private final Map<String, TickGeneratorTask> tickGeneratorTasks = new HashMap<>();
-
-    @Mock
-    private final MarketTick marketTick = new MarketTick(ORIGIN, GOOD, 3, 5);
-
-    @Mock
-    private BlockingQueue<MarketTick> tickBlockingQueue;
+    private static final String GOOD = "europe/egg";
 
     @Mock
     private GoodSpecification goodSpecification;
 
     private TickGeneratorImpl tickGenerator;
 
-
     @Before
-    public void initialize() throws InterruptedException {
-        tickBlockingQueue.put(marketTick);
+    public void initialize() {
         tickGenerator = new TickGeneratorImpl();
     }
 
-
     @Test
     public void startTickGenerationWithValidDataAddsGood() {
+
         //Act
         tickGenerator.startTickGeneration(GOOD, goodSpecification);
 
         //Assert
         assertEquals(1, tickGenerator.getTickGeneratorTasks().size());
-        assertTrue(this.tickGenerator.getTickGeneratorTasks().containsKey("egg"));
+        assertTrue(this.tickGenerator.getTickGeneratorTasks().containsKey(GOOD));
     }
 
     @Test
     public void stopTickGenerationWithValidDataRemovesGood() {
+
         //Act
         tickGenerator.startTickGeneration(GOOD, goodSpecification);
 
@@ -63,11 +49,13 @@ public class TickGeneratorImplTest {
 
         //Assert
         assertEquals(0, tickGenerator.getTickGeneratorTasks().size());
-        assertFalse(this.tickGenerator.getTickGeneratorTasks().containsKey("egg"));
+        assertFalse(this.tickGenerator.getTickGeneratorTasks().containsKey(GOOD));
     }
 
     @Test
     public void updateTickGenerationWithValidDataUpdatesGood() {
+
+        //Arrange
         GoodSpecification goodSpecificationUpdated = new GoodSpecification(GOOD,
                 1, 10, 1,
                 1, 6, 1,
@@ -83,4 +71,36 @@ public class TickGeneratorImplTest {
                 .get(GOOD).getGoodSpecification().getPeriodHigh());
 
     }
+
+    @Test
+    public void generateTicksWithValidDataCreatesTicks() {
+
+        //Arrange
+        List<TickResponse> tickResponses;
+
+        //Act
+        tickGenerator.startTickGeneration(GOOD, goodSpecification);
+        tickResponses = tickGenerator.generateTicks(GOOD);
+        String goodNameActual = tickResponses.get(0).getGoodName();
+
+        //Assert
+        assertFalse(tickResponses.isEmpty());
+        assertEquals(GOOD, goodNameActual);
+    }
+
+    @Test
+    public void generateTicksWithInvalidData() {
+
+        //Arrange
+        List<TickResponse> tickResponses;
+        String newGood = "europe/milk";
+
+        //Act
+        tickGenerator.startTickGeneration(GOOD, goodSpecification);
+        tickResponses = tickGenerator.generateTicks(newGood);
+
+        //Assert
+        assertEquals(tickResponses.size(), 0);
+    }
+
 }

@@ -24,11 +24,11 @@ public class TickGeneratorTask implements Runnable {
     private volatile boolean isStopped;
 
     public TickGeneratorTask(GoodSpecification goodSpecification, String originGood,
-                             String nameGood, BlockingQueue<MarketTick> tickBlockingQueue) {
+                             String nameGood) {
         this.goodSpecification = goodSpecification;
         this.originGood = originGood;
         this.nameGood = nameGood;
-        this.tickBlockingQueue = new LinkedBlockingQueue<>(20);
+        this.tickBlockingQueue = new LinkedBlockingQueue<>();
         this.scheduledExecutorService = Executors.newScheduledThreadPool(1);
         isStopped = false;
     }
