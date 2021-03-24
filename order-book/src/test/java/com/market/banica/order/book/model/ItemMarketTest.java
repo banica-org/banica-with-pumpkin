@@ -23,7 +23,7 @@ class ItemMarketTest {
     private final Map<String, TreeSet<Item>> allItems = new ConcurrentHashMap<>();
 
     @BeforeEach
-    public void initialize() {
+    public void setUp() {
         TreeSet<Item> items = new TreeSet<>();
         items.add(new Item(1.2, 3, Origin.EUROPE));
         items.add(new Item(2.2, 1, Origin.EUROPE));
