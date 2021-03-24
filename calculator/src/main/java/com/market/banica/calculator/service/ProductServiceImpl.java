@@ -147,7 +147,7 @@ public class ProductServiceImpl implements ProductService {
 
         productBase.getDatabase().remove(productName);
 
-        auroraClientSideService.announceInterests(productName);
+        auroraClientSideService.cancelSubscription(productName);
 
         backUpService.writeBackUp();
     }

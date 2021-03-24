@@ -75,6 +75,25 @@ public class AuroraClientSideService {
 
     }
 
+    public void cancelSubscription(String productName) {
+
+        LOGGER.debug("Inside cancelSubscription method");
+        LOGGER.debug("Building blocking stub");
+        AuroraServiceGrpc.AuroraServiceBlockingStub blockingStub = getBlockingStub();
+
+        LOGGER.debug("Building request with parameters {}", productName);
+        Aurora.AuroraRequest request = Aurora.AuroraRequest.newBuilder()
+                .setTopic(ORDERBOOK_TOPIC_PREFIX + productName)
+                .build();
+
+        Aurora.AuroraResponse auroraResponse = blockingStub.request(request);
+
+        if (!auroraResponse.hasCancelSubscriptionResponse()) {
+            throw new BadResponseException("Bad message from aurora service");
+        }
+
+    }
+
     public ItemOrderBookResponse getIngredient(String message, String clientId) {
 
         LOGGER.debug("Inside getIngredient method");

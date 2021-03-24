@@ -25,14 +25,23 @@ message OrderBookLayer {
 }
 
 message InterestsRequest {
-  repeated string item_names = 1;
+  string item_name = 1;
   string client_id = 2;
 }
 
 message InterestsResponse {
 }
 
+message CancelSubscriptionRequest {
+  string item_name = 1;
+  string client_id = 2;
+}
+
+message CancelSubscriptionResponse {
+}
+
 service OrderBookService {
   rpc getOrderBookItemLayers(ItemOrderBookRequest) returns (ItemOrderBookResponse);
   rpc announceItemInterest(InterestsRequest) returns (InterestsResponse);
+  rpc cancelItemSubscription(CancelSubscriptionRequest) returns (CancelSubscriptionResponse);
 }

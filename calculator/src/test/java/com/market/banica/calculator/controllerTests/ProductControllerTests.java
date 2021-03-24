@@ -42,7 +42,7 @@ public class ProductControllerTests {
     @BeforeEach
     private void setUp() {
         JacksonTester.initFields(this, new ObjectMapper());
-        mockMvc = MockMvcBuilders.standaloneSetup(productController).build();
+            mockMvc = MockMvcBuilders.standaloneSetup(productController).build();
     }
 
     @Test
