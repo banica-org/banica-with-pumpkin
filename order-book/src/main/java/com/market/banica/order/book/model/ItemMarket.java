@@ -18,7 +18,7 @@ public class ItemMarket {
     @Autowired
     public ItemMarket() {
         allItems = new ConcurrentHashMap<>();
-        addDummyData();
+        //addDummyData();
     }
 
     public Optional<Set<Item>> getItemSetByName(String itemName) {

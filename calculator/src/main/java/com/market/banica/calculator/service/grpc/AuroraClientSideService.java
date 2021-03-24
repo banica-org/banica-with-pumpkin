@@ -56,7 +56,6 @@ public class AuroraClientSideService {
 
     }
 
-
     public void announceInterests(List<String> products, String clientId) {
 
         LOGGER.debug("Inside announceInterests method");

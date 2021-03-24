@@ -53,6 +53,7 @@ public class AuroraClient {
     }
 
     public void updateItems(List<String> requestedItems, String clientId) throws TrackingException {
+
         List<String> stoppedItems = new ArrayList<>(itemMarket.getItemNameSet());
         List<String> startedItems = new ArrayList<>(requestedItems);
 
@@ -89,47 +90,47 @@ public class AuroraClient {
     private void startMarketStream(Aurora.AuroraRequest request) {
 
         LOGGER.info("Start item tracking: {}", request.getTopic());
-//        final AuroraServiceGrpc.AuroraServiceStub asynchronousStub = AuroraServiceGrpc.newStub(managedChannel);
+        final AuroraServiceGrpc.AuroraServiceStub asynchronousStub = AuroraServiceGrpc.newStub(managedChannel);
 
-//        asynchronousStub.subscribe(request, new StreamObserver<Aurora.AuroraResponse>() {
-//
-//            @Override
-//            public void onNext(Aurora.AuroraResponse response) {
-//                if (response.hasTickResponse()) {
-//                    TickResponse tickResponse = response.getTickResponse();
-//
-//                    Item item = new Item();
-//                    item.setPrice(tickResponse.getPrice());
-//                    item.setQuantity(tickResponse.getQuantity());
-//                    item.setOrigin(tickResponse.getOrigin());
-//
-//                    Optional<Set<Item>> itemSet = itemMarket.getItemSetByName(tickResponse.getGoodName());
-//                    if (itemSet.isPresent()) {
-//                        itemSet.get().add(item);
-//                    } else {
-//                        LOGGER.error("Item: {} is not being tracked and cannot be added to itemMarket!",
-//                                tickResponse.getGoodName());
-//                    }
-//
-//                    LOGGER.info("Products data updated!");
-//                } else {
-//                    throw new IncorrectResponseException("Response is not correct!");
-//                }
-//            }
-//
-//            @Override
-//            public void onError(final Throwable throwable) {
-//                LOGGER.warn("Unable to request");
-//                LOGGER.error(throwable.getMessage());
-//                throwable.printStackTrace();
-//            }
-//
-//            @Override
-//            public void onCompleted() {
-//                LOGGER.info("Market data gathered");
-//            }
-//
-//        });
+        asynchronousStub.subscribe(request, new StreamObserver<Aurora.AuroraResponse>() {
+
+            @Override
+            public void onNext(Aurora.AuroraResponse response) {
+                if (response.hasTickResponse()) {
+                    TickResponse tickResponse = response.getTickResponse();
+
+                    Item item = new Item();
+                    item.setPrice(tickResponse.getPrice());
+                    item.setQuantity(tickResponse.getQuantity());
+                    item.setOrigin(tickResponse.getOrigin());
+
+                    Optional<Set<Item>> itemSet = itemMarket.getItemSetByName(tickResponse.getGoodName());
+                    if (itemSet.isPresent()) {
+                        itemSet.get().add(item);
+                    } else {
+                        LOGGER.error("Item: {} is not being tracked and cannot be added to itemMarket!",
+                                tickResponse.getGoodName());
+                    }
+
+                    LOGGER.info("Products data updated!");
+                } else {
+                    throw new IncorrectResponseException("Response is not correct!");
+                }
+            }
+
+            @Override
+            public void onError(final Throwable throwable) {
+                LOGGER.warn("Unable to request");
+                LOGGER.error(throwable.getMessage());
+                throwable.printStackTrace();
+            }
+
+            @Override
+            public void onCompleted() {
+                LOGGER.info("Market data gathered");
+            }
+
+        });
 
     }
 

@@ -19,9 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 
 @Service
@@ -50,8 +48,10 @@ public class AuroraServiceImpl extends AuroraServiceGrpc.AuroraServiceImplBase {
         LOGGER.info("Received request from client {}.", request.getClientId());
 
         if (request.getTopic().contains("orderbook")) {
-            if (CharMatcher.is('/').countIn(request.getTopic()) > 1){
-                OrderBookServiceGrpc.OrderBookServiceBlockingStub stub = OrderBookServiceGrpc.newBlockingStub(this.managedChannel);
+
+            OrderBookServiceGrpc.OrderBookServiceBlockingStub stub = OrderBookServiceGrpc.newBlockingStub(this.managedChannel);
+
+            if (CharMatcher.is('/').countIn(request.getTopic()) > 1) {
 
                 Pair<String, Long> pair = this.harvestData(request);
 
@@ -67,9 +67,8 @@ public class AuroraServiceImpl extends AuroraServiceGrpc.AuroraServiceImplBase {
 
                 responseObserver.onCompleted();
             } else {
-                OrderBookServiceGrpc.OrderBookServiceBlockingStub stub = OrderBookServiceGrpc.newBlockingStub(this.managedChannel);
 
-                final String[] interests = request.getTopic().substring(request.getTopic().indexOf("/")).split(",");
+                final String[] interests = request.getTopic().split("/")[1].split(",");
 
                 InterestsResponse interestsResponse = stub.announceItemInterest(InterestsRequest.newBuilder()
                         .addAllItemNames(Arrays.asList(interests))
@@ -79,13 +78,11 @@ public class AuroraServiceImpl extends AuroraServiceGrpc.AuroraServiceImplBase {
                 responseObserver.onNext(Aurora.AuroraResponse.newBuilder()
                         .setInterestsResponse(interestsResponse)
                         .build());
-
-                responseObserver.onCompleted();
             }
 
-        }
+            responseObserver.onCompleted();
 
-        super.request(request, responseObserver);
+        }
     }
 
     private Pair<String, Long> harvestData(Aurora.AuroraRequest request) {
@@ -104,4 +101,5 @@ public class AuroraServiceImpl extends AuroraServiceGrpc.AuroraServiceImplBase {
     public void subscribe(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
         super.subscribe(request, responseObserver);
     }
+
 }
