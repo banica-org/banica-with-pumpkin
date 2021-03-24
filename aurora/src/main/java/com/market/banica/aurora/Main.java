@@ -18,7 +18,6 @@ public class Main implements CommandLineRunner {
         this.auroraService = auroraService;
     }
 
-
     @Override
     public void run(String... args) throws Exception {
         Aurora.AuroraRequest asiaBuilder = Aurora.AuroraRequest.newBuilder().setClientId("1").setTopic("asia/eggs").build();

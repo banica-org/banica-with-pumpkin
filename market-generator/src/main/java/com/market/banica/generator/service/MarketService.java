@@ -29,7 +29,6 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
     public void subscribeForItem(MarketDataRequest request, StreamObserver<TickResponse> responseObserver) {
         tickGenerator.generateTicks(request.getGoodName()).forEach(responseObserver::onNext);
         marketSubscriptionManager.subscribe(request, responseObserver);
-        responseObserver.onCompleted();
     }
 
     @Override

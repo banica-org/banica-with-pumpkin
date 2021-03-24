@@ -16,12 +16,12 @@ public class AuroraSubscriptionManager {
     public static final String ORDER_BOOK_HEADER = "OrderBook";
 
 
-    private final MarketSubscriptionManager marketSubscriptionManager;
+    private final MarketMapperManager marketMapperManager;
     private final OrderBookSubscriptionManager orderBookSubscriptionManager;
 
     @Autowired
-    public AuroraSubscriptionManager(MarketSubscriptionManager marketSubscriptionManager, OrderBookSubscriptionManager orderBookSubscriptionManager) {
-        this.marketSubscriptionManager = marketSubscriptionManager;
+    public AuroraSubscriptionManager(MarketMapperManager marketMapperManager, OrderBookSubscriptionManager orderBookSubscriptionManager) {
+        this.marketMapperManager = marketMapperManager;
         this.orderBookSubscriptionManager = orderBookSubscriptionManager;
     }
 
@@ -36,13 +36,12 @@ public class AuroraSubscriptionManager {
         if (header.equalsIgnoreCase(ORDER_BOOK_HEADER)) {
             this.orderBookSubscriptionManager.subscribeForOrderBookUpdate(request, responseObserver);
         } else {
-            marketSubscriptionManager.subscribeForGood(request, responseObserver);
+            marketMapperManager.subscribeForGood(request, responseObserver);
         }
     }
 
     private String extractHeader(Aurora.AuroraRequest request) {
         return request.getTopic().split(DELIMITER)[0];
-
     }
 
     private boolean isValidRequest(String header, StreamObserver<Aurora.AuroraResponse> responseObserver) {

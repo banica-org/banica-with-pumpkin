@@ -19,7 +19,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Component
-public class MarketSubscriptionManager {
+public class MarketMapperManager {
 
     public static final String DELIMITER = "/";
     public static final String ASTERISK = "*";
@@ -33,39 +33,39 @@ public class MarketSubscriptionManager {
     private final ReentrantLock lock;
 
     @Autowired
-    public MarketSubscriptionManager(MarketChannelManager marketChannelManager, MarketClient marketClient) {
+    public MarketMapperManager(MarketChannelManager marketChannelManager, MarketClient marketClient) {
         this.marketChannelManager = marketChannelManager;
         this.marketClient = marketClient;
         this.lock = new ReentrantLock(true);
     }
 
-
     public void subscribeForGood(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
 
-        String requestOriginName = extractMarketOrigin(request.getTopic());
+        String requestMarketName = extractMarketOrigin(request.getTopic());
         String requestGoodName = extractGood(request.getTopic());
 
         Set<MarketDataRequest> marketDataRequests;
-        Set<String> strings = marketChannelManager.getMarketChannels().keySet();
-        marketDataRequests = mapWildcard(requestOriginName, strings, (marketName) -> marketName + DELIMITER + requestGoodName,
+        Set<String> marketNames = marketChannelManager.getMarketChannels().keySet();
+
+        marketDataRequests = mapWildcard(requestMarketName, marketNames, (marketName) -> marketName + DELIMITER + requestGoodName,
                 request.getClientId(), request.getTopic());
 
         marketDataRequests.forEach(marketDataRequest -> {
 
-            String marketOriginName = extractMarketOrigin(marketDataRequest.getGoodName());
+            String marketName = extractMarketOrigin(marketDataRequest.getGoodName());
             String marketGoodName = extractGood(marketDataRequest.getGoodName());
 
             Set<MarketDataRequest> newMarketDataRequests;
 
             newMarketDataRequests = mapWildcard(marketGoodName, marketClient.getMarketCatalogue(marketDataRequest),
-                    (goodName) -> marketOriginName + DELIMITER + goodName, marketDataRequest.getClientId(), marketDataRequest.getGoodName());
+                    (goodName) -> marketName + DELIMITER + goodName, marketDataRequest.getClientId(), marketDataRequest.getGoodName());
+
             newMarketDataRequests.forEach(dataRequest -> {
                 MarketTickResponseObserver marketTickResponseObserver = new MarketTickResponseObserver(this);
                 observersMap.put(marketTickResponseObserver, responseObserver);
                 marketClient.subscribeForMarketGood(dataRequest, marketTickResponseObserver);
             });
         });
-
     }
 
     public void notifyObservers(TickResponse tickResponse, MarketTickResponseObserver marketTickResponseObserver) {
@@ -79,7 +79,6 @@ public class MarketSubscriptionManager {
         } finally {
             lock.unlock();
         }
-
     }
 
     public void unsubscribe(MarketTickResponseObserver marketTickResponseObserver) {
@@ -94,12 +93,12 @@ public class MarketSubscriptionManager {
         return topic.split(DELIMITER)[1];
     }
 
-    private Set<MarketDataRequest> mapWildcard(String possibleMarketData,
-                                               Set<String> getPossibleMarketData,
+    private Set<MarketDataRequest> mapWildcard(String possibleWildcard,
+                                               Set<String> getPossibleMarketNamesOrGoodNamesSet,
                                                Function<String, String> marketDataMapping,
-                                               String clientId, String goodName) {
-        if (possibleMarketData.equals(ASTERISK)) {
-            return getPossibleMarketData
+                                               String clientId, String topic) {
+        if (possibleWildcard.equals(ASTERISK)) {
+            return getPossibleMarketNamesOrGoodNamesSet
                     .stream()
                     .map(data ->
                             MarketDataRequest
@@ -111,7 +110,7 @@ public class MarketSubscriptionManager {
         return Collections.singleton(MarketDataRequest
                 .newBuilder()
                 .setClientId(clientId)
-                .setGoodName(goodName)
+                .setGoodName(topic)
                 .build());
 
     }
