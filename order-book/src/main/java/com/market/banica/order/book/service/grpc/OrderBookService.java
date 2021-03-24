@@ -21,6 +21,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+//TODO: IF CLASS DIFFRENT FROM MAIN GET FROM HERE
 @Component
 public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplBase {
 
@@ -68,7 +69,7 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
     public void announceItemInterest(InterestsRequest request, StreamObserver<InterestsResponse> responseObserver) {
 
         try {
-
+            LOGGER.info("request data : {}", request.getItemNamesList());
             auroraClient.updateItems(request.getItemNamesList(), request.getClientId());
             responseObserver.onNext(InterestsResponse.newBuilder().build());
             responseObserver.onCompleted();
