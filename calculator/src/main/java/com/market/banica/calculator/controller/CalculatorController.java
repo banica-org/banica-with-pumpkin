@@ -21,7 +21,7 @@ import javax.validation.constraints.NotBlank;
  */
 
 @RestController
-@RequestMapping("/calculator")
+@RequestMapping("calculator")
 @AllArgsConstructor
 public class CalculatorController {
 

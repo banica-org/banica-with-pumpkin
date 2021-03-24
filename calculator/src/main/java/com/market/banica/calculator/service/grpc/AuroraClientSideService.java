@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class AuroraClientSideService {
 
-    private static final String ORDERBOOK_TOPIC_PREFIX = "orderbook/";
+    public static final String ORDERBOOK_TOPIC_PREFIX = "orderbook/";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AuroraClientSideService.class);
 
