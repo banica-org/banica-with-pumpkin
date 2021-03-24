@@ -145,6 +145,8 @@ public class ProductServiceImpl implements ProductService {
 
         productBase.getDatabase().remove(productName);
 
+        removeDeletedProductFromAllRecipes(productName);
+
         backUpService.writeBackUp();
     }
 
@@ -183,6 +185,12 @@ public class ProductServiceImpl implements ProductService {
     //TODO to be implemented once expectations are clear
     @Override
     public void getAllProductsAsListProduct() {
+    }
+
+    private void removeDeletedProductFromAllRecipes(String productName) {
+        LOGGER.debug("In removeProductFromAllRecipes private method with parameters: productName {}", productName);
+
+        productBase.getDatabase().forEach((key, value) -> value.getIngredients().remove(productName));
     }
 
     private Product getProductFromDatabase(String productName) {
