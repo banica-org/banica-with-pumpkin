@@ -87,7 +87,6 @@ public class AuroraClient {
         }
     }
 
-    //TODO:
     private void startMarketStream(Aurora.AuroraRequest request) {
 
         LOGGER.info("Start item tracking: {}", request.getTopic());
@@ -145,6 +144,7 @@ public class AuroraClient {
             }
 
             Context.CancellableContext cancelledStub = cancellableStubs.remove(product);
+//            TODO difference!
             //cancelledStub.cancel(new StoppedStreamException("Stopped tracking stream for: " + product));
             itemMarket.removeUntrackedItem(product);
 

@@ -18,6 +18,7 @@ public class ItemMarket {
     @Autowired
     public ItemMarket() {
         allItems = new ConcurrentHashMap<>();
+        //TODO difference
         //addDummyData();
     }
 

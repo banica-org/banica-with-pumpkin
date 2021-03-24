@@ -21,7 +21,6 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
-//TODO: IF CLASS DIFFRENT FROM MAIN GET FROM HERE
 @Component
 public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplBase {
 
@@ -54,6 +53,7 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
         } else {
             responseObserver.onNext(ItemOrderBookResponse.newBuilder()
                     .setItemName(request.getItemName())
+//                    TODO difference!
                     .addAllOrderbookLayers(new TreeSet<>())
                     .build());
         }
