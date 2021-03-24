@@ -1,9 +1,9 @@
 package com.market.banica.calculator.service;
 
-import com.market.banica.calculator.dto.IngredientDTO;
 import com.market.banica.calculator.dto.RecipeDTO;
-import com.market.banica.calculator.exception.exceptions.FeatureNotSupportedException;
+import com.market.banica.calculator.model.Product;
 import com.market.banica.calculator.service.contract.CalculatorService;
+import com.market.banica.calculator.service.contract.ProductService;
 import com.market.banica.calculator.service.grpc.AuroraClientSideService;
 import com.orderbook.ItemOrderBookResponse;
 import lombok.AllArgsConstructor;
@@ -11,7 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Date: 3/10/2021 Time: 5:28 PM
@@ -24,6 +25,7 @@ import java.util.HashSet;
 public class CalculatorServiceImpl implements CalculatorService {
 
     AuroraClientSideService auroraService;
+    ProductService productService;
 
     /**
      * @param itemName name of the item (ex:banica)
@@ -33,24 +35,22 @@ public class CalculatorServiceImpl implements CalculatorService {
     @Override
     public RecipeDTO getRecipe(String clientId, String itemName, int quantity) {
 
-//        throw new FeatureNotSupportedException("Feature is not implemented yet.");
+        List<Product> products = productService.getProductAsListProduct(itemName);
+        List<ItemOrderBookResponse> resultList = new ArrayList<>();
 
-        //Due the connection is fake atm.
-        //method will fail because of the lack of real connection to aurora service.
+        for (int i = 0; i < products.size(); i++) {
 
-        //get recipe from property
+            resultList.add(auroraService.getIngredient(itemName, clientId));
 
-        //get desired ingredients name
+        }
 
-        //call aurora service for specific ingredient price.
+        ItemOrderBookResponse product = resultList.get(0);
 
-        ItemOrderBookResponse product = auroraService.getIngredient(itemName, clientId);
-
-        System.out.println(11111+ product.toString());
         RecipeDTO result = new RecipeDTO();
         result.setItemName(product.getItemName());
         result.setIngredients(null);
         result.setTotalPrice(BigDecimal.valueOf(product.getOrderbookLayersList().get(0).getPrice()));
+
         return result;
     }
 }
