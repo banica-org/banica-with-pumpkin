@@ -56,18 +56,15 @@ public class AuroraClientSideService {
 
     }
 
-    public void announceInterests(List<String> products, String clientId) {
+    public void announceInterests(String productName) {
 
         LOGGER.debug("Inside announceInterests method");
         LOGGER.debug("Building blocking stub");
         AuroraServiceGrpc.AuroraServiceBlockingStub blockingStub = getBlockingStub();
 
-        String message = String.join(",", products);
-
-        LOGGER.debug("Building request with parameters {}", message);
+        LOGGER.debug("Building request with parameters {}", productName);
         Aurora.AuroraRequest request = Aurora.AuroraRequest.newBuilder()
-                .setClientId(clientId)
-                .setTopic(ORDERBOOK_TOPIC_PREFIX + message)
+                .setTopic(ORDERBOOK_TOPIC_PREFIX + productName)
                 .build();
 
         Aurora.AuroraResponse auroraResponse = blockingStub.request(request);
