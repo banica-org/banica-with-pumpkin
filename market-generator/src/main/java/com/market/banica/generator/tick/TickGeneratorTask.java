@@ -55,7 +55,6 @@ public class TickGeneratorTask implements Runnable {
                 LOGGER.error("An error occurred while starting tick generation for {}!", nameGood);
             }
         }
-
     }
 
     public synchronized void stop() {

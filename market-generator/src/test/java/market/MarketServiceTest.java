@@ -15,6 +15,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.mockito.Mockito.times;
@@ -36,7 +37,7 @@ class MarketServiceTest {
     private static StreamObserver<TickResponse> TICK_RESPONSE_STREAM_OBSERVER;
     private static StreamObserver<CatalogueResponse> CATALOGUE_RESPONSE_STREAM_OBSERVER;
 
-    private List<String> marketCatalogue = Arrays.asList("eggs");
+    private final List<String> marketCatalogue = Collections.singletonList("eggs");
 
 
     private MarketSubscriptionManager marketSubscriptionManager;
@@ -72,7 +73,6 @@ class MarketServiceTest {
         //Assert
         verify(tickGenerator, times(1)).generateTicks(MARKET_DATA_REQUEST.getGoodName());
         verify(marketSubscriptionManager, times(1)).subscribe(MARKET_DATA_REQUEST, TICK_RESPONSE_STREAM_OBSERVER);
-        verify(TICK_RESPONSE_STREAM_OBSERVER, times(1)).onCompleted();
     }
 
     @Test
@@ -87,7 +87,6 @@ class MarketServiceTest {
         verify(tickGenerator, times(1)).getMarketCatalogue(CATALOGUE_REQUEST.getMarketOrigin());
         verify(CATALOGUE_RESPONSE_STREAM_OBSERVER, times(1)).onNext(CATALOGUE_RESPONSE);
         verify(CATALOGUE_RESPONSE_STREAM_OBSERVER, times(1)).onCompleted();
-
     }
 }
 

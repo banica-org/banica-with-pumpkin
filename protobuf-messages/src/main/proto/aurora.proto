@@ -14,13 +14,11 @@ message AuroraRequest{
 
 }
 message AuroraResponse{
-
   oneof responses{
     market.TickResponse tickResponse = 2;
     market.TradeActionProductResponse tradeActionProductResponse = 1;
     orderbook.ItemOrderBookResponse itemOrderBookResponse = 3;
   }
-
 }
 
 service AuroraService{
