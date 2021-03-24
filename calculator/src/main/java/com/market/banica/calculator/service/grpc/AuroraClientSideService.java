@@ -27,42 +27,37 @@ public class AuroraClientSideService {
 
     public void announceInterests(String productName) {
 
-        LOGGER.debug("Inside announceInterests method");
-        LOGGER.debug("Building blocking stub");
-
-        LOGGER.debug("Building request with parameters {}", productName);
-        Aurora.AuroraRequest request = Aurora.AuroraRequest.newBuilder()
-                .setTopic(ORDERBOOK_TOPIC_PREFIX + productName)
-                .build();
-
-        Aurora.AuroraResponse auroraResponse = blockingStub.request(request);
+        LOGGER.debug("Inside announceInterests method.");
+        Aurora.AuroraResponse auroraResponse = getAuroraResponse(productName);
 
         if (!auroraResponse.hasInterestsResponse()) {
             throw new BadResponseException("Bad message from aurora service");
         }
-
     }
 
     public ItemOrderBookResponse getIngredient(String message, String clientId) {
 
-        LOGGER.debug("Inside getIngredient method");
-        LOGGER.debug("Building blocking stub");
-
-        LOGGER.debug("Building request with parameters {}", message);
-        Aurora.AuroraRequest request = Aurora.AuroraRequest.newBuilder()
-                .setClientId(clientId)
-                .setTopic(ORDERBOOK_TOPIC_PREFIX + message)
-                .build();
-
-        LOGGER.debug("Sending request to aurora.");
-
-        Aurora.AuroraResponse auroraResponse = blockingStub.request(request);
+        LOGGER.debug("Inside getIngredient method.");
+        Aurora.AuroraResponse auroraResponse = getAuroraResponse(message);
 
         if (!auroraResponse.hasItemOrderBookResponse()) {
             throw new BadResponseException("Bad message from aurora service");
         }
-
         return auroraResponse.getItemOrderBookResponse();
+    }
 
+    private Aurora.AuroraResponse getAuroraResponse(String message) {
+
+        Aurora.AuroraRequest request = buildAuroraRequest(message);
+
+        return blockingStub.request(request);
+    }
+
+    private Aurora.AuroraRequest buildAuroraRequest(String message) {
+        LOGGER.debug("Building request with parameter {}.", message);
+        return Aurora.AuroraRequest
+                .newBuilder()
+                .setTopic(ORDERBOOK_TOPIC_PREFIX + message)
+                .build();
     }
 }
