@@ -81,12 +81,17 @@ public class AuroraClient {
             Context.CancellableContext withCancellation = Context.current().withCancellation();
             cancellableStubs.put(product, withCancellation);
             itemMarket.addTrackedItem(product);
-            withCancellation.run(() -> startMarketStream(request));
+
+            try {
+                withCancellation.run(() -> startMarketStream(request, product));
+            } catch (Exception e) {
+                withCancellation.cancel(e);
+            }
 
         }
     }
 
-    private void startMarketStream(Aurora.AuroraRequest request) {
+    private void startMarketStream(Aurora.AuroraRequest request, final String product) {
         final AuroraServiceGrpc.AuroraServiceStub asynchronousStub = AuroraServiceGrpc.newStub(managedChannel);
 
         asynchronousStub.subscribe(request, new StreamObserver<Aurora.AuroraResponse>() {
@@ -117,14 +122,14 @@ public class AuroraClient {
 
             @Override
             public void onError(final Throwable throwable) {
-                LOGGER.warn("Unable to request");
-                LOGGER.error(throwable.getMessage());
-                throwable.printStackTrace();
+                LOGGER.error("Unable to request tracking stream for: {} with problem: {}", product, throwable.getMessage());
+                cancellableStubs.get(product).cancel(throwable);
             }
 
             @Override
             public void onCompleted() {
                 LOGGER.info("Market data gathered");
+                cancellableStubs.get(product).cancel(new StoppedStreamException("Stopped tracking stream for: " + product));
             }
 
         });
@@ -147,8 +152,13 @@ public class AuroraClient {
 
     @PreDestroy
     private void stop() throws InterruptedException {
+
+        cancellableStubs.forEach((key, value) -> value
+                .cancel(new StoppedStreamException("Stopped tracking stream for: " + key)));
+
         managedChannel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
         LOGGER.info("Server is terminated!");
+
     }
 
 }
