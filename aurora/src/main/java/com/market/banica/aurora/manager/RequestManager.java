@@ -8,14 +8,19 @@ import com.orderbook.InterestsResponse;
 import com.orderbook.ItemOrderBookRequest;
 import com.orderbook.ItemOrderBookResponse;
 import com.orderbook.OrderBookServiceGrpc;
+
 import io.grpc.ManagedChannel;
 import io.grpc.stub.StreamObserver;
-import jdk.internal.vm.compiler.collections.Pair;
+
+
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Class handles blocking requests to aurora.
@@ -47,7 +52,7 @@ public class RequestManager {
 
         if (CharMatcher.is('/').countIn(request.getTopic()) > 1) {
 
-            Pair<String, Long> pair = this.harvestItemRequestData(request);
+            Map.Entry<String, Long> pair = this.harvestItemRequestData(request);
 
             ItemOrderBookResponse orderBookResponse = sendItemOrderBookResponse(request, blockingStub, pair);
 
@@ -83,11 +88,11 @@ public class RequestManager {
                 .build());
     }
 
-    private ItemOrderBookResponse sendItemOrderBookResponse(Aurora.AuroraRequest request, OrderBookServiceGrpc.OrderBookServiceBlockingStub blockingStub, Pair<String, Long> pair) {
+    private ItemOrderBookResponse sendItemOrderBookResponse(Aurora.AuroraRequest request, OrderBookServiceGrpc.OrderBookServiceBlockingStub blockingStub, Map.Entry<String, Long> pair) {
         return blockingStub.getOrderBookItemLayers(ItemOrderBookRequest.newBuilder()
                 .setClientId(request.getClientId())
-                .setItemName(pair.getLeft())
-                .setQuantity(pair.getRight())
+                .setItemName(pair.getKey())
+                .setQuantity(pair.getValue())
                 .build());
     }
 
@@ -95,7 +100,7 @@ public class RequestManager {
         return OrderBookServiceGrpc.newBlockingStub(channel);
     }
 
-    private Pair<String, Long> harvestItemRequestData(Aurora.AuroraRequest request) {
+    private Map.Entry<String, Long> harvestItemRequestData(Aurora.AuroraRequest request) {
         String topic = request.getTopic();
 
         String[] split = topic.split("/");
@@ -104,7 +109,7 @@ public class RequestManager {
 
         Long quantity = Long.parseLong(split[2]);
 
-        return Pair.create(productName, quantity);
+        return new HashMap.SimpleEntry<>(productName, quantity);
     }
 
 
