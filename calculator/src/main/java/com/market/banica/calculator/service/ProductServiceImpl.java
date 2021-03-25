@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -53,7 +54,7 @@ public class ProductServiceImpl implements ProductService {
     public void createProduct(String newProductName, String unitOfMeasure,
                               String ingredientsMap) {
         LOGGER.debug("In createProduct method with parameters: newProductName {}, unitOfMeasure {} and ingredientsMap {}"
-                ,newProductName,unitOfMeasure,ingredientsMap);
+                , newProductName, unitOfMeasure, ingredientsMap);
 
         if (doesProductExists(newProductName)) {
 
@@ -65,7 +66,7 @@ public class ProductServiceImpl implements ProductService {
 
         newProduct.setProductName(newProductName);
 
-        newProduct.setUnitOfMeasure(UnitOfMeasure.valueOf(unitOfMeasure));
+        newProduct.setUnitOfMeasure(UnitOfMeasure.valueOf(unitOfMeasure.toUpperCase(Locale.ROOT)));
 
         Map<String, Integer> ingredients = new HashMap<>();
 
@@ -147,6 +148,8 @@ public class ProductServiceImpl implements ProductService {
 
         productBase.getDatabase().remove(productName);
 
+        removeDeletedProductFromAllRecipes(productName);
+
         auroraClientSideService.cancelSubscription(productName);
 
         backUpService.writeBackUp();
@@ -187,6 +190,12 @@ public class ProductServiceImpl implements ProductService {
     //TODO to be implemented once expectations are clear
     @Override
     public void getAllProductsAsListProduct() {
+    }
+
+    private void removeDeletedProductFromAllRecipes(String productName) {
+        LOGGER.debug("In removeProductFromAllRecipes private method with parameters: productName {}", productName);
+
+        productBase.getDatabase().forEach((key, value) -> value.getIngredients().remove(productName));
     }
 
     private Product getProductFromDatabase(String productName) {
