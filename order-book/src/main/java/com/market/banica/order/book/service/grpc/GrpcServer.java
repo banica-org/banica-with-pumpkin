@@ -1,4 +1,4 @@
-package com.market.banica.order.book;
+package com.market.banica.order.book.service.grpc;
 
 import io.grpc.Server;
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
@@ -27,15 +27,18 @@ public class GrpcServer {
     @Autowired
     private GrpcServer(
             @Value("${application.executor.pool.size}") final int applicationExecutorPoolSize,
-            @Value("${grpc.server.port}") final int port,
+            @Value("${orderbook.server.port}") final int port,
             final OrderBookService orderBookService) {
+
         applicationExecutor = Executors.newFixedThreadPool(applicationExecutorPoolSize);
+
         server = NettyServerBuilder.forPort(port)
                 .executor(applicationExecutor)
                 .keepAliveTime(1, TimeUnit.MINUTES)
                 .permitKeepAliveTime(1, TimeUnit.MINUTES)
                 .addService(orderBookService)
                 .build();
+
     }
 
     @PostConstruct
@@ -45,14 +48,10 @@ public class GrpcServer {
     }
 
     @PreDestroy
-    private void destroy() {
+    private void destroy() throws InterruptedException {
         applicationExecutor.shutdownNow();
-        server.shutdownNow();
+        server.shutdown().awaitTermination(5, TimeUnit.SECONDS);
         LOGGER.info("Server stopped!");
-    }
-
-    void awaitTermination() throws InterruptedException {
-        server.awaitTermination();
     }
 
 }

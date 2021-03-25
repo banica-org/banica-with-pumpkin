@@ -19,13 +19,23 @@
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
+
         <protobuf-java.version>3.11.1</protobuf-java.version>
-        <grpc-all.version>1.29.0</grpc-all.version>
-        <grpc-services.version>1.29.0</grpc-services.version>
+        <grpc-all.version>1.36.0</grpc-all.version>
+        <gson.version>2.8.6</gson.version>
         <javax.annotation-api.version>1.3.2</javax.annotation-api.version>
         <lombok.version>1.18.16</lombok.version>
-        <protobuf-messages.version>1.0-SNAPSHOT</protobuf-messages.version>
+        <prtobuf-messages.version>1.0-SNAPSHOT</prtobuf-messages.version>
         <common.version>1.0-SNAPSHOT</common.version>
+        <mockito.version>3.6.28</mockito.version>
+        <junit-jupiter.version>5.7.0</junit-jupiter.version>
+        <model-mapper-version>2.3.7</model-mapper-version>
+        <tomcat-annotation-api-version>6.0.53</tomcat-annotation-api-version>
+        <guava.version>30.1-jre</guava.version>
+        <junit4-version>4.12</junit4-version>
+
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
 
     <modules>
@@ -40,22 +50,43 @@
 
     <dependencyManagement>
         <dependencies>
-            <dependency>
-                <groupId>com.google.protobuf</groupId>
-                <artifactId>protobuf-java</artifactId>
-                <version>${protobuf-java.version}</version>
-            </dependency>
 
+            <!-- dependencies for grpc -->
             <dependency>
                 <groupId>io.grpc</groupId>
-                <artifactId>grpc-all</artifactId>
+                <artifactId>grpc-netty-shaded</artifactId>
+                <version>${grpc-all.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.grpc</groupId>
+                <artifactId>grpc-stub</artifactId>
+                <version>${grpc-all.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.grpc</groupId>
+                <artifactId>grpc-protobuf</artifactId>
+                <version>${grpc-all.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.grpc</groupId>
+                <artifactId>grpc-services</artifactId>
+                <version>${grpc-all.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.grpc</groupId>
+                <artifactId>grpc-testing</artifactId>
+                <version>${grpc-all.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.grpc</groupId>
+                <artifactId>grpc-api</artifactId>
                 <version>${grpc-all.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>io.grpc</groupId>
-                <artifactId>grpc-services</artifactId>
-                <version>${grpc-services.version}</version>
+                <groupId>com.google.code.gson</groupId>
+                <artifactId>gson</artifactId>
+                <version>${gson.version}</version>
             </dependency>
 
             <dependency>
@@ -63,11 +94,39 @@
                 <artifactId>javax.annotation-api</artifactId>
                 <version>${javax.annotation-api.version}</version>
             </dependency>
+            <dependency> <!-- necessary for Java 9+ -->
+                <groupId>org.apache.tomcat</groupId>
+                <artifactId>annotations-api</artifactId>
+                <version>${tomcat-annotation-api-version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <!--  Testing dependencies  -->
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-junit-jupiter</artifactId>
+                <version>${mockito.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/junit/junit -->
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>${junit4-version}</version>
+                <scope>test</scope>
+            </dependency>
+
 
             <dependency>
-                <groupId>com.market.banica</groupId>
-                <artifactId>protobuf-messages</artifactId>
-                <version>${protobuf-messages.version}</version>
+                <groupId>org.modelmapper</groupId>
+                <artifactId>modelmapper</artifactId>
+                <version>${model-mapper-version}</version>
+            </dependency>
+
+            <dependency> <!-- Needed for gRPC ServiceConfig setup -->
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${guava.version}</version>
             </dependency>
 
             <dependency>
@@ -75,6 +134,12 @@
                 <artifactId>common</artifactId>
                 <version>${common.version}</version>
             </dependency>
+            <dependency> <!--Proto files -->
+                <groupId>com.market.banica</groupId>
+                <artifactId>protobuf-messages</artifactId>
+                <version>${prtobuf-messages.version}</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 
