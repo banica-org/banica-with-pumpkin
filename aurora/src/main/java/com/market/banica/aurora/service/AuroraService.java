@@ -7,6 +7,7 @@ import com.market.MarketServiceGrpc;
 import com.market.TickResponse;
 import com.market.banica.aurora.client.MarketClient;
 import com.market.banica.aurora.manager.AuroraSubscriptionManager;
+import com.market.banica.aurora.manager.RequestManager;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
@@ -20,9 +21,13 @@ public class AuroraService extends AuroraServiceGrpc.AuroraServiceImplBase {
     @Autowired
     private AuroraSubscriptionManager subscriptionManager;
 
+
+    @Autowired
+    private RequestManager requestManager;
+
     @Override
     public void request(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
-
+        requestManager.handleRequest(request, responseObserver);
     }
 
     @Override

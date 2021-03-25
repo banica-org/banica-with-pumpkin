@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Configuration;
 public class AuroraApplicationConfiguration {
 
     @Bean
-    public GrpcServer getAuroraServer(@Value("${aurora.grp.port}") final int port,
+    public GrpcServer getAuroraServer(@Value("${aurora.server.port}") final int port,
                                       final AuroraService marketService) {
         return new GrpcServer(port, marketService);
     }

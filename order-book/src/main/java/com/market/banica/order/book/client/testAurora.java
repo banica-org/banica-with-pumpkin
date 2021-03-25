@@ -2,14 +2,15 @@ package com.market.banica.order.book.client;
 
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
-import com.market.banica.common.ChannelRPCConfig;
+
+import com.market.banica.common.channel.ChannelRPCConfig;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
 import org.springframework.stereotype.Component;
 
 @Component
-public class AuroraClient {
+public class testAurora {
 
     public void subscribe(String market, String good) {
         Aurora.AuroraRequest request = Aurora.AuroraRequest.newBuilder().setClientId("1").setTopic(market + "/" + good).build();

@@ -5,7 +5,7 @@ import com.market.MarketDataRequest;
 import com.market.MarketServiceGrpc;
 import com.market.TickResponse;
 import com.market.banica.aurora.service.AuroraService;
-import com.market.banica.common.ChannelRPCConfig;
+
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
