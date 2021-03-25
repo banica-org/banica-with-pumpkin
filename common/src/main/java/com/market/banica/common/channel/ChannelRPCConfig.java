@@ -1,4 +1,4 @@
-package com.market.banica.common;
+package com.market.banica.common.channel;
 
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
