@@ -3,7 +3,7 @@ package com.market.banica.order.book.service.grpc;
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
 import com.market.TickResponse;
-import com.market.banica.common.ChannelRPCConfig;
+import com.market.banica.common.channel.ChannelRPCConfig;
 import com.market.banica.order.book.exception.IncorrectResponseException;
 import com.market.banica.order.book.exception.StoppedStreamException;
 import com.market.banica.order.book.exception.TrackingException;

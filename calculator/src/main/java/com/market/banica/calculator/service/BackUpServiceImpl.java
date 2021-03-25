@@ -43,7 +43,7 @@ public class BackUpServiceImpl implements BackUpService {
 
         if (doesBackUpFileExists()) {
 
-            try ( InputStream input = new FileInputStream(databaseBackUpUrl)) {
+            try (InputStream input = new FileInputStream(databaseBackUpUrl)) {
 
                 ConcurrentHashMap<String, Product> data = getDataFromBackUpFile(input);
 
