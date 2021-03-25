@@ -70,7 +70,7 @@ class ItemMarketTest {
     }
 
     @Test
-    public void removeUntrackedItemWithExistingItemNameRemovesItsBelongingEntrySet() {
+    public void removeUntrackedItemWithExistingItemNameRemovesItFromMap() {
         //Arrange
         this.itemMarket.addTrackedItem(MEAT_ITEM_NAME);
 
