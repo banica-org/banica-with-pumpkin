@@ -1,7 +1,7 @@
 package com.market.banica.order.book.service.grpc;
 
 import com.market.Origin;
-import com.market.banica.common.ChannelRPCConfig;
+import com.market.banica.common.channel.ChannelRPCConfig;
 import com.market.banica.order.book.exception.TrackingException;
 import com.market.banica.order.book.model.Item;
 import com.market.banica.order.book.model.ItemMarket;
