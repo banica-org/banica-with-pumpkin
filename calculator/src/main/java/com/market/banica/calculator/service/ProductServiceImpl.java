@@ -5,7 +5,6 @@ import com.market.banica.calculator.enums.UnitOfMeasure;
 import com.market.banica.calculator.model.Product;
 import com.market.banica.calculator.service.contract.BackUpService;
 import com.market.banica.calculator.service.contract.ProductService;
-import com.market.banica.calculator.service.grpc.AuroraClientSideService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -31,7 +31,6 @@ public class ProductServiceImpl implements ProductService {
 
     private final BackUpService backUpService;
     private final ProductBase productBase;
-    private final AuroraClientSideService auroraClientSideService;
 
     @Override
     public Product createProduct(List<Product> products) {
@@ -53,7 +52,7 @@ public class ProductServiceImpl implements ProductService {
     public void createProduct(String newProductName, String unitOfMeasure,
                               String ingredientsMap) {
         LOGGER.debug("In createProduct method with parameters: newProductName {}, unitOfMeasure {} and ingredientsMap {}"
-                ,newProductName,unitOfMeasure,ingredientsMap);
+                , newProductName, unitOfMeasure, ingredientsMap);
 
         if (doesProductExists(newProductName)) {
 
@@ -65,7 +64,7 @@ public class ProductServiceImpl implements ProductService {
 
         newProduct.setProductName(newProductName);
 
-        newProduct.setUnitOfMeasure(UnitOfMeasure.valueOf(unitOfMeasure));
+        newProduct.setUnitOfMeasure(UnitOfMeasure.valueOf(unitOfMeasure.toUpperCase(Locale.ROOT)));
 
         Map<String, Integer> ingredients = new HashMap<>();
 
@@ -147,7 +146,7 @@ public class ProductServiceImpl implements ProductService {
 
         productBase.getDatabase().remove(productName);
 
-        auroraClientSideService.announceInterests(productName);
+        removeDeletedProductFromAllRecipes(productName);
 
         backUpService.writeBackUp();
     }
@@ -189,6 +188,12 @@ public class ProductServiceImpl implements ProductService {
     public void getAllProductsAsListProduct() {
     }
 
+    private void removeDeletedProductFromAllRecipes(String productName) {
+        LOGGER.debug("In removeProductFromAllRecipes private method with parameters: productName {}", productName);
+
+        productBase.getDatabase().forEach((key, value) -> value.getIngredients().remove(productName));
+    }
+
     private Product getProductFromDatabase(String productName) {
         LOGGER.debug("In getProductFromDatabase private method");
 
@@ -200,19 +205,9 @@ public class ProductServiceImpl implements ProductService {
     private void writeProductToDatabase(String newProductName, Product newProduct) {
         LOGGER.debug("In writeProductToDatabase private method");
 
-        announceInterestToOrderBookProductBase(newProductName);
-
         productBase.getDatabase().put(newProductName, newProduct);
 
         backUpService.writeBackUp();
-    }
-
-    private void announceInterestToOrderBookProductBase(String newProductName) {
-        LOGGER.debug("In announceInterestToOrderBookProductBase private method");
-
-        if(!doesProductExists(newProductName)){
-            auroraClientSideService.announceInterests(newProductName);
-        }
     }
 
     private void validateProductsOfListExists(Collection<String> productsNames) {
