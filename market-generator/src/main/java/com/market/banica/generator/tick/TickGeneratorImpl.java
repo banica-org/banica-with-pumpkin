@@ -68,6 +68,7 @@ public class TickGeneratorImpl implements TickGenerator {
         while (!queueTicks.isEmpty()) {
             Date date = new Date();
             MarketTick marketTick = queueTicks.remove();
+            //removes all ticks?
             TickResponse tickResponse = TickResponse.newBuilder()
                     .setOrigin(Origin.valueOf(marketTick.getOrigin().toUpperCase()))
                     .setPrice(marketTick.getPrice())

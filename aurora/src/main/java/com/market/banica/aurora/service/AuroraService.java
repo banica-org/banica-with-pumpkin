@@ -20,7 +20,6 @@ public class AuroraService extends AuroraServiceGrpc.AuroraServiceImplBase {
     @Autowired
     private AuroraSubscriptionManager subscriptionManager;
 
-
     @Override
     public void request(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
 

@@ -28,7 +28,7 @@ public class MarketMapperManager {
 
     private final MarketClient marketClient;
 
-    private HashMap<StreamObserver<?>, StreamObserver<Aurora.AuroraResponse>> observersMap = new HashMap<>();
+    private final HashMap<StreamObserver<?>, StreamObserver<Aurora.AuroraResponse>> observersMap = new HashMap<>();
 
     private final ReentrantLock lock;
 

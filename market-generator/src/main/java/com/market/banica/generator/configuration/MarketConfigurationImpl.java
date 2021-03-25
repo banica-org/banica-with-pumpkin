@@ -18,7 +18,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -193,7 +192,7 @@ public class MarketConfigurationImpl implements MarketConfiguration {
                 properties.load(inputStream);
             }
             propertiesMap.forEach(function);
-            try (FileOutputStream outputStream = new FileOutputStream(file, append);) {
+            try (FileOutputStream outputStream = new FileOutputStream(file, append)) {
                 properties.store(outputStream, null);
             }
         } catch (IOException e) {

@@ -15,7 +15,6 @@ public class AuroraSubscriptionManager {
     public static final String AMERICA_HEADER = "America";
     public static final String ORDER_BOOK_HEADER = "OrderBook";
 
-
     private final MarketMapperManager marketMapperManager;
     private final OrderBookSubscriptionManager orderBookSubscriptionManager;
 
