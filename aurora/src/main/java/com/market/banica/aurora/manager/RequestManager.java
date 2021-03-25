@@ -10,7 +10,7 @@ import com.orderbook.ItemOrderBookResponse;
 import com.orderbook.OrderBookServiceGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.stub.StreamObserver;
-import javafx.util.Pair;
+import jdk.internal.vm.compiler.collections.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -86,8 +86,8 @@ public class RequestManager {
     private ItemOrderBookResponse sendItemOrderBookResponse(Aurora.AuroraRequest request, OrderBookServiceGrpc.OrderBookServiceBlockingStub blockingStub, Pair<String, Long> pair) {
         return blockingStub.getOrderBookItemLayers(ItemOrderBookRequest.newBuilder()
                 .setClientId(request.getClientId())
-                .setItemName(pair.getKey())
-                .setQuantity(pair.getValue())
+                .setItemName(pair.getLeft())
+                .setQuantity(pair.getRight())
                 .build());
     }
 
@@ -104,7 +104,7 @@ public class RequestManager {
 
         Long quantity = Long.parseLong(split[2]);
 
-        return new Pair<>(productName, quantity);
+        return Pair.create(productName, quantity);
     }
 
 
