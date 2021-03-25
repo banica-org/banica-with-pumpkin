@@ -219,7 +219,7 @@ public class ProductServiceImpl implements ProductService {
     private void announceInterestToOrderBookProductBase(String newProductName) {
         LOGGER.debug("In announceInterestToOrderBookProductBase private method");
 
-        if(!doesProductExists(newProductName)){
+        if (!doesProductExists(newProductName)) {
             auroraClientSideService.announceInterests(newProductName);
         }
     }
