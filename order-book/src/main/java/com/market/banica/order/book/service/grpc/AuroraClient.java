@@ -85,6 +85,7 @@ public class AuroraClient {
             try {
                 withCancellation.run(() -> startMarketStream(request, product));
             } catch (Exception e) {
+                LOGGER.error("Tracking for {} has suddenly stopped due to: {}", product, e.getMessage());
                 withCancellation.cancel(e);
             }
 
