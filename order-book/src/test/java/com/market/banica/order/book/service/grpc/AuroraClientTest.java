@@ -14,8 +14,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
@@ -62,46 +60,34 @@ public class AuroraClientTest {
     }
 
     @Test
-    public void updateItemsAddsItemsInAllItemsMapAndCancellableStub() throws TrackingException {
-        //Arrange
-        List<String> items = new ArrayList<>();
-        items.add(EGGS_ITEM_NAME);
-        items.add(RICE_ITEM_NAME);
-        items.add(MEAT_ITEM_NAME);
-
+    public void startSubscriptionAddsItemsInAllItemsMapAndCancellableStub() throws TrackingException {
         //Act
-        this.auroraClient.updateItems(items, CLIENT);
+        this.auroraClient.startSubscription(EGGS_ITEM_NAME, CLIENT);
+        this.auroraClient.startSubscription(RICE_ITEM_NAME, CLIENT);
+        this.auroraClient.startSubscription(MEAT_ITEM_NAME, CLIENT);
 
         //Assert
-        assertEquals(1, this.cancellableStubs.size());
+        assertEquals(3, this.cancellableStubs.size());
         assertEquals(3, this.allItems.size());
         assertEquals(this.allItems.get(MEAT_ITEM_NAME).size(), 0);
     }
 
     @Test(expected = TrackingException.class)
-    public void updateItemsWithExistingItemsThrowsTrackingException() throws TrackingException {
+    public void startSubscriptionWithExistingItemsThrowsTrackingException() throws TrackingException {
         //Arrange
         this.cancellableStubs.put(MEAT_ITEM_NAME, Context.current().withCancellation());
 
-        List<String> items = new ArrayList<>();
-        items.add(EGGS_ITEM_NAME);
-        items.add(RICE_ITEM_NAME);
-        items.add(MEAT_ITEM_NAME);
-
         //Act
-        this.auroraClient.updateItems(items, CLIENT);
+        this.auroraClient.startSubscription(MEAT_ITEM_NAME, CLIENT);
     }
 
     @Test
-    public void stopTrackingItemsRemovesCancellableContextAndProductFromItemMarketWithSuccess() throws TrackingException {
+    public void stopSubscriptionRemovesCancellableContextAndProductFromItemMarketWithSuccess() throws TrackingException {
         //Arrange
         this.cancellableStubs.put(RICE_ITEM_NAME, Context.current().withCancellation());
 
-        List<String> items = new ArrayList<>();
-        items.add(EGGS_ITEM_NAME);
-
         //Act
-        this.auroraClient.updateItems(items, CLIENT);
+        this.auroraClient.stopSubscription(RICE_ITEM_NAME, CLIENT);
 
         //Assert
         assertEquals(1, allItems.size());
@@ -109,13 +95,9 @@ public class AuroraClientTest {
     }
 
     @Test(expected = TrackingException.class)
-    public void stopTrackingItemsThrowsTrackingException() throws TrackingException {
-        //Arrange
-        List<String> items = new ArrayList<>();
-        items.add(EGGS_ITEM_NAME);
-
+    public void stopSubscriptionThrowsTrackingException() throws TrackingException {
         //Act
-        this.auroraClient.updateItems(items, CLIENT);
+        this.auroraClient.stopSubscription(EGGS_ITEM_NAME, CLIENT);
     }
 
     @Test
