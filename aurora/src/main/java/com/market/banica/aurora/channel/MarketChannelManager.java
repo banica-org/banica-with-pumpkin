@@ -27,12 +27,11 @@ public class MarketChannelManager {
     @Value("${europe.grpc.server.port}")
     int EUROPE_PORT;
 
-
-
     public void createChannel(String channelName, String host, int port) {
         ManagedChannel channel = ManagedChannelBuilder
                 .forAddress(host, port)
                 .usePlaintext()
+                .enableRetry()
                 .defaultServiceConfig(ChannelRPCConfig.getInstance().getServiceConfig())
                 .build();
         marketChannels.put(channelName, channel);

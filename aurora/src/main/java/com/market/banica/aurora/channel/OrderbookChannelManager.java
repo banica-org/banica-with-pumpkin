@@ -21,6 +21,7 @@ public class OrderbookChannelManager {
          orderbookChannel = ManagedChannelBuilder
                 .forAddress("localhost", port)
                 .usePlaintext()
+                 .enableRetry()
                 .defaultServiceConfig(ChannelRPCConfig.getInstance().getServiceConfig())
                 .build();
     }
