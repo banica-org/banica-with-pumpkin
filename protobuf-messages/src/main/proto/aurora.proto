@@ -20,6 +20,7 @@ message AuroraResponse{
     market.TradeActionProductResponse tradeActionProductResponse = 1;
     orderbook.ItemOrderBookResponse itemOrderBookResponse = 3;
     orderbook.InterestsResponse interestsResponse = 4;
+    orderbook.CancelSubscriptionResponse CancelSubscriptionResponse = 5;
   }
 
 }
