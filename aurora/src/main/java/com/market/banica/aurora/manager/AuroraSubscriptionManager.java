@@ -44,8 +44,6 @@ public class AuroraSubscriptionManager {
     }
 
     private boolean isValidRequest(String header, StreamObserver<Aurora.AuroraResponse> responseObserver) {
-
-
         if (!isValidHeader(header)) {
             responseObserver.onError(Status.INVALID_ARGUMENT.withDescription("Request has invalid header data!").asRuntimeException());
             return false;
