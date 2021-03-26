@@ -4,16 +4,14 @@ import com.market.banica.calculator.data.contract.ProductBase;
 import com.market.banica.calculator.enums.UnitOfMeasure;
 import com.market.banica.calculator.model.Product;
 import com.market.banica.calculator.service.contract.BackUpService;
+import com.market.banica.calculator.service.grpc.AuroraClientSideService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -23,7 +21,8 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class ProductServiceImplTest {
     private static final String BANICA = "banica";
-    private static final String PUMPKIN = "PUMPKIN";
+    private static final String PUMPKIN = "pumpkin";
+    public static final String INGREDIENTS_MAP = "pumpkin:2";
     public static final Integer QUANTITY = 2;
 
     private Product banica;
@@ -35,12 +34,14 @@ class ProductServiceImplTest {
     private BackUpService backUpService;
     @Mock
     private ProductBase productBase;
+    @Mock
+    private AuroraClientSideService auroraClientSideService;
 
     private ProductServiceImpl productService;
 
     @BeforeEach
     void setUp() {
-        productService = new ProductServiceImpl(backUpService, productBase);
+        productService = new ProductServiceImpl(backUpService, productBase, auroraClientSideService);
         banica = createProduct(BANICA);
         pumpkin = createProduct(PUMPKIN);
         demoDataBase = createDataBase();
@@ -61,13 +62,13 @@ class ProductServiceImplTest {
     }
 
     @Test
-    void createProductShouldThrowIllegalArgumentExceptionIfListOfProductsIsNullOrEmpty() {
+    void firstCreateProductMethodShouldThrowIllegalArgumentExceptionIfListOfProductsIsNullOrEmpty() {
         //Act //Assert
         assertThrows(IllegalArgumentException.class, () -> productService.createProduct(new ArrayList<>()));
     }
 
     @Test
-    void createProductShouldThrowIllegalArgumentExceptionIfProductAlreadyExist() {
+    void firstCreateProductMethodShouldThrowIllegalArgumentExceptionIfProductAlreadyExist() {
         //Arrange
         when(productBase.getDatabase()).thenReturn(demoDataBase);
         //Act //Assert
@@ -75,7 +76,7 @@ class ProductServiceImplTest {
     }
 
     @Test
-    void createProductShouldCreateNewProductIfItDoesNotExistAndAddItToProductBase() {
+    void firstCreateProductMethodShouldCreateNewProductIfItDoesNotExistAndAddItToProductBase() {
         //Arrange
         when(productBase.getDatabase()).thenReturn(demoDataBase);
 
@@ -88,7 +89,25 @@ class ProductServiceImplTest {
     }
 
     @Test
-    void testCreateProduct() {
+    void secondCreateProductMethodShouldThrowIllegalArgumentExceptionIfProductAlreadyExist() {
+        //Arrange
+        when(productBase.getDatabase()).thenReturn(demoDataBase);
+
+        //Assert
+        assertThrows(IllegalArgumentException.class, () -> productService.createProduct(BANICA, UnitOfMeasure.GRAM.toString(), INGREDIENTS_MAP));
+    }
+
+    @Test
+    void secondCreateProductMethodShouldCreateAProductAndSetIngredientsToIt() {
+        //Arrange
+
+        when(productBase.getDatabase()).thenReturn(getDatabaseWithIngredients());
+
+        //Act
+        productService.createProduct(BANICA, UnitOfMeasure.GRAM.toString(), INGREDIENTS_MAP);
+
+        //Assert
+        verify(backUpService, times(1)).writeBackUp();
     }
 
     @Test
@@ -112,6 +131,7 @@ class ProductServiceImplTest {
 
         //Assert
         verify(backUpService, times(1)).writeBackUp();
+        verifyNoMoreInteractions(backUpService, backUpService, auroraClientSideService);
     }
 
     @Test
@@ -140,10 +160,11 @@ class ProductServiceImplTest {
         when(productBase.getDatabase()).thenReturn(demoDataBase);
 
         //Act
-        productService.addIngredient(BANICA, PUMPKIN, QUANTITY);
+        productService.setProductQuantity(BANICA, PUMPKIN, QUANTITY);
 
         //Assert
         verify(backUpService, times(1)).writeBackUp();
+        verifyNoMoreInteractions(backUpService, backUpService, auroraClientSideService);
     }
 
     @Test
@@ -207,12 +228,32 @@ class ProductServiceImplTest {
         when(productBase.getDatabase()).thenReturn(demoDataBase);
         //Act
         productService.setUnitOfMeasure(BANICA, UnitOfMeasure.PIECE.toString());
+        //Assert
         verify(backUpService, times(1)).writeBackUp();
+        verifyNoMoreInteractions(backUpService, backUpService, auroraClientSideService);
     }
 
 
     @Test
-    void deleteProductFromDatabase() {
+    void deleteProductFromDatabaseShouldThrowIllegalArgumentExceptionIfProductDoesNotExist() {
+        //Arrange
+        when(productBase.getDatabase()).thenReturn(new ConcurrentHashMap<>());
+
+        //Act
+        assertThrows(IllegalArgumentException.class, () -> productService.deleteProductFromDatabase(BANICA));
+    }
+
+    @Test
+    void deleteProductFromDatabaseShouldDeleteProductFromDatabase() {
+        //Arrange
+        when(productBase.getDatabase()).thenReturn(demoDataBase);
+
+        //Act
+        productService.deleteProductFromDatabase(BANICA);
+
+        //Assert
+        verify(auroraClientSideService, times(1)).cancelSubscription(BANICA);
+        verify(backUpService, times(1)).writeBackUp();
     }
 
     @Test
@@ -240,10 +281,35 @@ class ProductServiceImplTest {
         productService.deleteProductFromParentIngredients(BANICA, PUMPKIN);
         //Assert
         verify(backUpService, times(1)).writeBackUp();
+        verifyNoMoreInteractions(backUpService, backUpService, auroraClientSideService);
     }
 
     @Test
-    void getProductAsListProduct() {
+    void getProductAsListProductShouldReturnProductAndHisIngredients() {
+        //Arrange
+        setBanicaIngredients();
+        when(productBase.getDatabase()).thenReturn(demoDataBase);
+
+        //Act
+        List<Product> products = productService.getProductAsListProduct(BANICA);
+
+        //Assert
+        assertEquals(products.get(0), banica);
+        assertEquals(products.get(1), pumpkin);
+
+    }
+
+    @Test
+    void getProductAsListProductShouldReturnSingleProductAndWithoutIngredients() {
+        //Arrange
+        when(productBase.getDatabase()).thenReturn(demoDataBase);
+
+        //Act
+        List<Product> products = productService.getProductAsListProduct(BANICA);
+
+        //Assert
+        assertEquals(products.get(0), banica);
+
     }
 
     @Test
@@ -255,5 +321,11 @@ class ProductServiceImplTest {
         Map<String, Integer> ingredients = new ConcurrentHashMap<>();
         ingredients.put(PUMPKIN, QUANTITY);
         banica.setIngredients(ingredients);
+    }
+
+    private Map<String, Product> getDatabaseWithIngredients() {
+        Map<String, Product> ingredients = new ConcurrentHashMap<>();
+        ingredients.put(PUMPKIN, createProduct(PUMPKIN));
+        return ingredients;
     }
 }
