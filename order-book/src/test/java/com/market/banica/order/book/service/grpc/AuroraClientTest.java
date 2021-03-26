@@ -8,10 +8,8 @@ import com.market.banica.order.book.model.ItemMarket;
 import io.grpc.Context;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.junit.Before;
+import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.lang.reflect.InvocationTargetException;
@@ -23,21 +21,23 @@ import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@ExtendWith(MockitoExtension.class)
-class AuroraClientTest {
+public class AuroraClientTest {
     private static final String EGGS_ITEM_NAME = "eggs";
     private static final String RICE_ITEM_NAME = "rice";
     private static final String MEAT_ITEM_NAME = "meat";
+
+    private static final String ALL_ITEMS_FIELD = "allItems";
+    private static final String MANAGED_CHANNEL_FIELD = "managedChannel";
+    private static final String CANCELLABLE_STUBS_FIELD = "cancellableStubs";
 
     private static final String CLIENT = "client";
 
     private static final String DEFAULT_HOST = "localhost";
     private static final int DEFAULT_PORT = 9090;
 
-    ManagedChannel managedChannel = ManagedChannelBuilder.forAddress(DEFAULT_HOST, DEFAULT_PORT)
+    private final ManagedChannel managedChannel = ManagedChannelBuilder.forAddress(DEFAULT_HOST, DEFAULT_PORT)
             .usePlaintext()
             .defaultServiceConfig(ChannelRPCConfig.getInstance().getServiceConfig())
             .enableRetry()
@@ -49,22 +49,20 @@ class AuroraClientTest {
     private final Map<String, TreeSet<Item>> allItems = new ConcurrentHashMap<>();
     private final Map<String, Context.CancellableContext> cancellableStubs = new ConcurrentHashMap<>();
 
-    @BeforeEach
+    @Before
     public void setUp() {
-        TreeSet<Item> items = new TreeSet<>();
-        items.add(new Item(1.2, 3, Origin.EUROPE));
-        items.add(new Item(2.2, 1, Origin.EUROPE));
-        items.add(new Item(3.2, 2, Origin.EUROPE));
+        TreeSet<Item> items = this.populateItems();
+
         allItems.put(EGGS_ITEM_NAME, items);
         allItems.put(RICE_ITEM_NAME, new TreeSet<>());
 
-        ReflectionTestUtils.setField(itemMarket, "allItems", allItems);
-        ReflectionTestUtils.setField(auroraClient, "cancellableStubs", cancellableStubs);
-        ReflectionTestUtils.setField(auroraClient, "managedChannel", managedChannel);
+        ReflectionTestUtils.setField(itemMarket, ALL_ITEMS_FIELD, allItems);
+        ReflectionTestUtils.setField(auroraClient, CANCELLABLE_STUBS_FIELD, cancellableStubs);
+        ReflectionTestUtils.setField(auroraClient, MANAGED_CHANNEL_FIELD, managedChannel);
     }
 
     @Test
-    public void updateItemsAddsItemsInAllItemsMapAndCancellableStubAsWell() throws TrackingException {
+    public void updateItemsAddsItemsInAllItemsMapAndCancellableStub() throws TrackingException {
         //Arrange
         List<String> items = new ArrayList<>();
         items.add(EGGS_ITEM_NAME);
@@ -80,8 +78,8 @@ class AuroraClientTest {
         assertEquals(this.allItems.get(MEAT_ITEM_NAME).size(), 0);
     }
 
-    @Test
-    public void updateItemsWithExistingItemsThrowsTrackingException() {
+    @Test(expected = TrackingException.class)
+    public void updateItemsWithExistingItemsThrowsTrackingException() throws TrackingException {
         //Arrange
         this.cancellableStubs.put(MEAT_ITEM_NAME, Context.current().withCancellation());
 
@@ -90,9 +88,8 @@ class AuroraClientTest {
         items.add(RICE_ITEM_NAME);
         items.add(MEAT_ITEM_NAME);
 
-        //Act, Assert
-        assertThrows(TrackingException.class,
-                () -> this.auroraClient.updateItems(items, CLIENT));
+        //Act
+        this.auroraClient.updateItems(items, CLIENT);
     }
 
     @Test
@@ -111,14 +108,14 @@ class AuroraClientTest {
         assertEquals(0, cancellableStubs.size());
     }
 
-    @Test
+    @Test(expected = TrackingException.class)
     public void stopTrackingItemsThrowsTrackingException() throws TrackingException {
         //Arrange
         List<String> items = new ArrayList<>();
         items.add(EGGS_ITEM_NAME);
 
-        //Act, Assert
-        assertThrows(TrackingException.class, () -> this.auroraClient.updateItems(items, CLIENT));
+        //Act
+        this.auroraClient.updateItems(items, CLIENT);
     }
 
     @Test
@@ -130,9 +127,16 @@ class AuroraClientTest {
 
         //Act
         stop.invoke(auroraClient, null);
-//        managedChannel.shutdownNow();
 
         //Assert
         assertTrue(managedChannel.isShutdown());
+    }
+
+    private TreeSet<Item> populateItems() {
+        TreeSet<Item> items = new TreeSet<>();
+        items.add(new Item(1.2, 3, Origin.EUROPE));
+        items.add(new Item(2.2, 1, Origin.EUROPE));
+        items.add(new Item(3.2, 2, Origin.EUROPE));
+        return items;
     }
 }
