@@ -77,16 +77,23 @@ public class CalculatorComponentIT {
     private RecipeDTO response;
     private Product product;
 
+    private Resources resources;
+    private Duration duration;
+
     private AuroraServiceGrpc.AuroraServiceBlockingStub blockingStub;
     private JacksonTester<RecipeDTO> jsonResponseRecipeDto;
+
     private String calculatorControllerGetRecipeUrl;
+    private String productControllerCreateProductUrl;
 
     @BeforeEach
     public void SetUp() throws IOException {
         JacksonTester.initFields(this, new ObjectMapper());
         RestAssured.port = port;
+
         calculatorControllerGetRecipeUrl =
                 "calculator/" + clientId + "/" + productName + "/" + productQuantity;
+        productControllerCreateProductUrl = "product";
 
         product = new Product();
         product.setProductName(productName);
@@ -97,19 +104,48 @@ public class CalculatorComponentIT {
         response.setIngredients(null);
         response.setTotalPrice(BigDecimal.valueOf(price));
 
-        Resources resources = new Resources();
-        Duration duration = Duration.of(timeout, ChronoUnit.MILLIS);
+        duration = Duration.of(timeout, ChronoUnit.MILLIS);
 
-        resources.register(testConfigurationIT.startInProcessService(), duration);
         resources.register(testConfigurationIT.getChannel(), duration);
 
         blockingStub = testConfigurationIT.createBlockingStub();
     }
 
     @Test
-    public void getRecipe_Should_returnIngredientDto_When_thereIsResponse() throws IOException {
-        productController.createProduct(Collections.singletonList(product));
+    public void getRecipe_Should_returnRecipeDto_When_thereIsResponse() throws IOException {
         //given
+        productController.createProduct(Collections.singletonList(product));
+        resources.register(testConfigurationIT.startInProcessService(), duration);
+        doReturn(blockingStub).when(auroraClientSideService).getBlockingStub();
+
+        //when & then
+        when()
+                .get(calculatorControllerGetRecipeUrl)
+                .then()
+                .assertThat()
+                .statusCode(HttpStatus.OK.value())
+                .body(is(jsonResponseRecipeDto.write(response).getJson()));
+    }
+
+    @Test
+    public void getRecipe_Should_returnError_When_thereIsNoResponse() throws IOException {
+        //given
+        productController.createProduct(Collections.singletonList(product));
+        resources.register(testConfigurationIT.startInProcessServiceWithEmptyService(), duration);
+        doReturn(blockingStub).when(auroraClientSideService).getBlockingStub();
+
+        //when & then
+        when()
+                .get(calculatorControllerGetRecipeUrl)
+                .then()
+                .assertThat()
+                .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
+    }
+
+    @Test
+    public void createProduct_Should_returnProduct_When_thereIsResponse() throws IOException {
+        //given
+        resources.register(testConfigurationIT.startInProcessService(), duration);
         doReturn(blockingStub).when(auroraClientSideService).getBlockingStub();
 
         //when & then

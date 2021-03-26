@@ -24,7 +24,7 @@ public class TestConfigurationIT {
 
     private final String name;
     private final double price;
-    private final String serverName =InProcessServerBuilder.generateName();
+    private final String serverName = InProcessServerBuilder.generateName();
     private final ManagedChannel channel = InProcessChannelBuilder.forName(serverName).build();
 
     public ManagedChannel getChannel() {
@@ -32,7 +32,7 @@ public class TestConfigurationIT {
         return channel;
     }
 
-    public  AuroraServiceGrpc.AuroraServiceBlockingStub createBlockingStub(){
+    public AuroraServiceGrpc.AuroraServiceBlockingStub createBlockingStub() {
 
         return AuroraServiceGrpc.newBlockingStub(getChannel());
     }
@@ -41,6 +41,12 @@ public class TestConfigurationIT {
 
         return InProcessServerBuilder.forName(serverName).directExecutor()
                 .addService(getGrpcService()).build().start();
+    }
+
+    public Server startInProcessServiceWithEmptyService() throws IOException {
+
+        return InProcessServerBuilder.forName(serverName).directExecutor()
+                .addService(getEmptyGrpcService()).build().start();
     }
 
     private AuroraServiceGrpc.AuroraServiceImplBase getGrpcService() {
@@ -55,6 +61,12 @@ public class TestConfigurationIT {
 
                 responseObserver.onCompleted();
             }
+        };
+    }
+
+    private AuroraServiceGrpc.AuroraServiceImplBase getEmptyGrpcService() {
+
+        return new AuroraServiceGrpc.AuroraServiceImplBase() {
         };
     }
 
