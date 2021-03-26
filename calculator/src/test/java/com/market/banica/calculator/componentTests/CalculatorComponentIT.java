@@ -27,7 +27,6 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,7 +43,6 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.doReturn;
 
 @SpringBootTest(classes = CalculatorApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@SpringJUnitConfig
 @ExtendWith({GrpcCleanupExtension.class, MockitoExtension.class})
 @ActiveProfiles("testIT")
 public class CalculatorComponentIT {
@@ -65,22 +63,22 @@ public class CalculatorComponentIT {
     @Autowired
     private AuroraClientSideService auroraClientSideService;
 
-    @Value(value = "${client.id}")
+    @Value(value = "${client-id}")
     private String clientId;
 
-    @Value(value = "${product.name}")
+    @Value(value = "${product-name}")
     private String productName;
 
-    @Value(value = "${product.quantity}")
+    @Value(value = "${product-quantity}")
     private int productQuantity;
 
-    @Value(value = "${product.price}")
+    @Value(value = "${product-price}")
     private double price;
 
-    @Value(value = "${resource.timeout}")
+    @Value(value = "${resource-timeout}")
     private int timeout;
 
-    @Value(value = "${database.backup.url}")
+    @Value(value = "${database-backup-url}")
     private String databaseBackupUrl;
 
     private RecipeDTO response;
@@ -88,8 +86,8 @@ public class CalculatorComponentIT {
 
     private Resources resources;
     private Duration duration;
-
     private AuroraServiceGrpc.AuroraServiceBlockingStub blockingStub;
+
     private JacksonTester<RecipeDTO> jsonResponseRecipeDto;
     private JacksonTester<List<Product>> jsonRequestProductList;
     private JacksonTester<Product> jsonRequestProduct;
@@ -120,13 +118,13 @@ public class CalculatorComponentIT {
 
         resources.register(testConfigurationIT.getChannel(), duration);
 
-        blockingStub = testConfigurationIT.createBlockingStub();
+        blockingStub =  testConfigurationIT.getBlockingStub();
     }
 
     @Test
     public void getRecipe_Should_returnRecipeDto_When_thereIsResponse() throws IOException {
         //given
-        productBase.getDatabase().put("product",product);
+        productBase.getDatabase().put(productName,product);
         resources.register(testConfigurationIT.startInProcessServiceForItemOrderBookResponse(), duration);
         doReturn(blockingStub).when(auroraClientSideService).getBlockingStub();
 
@@ -142,7 +140,7 @@ public class CalculatorComponentIT {
     @Test
     public void getRecipe_Should_returnError_When_thereIsNoResponse() throws IOException {
         //given
-        productBase.getDatabase().put("product",product);
+        productBase.getDatabase().put(productName,product);
         resources.register(testConfigurationIT.startInProcessServiceWithEmptyService(), duration);
         doReturn(blockingStub).when(auroraClientSideService).getBlockingStub();
 

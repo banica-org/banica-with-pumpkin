@@ -10,32 +10,32 @@ import io.grpc.Server;
 import io.grpc.inprocess.InProcessChannelBuilder;
 import io.grpc.inprocess.InProcessServerBuilder;
 import io.grpc.stub.StreamObserver;
-import lombok.AllArgsConstructor;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.context.properties.ConstructorBinding;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
 import java.io.IOException;
 
-@ConfigurationProperties(prefix = "product")
+@Configuration
 @Profile(value = "testIT")
-@AllArgsConstructor
-@ConstructorBinding
 public class TestConfigurationIT {
 
-    private final String name;
-    private final double price;
+    @Value(value = "${product-name}")
+    private String name;
+
+    @Value(value = "${product-price}")
+    private double price;
+
     private final String serverName = InProcessServerBuilder.generateName();
-    private final ManagedChannel channel = InProcessChannelBuilder.forName(serverName).build();
+
+    public AuroraServiceGrpc.AuroraServiceBlockingStub getBlockingStub(){
+
+        return   AuroraServiceGrpc.newBlockingStub(getChannel());
+    }
 
     public ManagedChannel getChannel() {
 
-        return channel;
-    }
-
-    public AuroraServiceGrpc.AuroraServiceBlockingStub createBlockingStub() {
-
-        return AuroraServiceGrpc.newBlockingStub(getChannel());
+        return InProcessChannelBuilder.forName(serverName).build();
     }
 
     public Server startInProcessServiceForItemOrderBookResponse() throws IOException {
@@ -79,7 +79,7 @@ public class TestConfigurationIT {
 
                 responseObserver.onNext(Aurora.AuroraResponse.newBuilder()
                         .setInterestsResponse(getInterestResponse())
-                                .build());
+                        .build());
 
                 responseObserver.onCompleted();
             }
