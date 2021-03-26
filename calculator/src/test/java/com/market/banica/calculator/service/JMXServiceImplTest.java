@@ -32,10 +32,6 @@ class JMXServiceImplTest {
     @InjectMocks
     private JMXServiceImpl jmxService;
 
-    @BeforeEach
-    void setUp() {
-
-    }
 
     @Test
     void getDatabaseShouldReturnHasMapWithKeyProductNameAndValueProduct() {
@@ -83,9 +79,10 @@ class JMXServiceImplTest {
     void getProductQuantityShouldInvokeProductServiceGetProductQuantityAndReturnProductQuantity() {
         //Arrange
         when(productService.getProductQuantity(PRODUCT_NAME, INGREDIENT_NAME)).thenReturn(1);
-
-        //Act//Assert
-        assertEquals(jmxService.getProductQuantity(PRODUCT_NAME, INGREDIENT_NAME), 1);
+        //Act
+        int expected = jmxService.getProductQuantity(PRODUCT_NAME, INGREDIENT_NAME);
+        // Assert
+        assertEquals(expected, 1);
     }
 
     @Test
@@ -93,8 +90,10 @@ class JMXServiceImplTest {
         //Arrange
         when(productService.getUnitOfMeasure(PRODUCT_NAME)).thenReturn(UnitOfMeasure.GRAM.toString());
 
-        //Act//Assert
-        assertEquals(jmxService.getUnitOfMeasure(PRODUCT_NAME), UnitOfMeasure.GRAM.toString());
+        //Act
+        String expected = jmxService.getUnitOfMeasure(PRODUCT_NAME);
+        // Assert
+        assertEquals(expected, UnitOfMeasure.GRAM.toString());
     }
 
     @Test
