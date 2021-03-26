@@ -2,6 +2,7 @@ package com.market.banica.calculator.componentTests.configuration;
 
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
+import com.orderbook.InterestsResponse;
 import com.orderbook.ItemOrderBookResponse;
 import com.orderbook.OrderBookLayer;
 import io.grpc.ManagedChannel;
@@ -37,10 +38,16 @@ public class TestConfigurationIT {
         return AuroraServiceGrpc.newBlockingStub(getChannel());
     }
 
-    public Server startInProcessService() throws IOException {
+    public Server startInProcessServiceForItemOrderBookResponse() throws IOException {
 
         return InProcessServerBuilder.forName(serverName).directExecutor()
-                .addService(getGrpcService()).build().start();
+                .addService(getGrpcServiceForItemOrderBookResponse()).build().start();
+    }
+
+    public Server startInProcessServiceForInterestResponse() throws IOException {
+
+        return InProcessServerBuilder.forName(serverName).directExecutor()
+                .addService(getGrpcServiceForInterestResponse()).build().start();
     }
 
     public Server startInProcessServiceWithEmptyService() throws IOException {
@@ -49,15 +56,30 @@ public class TestConfigurationIT {
                 .addService(getEmptyGrpcService()).build().start();
     }
 
-    private AuroraServiceGrpc.AuroraServiceImplBase getGrpcService() {
+    private AuroraServiceGrpc.AuroraServiceImplBase getGrpcServiceForItemOrderBookResponse() {
 
         return new AuroraServiceGrpc.AuroraServiceImplBase() {
             @Override
             public void request(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
 
-                responseObserver.onNext(Aurora.AuroraResponse.newBuilder().
-                        setItemOrderBookResponse(getItemOrderBookResponse()).
-                        build());
+                responseObserver.onNext(Aurora.AuroraResponse.newBuilder()
+                        .setItemOrderBookResponse(getItemOrderBookResponse()).
+                                build());
+
+                responseObserver.onCompleted();
+            }
+        };
+    }
+
+    private AuroraServiceGrpc.AuroraServiceImplBase getGrpcServiceForInterestResponse() {
+
+        return new AuroraServiceGrpc.AuroraServiceImplBase() {
+            @Override
+            public void request(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
+
+                responseObserver.onNext(Aurora.AuroraResponse.newBuilder()
+                        .setInterestsResponse(getInterestResponse())
+                                .build());
 
                 responseObserver.onCompleted();
             }
@@ -78,5 +100,10 @@ public class TestConfigurationIT {
                         .setPrice(price)
                         .build())
                 .build();
+    }
+
+    private InterestsResponse getInterestResponse() {
+
+        return InterestsResponse.newBuilder().build();
     }
 }

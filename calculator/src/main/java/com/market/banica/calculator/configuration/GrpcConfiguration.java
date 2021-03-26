@@ -10,7 +10,8 @@ import org.springframework.context.annotation.Configuration;
 public class GrpcConfiguration {
 
     @Bean
-    public AuroraServiceGrpc.AuroraServiceBlockingStub getAuroraBlockingStub(@Value("${aurora.server.host}") String host, @Value("${aurora.server.port}") final int port) {
+    public AuroraServiceGrpc.AuroraServiceBlockingStub getAuroraBlockingStub(@Value("${aurora.server.host}") String host
+            , @Value("${aurora.server.port}") final int port) {
         return AuroraServiceGrpc.newBlockingStub(new GrpcChannel(host, port).getManagedChannel());
     }
 }

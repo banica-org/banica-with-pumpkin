@@ -5,5 +5,5 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @EnableConfigurationProperties(TestConfigurationIT.class)
-public class TestConfiguration {
+public class TestConfigurationBase {
 }

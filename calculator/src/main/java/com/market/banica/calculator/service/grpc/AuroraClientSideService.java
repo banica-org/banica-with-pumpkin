@@ -57,12 +57,17 @@ public class AuroraClientSideService {
         return auroraResponse.getItemOrderBookResponse();
     }
 
+    public AuroraServiceGrpc.AuroraServiceBlockingStub getBlockingStub() {
+
+        return blockingStub;
+    }
+
     private Aurora.AuroraResponse getAuroraResponse(String message) {
         LOGGER.debug("In getAuroraResponse private method");
 
         Aurora.AuroraRequest request = buildAuroraRequest(message);
 
-        return blockingStub.request(request);
+        return getBlockingStub().request(request);
     }
 
     private Aurora.AuroraRequest buildAuroraRequest(String message) {
