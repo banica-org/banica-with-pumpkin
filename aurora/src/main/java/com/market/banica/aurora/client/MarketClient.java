@@ -43,9 +43,4 @@ public class MarketClient {
     private String getOrigin(MarketDataRequest marketDataRequest) {
         return marketDataRequest.getGoodName().split(DELIMITER)[0];
     }
-
-    private String getGood(MarketDataRequest marketDataRequest) {
-        return marketDataRequest.getGoodName().split(DELIMITER)[1];
-    }
-
 }
