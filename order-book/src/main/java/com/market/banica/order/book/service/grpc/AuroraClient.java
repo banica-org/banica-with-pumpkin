@@ -20,8 +20,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PreDestroy;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -52,38 +50,34 @@ public class AuroraClient {
 
     }
 
-    public void updateItems(List<String> requestedItems, String clientId) throws TrackingException {
-        List<String> stoppedItems = new ArrayList<>(itemMarket.getItemNameSet());
-        List<String> startedItems = new ArrayList<>(requestedItems);
+    public void startSubscription(String requestedItem, String clientId) throws TrackingException {
 
-        stoppedItems.removeAll(requestedItems);
-        startedItems.removeAll(itemMarket.getItemNameSet());
+        if (cancellableStubs.containsKey(requestedItem)) {
+            throw new TrackingException("Item is already being tracked!");
+        }
 
-        startTrackingItems(startedItems, clientId);
-        stopTrackingItems(stoppedItems);
+        final Aurora.AuroraRequest request = Aurora.AuroraRequest.newBuilder()
+                .setTopic("market/" + requestedItem)
+                .setClientId(clientId)
+                .build();
 
+        LOGGER.info("Start gathering product data.");
+
+        Context.CancellableContext withCancellation = Context.current().withCancellation();
+        cancellableStubs.put(requestedItem, withCancellation);
+        itemMarket.addTrackedItem(requestedItem);
+        withCancellation.run(() -> startMarketStream(request));
     }
 
-    private void startTrackingItems(List<String> trackedItems, String clientId) throws TrackingException {
-        for (String product : trackedItems) {
+    public void stopSubscription(String requestedItem, String clientId) throws TrackingException {
 
-            if (cancellableStubs.containsKey(product)) {
-                throw new TrackingException("Item is already being tracked!");
-            }
-
-            final Aurora.AuroraRequest request = Aurora.AuroraRequest.newBuilder()
-                    .setTopic("market/" + product)
-                    .setClientId(clientId)
-                    .build();
-
-            LOGGER.info("Start gathering product data.");
-
-            Context.CancellableContext withCancellation = Context.current().withCancellation();
-            cancellableStubs.put(product, withCancellation);
-            itemMarket.addTrackedItem(product);
-            withCancellation.run(() -> startMarketStream(request));
-
+        if (!cancellableStubs.containsKey(requestedItem)) {
+            throw new TrackingException("Item is not being tracked!");
         }
+
+        Context.CancellableContext cancelledStub = cancellableStubs.remove(requestedItem);
+        cancelledStub.cancel(new StoppedStreamException("Stopped tracking stream for: " + requestedItem));
+        itemMarket.removeUntrackedItem(requestedItem);
     }
 
     private void startMarketStream(Aurora.AuroraRequest request) {
@@ -129,20 +123,6 @@ public class AuroraClient {
 
         });
 
-    }
-
-    private void stopTrackingItems(List<String> untrackedItems) throws TrackingException {
-        for (String product : untrackedItems) {
-
-            if (!cancellableStubs.containsKey(product)) {
-                throw new TrackingException("Item is not being tracked!");
-            }
-
-            Context.CancellableContext cancelledStub = cancellableStubs.remove(product);
-            cancelledStub.cancel(new StoppedStreamException("Stopped tracking stream for: " + product));
-            itemMarket.removeUntrackedItem(product);
-
-        }
     }
 
     @PreDestroy
