@@ -5,6 +5,7 @@ import com.market.banica.calculator.enums.UnitOfMeasure;
 import com.market.banica.calculator.model.Product;
 import com.market.banica.calculator.service.contract.BackUpService;
 import com.market.banica.calculator.service.contract.ProductService;
+import com.market.banica.calculator.service.grpc.AuroraClientSideService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +32,7 @@ public class ProductServiceImpl implements ProductService {
 
     private final BackUpService backUpService;
     private final ProductBase productBase;
+    private final AuroraClientSideService auroraClientSideService;
 
     @Override
     public Product createProduct(List<Product> products) {
@@ -148,6 +150,8 @@ public class ProductServiceImpl implements ProductService {
 
         removeDeletedProductFromAllRecipes(productName);
 
+        auroraClientSideService.cancelSubscription(productName);
+
         backUpService.writeBackUp();
     }
 
@@ -205,9 +209,19 @@ public class ProductServiceImpl implements ProductService {
     private void writeProductToDatabase(String newProductName, Product newProduct) {
         LOGGER.debug("In writeProductToDatabase private method");
 
+        announceInterestToOrderBookProductBase(newProductName);
+
         productBase.getDatabase().put(newProductName, newProduct);
 
         backUpService.writeBackUp();
+    }
+
+    private void announceInterestToOrderBookProductBase(String newProductName) {
+        LOGGER.debug("In announceInterestToOrderBookProductBase private method");
+
+        if (!doesProductExists(newProductName)) {
+            auroraClientSideService.announceInterests(newProductName);
+        }
     }
 
     private void validateProductsOfListExists(Collection<String> productsNames) {
