@@ -23,6 +23,7 @@ import static org.mockito.Mockito.when;
 class JMXServiceImplTest {
     public static final String PRODUCT_NAME = "banica";
     public static final String INGREDIENT_NAME = "eggs";
+    public static final Integer QUANTITY = 3;
     @Mock
     private ProductService productService;
     @Mock
@@ -63,19 +64,19 @@ class JMXServiceImplTest {
     @Test
     void addIngredientShouldInvokeProductServiceAddIngredientMethod() {
         //Act
-        jmxService.addIngredient(PRODUCT_NAME, INGREDIENT_NAME, 3);
+        jmxService.addIngredient(PRODUCT_NAME, INGREDIENT_NAME, QUANTITY);
 
         //Assert
-        verify(productService, times(1)).addIngredient(PRODUCT_NAME, INGREDIENT_NAME, 3);
+        verify(productService, times(1)).addIngredient(PRODUCT_NAME, INGREDIENT_NAME, QUANTITY);
     }
 
     @Test
     void setProductQuantityShouldInvokeProductServiceSetProductQuantityMethod() {
         //Act
-        jmxService.setProductQuantity(PRODUCT_NAME, INGREDIENT_NAME, 3);
+        jmxService.setProductQuantity(PRODUCT_NAME, INGREDIENT_NAME, QUANTITY);
 
         //Assert
-        verify(productService, times(1)).setProductQuantity(PRODUCT_NAME, INGREDIENT_NAME, 3);
+        verify(productService, times(1)).setProductQuantity(PRODUCT_NAME, INGREDIENT_NAME, QUANTITY);
     }
 
     @Test

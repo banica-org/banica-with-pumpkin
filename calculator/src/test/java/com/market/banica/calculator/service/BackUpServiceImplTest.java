@@ -11,11 +11,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -28,8 +24,10 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class BackUpServiceImplTest {
 
-    private final String DATABASE_BACKUP_URL = "src/test/resources/backUpRecipeBase.json";
+    private final String DATABASE_BACKUP_URL = "backUpRecipeBase.json";
     public static final String PRODUCT_NAME = "crusts";
+    public static final String BACK_UP_SERVICE_DATABASE_BACKUP_URL_FIELD = "databaseBackUpUrl";
+    public static final String PRODUCT_DATABASE_BACKUP_URL_FIELD = "productBase";
 
     private File testFile;
     private ConcurrentHashMap<String, Product> base;
@@ -42,7 +40,7 @@ class BackUpServiceImplTest {
     @BeforeEach
     void setUp() {
         backUpService = new BackUpServiceImpl(productBase);
-        ReflectionTestUtils.setField(backUpService, "databaseBackUpUrl", DATABASE_BACKUP_URL);
+        ReflectionTestUtils.setField(backUpService, BACK_UP_SERVICE_DATABASE_BACKUP_URL_FIELD, DATABASE_BACKUP_URL);
         base = new ConcurrentHashMap<>();
         base.put("crusts", createProduct());
     }
@@ -54,7 +52,7 @@ class BackUpServiceImplTest {
 
     @Test
     void readBackUpShouldCreateNewFileIfBackUpFileDoesNotExists() {
-        //Arrange//Act
+        //Act
         backUpService.readBackUp();
 
         //Assert
@@ -63,7 +61,7 @@ class BackUpServiceImplTest {
     }
 
     @Test
-    void readBackUpShouldCreateAProductBaseBackUpFromBackUpFile() {
+    void readBackUpShouldCreateAProductBaseBackUpFromBackUpFile() throws IOException {
         //Arrange
         createFileWithValidData();
         when(productBase.getDatabase()).thenReturn(base);
@@ -72,7 +70,7 @@ class BackUpServiceImplTest {
         backUpService.readBackUp();
 
         //Assert
-        ProductBase productBase = (ProductBase) ReflectionTestUtils.getField(backUpService, "productBase");
+        ProductBase productBase = (ProductBase) ReflectionTestUtils.getField(backUpService, PRODUCT_DATABASE_BACKUP_URL_FIELD);
 
         Product product = productBase.getDatabase().get(PRODUCT_NAME);
 
@@ -89,7 +87,7 @@ class BackUpServiceImplTest {
     }
 
     @Test
-    void writeBackUpShouldWriteTheDataFromProductBaseToJsonFile() {
+    void writeBackUpShouldWriteTheDataFromProductBaseToJsonFile() throws IOException {
         //Arrange
         createFileWithoutData();
         when(productBase.getDatabase()).thenReturn(base);
@@ -100,19 +98,16 @@ class BackUpServiceImplTest {
         //Assert
         File file = Paths.get(DATABASE_BACKUP_URL).toFile();
         assertTrue(file.length() != 0);
-
     }
 
-    private void createFileWithoutData() {
+    private void createFileWithoutData() throws IOException {
         testFile = new File(DATABASE_BACKUP_URL);
         try (OutputStreamWriter outputStreamWriter = new OutputStreamWriter(new FileOutputStream(testFile), StandardCharsets.UTF_8)) {
-        } catch (IOException e) {
-            e.printStackTrace();
         }
 
     }
 
-    private void createFileWithValidData() {
+    private void createFileWithValidData() throws IOException {
         testFile = new File(DATABASE_BACKUP_URL);
 
         String text = "{\n" +
@@ -127,8 +122,6 @@ class BackUpServiceImplTest {
                 "}";
         try (BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(testFile), StandardCharsets.UTF_8))) {
             bufferedWriter.write(text);
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 }
