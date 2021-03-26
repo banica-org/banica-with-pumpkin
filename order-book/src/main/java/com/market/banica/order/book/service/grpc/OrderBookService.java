@@ -3,6 +3,8 @@ package com.market.banica.order.book.service.grpc;
 import com.market.banica.order.book.exception.TrackingException;
 import com.market.banica.order.book.model.Item;
 import com.market.banica.order.book.model.ItemMarket;
+import com.orderbook.CancelSubscriptionRequest;
+import com.orderbook.CancelSubscriptionResponse;
 import com.orderbook.InterestsRequest;
 import com.orderbook.InterestsResponse;
 import com.orderbook.ItemOrderBookRequest;
@@ -67,18 +69,35 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
 
         try {
 
-            auroraClient.updateItems(request.getItemNamesList(), request.getClientId());
+            auroraClient.startSubscription(request.getItemName(), request.getClientId());
             responseObserver.onNext(InterestsResponse.newBuilder().build());
             responseObserver.onCompleted();
-            LOGGER.info("Announce item interests by client id: {}", request.getClientId());
+            LOGGER.info("Announce item interest by client id: {}", request.getClientId());
 
         } catch (TrackingException e) {
 
-            LOGGER.warn("Announce item interests by client id: {} has failed with items: {}", request.getClientId(), request.getItemNamesList());
-            responseObserver.onError(Status.INVALID_ARGUMENT.withDescription("Invalid item list").asException());
+            LOGGER.warn("Announce item interest by client id: {} has failed with item: {}", request.getClientId(), request.getItemName());
+            responseObserver.onError(Status.INVALID_ARGUMENT.withDescription("Invalid item name").asException());
 
         }
 
+    }
+
+    @Override
+    public void cancelItemSubscription(CancelSubscriptionRequest request, StreamObserver<CancelSubscriptionResponse> responseObserver) {
+
+        try {
+
+            auroraClient.stopSubscription(request.getItemName(), request.getClientId());
+            responseObserver.onNext(CancelSubscriptionResponse.newBuilder().build());
+            responseObserver.onCompleted();
+            LOGGER.info("Cancel item subscription by client id: {}", request.getClientId());
+
+        } catch (TrackingException e) {
+
+            LOGGER.error("Cancel item subscription by client id: {} has failed with item: {}", request.getClientId(), request.getItemName());
+            responseObserver.onError(Status.INVALID_ARGUMENT.withDescription("Invalid item name").asException());
+        }
     }
 
 }
