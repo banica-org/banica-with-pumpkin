@@ -102,7 +102,7 @@ public class AuroraClientSideService {
 
     }
 
-    private AuroraServiceGrpc.AuroraServiceBlockingStub getBlockingStub() {
+    public AuroraServiceGrpc.AuroraServiceBlockingStub getBlockingStub() {
         return AuroraServiceGrpc.newBlockingStub(managedChannel);
     }
 

@@ -19,6 +19,7 @@
         <fasterXML-version>2.12.2</fasterXML-version>
         <swagger-version>2.9.2</swagger-version>
         <rest-assured>4.3.3</rest-assured>
+        <asarkar>1.0.3</asarkar>
     </properties>
 
     <dependencies>
@@ -102,6 +103,10 @@
         <!--  gRPC dependencies  -->
         <dependency>
             <groupId>io.grpc</groupId>
+            <artifactId>grpc-services</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
             <artifactId>grpc-netty-shaded</artifactId>
         </dependency>
         <dependency>
@@ -114,10 +119,16 @@
         </dependency>
         <!-- Grpc-Test-Support -->
         <dependency>
-            <groupId>org.grpcmock</groupId>
-            <artifactId>grpcmock-spring-boot</artifactId>
-            <version>0.5.2</version>
+            <groupId>com.asarkar.grpc</groupId>
+            <artifactId>grpc-test</artifactId>
+            <version>${asarkar}</version>
         </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-testing</artifactId>
+            <scope>test</scope>
+        </dependency>
+
         <dependency> <!-- necessary for Java 9+ -->
             <groupId>org.apache.tomcat</groupId>
             <artifactId>annotations-api</artifactId>
