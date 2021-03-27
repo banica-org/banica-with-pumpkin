@@ -1,8 +1,9 @@
 package com.market.banica.generator.configuration;
 
+import com.market.banica.common.util.ApplicationDirectory;
 import com.market.banica.generator.exception.NotFoundException;
 import com.market.banica.generator.model.GoodSpecification;
-import com.market.banica.generator.property.LinkedProperties;
+import com.market.banica.generator.service.TickGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,183 +16,191 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 @Component
 @ManagedResource
 public class MarketConfigurationImpl implements MarketConfiguration {
-    private static final String ORIGIN_GOOD_PATTERN = "%s.%s";
 
-    private final File file;
-    private final ReadWriteLock lock = new ReentrantReadWriteLock();
-    private final Logger LOGGER = LoggerFactory.getLogger(MarketConfigurationImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(MarketConfigurationImpl.class);
 
+    private final ReadWriteLock propertiesWriteLock = new ReentrantReadWriteLock();
+
+    private final File configurationFile;
+    private final Properties properties = new Properties();
     private final Map<String, GoodSpecification> goods = new HashMap<>();
 
     @Autowired
-    public MarketConfigurationImpl(@Value("${market.properties.file.path}") String path) {
-        this.file = new File(path);
+    public MarketConfigurationImpl(@Value("${market.properties.file.name}") String fileName) throws IOException {
+        this.configurationFile = ApplicationDirectory.getConfigFile(fileName);
+        loadProperties();
     }
 
     @Override
     @ManagedOperation
-    public void addGoodSpecification(String origin, String good,
-                                     long quantityLow, long quantityHigh, long quantityStep,
+    public void addGoodSpecification(String good, long quantityLow, long quantityHigh, long quantityStep,
                                      double priceLow, double priceHigh, double priceStep,
                                      int periodLow, int periodHigh, int periodStep) {
-
         try {
-            this.lock.writeLock().lock();
+            propertiesWriteLock.writeLock().lock();
 
-            String errorMessage = String.format("A good with name %s from %s already exists",
-                    good.toUpperCase(), origin.toUpperCase());
-            String loggerMessage = "Creating and adding a new goodSpecification.";
-
-            origin = origin.toLowerCase(Locale.getDefault());
             good = good.toLowerCase(Locale.getDefault());
+            if (this.doesGoodExist(good)) {
+                throw new IllegalArgumentException(String.format("A good with name %s already exists",
+                        good.toUpperCase()));
+            }
 
-            Properties properties = new LinkedProperties();
-            boolean append = false;
-            boolean condition = this.doesGoodExist(String.format(ORIGIN_GOOD_PATTERN,
-                    origin, good));
-
-            this.modifyProperty(origin, good,
-                    new IllegalArgumentException(errorMessage),
-                    condition,
+            GoodSpecification addedGoodSpecification = new GoodSpecification(good,
                     quantityLow, quantityHigh, quantityStep,
                     priceLow, priceHigh, priceStep,
-                    periodLow, periodHigh, periodStep, append, properties, properties::setProperty, loggerMessage);
+                    periodLow, periodHigh, periodStep);
 
+            this.modifyProperty(addedGoodSpecification);
+
+            LOGGER.info("Creating and adding a new goodSpecification.");
         } finally {
-            this.lock.writeLock().unlock();
+            propertiesWriteLock.writeLock().unlock();
         }
     }
 
     @Override
     @ManagedOperation
-    public void removeGoodSpecification(String origin, String good) {
+    public void removeGoodSpecification(String good) {
         try {
-            this.lock.writeLock().lock();
+            propertiesWriteLock.writeLock().lock();
 
-            origin = origin.toLowerCase(Locale.getDefault());
             good = good.toLowerCase(Locale.getDefault());
 
-            if (!doesGoodExist(String.format(ORIGIN_GOOD_PATTERN, origin, good))) {
-                throw new NotFoundException(String.format("A good with name %s from %s does " +
-                        "not exist and it cannot be removed", good.toUpperCase(), origin.toUpperCase()));
+            if (!doesGoodExist(good)) {
+                throw new NotFoundException(String.format("A good with name %s does " +
+                        "not exist and it cannot be removed", good.toUpperCase()));
             }
-            Properties properties = new LinkedProperties();
-            Map<String, String> removedGoodSpecification = this.goods.remove(String.format(ORIGIN_GOOD_PATTERN, origin, good))
-                    .generateProperties(origin);
-            this.modifyProperties(removedGoodSpecification, properties,
-                    (k, v) -> properties.remove(k), this.file, false);
+
+            Map<String, String> removedGoodSpecification = this.goods.remove(good).generateProperties();
+
+            removedGoodSpecification.forEach((key, value) -> properties.remove(key));
+
+            saveProperties();
 
             LOGGER.info("Removing an existing goodSpecification.");
         } finally {
-            this.lock.writeLock().unlock();
+            propertiesWriteLock.writeLock().unlock();
         }
     }
 
     @Override
     @ManagedOperation
-    public void updateGoodSpecification(String origin, String good, long quantityLow, long quantityHigh,
-                                        long quantityStep,
+    public void updateGoodSpecification(String good, long quantityLow, long quantityHigh, long quantityStep,
                                         double priceLow, double priceHigh, double priceStep,
                                         int periodLow, int periodHigh, int periodStep) {
-
-
         try {
-            this.lock.writeLock().lock();
+            propertiesWriteLock.writeLock().lock();
 
-            String errorMessage =
-                    String.format("A good with name %s from %s does not exist and cannot be updated", good.toUpperCase(), origin.toUpperCase());
-            String loggerMessage = "Updating an existing goodSpecification.";
-            origin = origin.toLowerCase(Locale.getDefault());
             good = good.toLowerCase(Locale.getDefault());
+            if (!this.doesGoodExist(good)) {
+                throw new IllegalArgumentException(String
+                        .format("A good with name %s does not exist and cannot be updated", good.toUpperCase()));
+            }
 
-            Properties properties = new LinkedProperties();
-            boolean append = false;
-            boolean condition = !this.doesGoodExist(String.format(ORIGIN_GOOD_PATTERN,
-                    origin, good));
-
-
-            this.modifyProperty(origin, good,
-                    new NotFoundException(errorMessage),
-                    condition,
+            GoodSpecification updatedGoodSpecification = new GoodSpecification(good,
                     quantityLow, quantityHigh, quantityStep,
                     priceLow, priceHigh, priceStep,
-                    periodLow, periodHigh, periodStep, append, properties, properties::setProperty, loggerMessage);
+                    periodLow, periodHigh, periodStep);
+
+            this.modifyProperty(updatedGoodSpecification);
+
+            LOGGER.info("Updating an existing goodSpecification.");
         } finally {
-            this.lock.writeLock().unlock();
+            propertiesWriteLock.writeLock().unlock();
         }
     }
 
-    private void modifyProperty(String origin, String good,
-                                RuntimeException exception, boolean condition,
-                                long quantityLow, long quantityHigh, long quantityStep,
-                                double priceLow, double priceHigh, double priceStep,
-                                int periodLow, int periodHigh, int periodStep, boolean append,
-                                Properties properties, BiConsumer<String, String> function, String loggerMessage) {
+    private void modifyProperty(GoodSpecification modifiedGoodSpecification) {
 
-        if (condition) {
-            throw exception;
-        }
+        validateGoodSpecification(modifiedGoodSpecification);
 
-        GoodSpecification goodSpecification = new GoodSpecification(good,
-                quantityLow, quantityHigh, quantityStep,
-                priceLow, priceHigh, priceStep,
-                periodLow, periodHigh, periodStep);
+        modifiedGoodSpecification.generateProperties().forEach(properties::setProperty);
 
-        validateGoodSpecification(goodSpecification);
+        this.saveProperties();
 
-        this.modifyProperties(goodSpecification.generateProperties(origin)
-                , properties, function, this.file, append);
+        this.goods.put(modifiedGoodSpecification.getName(), modifiedGoodSpecification);
 
-        this.goods.put(String.format(ORIGIN_GOOD_PATTERN, origin, good), goodSpecification);
-
-        LOGGER.info(loggerMessage);
     }
 
     private void validateGoodSpecification(GoodSpecification goodSpecification) {
-        for (Map.Entry<String, String> keyValue : goodSpecification.generateProperties("europe").entrySet()) {
-            double currentPropertyValue = Double.parseDouble(keyValue.getValue());
-            if (!(keyValue.getKey().contains("pricerange.low") ||
-                    keyValue.getKey().contains("pricerange.high")) && Double.compare(currentPropertyValue, 0) < 0) {
-                throw new IllegalArgumentException("Value for key: " + keyValue.getKey() + " cannot be negative");
-            }
+
+        if (goodSpecification.getName().contains(".")) {
+            throw new IllegalArgumentException("Good name: " + goodSpecification.getName() + " cannot have dots.");
+        } else if (goodSpecification.getQuantityHigh() < goodSpecification.getQuantityLow()) {
+            throw new IllegalArgumentException("quantityHigh should be higher than quantityLow.");
+        } else if (goodSpecification.getQuantityHigh() - goodSpecification.getQuantityLow() < goodSpecification.getQuantityStep()) {
+            throw new IllegalArgumentException("quantityStep should be lower then the range between low and high.");
+        } else if (goodSpecification.getPriceHigh() < goodSpecification.getPriceLow()) {
+            throw new IllegalArgumentException("priceHigh should be higher than priceLow.");
+        } else if (goodSpecification.getPriceHigh() - goodSpecification.getPriceLow() < goodSpecification.getPriceStep()) {
+            throw new IllegalArgumentException("priceStep should be lower then the range between low and high.");
+        } else if (goodSpecification.getPeriodHigh() < goodSpecification.getPeriodLow()) {
+            throw new IllegalArgumentException("periodHigh should be higher than periodLow.");
+        } else if (goodSpecification.getPeriodHigh() - goodSpecification.getPeriodLow() < goodSpecification.getPeriodStep()) {
+            throw new IllegalArgumentException("periodStep should be lower then the range between low and high.");
         }
 
     }
 
-    private void modifyProperties(Map<String, String> propertiesMap, Properties properties,
-                                  BiConsumer<String, String> function, File file, boolean append) {
+    private void saveProperties() {
 
-        try {
-            if (!file.exists()) {
-                Files.createFile(Paths.get(file.getPath()));
-                LOGGER.debug("Creating a new file in: {}", file.getPath());
-            }
-            try (FileInputStream inputStream = new FileInputStream(file)) {
-                properties.load(inputStream);
-            }
-            propertiesMap.forEach(function);
-            try (FileOutputStream outputStream = new FileOutputStream(file, append);) {
-                properties.store(outputStream, null);
-            }
+        try (Writer output = new OutputStreamWriter(new FileOutputStream(configurationFile), UTF_8)) {
+            properties.store(output, null);
         } catch (IOException e) {
             LOGGER.error("An error occurred while modifying the file: {}", e.getMessage());
         }
+
     }
 
     private boolean doesGoodExist(String good) {
         return this.goods.containsKey(good);
     }
+
+    private void loadProperties() throws IOException {
+        try (FileInputStream inputStream = new FileInputStream(configurationFile)) {
+            propertiesWriteLock.writeLock().lock();
+
+            properties.load(inputStream);
+
+            List<String> distinctProducts = properties.stringPropertyNames().stream()
+                    .filter(property -> property.matches("([a-z])+\\.([a-z])+\\.([a-z])+"))
+                    .map(property -> property.split("\\.")[0])
+                    .distinct()
+                    .collect(Collectors.toList());
+
+            for (String product : distinctProducts) {
+                GoodSpecification goodSpecification = new GoodSpecification(product,
+                        Long.parseLong(properties.getProperty(product + ".quantityrange.low")),
+                        Long.parseLong(properties.getProperty(product + ".quantityrange.high")),
+                        Long.parseLong(properties.getProperty(product + ".quantityrange.step")),
+                        Double.parseDouble(properties.getProperty(product + ".pricerange.low")),
+                        Double.parseDouble(properties.getProperty(product + ".pricerange.high")),
+                        Double.parseDouble(properties.getProperty(product + ".pricerange.step")),
+                        Integer.parseInt(properties.getProperty(product + ".tickrange.low")),
+                        Integer.parseInt(properties.getProperty(product + ".tickrange.high")),
+                        Integer.parseInt(properties.getProperty(product + ".tickrange.step")));
+
+                goods.put(product, goodSpecification);
+            }
+        } finally {
+            propertiesWriteLock.writeLock().unlock();
+        }
+    }
+
 }
