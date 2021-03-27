@@ -2,6 +2,7 @@ package com.market.banica.calculator.componentTests.configuration;
 
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
+import com.orderbook.CancelSubscriptionResponse;
 import com.orderbook.InterestsResponse;
 import com.orderbook.ItemOrderBookResponse;
 import com.orderbook.OrderBookLayer;
@@ -11,14 +12,23 @@ import io.grpc.inprocess.InProcessChannelBuilder;
 import io.grpc.inprocess.InProcessServerBuilder;
 import io.grpc.stub.StreamObserver;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 
-@Configuration
+import static org.mockito.AdditionalAnswers.delegatesTo;
+import static org.mockito.Mockito.mock;
+
+@Service
 @Profile(value = "testIT")
-public class TestConfigurationIT {
+public class TestServiceIT {
+
+    @Value(value = "${order-book-topic-prefix}")
+    private String orderBookTopicPrefix;
+
+    @Value(value = "${client-id}")
+    private String clientId;
 
     @Value(value = "${product-name}")
     private String name;
@@ -28,9 +38,14 @@ public class TestConfigurationIT {
 
     private final String serverName = InProcessServerBuilder.generateName();
 
-    public AuroraServiceGrpc.AuroraServiceBlockingStub getBlockingStub(){
+    public String getServerName() {
 
-        return   AuroraServiceGrpc.newBlockingStub(getChannel());
+        return serverName;
+    }
+
+    public AuroraServiceGrpc.AuroraServiceBlockingStub getBlockingStub() {
+
+        return AuroraServiceGrpc.newBlockingStub(getChannel());
     }
 
     public ManagedChannel getChannel() {
@@ -54,6 +69,21 @@ public class TestConfigurationIT {
 
         return InProcessServerBuilder.forName(serverName).directExecutor()
                 .addService(getEmptyGrpcService()).build().start();
+    }
+
+    public AuroraServiceGrpc.AuroraServiceImplBase getGrpcServiceForCancelSubscriptionResponse() {
+
+        return mock(AuroraServiceGrpc.AuroraServiceImplBase.class, delegatesTo(new AuroraServiceGrpc.AuroraServiceImplBase() {
+            @Override
+            public void request(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
+
+                responseObserver.onNext(Aurora.AuroraResponse.newBuilder()
+                        .setCancelSubscriptionResponse(getCancelSubscriptionResponse())
+                        .build());
+
+                responseObserver.onCompleted();
+            }
+        }));
     }
 
     private AuroraServiceGrpc.AuroraServiceImplBase getGrpcServiceForItemOrderBookResponse() {
@@ -105,5 +135,10 @@ public class TestConfigurationIT {
     private InterestsResponse getInterestResponse() {
 
         return InterestsResponse.newBuilder().build();
+    }
+
+    private CancelSubscriptionResponse getCancelSubscriptionResponse() {
+
+        return CancelSubscriptionResponse.newBuilder().build();
     }
 }
