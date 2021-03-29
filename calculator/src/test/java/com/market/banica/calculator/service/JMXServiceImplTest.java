@@ -4,7 +4,6 @@ import com.market.banica.calculator.data.contract.ProductBase;
 import com.market.banica.calculator.enums.UnitOfMeasure;
 import com.market.banica.calculator.model.Product;
 import com.market.banica.calculator.service.contract.ProductService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -15,9 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class JMXServiceImplTest {
@@ -36,15 +33,15 @@ class JMXServiceImplTest {
     @Test
     void getDatabaseShouldReturnHasMapWithKeyProductNameAndValueProduct() {
         //Arrange
-        HashMap<String, Product> productsDatabse = new HashMap<>();
-        when(productBase.getDatabase()).thenReturn(productsDatabse);
+        HashMap<String, Product> productsDatabase = new HashMap<>();
+        when(productBase.getDatabase()).thenReturn(productsDatabase);
 
         //Act
         Map<String, Product> database = jmxService.getDatabase();
 
         //Assert
         verify(productBase, times(1)).getDatabase();
-        assertEquals(productsDatabse, database);
+        assertEquals(productsDatabase, database);
 
     }
 

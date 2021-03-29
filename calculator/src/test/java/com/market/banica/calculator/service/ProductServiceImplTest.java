@@ -11,27 +11,19 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ProductServiceImplTest {
-    private static final String BANICA = "banica";
-    private static final String PUMPKIN = "pumpkin";
     public static final String INGREDIENTS_MAP = "pumpkin:2";
     public static final Integer QUANTITY = 2;
-
+    private static final String BANICA = "banica";
+    private static final String PUMPKIN = "pumpkin";
     private Product banica;
     private Product pumpkin;
 
@@ -317,10 +309,6 @@ class ProductServiceImplTest {
         //Assert
         assertEquals(products.get(0), banica);
 
-    }
-
-    @Test
-    void getAllProductsAsListProduct() {
     }
 
     private void setBanicaIngredients() {

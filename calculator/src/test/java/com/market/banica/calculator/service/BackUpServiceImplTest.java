@@ -24,11 +24,10 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class BackUpServiceImplTest {
 
-    private final String DATABASE_BACKUP_URL = "backUpRecipeBase.json";
     public static final String PRODUCT_NAME = "crusts";
     public static final String BACK_UP_SERVICE_DATABASE_BACKUP_URL_FIELD = "databaseBackUpUrl";
     public static final String PRODUCT_DATABASE_BACKUP_URL_FIELD = "productBase";
-
+    private final String DATABASE_BACKUP_URL = "backUpRecipeBase.json";
     private File testFile;
     private ConcurrentHashMap<String, Product> base;
 
