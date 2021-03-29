@@ -1,0 +1,10 @@
+{
+  "crusts": {
+    "productName": "crusts",
+    "unitOfMeasure": "GRAM",
+    "ingredients": {
+      "water": 50,
+      "eggs": 12
+    }
+  }
+}
