@@ -35,9 +35,9 @@ public class TickGeneratorImpl implements TickGenerator {
     @Override
     public void startTickGeneration(GoodSpecification goodSpecification) {
         if (!tickTimerTasks.containsKey(goodSpecification.getName())) {
-            TickTimerTask tickTimerTask = new TickTimerTask(this, goodSpecification);
-            tickTimerTasks.put(goodSpecification.getName(), tickTimerTask);
-            TICK_TIMER.schedule(tickTimerTask, tickTimerTask.generateRandomPeriod());
+            TickTimerTask startedTask = new TickTimerTask(this, goodSpecification);
+            tickTimerTasks.put(goodSpecification.getName(), startedTask);
+            TICK_TIMER.schedule(startedTask, startedTask.generateRandomPeriod());
             LOGGER.info("Started new tick generation for {}!", goodSpecification.getName());
         } else {
             LOGGER.warn("Could not start new tick generation for {} as it already exists!",
@@ -48,7 +48,7 @@ public class TickGeneratorImpl implements TickGenerator {
     @Override
     public void stopTickGeneration(String nameGood) {
         if (tickTimerTasks.containsKey(nameGood)) {
-            tickTimerTasks.get(nameGood).cancel();
+            tickTimerTasks.remove(nameGood).cancel();
             LOGGER.info("Stopped tick generation for {}!", nameGood);
         } else {
             LOGGER.warn("Could not stop tick generation for {} as it does not exist!",
@@ -59,11 +59,12 @@ public class TickGeneratorImpl implements TickGenerator {
     @Override
     public void updateTickGeneration(GoodSpecification goodSpecification) {
         if (tickTimerTasks.containsKey(goodSpecification.getName())) {
-            TickTimerTask tickTimerTask = tickTimerTasks.get(goodSpecification.getName());
-            tickTimerTask.cancel();
-            tickTimerTask.changeSpecification(goodSpecification);
-            TICK_TIMER.schedule(tickTimerTask, tickTimerTask.generateRandomPeriod());
-            LOGGER.info("Updated good specification for {}!", goodSpecification.getName());
+            tickTimerTasks.remove(goodSpecification.getName()).cancel();
+
+            TickTimerTask startedTask = new TickTimerTask(this, goodSpecification);
+            tickTimerTasks.put(goodSpecification.getName(), startedTask);
+            TICK_TIMER.schedule(startedTask, startedTask.generateRandomPeriod());
+            LOGGER.info("Updated tick generation for {}!", goodSpecification.getName());
         } else {
             LOGGER.warn("Could not update tick generation for {} as it does not exist!",
                     goodSpecification.getName());
