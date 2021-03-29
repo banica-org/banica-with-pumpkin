@@ -66,7 +66,11 @@ public class AuroraClient {
         Context.CancellableContext withCancellation = Context.current().withCancellation();
         cancellableStubs.put(requestedItem, withCancellation);
         itemMarket.addTrackedItem(requestedItem);
-        withCancellation.run(() -> startMarketStream(request));
+        try {
+            withCancellation.run(() -> startMarketStream(request));
+        } catch (Exception e) {
+            LOGGER.error("Tracking for {} has suddenly stopped due to: {}", requestedItem, e.getMessage());
+        }
     }
 
     public void stopSubscription(String requestedItem, String clientId) throws TrackingException {
