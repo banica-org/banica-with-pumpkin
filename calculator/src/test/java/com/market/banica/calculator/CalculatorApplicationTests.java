@@ -7,6 +7,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 public class CalculatorApplicationTests {
 
     @Test
-    void contextLoads(){
+    void contextLoads() {
     }
 }
