@@ -34,6 +34,7 @@ import org.springframework.boot.test.json.JacksonTester;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.io.File;
@@ -56,6 +57,7 @@ import static org.mockito.Mockito.verify;
 @SpringBootTest(classes = CalculatorApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ExtendWith({GrpcCleanupExtension.class})
 @ActiveProfiles("testIT")
+@DirtiesContext
 public class CalculatorComponentIT {
 
     @LocalServerPort
