@@ -5,7 +5,6 @@ import com.asarkar.grpc.test.Resources;
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.market.banica.calculator.CalculatorApplication;
 import com.market.banica.calculator.componentTests.configuration.TestConfigurationIT;
 import com.market.banica.calculator.data.contract.ProductBase;
 import com.market.banica.calculator.dto.RecipeDTO;
@@ -54,10 +53,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 
-@SpringBootTest(classes = CalculatorApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ExtendWith({GrpcCleanupExtension.class})
 @ActiveProfiles("testIT")
-@DirtiesContext
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class CalculatorComponentIT {
 
     @LocalServerPort
@@ -91,11 +90,11 @@ public class CalculatorComponentIT {
     @Value(value = "${resource-timeout}")
     private int timeout;
 
-    @Value(value = "${database-backup-url}")
-    private String databaseBackupUrl;
-
     @Value(value = "${order-book-topic-prefix}")
     private String orderBookTopicPrefix;
+
+    @Value(value = "${database-backup-url}")
+    private String databaseBackupUrl;
 
     private Product product;
 
@@ -267,7 +266,7 @@ public class CalculatorComponentIT {
     }
 
     @AfterEach
-    void cleanUp() {
+    public void cleanUp() {
 
         productBase.getDatabase().clear();
 
