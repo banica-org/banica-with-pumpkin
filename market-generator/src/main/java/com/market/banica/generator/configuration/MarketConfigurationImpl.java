@@ -40,10 +40,13 @@ public class MarketConfigurationImpl implements MarketConfiguration {
     private final File configurationFile;
     private final Properties properties = new Properties();
     private final Map<String, GoodSpecification> goods = new HashMap<>();
+    private final TickGenerator tickGenerator;
 
     @Autowired
-    public MarketConfigurationImpl(@Value("${market.properties.file.name}") String fileName) throws IOException {
+    public MarketConfigurationImpl(@Value("${market.properties.file.name}") String fileName,
+                                   TickGenerator tickGenerator) throws IOException {
         this.configurationFile = ApplicationDirectory.getConfigFile(fileName);
+        this.tickGenerator = tickGenerator;
         loadProperties();
     }
 
@@ -67,6 +70,8 @@ public class MarketConfigurationImpl implements MarketConfiguration {
                     periodLow, periodHigh, periodStep);
 
             this.modifyProperty(addedGoodSpecification);
+
+            tickGenerator.startTickGeneration(addedGoodSpecification);
 
             LOGGER.info("Creating and adding a new goodSpecification.");
         } finally {
@@ -92,6 +97,8 @@ public class MarketConfigurationImpl implements MarketConfiguration {
             removedGoodSpecification.forEach((key, value) -> properties.remove(key));
 
             saveProperties();
+
+            tickGenerator.stopTickGeneration(good);
 
             LOGGER.info("Removing an existing goodSpecification.");
         } finally {
@@ -119,6 +126,8 @@ public class MarketConfigurationImpl implements MarketConfiguration {
                     periodLow, periodHigh, periodStep);
 
             this.modifyProperty(updatedGoodSpecification);
+
+            tickGenerator.updateTickGeneration(updatedGoodSpecification);
 
             LOGGER.info("Updating an existing goodSpecification.");
         } finally {
@@ -197,6 +206,8 @@ public class MarketConfigurationImpl implements MarketConfiguration {
                         Integer.parseInt(properties.getProperty(product + ".tickrange.step")));
 
                 goods.put(product, goodSpecification);
+
+                tickGenerator.startTickGeneration(goodSpecification);
             }
         } finally {
             propertiesWriteLock.writeLock().unlock();
