@@ -6,15 +6,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public class ApplicationDirectory {
+public class ApplicationDirectoryUtil {
+
+    private static final String USER_DIR = "user.dir";
 
     private static final Path config;
 
-    private ApplicationDirectory() {
+    private ApplicationDirectoryUtil() {
     }
 
     static {
-        String workDir = System.getProperty("user.dir");
+        String workDir = System.getProperty(USER_DIR);
         config = Paths.get(workDir);
     }
 

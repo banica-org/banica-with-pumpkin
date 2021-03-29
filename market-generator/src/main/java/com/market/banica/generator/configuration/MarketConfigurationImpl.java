@@ -1,9 +1,8 @@
 package com.market.banica.generator.configuration;
 
-import com.market.banica.common.util.ApplicationDirectory;
+import com.market.banica.common.util.ApplicationDirectoryUtil;
 import com.market.banica.generator.exception.NotFoundException;
 import com.market.banica.generator.model.GoodSpecification;
-import com.market.banica.generator.service.TickGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +32,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 @ManagedResource
 public class MarketConfigurationImpl implements MarketConfiguration {
 
+    private static final String PROPERTY_REGEX = "([a-z])+\\.([a-z])+\\.([a-z])+";
+
     private static final Logger LOGGER = LoggerFactory.getLogger(MarketConfigurationImpl.class);
 
     private final ReadWriteLock propertiesWriteLock = new ReentrantReadWriteLock();
@@ -43,7 +44,7 @@ public class MarketConfigurationImpl implements MarketConfiguration {
 
     @Autowired
     public MarketConfigurationImpl(@Value("${market.properties.file.name}") String fileName) throws IOException {
-        this.configurationFile = ApplicationDirectory.getConfigFile(fileName);
+        this.configurationFile = ApplicationDirectoryUtil.getConfigFile(fileName);
         loadProperties();
     }
 
@@ -55,10 +56,10 @@ public class MarketConfigurationImpl implements MarketConfiguration {
         try {
             propertiesWriteLock.writeLock().lock();
 
-            good = good.toLowerCase(Locale.getDefault());
+            good = good.toLowerCase(Locale.ROOT);
             if (this.doesGoodExist(good)) {
-                throw new IllegalArgumentException(String.format("A good with name %s already exists",
-                        good.toUpperCase()));
+                LOGGER.warn("A good with name {} already exists", good);
+                throw new IllegalArgumentException(String.format("A good with name %s already exists", good));
             }
 
             GoodSpecification addedGoodSpecification = new GoodSpecification(good,
@@ -80,11 +81,12 @@ public class MarketConfigurationImpl implements MarketConfiguration {
         try {
             propertiesWriteLock.writeLock().lock();
 
-            good = good.toLowerCase(Locale.getDefault());
+            good = good.toLowerCase(Locale.ROOT);
 
             if (!doesGoodExist(good)) {
+                LOGGER.warn("A good with name {} does not exist and it cannot be removed", good);
                 throw new NotFoundException(String.format("A good with name %s does " +
-                        "not exist and it cannot be removed", good.toUpperCase()));
+                        "not exist and it cannot be removed", good));
             }
 
             Map<String, String> removedGoodSpecification = this.goods.remove(good).generateProperties();
@@ -107,10 +109,11 @@ public class MarketConfigurationImpl implements MarketConfiguration {
         try {
             propertiesWriteLock.writeLock().lock();
 
-            good = good.toLowerCase(Locale.getDefault());
+            good = good.toLowerCase(Locale.ROOT);
             if (!this.doesGoodExist(good)) {
+                LOGGER.warn("A good with name {} does not exist and cannot be updated", good);
                 throw new IllegalArgumentException(String
-                        .format("A good with name %s does not exist and cannot be updated", good.toUpperCase()));
+                        .format("A good with name %s does not exist and cannot be updated", good));
             }
 
             GoodSpecification updatedGoodSpecification = new GoodSpecification(good,
@@ -141,19 +144,25 @@ public class MarketConfigurationImpl implements MarketConfiguration {
     private void validateGoodSpecification(GoodSpecification goodSpecification) {
 
         if (goodSpecification.getName().contains(".")) {
+            LOGGER.warn("Good name: {} cannot have dots.", goodSpecification.getName());
             throw new IllegalArgumentException("Good name: " + goodSpecification.getName() + " cannot have dots.");
-        } else if (goodSpecification.getQuantityHigh() < goodSpecification.getQuantityLow()) {
-            throw new IllegalArgumentException("quantityHigh should be higher than quantityLow.");
-        } else if (goodSpecification.getQuantityHigh() - goodSpecification.getQuantityLow() < goodSpecification.getQuantityStep()) {
-            throw new IllegalArgumentException("quantityStep should be lower then the range between low and high.");
-        } else if (goodSpecification.getPriceHigh() < goodSpecification.getPriceLow()) {
-            throw new IllegalArgumentException("priceHigh should be higher than priceLow.");
-        } else if (goodSpecification.getPriceHigh() - goodSpecification.getPriceLow() < goodSpecification.getPriceStep()) {
-            throw new IllegalArgumentException("priceStep should be lower then the range between low and high.");
-        } else if (goodSpecification.getPeriodHigh() < goodSpecification.getPeriodLow()) {
-            throw new IllegalArgumentException("periodHigh should be higher than periodLow.");
-        } else if (goodSpecification.getPeriodHigh() - goodSpecification.getPeriodLow() < goodSpecification.getPeriodStep()) {
-            throw new IllegalArgumentException("periodStep should be lower then the range between low and high.");
+        } else if (goodSpecification.getQuantityLow() <= 0 || goodSpecification.getQuantityHigh() <= 0 ||
+                goodSpecification.getQuantityStep() < 0 || goodSpecification.getPriceLow() <= 0 ||
+                goodSpecification.getPriceHigh() <= 0 || goodSpecification.getPriceStep() < 0 ||
+                goodSpecification.getPeriodLow() <= 0 || goodSpecification.getPeriodHigh() <= 0 ||
+                goodSpecification.getPeriodStep() < 0) {
+            LOGGER.warn("Low and high parameters can only be positive, steps cannot be negative");
+            throw new IllegalArgumentException("Low and high parameters can only be positive, steps cannot be negative");
+        } else if (goodSpecification.getQuantityHigh() < goodSpecification.getQuantityLow() ||
+                goodSpecification.getPriceHigh() < goodSpecification.getPriceLow() ||
+                goodSpecification.getPeriodHigh() < goodSpecification.getPeriodLow()) {
+            LOGGER.warn("High parameters should be higher than low parameters.");
+            throw new IllegalArgumentException("High parameters should be higher than low parameters.");
+        } else if (goodSpecification.getQuantityHigh() - goodSpecification.getQuantityLow() < goodSpecification.getQuantityStep() ||
+                goodSpecification.getPriceHigh() - goodSpecification.getPriceLow() < goodSpecification.getPriceStep() ||
+                goodSpecification.getPeriodHigh() - goodSpecification.getPeriodLow() < goodSpecification.getPeriodStep()) {
+            LOGGER.warn("Step parameter should be lower than the range between low and high parameters.");
+            throw new IllegalArgumentException("Step parameter should be lower than the range between low and high parameters.");
         }
 
     }
@@ -178,29 +187,35 @@ public class MarketConfigurationImpl implements MarketConfiguration {
 
             properties.load(inputStream);
 
-            List<String> distinctProducts = properties.stringPropertyNames().stream()
-                    .filter(property -> property.matches("([a-z])+\\.([a-z])+\\.([a-z])+"))
+            List<String> distinctGoods = properties.stringPropertyNames().stream()
+                    .filter(property -> property.matches(PROPERTY_REGEX))
                     .map(property -> property.split("\\.")[0])
                     .distinct()
                     .collect(Collectors.toList());
 
-            for (String product : distinctProducts) {
-                GoodSpecification goodSpecification = new GoodSpecification(product,
-                        Long.parseLong(properties.getProperty(product + ".quantityrange.low")),
-                        Long.parseLong(properties.getProperty(product + ".quantityrange.high")),
-                        Long.parseLong(properties.getProperty(product + ".quantityrange.step")),
-                        Double.parseDouble(properties.getProperty(product + ".pricerange.low")),
-                        Double.parseDouble(properties.getProperty(product + ".pricerange.high")),
-                        Double.parseDouble(properties.getProperty(product + ".pricerange.step")),
-                        Integer.parseInt(properties.getProperty(product + ".tickrange.low")),
-                        Integer.parseInt(properties.getProperty(product + ".tickrange.high")),
-                        Integer.parseInt(properties.getProperty(product + ".tickrange.step")));
+            for (String goodName : distinctGoods) {
+                GoodSpecification goodSpecification = createGoodSpecification(goodName);
 
-                goods.put(product, goodSpecification);
+                goods.put(goodName, goodSpecification);
             }
         } finally {
             propertiesWriteLock.writeLock().unlock();
         }
+    }
+
+    private GoodSpecification createGoodSpecification(String goodName) {
+
+        return new GoodSpecification(goodName,
+                Long.parseLong(properties.getProperty(goodName + ".quantityrange.low")),
+                Long.parseLong(properties.getProperty(goodName + ".quantityrange.high")),
+                Long.parseLong(properties.getProperty(goodName + ".quantityrange.step")),
+                Double.parseDouble(properties.getProperty(goodName + ".pricerange.low")),
+                Double.parseDouble(properties.getProperty(goodName + ".pricerange.high")),
+                Double.parseDouble(properties.getProperty(goodName + ".pricerange.step")),
+                Integer.parseInt(properties.getProperty(goodName + ".tickrange.low")),
+                Integer.parseInt(properties.getProperty(goodName + ".tickrange.high")),
+                Integer.parseInt(properties.getProperty(goodName + ".tickrange.step")));
+
     }
 
 }
