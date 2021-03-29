@@ -6,14 +6,17 @@ import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.market.banica.calculator.CalculatorApplication;
-import com.market.banica.calculator.componentTests.configuration.TestServiceIT;
-import com.market.banica.calculator.controller.ProductController;
+import com.market.banica.calculator.componentTests.configuration.TestConfigurationIT;
 import com.market.banica.calculator.data.contract.ProductBase;
 import com.market.banica.calculator.dto.RecipeDTO;
 import com.market.banica.calculator.enums.UnitOfMeasure;
 import com.market.banica.calculator.model.Product;
 import com.market.banica.calculator.service.contract.JMXServiceMBean;
 import com.market.banica.calculator.service.grpc.AuroraClientSideService;
+import com.orderbook.CancelSubscriptionResponse;
+import com.orderbook.InterestsResponse;
+import com.orderbook.ItemOrderBookResponse;
+import com.orderbook.OrderBookLayer;
 import io.grpc.StatusRuntimeException;
 import io.grpc.inprocess.InProcessServerBuilder;
 import io.restassured.RestAssured;
@@ -59,16 +62,13 @@ public class CalculatorComponentIT {
     private int port;
 
     @Autowired
-    private ProductController productController;
-
-    @Autowired
     private JMXServiceMBean jmxService;
 
     @Autowired
     private ProductBase productBase;
 
     @Autowired
-    private TestServiceIT testServiceIT;
+    private TestConfigurationIT testConfigurationIT;
 
     @SpyBean
     @Autowired
@@ -95,7 +95,6 @@ public class CalculatorComponentIT {
     @Value(value = "${order-book-topic-prefix}")
     private String orderBookTopicPrefix;
 
-    private RecipeDTO response;
     private Product product;
 
     private Resources resources;
@@ -124,23 +123,35 @@ public class CalculatorComponentIT {
         product.setUnitOfMeasure(UnitOfMeasure.GRAM);
         product.setIngredients(new HashMap<>());
 
-        response = new RecipeDTO();
-        response.setItemName(productName);
-        response.setIngredients(null);
-        response.setTotalPrice(BigDecimal.valueOf(price));
-
         duration = Duration.of(timeout, ChronoUnit.MILLIS);
 
-        resources.register(testServiceIT.getChannel(), duration);
+        resources.register(testConfigurationIT.getChannel(), duration);
 
-        blockingStub = testServiceIT.getBlockingStub();
+        blockingStub = testConfigurationIT.getBlockingStub();
     }
 
     @Test
     public void getRecipe_Should_returnRecipeDto_When_thereIsResponse() throws IOException {
         //given
+        RecipeDTO response = new RecipeDTO();
+        response.setItemName(productName);
+        response.setIngredients(null);
+        response.setTotalPrice(BigDecimal.valueOf(price));
         productBase.getDatabase().put(productName, product);
-        resources.register(testServiceIT.startInProcessServiceForItemOrderBookResponse(), duration);
+
+        ItemOrderBookResponse itemOrderBookResponse = ItemOrderBookResponse.newBuilder()
+                .setItemName(productName)
+                .addOrderbookLayers(0, OrderBookLayer.newBuilder()
+                        .setPrice(price)
+                        .build())
+                .build();
+        Aurora.AuroraResponse auroraResponse = Aurora.AuroraResponse.newBuilder()
+                .setItemOrderBookResponse(itemOrderBookResponse).
+                        build();
+
+        resources.register(testConfigurationIT.startInProcessService(
+                testConfigurationIT.getGrpcService(auroraResponse)), duration);
+
         doReturn(blockingStub).when(auroraClientSideService).getBlockingStub();
 
         //when & then
@@ -156,7 +167,10 @@ public class CalculatorComponentIT {
     public void getRecipe_Should_returnError_When_thereIsNoResponse() throws IOException {
         //given
         productBase.getDatabase().put(productName, product);
-        resources.register(testServiceIT.startInProcessServiceWithEmptyService(), duration);
+
+        resources.register(testConfigurationIT.startInProcessService(
+                testConfigurationIT.getEmptyGrpcService()), duration);
+
         doReturn(blockingStub).when(auroraClientSideService).getBlockingStub();
 
         //when & then
@@ -171,7 +185,14 @@ public class CalculatorComponentIT {
     public void createProduct_Should_returnProduct_When_thereIsResponse() throws IOException {
         //given
         List<Product> products = Collections.singletonList(product);
-        resources.register(testServiceIT.startInProcessServiceForInterestResponse(), duration);
+
+        InterestsResponse interestsResponse = InterestsResponse.newBuilder().build();
+        Aurora.AuroraResponse auroraResponse = Aurora.AuroraResponse.newBuilder()
+                .setInterestsResponse(interestsResponse).
+                        build();
+
+        resources.register(testConfigurationIT.startInProcessService(testConfigurationIT.getGrpcService(auroraResponse)), duration);
+
         doReturn(blockingStub).when(auroraClientSideService).getBlockingStub();
 
         //when & then
@@ -189,7 +210,9 @@ public class CalculatorComponentIT {
     public void createProduct_Should_returnError_When_thereIsNoResponse() throws IOException {
         //given
         List<Product> products = Collections.singletonList(product);
-        resources.register(testServiceIT.startInProcessServiceWithEmptyService(), duration);
+
+        resources.register(testConfigurationIT.startInProcessService(testConfigurationIT.getEmptyGrpcService()), duration);
+
         doReturn(blockingStub).when(auroraClientSideService).getBlockingStub();
 
         //when & then
@@ -206,12 +229,16 @@ public class CalculatorComponentIT {
     public void deleteProduct_Should_sendRequestWithProductName_When_thereIsService() throws IOException {
         //given
         ArgumentCaptor<Aurora.AuroraRequest> requestCaptor = ArgumentCaptor.forClass(Aurora.AuroraRequest.class);
-
-        AuroraServiceGrpc.AuroraServiceImplBase server = testServiceIT.getGrpcServiceForCancelSubscriptionResponse();
-        resources.register(InProcessServerBuilder.forName(testServiceIT.getServerName()).directExecutor()
-                .addService(server).build().start(), duration);
-
         productBase.getDatabase().put(productName, product);
+
+        CancelSubscriptionResponse cancelSubscriptionResponse = CancelSubscriptionResponse.newBuilder().build();
+        Aurora.AuroraResponse auroraResponse = Aurora.AuroraResponse.newBuilder()
+                .setCancelSubscriptionResponse(cancelSubscriptionResponse).
+                        build();
+
+        AuroraServiceGrpc.AuroraServiceImplBase server = testConfigurationIT.getMockGrpcService(auroraResponse);
+        resources.register(InProcessServerBuilder.forName(testConfigurationIT.getServerName()).directExecutor()
+                .addService(server).build().start(), duration);
 
         doReturn(blockingStub).when(auroraClientSideService).getBlockingStub();
 
@@ -219,7 +246,6 @@ public class CalculatorComponentIT {
         jmxService.deleteProductFromDatabase(productName);
 
         //then
-
         verify(server)
                 .request(requestCaptor.capture(), ArgumentMatchers.any());
         assertEquals(orderBookTopicPrefix + productName, requestCaptor.getValue().getTopic());
@@ -229,7 +255,9 @@ public class CalculatorComponentIT {
     public void deleteProduct_Should_returnError_When_thereIsNoService() throws IOException {
         //given
         productBase.getDatabase().put(productName, product);
-        resources.register(testServiceIT.startInProcessServiceWithEmptyService(), duration);
+
+        resources.register(testConfigurationIT.startInProcessService(testConfigurationIT.getEmptyGrpcService()), duration);
+
         doReturn(blockingStub).when(auroraClientSideService).getBlockingStub();
 
         //when & then
@@ -238,8 +266,11 @@ public class CalculatorComponentIT {
 
     @AfterEach
     void cleanUp() {
+
         productBase.getDatabase().clear();
+
         File data = new File(databaseBackupUrl);
+
         if (data.length() > 0) {
             data.delete();
         }
