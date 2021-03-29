@@ -5,17 +5,19 @@ import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
 import com.market.Origin;
 import com.market.TickResponse;
-import com.market.banica.common.channel.GrpcChannel;
 import com.market.banica.order.book.OrderBookApplication;
-import com.market.banica.order.book.model.Item;
-import com.market.banica.order.book.model.ItemMarket;
+import com.market.banica.order.book.exception.TrackingException;
 import com.market.banica.order.book.service.grpc.AuroraClient;
 import com.market.banica.order.book.service.grpc.OrderBookService;
+import com.orderbook.CancelSubscriptionRequest;
+import com.orderbook.CancelSubscriptionResponse;
 import com.orderbook.InterestsRequest;
+import com.orderbook.InterestsResponse;
 import com.orderbook.ItemOrderBookRequest;
 import com.orderbook.ItemOrderBookResponse;
 import com.orderbook.OrderBookLayer;
 import com.orderbook.OrderBookServiceGrpc;
+import io.grpc.Context;
 import io.grpc.ManagedChannel;
 import io.grpc.StatusRuntimeException;
 import io.grpc.inprocess.InProcessChannelBuilder;
@@ -30,20 +32,18 @@ import org.junit.runners.JUnit4;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.TreeSet;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.AdditionalAnswers.delegatesTo;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -54,6 +54,9 @@ import static org.mockito.Mockito.verify;
 @SpringBootTest(classes = OrderBookApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @RunWith(JUnit4.class)
 class OrderBookComponentIT {
+    public static final String ITEM_NAME = "cheese";
+    public static final String CLIENT_ID = "1";
+    public static final double PRICE = 2.6;
 
     @SpyBean
     @Autowired
@@ -69,81 +72,40 @@ class OrderBookComponentIT {
     private int grpcMockPort;
 
     private ItemOrderBookResponse itemOrderBookResponse;
-    private ItemMarket itemMarket;
 
     private static ManagedChannel channel;
     private static ManagedChannel channelTwo;
 
-    private String itemName;
     private String serverName;
     private String serverNameTwo;
     private OrderBookServiceGrpc.OrderBookServiceBlockingStub blockingStub;
-    private AuroraServiceGrpc.AuroraServiceBlockingStub auroraBlockingStub;
-    private OrderBookServiceGrpc.OrderBookServiceStub stub;
-
-    @Value("${aurora.server.host}") String host;
-    @Value("${aurora.server.port}") int port;
+    private AuroraServiceGrpc.AuroraServiceStub asynchronousStub;
 
     @BeforeEach
     void setupChannel() {
         serverName = InProcessServerBuilder.generateName();
         serverNameTwo = InProcessServerBuilder.generateName();
 
-
-
-        channel = new GrpcChannel(host,port).getManagedChannel();
-
-        auroraBlockingStub = AuroraServiceGrpc.newBlockingStub(new GrpcChannel(host,port).getManagedChannel());
-
-        blockingStub = OrderBookServiceGrpc.newBlockingStub(
-                grpcCleanup.register(channel));
-
-//                ManagedChannelBuilder.forAddress(serverName, grpcMockPort)
-//                .usePlaintext()
-//                .defaultServiceConfig(ChannelRPCConfig.getInstance().getServiceConfig())
-//                .enableRetry()
-//                .build();
-
+        channel = InProcessChannelBuilder.forName(serverName).directExecutor().build();
         channelTwo = InProcessChannelBuilder.forName(serverNameTwo).executor(Executors.newSingleThreadExecutor()).build();
-//                ManagedChannelBuilder.forAddress(serverNameTwo, 41114)
-//                .usePlaintext()
-//                .defaultServiceConfig(ChannelRPCConfig.getInstance().getServiceConfig())
-//                .enableRetry()
-//                .build();
 
+        asynchronousStub = AuroraServiceGrpc.newStub(channelTwo);
+        blockingStub = OrderBookServiceGrpc.newBlockingStub(grpcCleanup.register(channel));
     }
 
     @Test
     void getOrderBookItemLayers_Should_ReturnAUnaryResponse() throws IOException {
-
         // Arrange
-
-        Map<String, TreeSet<Item>> allItems = new ConcurrentHashMap<>();
-        TreeSet<Item> cheeseItems = new TreeSet<>();
-
-        cheeseItems.add(new Item(2.6, 3, Origin.AMERICA));
-        cheeseItems.add(new Item(2.5, 4, Origin.EUROPE));
-        cheeseItems.add(new Item(2.7, 1, Origin.ASIA));
-        allItems.put("cheese", cheeseItems);
-
-        ItemOrderBookResponse expected = ItemOrderBookResponse.newBuilder()
-                .setItemName("cheese")
-                .addOrderbookLayers(0, OrderBookLayer.newBuilder()
-                        .setPrice(2.6)
-                        .setQuantity(3)
-                        .setOrigin(Origin.AMERICA)
-                        .build())
-                .build();
+        ItemOrderBookResponse expected = generateResponse();
 
         grpcCleanup.register(InProcessServerBuilder
                 .forName(serverName).directExecutor().addService(new OrderBookServiceGrpc.OrderBookServiceImplBase() {
                     @Override
                     public void getOrderBookItemLayers(ItemOrderBookRequest request, StreamObserver<ItemOrderBookResponse> responseObserver) {
                         responseObserver.onNext(ItemOrderBookResponse.newBuilder()
-                                .setItemName("cheese")
+                                .setItemName(ITEM_NAME)
                                 .addOrderbookLayers(0, OrderBookLayer.newBuilder()
-                                        .setPrice(2.6)
-                                        .setQuantity(3)
+                                        .setPrice(PRICE)
                                         .setOrigin(Origin.AMERICA)
                                         .build())
                                 .build());
@@ -151,107 +113,106 @@ class OrderBookComponentIT {
                         responseObserver.onCompleted();
                     }
                 }).build().start());
-
+        // Act
         ItemOrderBookResponse reply =
                 blockingStub.getOrderBookItemLayers(ItemOrderBookRequest.newBuilder()
-                        .setItemName("cheese")
-                        .setClientId("1")
-                        .setQuantity(1)
+                        .setItemName(ITEM_NAME)
+                        .setClientId(CLIENT_ID)
                         .build());
-
+        // Assert
         assertEquals(expected.getItemName(), reply.getItemName());
-
     }
 
     @Test
     void getOrderBookItemLayers_Should_ReturnError() throws IOException {
-
         // Arrange
-
         grpcCleanup.register(InProcessServerBuilder
                 .forName(serverName).directExecutor().addService(new OrderBookServiceGrpc.OrderBookServiceImplBase() {
                 })
                 .build().start());
-        // Assert
+
+        // Act and Assert
         assertThrows(StatusRuntimeException.class, () -> blockingStub.getOrderBookItemLayers(ItemOrderBookRequest.newBuilder().build()));
     }
 
     @Test
-    void announceItemInterest_Should_ReturnResponse_When_Success() throws IOException {
-
-        ArgumentCaptor<Aurora.AuroraRequest> requestCaptor = ArgumentCaptor.forClass(Aurora.AuroraRequest.class);
-
-//        stub = OrderBookServiceGrpc.newStub(
-//                grpcCleanup.register(InProcessChannelBuilder
-//                        .forName("name").directExecutor().build()));
-
-
-//        grpcCleanup.register(InProcessServerBuilder
-//                .forName(serverName).directExecutor().addService(new OrderBookServiceGrpc.OrderBookServiceImplBase() {
-//                    @Override
-//                    public void announceItemInterest(InterestsRequest request, StreamObserver<InterestsResponse> responseObserver) {
-//                        responseObserver.onNext(InterestsResponse.newBuilder().build());
-//                    }
-//                }).build().start());
-
-        AuroraServiceGrpc.AuroraServiceImplBase server = mock(AuroraServiceGrpc.AuroraServiceImplBase.class,
-                delegatesTo(new AuroraServiceGrpc.AuroraServiceImplBase() {
-
+    void announceItemInterest_Should_ReturnResponse() throws IOException {
+        // Arrange
+        grpcCleanup.register(channel);
+        grpcCleanup.register(InProcessServerBuilder
+                .forName(serverName).directExecutor().addService(new OrderBookServiceGrpc.OrderBookServiceImplBase() {
                     @Override
-                    public void request(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
-
-                        responseObserver.onNext(Aurora.AuroraResponse.newBuilder()
-                                .setTickResponse(TickResponse.newBuilder()
-                                        .setGoodName("cheese")
-                                        .build())
-                                .build());
-
+                    public void announceItemInterest(InterestsRequest request, StreamObserver<InterestsResponse> responseObserver) {
+                        try {
+                            auroraClient.startSubscription(request.getItemName(), request.getClientId());
+                        } catch (TrackingException e) {
+                            e.printStackTrace();
+                        }
+                        responseObserver.onNext(InterestsResponse.newBuilder().build());
                         responseObserver.onCompleted();
                     }
-                }));
-
-
+                }).build().start());
+        ArgumentCaptor<Aurora.AuroraRequest> requestCaptor = ArgumentCaptor.forClass(Aurora.AuroraRequest.class);
         grpcCleanup.register(channelTwo);
+        AuroraServiceGrpc.AuroraServiceImplBase server = mock(AuroraServiceGrpc.AuroraServiceImplBase.class, delegatesTo(new AuroraServiceGrpc.AuroraServiceImplBase() {
 
+            @Override
+            public void subscribe(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
+                responseObserver.onNext(Aurora.AuroraResponse.newBuilder()
+                        .setTickResponse(TickResponse.newBuilder()
+                                .setGoodName(ITEM_NAME)
+                                .build())
+                        .build());
+                responseObserver.onCompleted();
+            }
+        }));
         grpcCleanup.register(InProcessServerBuilder.forName(serverNameTwo).directExecutor().addService(server).build().start());
-
-        doReturn(channelTwo).when(auroraClient).getManagedChannel();
-
-        blockingStub.announceItemInterest(InterestsRequest.newBuilder().setItemName("cheese").build());
-
-        verify(server).request(requestCaptor.capture(), ArgumentMatchers.any());
-
+        doReturn(asynchronousStub).when(auroraClient).getAsynchronousStub();
+        // Act
+        InterestsResponse response = blockingStub.announceItemInterest(InterestsRequest.newBuilder().setItemName(ITEM_NAME).build());
+        // Assert
+        verify(server).subscribe(requestCaptor.capture(), ArgumentMatchers.any());
         assertEquals("market/cheese", requestCaptor.getValue().getTopic());
-
-
+        assertTrue(response.isInitialized());
     }
-//
-//    @Test
-//    void announceItemInterest_Should_Return_Error() throws IOException {
-//
-//    }
-//
-//    @Test
-//    void cancelItemSubscription() throws IOException {
-//        grpcCleanup.register(InProcessServerBuilder
-//                .forName(serverName).directExecutor().addService(new OrderBookServiceGrpc.OrderBookServiceImplBase() {
-//                    @Override
-//                    public void cancelItemSubscription(CancelSubscriptionRequest request, StreamObserver<CancelSubscriptionResponse> responseObserver) {
-//                        responseObserver.onNext(CancelSubscriptionResponse.newBuilder()
-//                                .build());
-//
-//                        responseObserver.onCompleted();
-//                    }
-//                }).build().start());
-//
-//        CancelSubscriptionResponse reply =
-//                blockingStub.cancelItemSubscription(CancelSubscriptionRequest.newBuilder()
-//                        .setItemName("cheese")
-//                        .setClientId("1")
-//                        .build());
-//
-//
-//    }
+
+    @Test
+    void cancelItemSubscription_Should_ReturnResponse() throws IOException {
+        // Arrange
+        auroraClient.getCancellableStubs().put(ITEM_NAME, Context.current().withCancellation());
+        grpcCleanup.register(channel);
+        grpcCleanup.register(InProcessServerBuilder
+                .forName(serverName).directExecutor().addService(new OrderBookServiceGrpc.OrderBookServiceImplBase() {
+                    @Override
+                    public void cancelItemSubscription(CancelSubscriptionRequest request, StreamObserver<CancelSubscriptionResponse> responseObserver) {
+                        try {
+                            auroraClient.stopSubscription(request.getItemName(), request.getClientId());
+                        } catch (TrackingException e) {
+                            e.printStackTrace();
+                        }
+                        responseObserver.onNext(CancelSubscriptionResponse.newBuilder().build());
+                        responseObserver.onCompleted();
+                    }
+                }).build().start());
+        // Act
+        blockingStub.cancelItemSubscription(CancelSubscriptionRequest.newBuilder()
+                .setItemName(ITEM_NAME)
+                .setClientId(CLIENT_ID)
+                .build());
+        // Assert
+        assertNull(auroraClient.getCancellableStubs().get(ITEM_NAME));
+    }
+
+    private ItemOrderBookResponse generateResponse() {
+        ItemOrderBookResponse expected = ItemOrderBookResponse.newBuilder()
+                .setItemName(ITEM_NAME)
+                .addOrderbookLayers(0, OrderBookLayer.newBuilder()
+                        .setPrice(PRICE)
+                        .setOrigin(Origin.AMERICA)
+                        .build())
+                .build();
+        return expected;
+    }
 }
 
 

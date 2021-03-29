@@ -90,7 +90,8 @@ public class AuroraClient {
     }
 
     private void startMarketStream(Aurora.AuroraRequest request) {
-        final AuroraServiceGrpc.AuroraServiceStub asynchronousStub = AuroraServiceGrpc.newStub(managedChannel);
+        final AuroraServiceGrpc.AuroraServiceStub asynchronousStub = getAsynchronousStub();
+
 
         asynchronousStub.subscribe(request, new StreamObserver<Aurora.AuroraResponse>() {
 
@@ -132,6 +133,10 @@ public class AuroraClient {
 
         });
 
+    }
+
+    public AuroraServiceGrpc.AuroraServiceStub getAsynchronousStub() {
+        return AuroraServiceGrpc.newStub(managedChannel);
     }
 
     @PreDestroy
