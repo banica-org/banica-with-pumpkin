@@ -62,6 +62,13 @@ public class ItemMarket {
 
             Set<Item> itemSet = allItems.get(tickResponse.getGoodName());
             if (itemSet != null) {
+                if (itemSet.contains(item)) {
+                    Item presentItem = itemSet.stream().filter(item1 -> Double.compare(item1.getPrice(), item.getPrice()) == 0
+                            && item1.getOrigin().equals(item.getOrigin())).findFirst().get();
+                    presentItem.setQuantity(presentItem.getQuantity() + item.getQuantity());
+                    return;
+                }
+
                 itemSet.add(item);
             } else {
                 LOGGER.error("Item: {} is not being tracked and cannot be added to itemMarket!",
@@ -127,7 +134,6 @@ public class ItemMarket {
 
         TreeSet<Item> cheeseItems = new TreeSet<>();
         cheeseItems.add(new Item(2.6, 2, Origin.AMERICA));
-        cheeseItems.add(new Item(2.6, 4, Origin.ASIA));
         cheeseItems.add(new Item(4.0, 4, Origin.EUROPE));
         cheeseItems.add(new Item(4.0, 1, Origin.ASIA));
         allItems.put("cheese", cheeseItems);
