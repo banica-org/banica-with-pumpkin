@@ -1,9 +1,18 @@
 package com.market.banica.generator.service;
 
 import com.market.TickResponse;
+import com.market.banica.generator.model.GoodSpecification;
 
 import java.util.List;
 
 public interface TickGenerator {
-    List<TickResponse> generateTicks(String topic);
+
+    void startTickGeneration(GoodSpecification goodSpecification);
+
+    void stopTickGeneration(String good);
+
+    void updateTickGeneration(GoodSpecification goodSpecification);
+
+    List<TickResponse> generateTicks(String goodName);
+
 }
