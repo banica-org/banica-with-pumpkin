@@ -20,6 +20,7 @@ import io.grpc.StatusRuntimeException;
 import io.grpc.inprocess.InProcessServerBuilder;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -128,20 +129,10 @@ public class CalculatorComponentIT {
         blockingStub = testConfigurationIT.getBlockingStub();
     }
 
-    private void createProduct() {
-        product = new Product();
-        product.setProductName(productName);
-        product.setUnitOfMeasure(UnitOfMeasure.GRAM);
-        product.setIngredients(new HashMap<>());
-    }
-
     @Test
     public void getRecipe_Should_returnRecipeDto_When_thereIsResponse() throws IOException {
         //given
-        RecipeDTO response = new RecipeDTO();
-        response.setItemName(productName);
-        response.setIngredients(null);
-        response.setTotalPrice(BigDecimal.valueOf(price));
+        RecipeDTO response = createRecipeDTO();
         productBase.getDatabase().put(productName, product);
 
         ItemOrderBookResponse itemOrderBookResponse = ItemOrderBookResponse.newBuilder()
@@ -279,5 +270,20 @@ public class CalculatorComponentIT {
         if (data.length() > 0) {
             data.delete();
         }
+    }
+
+    @NotNull
+    private RecipeDTO createRecipeDTO() {
+        RecipeDTO response = new RecipeDTO();
+        response.setItemName(productName);
+        response.setTotalPrice(BigDecimal.valueOf(price));
+        return response;
+    }
+
+    private void createProduct() {
+        product = new Product();
+        product.setProductName(productName);
+        product.setUnitOfMeasure(UnitOfMeasure.GRAM);
+        product.setIngredients(new HashMap<>());
     }
 }
