@@ -41,7 +41,10 @@ public class JMXConfig {
     public JMXConfig(ChannelManager channelManager) {
         this.channels = channelManager;
         this.channelPropertyMap = this.readChannelsConfigsFromFile();
+        this.populateChannels(this.channelPropertyMap);
     }
+
+
 
     @ManagedOperation
     public void createChannel(String channelPrefix, String host, String port) {
@@ -116,6 +119,11 @@ public class JMXConfig {
         } catch (IOException e) {
             LOGGER.error("Exception thrown during writing back-up");
         }
+    }
+
+    private void populateChannels(Map<String, ChannelProperty> channelPropertyMap){
+        channelPropertyMap.entrySet().stream()
+                .forEach(entry-> channels.addChannel(entry.getKey(), entry.getValue()));
     }
 
     private String getStringFromMap(Map<String, ChannelProperty> data, ObjectWriter objectWriter)

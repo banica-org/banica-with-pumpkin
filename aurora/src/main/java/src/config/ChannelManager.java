@@ -33,8 +33,7 @@ public class ChannelManager {
 
     @Autowired
     public ChannelManager() {
-        this.populateChannels(this.readChannelsConfigsFromFile());
-        LOGGER.debug("Map size after population {}", channels.size());
+
     }
 
 
@@ -117,18 +116,4 @@ public class ChannelManager {
                 .build();
     }
 
-    private ConcurrentHashMap<String, ChannelProperty> readChannelsConfigsFromFile() {
-        LOGGER.debug("Reading ChannelProperty from configuration file");
-        try (InputStream input = new FileInputStream(ApplicationDirectoryUtil.getConfigFile("channels.json"))) {
-
-            return new ObjectMapper().readValue(input,
-                    new TypeReference<ConcurrentHashMap<String, ChannelProperty>>() {
-                    });
-
-        } catch (IOException e) {
-            LOGGER.warn("An error has occurred while reading from file!");
-            LOGGER.error(e.getMessage());
-        }
-        return new ConcurrentHashMap<>();
-    }
 }
