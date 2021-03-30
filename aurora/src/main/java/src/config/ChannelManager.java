@@ -52,17 +52,22 @@ public class ChannelManager {
 
     protected void deleteChannel(String key) {
         LOGGER.info("Deleting channel {} to map", key);
-        ManagedChannel managedChannel = this.channels.remove(key);
-        this.shutDownChannel(managedChannel);
+        Optional<ManagedChannel> managedChannel = Optional.ofNullable(this.channels.remove(key));
+
+        if (managedChannel.isPresent()) {
+            this.shutDownChannel(managedChannel.get());
+        }
     }
 
     protected void editChannel(String key, ChannelProperty value) {
         LOGGER.info("Editing channel {} to map", key);
         Map.Entry<String, ManagedChannel> entry = this.convertPropertyToChannel(new AbstractMap.SimpleEntry<>(key, value));
 
-        ManagedChannel channel = this.channels.remove(key);
+        Optional<ManagedChannel> managedChannel = Optional.ofNullable(this.channels.remove(key));
 
-        this.shutDownChannel(channel);
+        if (managedChannel.isPresent()) {
+            this.shutDownChannel(managedChannel.get());
+        }
 
         this.channels.put(key, entry.getValue());
     }
