@@ -119,16 +119,20 @@ public class CalculatorComponentIT {
                 "calculator/" + clientId + "/" + productName + "/" + productQuantity;
         productControllerCreateProductUrl = "product";
 
-        product = new Product();
-        product.setProductName(productName);
-        product.setUnitOfMeasure(UnitOfMeasure.GRAM);
-        product.setIngredients(new HashMap<>());
+        createProduct();
 
         duration = Duration.of(timeout, ChronoUnit.MILLIS);
 
         resources.register(testConfigurationIT.getChannel(), duration);
 
         blockingStub = testConfigurationIT.getBlockingStub();
+    }
+
+    private void createProduct() {
+        product = new Product();
+        product.setProductName(productName);
+        product.setUnitOfMeasure(UnitOfMeasure.GRAM);
+        product.setIngredients(new HashMap<>());
     }
 
     @Test
