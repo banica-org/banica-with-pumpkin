@@ -39,3 +39,4 @@ build/
 
 ### FILES GENERATED FROM PROJECT ###
 /market.properties
+/channels.json
