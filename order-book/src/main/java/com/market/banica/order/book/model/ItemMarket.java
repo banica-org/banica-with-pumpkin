@@ -1,19 +1,33 @@
 package com.market.banica.order.book.model;
 
+import com.aurora.Aurora;
 import com.market.Origin;
+import com.market.TickResponse;
+import com.market.banica.order.book.exception.IncorrectResponseException;
+import com.orderbook.ItemOrderBookRequest;
+import com.orderbook.OrderBookLayer;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @Component
 public class ItemMarket {
 
     private final Map<String, TreeSet<Item>> allItems;
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+
+    private static final Logger LOGGER = LogManager.getLogger(ItemMarket.class);
 
     @Autowired
     public ItemMarket() {
@@ -37,13 +51,85 @@ public class ItemMarket {
         allItems.remove(itemName);
     }
 
+    public void updateItem(Aurora.AuroraResponse response) {
+        if (response.hasTickResponse()) {
+            TickResponse tickResponse = response.getTickResponse();
+
+            Item item = new Item();
+            item.setPrice(tickResponse.getPrice());
+            item.setQuantity(tickResponse.getQuantity());
+            item.setOrigin(tickResponse.getOrigin());
+
+            Set<Item> itemSet = allItems.get(tickResponse.getGoodName());
+            if (itemSet != null) {
+                itemSet.add(item);
+            } else {
+                LOGGER.error("Item: {} is not being tracked and cannot be added to itemMarket!",
+                        tickResponse.getGoodName());
+            }
+
+            LOGGER.info("Products data updated!");
+        } else {
+            throw new IncorrectResponseException("Response is not correct!");
+        }
+    }
+
+    public List<OrderBookLayer> getRequestedItem(ItemOrderBookRequest request) {
+        TreeSet<Item> items = this.allItems.get(request.getItemName());
+
+        if (items == null) {
+            return new ArrayList<>();
+        }
+
+        List<OrderBookLayer> layers;
+        try {
+            lock.writeLock().lock();
+
+            layers = new ArrayList<>();
+
+            Iterator<Item> iterator = items.iterator();
+            long itemLeft = request.getQuantity();
+
+            while (iterator.hasNext() && itemLeft > 0) {
+                Item currentItem = iterator.next();
+
+                OrderBookLayer.Builder currentLayer = OrderBookLayer.newBuilder()
+                        .setPrice(currentItem.getPrice());
+
+                if (currentItem.getQuantity() >= itemLeft) {
+                    currentLayer.setQuantity(itemLeft);
+
+                    currentItem.setQuantity(currentItem.getQuantity() - itemLeft);
+
+                    if (currentItem.getQuantity() == itemLeft) {
+                        iterator.remove();
+                    }
+
+                } else if (currentItem.getQuantity() < itemLeft) {
+                    currentLayer.setQuantity(currentItem.getQuantity());
+
+                    iterator.remove();
+                }
+                itemLeft -= currentItem.getQuantity();
+
+                OrderBookLayer build = currentLayer
+                        .setOrigin(currentItem.getOrigin())
+                        .build();
+                layers.add(build);
+            }
+        } finally {
+            lock.writeLock().unlock();
+        }
+        return layers;
+    }
+
     private void addDummyData() {
 
         TreeSet<Item> cheeseItems = new TreeSet<>();
-
-        cheeseItems.add(new Item(2.6, 3, Origin.AMERICA));
-        cheeseItems.add(new Item(2.5, 4, Origin.EUROPE));
-        cheeseItems.add(new Item(2.7, 1, Origin.ASIA));
+        cheeseItems.add(new Item(2.6, 2, Origin.AMERICA));
+        cheeseItems.add(new Item(2.6, 4, Origin.ASIA));
+        cheeseItems.add(new Item(4.0, 4, Origin.EUROPE));
+        cheeseItems.add(new Item(4.0, 1, Origin.ASIA));
         allItems.put("cheese", cheeseItems);
 
         TreeSet<Item> cocoaItems = new TreeSet<>();

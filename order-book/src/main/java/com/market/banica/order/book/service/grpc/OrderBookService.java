@@ -18,9 +18,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Component
 public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplBase {
@@ -41,15 +41,12 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
 
         Optional<Set<Item>> result = itemMarket.getItemSetByName(request.getItemName());
 
+        List<OrderBookLayer> requestedItem = itemMarket.getRequestedItem(request);
+
         if (result.isPresent()) {
             responseObserver.onNext(ItemOrderBookResponse.newBuilder()
                     .setItemName(request.getItemName())
-                    .addAllOrderbookLayers(result.get().stream()
-                            .map(item -> OrderBookLayer.newBuilder()
-                                    .setPrice(item.getPrice())
-                                    .setQuantity(item.getQuantity())
-                                    .setOrigin(item.getOrigin())
-                                    .build()).collect(Collectors.toList()))
+                    .addAllOrderbookLayers(requestedItem)
                     .build());
         } else {
             responseObserver.onNext(ItemOrderBookResponse.newBuilder()
