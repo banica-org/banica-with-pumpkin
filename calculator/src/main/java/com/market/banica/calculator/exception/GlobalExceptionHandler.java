@@ -32,7 +32,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler({BadResponseException.class})
-    public  ResponseEntity<Object> badAuroraResponse( RuntimeException runtimeException, WebRequest request){
+    public ResponseEntity<Object> badAuroraResponse(RuntimeException runtimeException, WebRequest request) {
         return handleExceptionInternal(runtimeException, runtimeException.getMessage(),
                 new HttpHeaders(), HttpStatus.INTERNAL_SERVER_ERROR, request);
     }
