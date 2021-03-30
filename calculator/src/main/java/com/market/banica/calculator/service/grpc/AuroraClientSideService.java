@@ -3,7 +3,10 @@ package com.market.banica.calculator.service.grpc;
 
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.market.banica.calculator.exception.exceptions.BadResponseException;
+import com.orderbook.CancelSubscriptionResponse;
+import com.orderbook.InterestsResponse;
 import com.orderbook.ItemOrderBookResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +19,8 @@ public class AuroraClientSideService {
 
     private static final String ORDERBOOK_TOPIC_PREFIX = "orderbook/";
 
+    private static final String AURORA_BAD_RESPONSE_MESSAGE = "Bad message from aurora service";
+
     private static final Logger LOGGER = LoggerFactory.getLogger(AuroraClientSideService.class);
 
     private final AuroraServiceGrpc.AuroraServiceBlockingStub blockingStub;
@@ -26,35 +31,45 @@ public class AuroraClientSideService {
     }
 
     public void announceInterests(String productName) {
-        LOGGER.debug("Inside announceInterests method with parameter product name: {}",productName);
+        LOGGER.debug("Inside announceInterests method with parameter product name: {}", productName);
 
         Aurora.AuroraResponse auroraResponse = getAuroraResponse(productName);
 
-        if (!auroraResponse.hasInterestsResponse()) {
-            throw new BadResponseException("Bad message from aurora service");
+        if (!auroraResponse.getMessage().is(InterestsResponse.class)) {
+            throw new BadResponseException(AURORA_BAD_RESPONSE_MESSAGE);
         }
     }
 
     public void cancelSubscription(String productName) {
-        LOGGER.debug("Inside cancelSubscription method with parameter product name: {}",productName);
+        LOGGER.debug("Inside cancelSubscription method with parameter product name: {}", productName);
 
         Aurora.AuroraResponse auroraResponse = getAuroraResponse(productName);
 
-        if (!auroraResponse.hasCancelSubscriptionResponse()) {
-            throw new BadResponseException("Bad message from aurora service");
+        if (!auroraResponse.getMessage().is(CancelSubscriptionResponse.class)) {
+            throw new BadResponseException(AURORA_BAD_RESPONSE_MESSAGE);
         }
     }
 
     public ItemOrderBookResponse getIngredient(String productName, String clientId) {
         LOGGER.debug("Inside getIngredient method with parameter product name - {} and client id - {}"
-                ,productName,clientId);
+                , productName, clientId);
 
         Aurora.AuroraResponse auroraResponse = getAuroraResponse(productName);
 
-        if (!auroraResponse.hasItemOrderBookResponse()) {
-            throw new BadResponseException("Bad message from aurora service");
+        if (!auroraResponse.getMessage().is(ItemOrderBookResponse.class)) {
+            throw new BadResponseException(AURORA_BAD_RESPONSE_MESSAGE);
         }
-        return auroraResponse.getItemOrderBookResponse();
+
+        ItemOrderBookResponse response;
+
+        try {
+            response = auroraResponse.getMessage().unpack(ItemOrderBookResponse.class);
+        } catch (InvalidProtocolBufferException e) {
+            LOGGER.error("Unable to parse Any to desired class: {}", e.getMessage());
+            throw new BadResponseException(AURORA_BAD_RESPONSE_MESSAGE);
+        }
+
+        return response;
     }
 
     private Aurora.AuroraResponse getAuroraResponse(String message) {
