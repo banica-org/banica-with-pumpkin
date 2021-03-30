@@ -36,3 +36,6 @@ build/
 
 ### Random ###
 .DS_Store
+
+### FILES GENERATED FROM PROJECT ###
+/market.properties
