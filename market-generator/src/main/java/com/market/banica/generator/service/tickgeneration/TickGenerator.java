@@ -1,4 +1,4 @@
-package com.market.banica.generator.service;
+package com.market.banica.generator.service.tickgeneration;
 
 import com.market.TickResponse;
 import com.market.banica.generator.model.GoodSpecification;
@@ -14,5 +14,4 @@ public interface TickGenerator {
     void updateTickGeneration(GoodSpecification goodSpecification);
 
     List<TickResponse> generateTicks(String goodName);
-
 }
