@@ -27,8 +27,6 @@ import io.grpc.testing.GrpcCleanupRule;
 import org.junit.Rule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,7 +50,6 @@ import static org.mockito.Mockito.verify;
 
 @SpringJUnitConfig
 @SpringBootTest(classes = OrderBookApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@RunWith(JUnit4.class)
 @ActiveProfiles("testOrderBookIT")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class OrderBookComponentIT {
@@ -109,14 +106,17 @@ class OrderBookComponentIT {
 
     @Test
     void getOrderBookItemLayers_Should_ReturnAUnaryResponse() throws IOException {
+
         // Arrange
         ItemOrderBookResponse expected = generateItemOrderBookExpectedResponse();
 
         grpcCleanup.register(InProcessServerBuilder
                 .forName(serverName).directExecutor().addService(testConfiguration.getGrpcOrderBookServiceItemLayers(expected))
                 .build().start());
+
         // Act
         ItemOrderBookResponse reply = generateItemOrderBookResponseFromRequest();
+
         // Assert
         assertEquals(expected.getItemName(), reply.getItemName());
     }
@@ -134,6 +134,7 @@ class OrderBookComponentIT {
 
     @Test
     void announceItemInterest_Should_ReturnResponse() throws IOException {
+
         // Arrange
         grpcCleanup.register(channel);
         grpcCleanup.register(InProcessServerBuilder
@@ -158,8 +159,10 @@ class OrderBookComponentIT {
 
         grpcCleanup.register(InProcessServerBuilder.forName(serverNameTwo).directExecutor().addService(server).build().start());
         doReturn(asynchronousStub).when(auroraClient).getAsynchronousStub();
+
         // Act
         InterestsResponse response = blockingStub.announceItemInterest(InterestsRequest.newBuilder().setItemName(productName).build());
+
         // Assert
         verify(server).subscribe(requestCaptor.capture(), ArgumentMatchers.any());
         assertEquals(orderBookTopicPrefix + productName, requestCaptor.getValue().getTopic());
@@ -168,6 +171,7 @@ class OrderBookComponentIT {
 
     @Test
     void cancelItemSubscription_Should_ReturnResponse() throws IOException {
+
         // Arrange
         auroraClient.getCancellableStubs().put(productName, Context.current().withCancellation());
         grpcCleanup.register(channel);
@@ -184,11 +188,13 @@ class OrderBookComponentIT {
                         responseObserver.onCompleted();
                     }
                 }).build().start());
+
         // Act
         blockingStub.cancelItemSubscription(CancelSubscriptionRequest.newBuilder()
                 .setItemName(productName)
                 .setClientId(clientId)
                 .build());
+
         // Assert
         assertNull(auroraClient.getCancellableStubs().get(productName));
     }
