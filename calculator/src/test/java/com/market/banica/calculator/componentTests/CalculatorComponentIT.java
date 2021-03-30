@@ -130,7 +130,7 @@ public class CalculatorComponentIT {
     }
 
     @Test
-    public void getRecipe_Should_returnRecipeDto_When_thereIsResponse() throws IOException {
+    public void getRecipeShouldReturnRecipeDtoWhenThereIsResponse() throws IOException {
         //given
         RecipeDTO response = createRecipeDTO();
         productBase.getDatabase().put(productName, product);
@@ -160,7 +160,7 @@ public class CalculatorComponentIT {
     }
 
     @Test
-    public void getRecipe_Should_returnError_When_thereIsNoResponse() throws IOException {
+    public void getRecipeShouldReturnErrorWhenThereIsNoResponse() throws IOException {
         //given
         productBase.getDatabase().put(productName, product);
 
@@ -178,7 +178,7 @@ public class CalculatorComponentIT {
     }
 
     @Test
-    public void createProduct_Should_returnProduct_When_thereIsResponse() throws IOException {
+    public void createProductShouldReturnProductWhenThereIsResponse() throws IOException {
         //given
         List<Product> products = Collections.singletonList(product);
 
@@ -203,7 +203,7 @@ public class CalculatorComponentIT {
     }
 
     @Test
-    public void createProduct_Should_returnError_When_thereIsNoResponse() throws IOException {
+    public void createProductShouldReturnErrorWhenThereIsNoResponse() throws IOException {
         //given
         List<Product> products = Collections.singletonList(product);
 
@@ -222,7 +222,7 @@ public class CalculatorComponentIT {
     }
 
     @Test
-    public void deleteProduct_Should_sendRequestWithProductName_When_thereIsService() throws IOException {
+    public void deleteProductShouldSendRequestWithProductNameWhenThereIsService() throws IOException {
         //given
         ArgumentCaptor<Aurora.AuroraRequest> requestCaptor = ArgumentCaptor.forClass(Aurora.AuroraRequest.class);
         productBase.getDatabase().put(productName, product);
@@ -248,7 +248,7 @@ public class CalculatorComponentIT {
     }
 
     @Test
-    public void deleteProduct_Should_returnError_When_thereIsNoService() throws IOException {
+    public void deleteProductShouldReturnErrorWhenThereIsNoService() throws IOException {
         //given
         productBase.getDatabase().put(productName, product);
 
