@@ -2,8 +2,7 @@ package com.market.banica.calculator.controller;
 
 import com.market.banica.calculator.dto.RecipeDTO;
 import com.market.banica.calculator.service.contract.CalculatorService;
-import lombok.AllArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,12 +20,11 @@ import javax.validation.constraints.NotBlank;
  */
 
 @RestController
-@RequestMapping("/calculator")
-@AllArgsConstructor
+@RequestMapping(value = "calculator")
+@RequiredArgsConstructor
 public class CalculatorController {
 
-    @Autowired
-    CalculatorService service;
+   private final CalculatorService service;
 
 
     @GetMapping("/{clientId}/{itemName}/{quantity}")

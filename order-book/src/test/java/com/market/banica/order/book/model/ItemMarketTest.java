@@ -19,28 +19,31 @@ class ItemMarketTest {
     private static final String RICE_ITEM_NAME = "rice";
     private static final String MEAT_ITEM_NAME = "meat";
 
+    private static final String ALL_ITEMS_FIELD = "allItems";
+
     private final ItemMarket itemMarket = new ItemMarket();
     private final Map<String, TreeSet<Item>> allItems = new ConcurrentHashMap<>();
 
     @BeforeEach
     public void setUp() {
-        TreeSet<Item> items = new TreeSet<>();
-        items.add(new Item(1.2, 3, Origin.EUROPE));
-        items.add(new Item(2.2, 1, Origin.EUROPE));
-        items.add(new Item(3.2, 2, Origin.EUROPE));
+        TreeSet<Item> items = this.populateItems();
+
         allItems.put(EGGS_ITEM_NAME, items);
         allItems.put(RICE_ITEM_NAME, new TreeSet<>());
 
-        ReflectionTestUtils.setField(itemMarket, "allItems", allItems);
+        ReflectionTestUtils.setField(itemMarket, ALL_ITEMS_FIELD, allItems);
     }
 
     @Test
     public void getItemSetByNameWithExistingItemNameReturnsTreeSetOfItems() {
-        //Arrange, Act
+        //Act
         Optional<Set<Item>> itemSetByName = this.itemMarket.getItemSetByName(EGGS_ITEM_NAME);
-        Set<Item> items = itemSetByName.get();
 
         //Assert
+        assertTrue(itemSetByName.isPresent());
+
+        Set<Item> items = itemSetByName.get();
+
         assertEquals(3, items.size());
         assertTrue(items.contains(new Item(1.2, 3, Origin.EUROPE)));
         assertTrue(items.contains(new Item(2.2, 1, Origin.EUROPE)));
@@ -49,7 +52,7 @@ class ItemMarketTest {
 
     @Test
     public void getItemNameSetReturnsAllPresentKeys() {
-        //Arrange, Act
+        //Act
         Set<String> itemNameSet = this.itemMarket.getItemNameSet();
 
         //Assert
@@ -70,7 +73,7 @@ class ItemMarketTest {
     }
 
     @Test
-    public void removeUntrackedItemWithExistingItemNameRemovesItsBelongingEntrySet() {
+    public void removeUntrackedItemWithExistingItemNameRemovesItFromMap() {
         //Arrange
         this.itemMarket.addTrackedItem(MEAT_ITEM_NAME);
 
@@ -81,5 +84,11 @@ class ItemMarketTest {
         assertEquals(2, this.allItems.size());
     }
 
-
+    private TreeSet<Item> populateItems() {
+        TreeSet<Item> items = new TreeSet<>();
+        items.add(new Item(1.2, 3, Origin.EUROPE));
+        items.add(new Item(2.2, 1, Origin.EUROPE));
+        items.add(new Item(3.2, 2, Origin.EUROPE));
+        return items;
+    }
 }

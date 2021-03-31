@@ -80,7 +80,7 @@ public class TickGeneratorImpl implements TickGenerator {
                         .setGoodName(marketTick.getGood())
                         .setQuantity(marketTick.getQuantity())
                         .setPrice(marketTick.getPrice())
-                        .setTimestamp(marketTick.getDate().getTime())
+                        .setTimestamp(marketTick.getTimestamp())
                         .build())
                 .collect(Collectors.toList());
     }

@@ -2,27 +2,28 @@ package com.market.banica.generator.model;
 
 import com.market.Origin;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.springframework.beans.factory.annotation.Value;
 
-import java.util.Date;
 import java.util.Locale;
 
 @Getter
 @ToString
+@NoArgsConstructor
 public class MarketTick {
 
     private static Origin origin;
-    private final String good;
-    private final long quantity;
-    private final double price;
-    private final Date date;
+    private String good;
+    private long quantity;
+    private double price;
+    private long timestamp;
 
-    public MarketTick(String good, long amount, double price, Date date) {
+    public MarketTick(String good, long amount, double price, long timestamp) {
         this.good = good;
         this.quantity = amount;
         this.price = price;
-        this.date = date;
+        this.timestamp = timestamp;
     }
 
     public static Origin getOrigin() {
