@@ -53,8 +53,6 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
                     .setItemName(request.getItemName())
                     .build());
         }
-
-
         responseObserver.onCompleted();
 
         LOGGER.info("Get orderbook item layers by client id: {}", request.getClientId());
@@ -77,7 +75,6 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
             responseObserver.onError(Status.INVALID_ARGUMENT.withDescription("Invalid item name").asException());
 
         }
-
     }
 
     @Override
@@ -96,5 +93,4 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
             responseObserver.onError(Status.INVALID_ARGUMENT.withDescription("Invalid item name").asException());
         }
     }
-
 }
