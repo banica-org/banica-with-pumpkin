@@ -12,9 +12,9 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class SnapshotPersistence {
 
@@ -38,9 +38,9 @@ public class SnapshotPersistence {
     }
 
     @SuppressWarnings({"unchecked"})
-    public Map<String, Set<MarketTick>> getPersistedTicks() throws IOException {
+    public Map<String, Set<MarketTick>> loadPersistedSnapshot() throws IOException {
 
-        Map<String, Set<MarketTick>> loadedMarketTicks = new HashMap<>();
+        Map<String, Set<MarketTick>> loadedMarketTicks = new ConcurrentHashMap<>();
 
         if (!ApplicationDirectoryUtil.doesFileExist(DATABASE_FILE_NAME)) {
 
@@ -59,14 +59,13 @@ public class SnapshotPersistence {
             LOGGER.info("Loaded snapshot database!");
 
         }
-
         return loadedMarketTicks;
 
     }
 
     private static void initKryo() {
 
-        kryoHandle.register(java.util.HashMap.class);
+        kryoHandle.register(java.util.concurrent.ConcurrentHashMap.class);
         kryoHandle.register(java.util.HashSet.class);
         kryoHandle.register(MarketTick.class);
 
