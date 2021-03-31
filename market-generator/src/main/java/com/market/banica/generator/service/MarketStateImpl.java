@@ -57,8 +57,7 @@ public class MarketStateImpl implements com.market.banica.generator.service.Mark
                 }
                 marketState.get(good).add(marketTick);
                 subscriptionManager.notifySubscribers(convertMarketTickToTickResponse(marketTick));
-            }
-            finally {
+            } finally {
                 marketStateLock.writeLock().unlock();
             }
         });
