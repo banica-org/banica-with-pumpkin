@@ -30,6 +30,23 @@ public class CalculatorServiceImpl implements CalculatorService {
     public RecipeDTO getRecipe(String clientId, String itemName, int quantity) {
 
         List<Product> products = productService.getProductAsListProduct(itemName);
+        ArrayDeque<Product> arrayDeque = new ArrayDeque<>();
+        for (Product product : products) {
+            if (product.getIngredients().isEmpty()) {
+                arrayDeque.add(product);
+            } else {
+                product.getIngredients().keySet().forEach(ingredientName -> {
+                    Product ingredient =
+                            products
+                                    .stream()
+                                    .filter(k -> k.getProductName().equals(ingredientName))
+                                    .findFirst()
+                                    .orElseThrow(IllegalArgumentException::new);
+
+                    arrayDeque.add(ingredient);
+                });
+            }
+        }
 
         Map<String, List<RecipeBase>> productAvailability = new HashMap<>();
         List<RecipeBase> recipeBaseList = new ArrayList<>();
@@ -66,6 +83,14 @@ public class CalculatorServiceImpl implements CalculatorService {
             productAvailability.put(itemName, recipeBaseList);
         }
 
+        //banica/pumpkin/milk/crust/water/eggs/sauce/water/sugar/ketchup/water/tomatoes
+
+        //tomatoes => europe/1 asia/2 america /3 => europe/1
+        //water => europe/4 asia/5 america/6 => europe/4
+
+        //queue.removeLast = tomatoe => if(product.getIngredients.isEmpty())
+        //
+
 
         return new RecipeDTO();
     }
@@ -99,8 +124,6 @@ public class CalculatorServiceImpl implements CalculatorService {
                             .findFirst()
                             .orElseThrow(IllegalArgumentException::new))
                     .forEach(ingredient -> generateProductSpecificationData(clientId, products, productSpecificationMap, ingredient));
-                  /*  .collect(Collectors.toList())
-                    .forEach(ingredient -> generateProductSpecificationData(clientId, products, productSpecificationMap, product));*/
 
 
         }
