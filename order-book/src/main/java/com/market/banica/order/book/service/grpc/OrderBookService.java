@@ -42,11 +42,9 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
         String itemName = topicSplit[1];
         long itemQuantity = Long.parseLong(topicSplit[2]);
 
-        Optional<Set<Item>> result = itemMarket.getItemSetByName(itemName);
-
         List<OrderBookLayer> requestedItem = itemMarket.getRequestedItem(itemName, itemQuantity);
 
-        if (result.isPresent()) {
+        if (requestedItem.size()>0) {
             responseObserver.onNext(
                     Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(
                             ItemOrderBookResponse.newBuilder()

@@ -22,9 +22,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class AuroraClientTest {
-   /* private static final String EGGS_ITEM_NAME = "eggs";
+    private static final String EGGS_ITEM_NAME = "eggs";
     private static final String RICE_ITEM_NAME = "rice";
     private static final String MEAT_ITEM_NAME = "meat";
+
+    private static final String EUROPE_MARKET_NAME = "europe";
 
     private static final String ALL_ITEMS_FIELD = "allItems";
     private static final String MANAGED_CHANNEL_FIELD = "managedChannel";
@@ -62,9 +64,9 @@ public class AuroraClientTest {
     @Test
     public void startSubscriptionAddsItemsInAllItemsMapAndCancellableStub() throws TrackingException {
         //Act
-        this.auroraClient.startSubscription(EGGS_ITEM_NAME, CLIENT);
-        this.auroraClient.startSubscription(RICE_ITEM_NAME, CLIENT);
-        this.auroraClient.startSubscription(MEAT_ITEM_NAME, CLIENT);
+        this.auroraClient.startSubscription(EGGS_ITEM_NAME, CLIENT, EUROPE_MARKET_NAME);
+        this.auroraClient.startSubscription(RICE_ITEM_NAME, CLIENT, EUROPE_MARKET_NAME);
+        this.auroraClient.startSubscription(MEAT_ITEM_NAME, CLIENT, EUROPE_MARKET_NAME);
 
         //Assert
         assertEquals(3, this.cancellableStubs.size());
@@ -78,7 +80,7 @@ public class AuroraClientTest {
         this.cancellableStubs.put(MEAT_ITEM_NAME, Context.current().withCancellation());
 
         //Act
-        this.auroraClient.startSubscription(MEAT_ITEM_NAME, CLIENT);
+        this.auroraClient.startSubscription(MEAT_ITEM_NAME, CLIENT, EUROPE_MARKET_NAME);
     }
 
     @Test
@@ -120,5 +122,5 @@ public class AuroraClientTest {
         items.add(new Item(2.2, 1, Origin.EUROPE));
         items.add(new Item(3.2, 2, Origin.EUROPE));
         return items;
-    }*/
+    }
 }
