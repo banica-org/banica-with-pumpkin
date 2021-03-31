@@ -3,8 +3,8 @@ package market;
 import com.market.MarketDataRequest;
 import com.market.TickResponse;
 import com.market.banica.generator.service.MarketServiceImpl;
+import com.market.banica.generator.service.MarketState;
 import com.market.banica.generator.service.MarketSubscriptionManager;
-import com.market.banica.generator.service.tickgeneration.TickGenerator;
 import io.grpc.stub.StreamObserver;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,7 +31,7 @@ class MarketServiceImplTest {
     private MarketSubscriptionManager marketSubscriptionServiceImpl;
 
     @Mock
-    private TickGenerator tickGenerator;
+    private MarketState marketState;
 
     private static final String GOOD_BANICA = "Banica";
 
@@ -45,15 +45,14 @@ class MarketServiceImplTest {
                 TickResponse.newBuilder().setGoodName("secondTick").build());
 
         Mockito.when(marketSubscriptionServiceImpl.getRequestGoodName(MARKET_DATA_REQUEST_BANICA)).thenReturn(GOOD_BANICA);
-        Mockito.when(tickGenerator.generateTicks(GOOD_BANICA)).thenReturn(ticks);
+        Mockito.when(marketState.generateMarketTicks(GOOD_BANICA)).thenReturn(ticks);
 
         marketService.subscribeForItem(MARKET_DATA_REQUEST_BANICA, subscriberOne);
 
 
-        verify(tickGenerator, times(1)).generateTicks(GOOD_BANICA);
+        verify(marketState, times(1)).generateMarketTicks(GOOD_BANICA);
         verify(marketSubscriptionServiceImpl, times(1)).subscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
 
         verify(subscriberOne, times(2)).onNext(any());
-        verify(subscriberOne, times(1)).onCompleted();
     }
 }

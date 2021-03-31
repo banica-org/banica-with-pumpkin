@@ -16,8 +16,10 @@ public class ApplicationDirectoryUtil {
     }
 
     static {
+
         String workDir = System.getProperty(USER_DIR);
         config = Paths.get(workDir);
+
     }
 
     public static File getConfigFile(String fileName) throws IOException {
@@ -29,6 +31,14 @@ public class ApplicationDirectoryUtil {
         }
 
         return configFile;
+
+    }
+
+    public static boolean doesFileExist(String fileName) {
+
+        File configFile = new File(config.toString() + '\\' + fileName);
+
+        return configFile.exists();
 
     }
 
