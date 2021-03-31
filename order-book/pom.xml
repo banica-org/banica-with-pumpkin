@@ -15,6 +15,7 @@
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
+        <grpcmock-junit5.version>0.5.2</grpcmock-junit5.version>
     </properties>
 
     <dependencies>
@@ -39,6 +40,41 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.rest-assured</groupId>
+            <artifactId>rest-assured</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.rest-assured</groupId>
+            <artifactId>json-path</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.rest-assured</groupId>
+            <artifactId>xml-path</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.codehaus.groovy</groupId>
+            <artifactId>groovy</artifactId>
+        </dependency>
+
+        <!-- Grpc-Test-Support -->
+        <dependency>
+            <groupId>org.grpcmock</groupId>
+            <artifactId>grpcmock-junit5</artifactId>
+            <version>${grpcmock-junit5.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.grpcmock</groupId>
+            <artifactId>grpcmock-spring-boot</artifactId>
+        </dependency>
 
         <!--  gRPC dependencies  -->
         <dependency>
@@ -53,6 +89,11 @@
             <groupId>io.grpc</groupId>
             <artifactId>grpc-stub</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-testing</artifactId>
+            <version>${grpc-all.version}</version>
+        </dependency>
 
         <dependency> <!--Proto files -->
             <groupId>com.market.banica</groupId>
@@ -64,7 +105,8 @@
             <artifactId>log4j-api</artifactId>
         </dependency>
 
-        <dependency> <!-- necessary for Java 9+ -->
+        <!-- necessary for Java 9+ -->
+        <dependency>
             <groupId>org.apache.tomcat</groupId>
             <artifactId>annotations-api</artifactId>
             <scope>provided</scope>
@@ -76,7 +118,9 @@
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
-        <dependency> <!-- Needed for gRPC ServiceConfig setup -->
+
+        <!-- Needed for gRPC ServiceConfig setup -->
+        <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>${guava.version}</version>
@@ -85,6 +129,10 @@
             <groupId>com.market.banica</groupId>
             <artifactId>common</artifactId>
             <version>${common.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
         </dependency>
     </dependencies>
 
