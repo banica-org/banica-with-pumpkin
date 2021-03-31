@@ -46,14 +46,14 @@ public class AuroraClient {
 
     }
 
-    public void startSubscription(String requestedItem, String clientId) throws TrackingException {
+    public void startSubscription(String requestedItem, String clientId, String marketName) throws TrackingException {
 
         if (cancellableStubs.containsKey(requestedItem)) {
             throw new TrackingException("Item is already being tracked!");
         }
 
         final Aurora.AuroraRequest request = Aurora.AuroraRequest.newBuilder()
-                .setTopic("market/" + requestedItem)
+                .setTopic("market/" + requestedItem + "/" + marketName)
                 .setClientId(clientId)
                 .build();
 

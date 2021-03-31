@@ -1,5 +1,8 @@
 package com.market.banica.generator;
 
+import com.aurora.Aurora;
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.market.TickResponse;
 import com.orderbook.ItemOrderBookRequest;
 import com.orderbook.ItemOrderBookResponse;
 import com.orderbook.OrderBookServiceGrpc;
@@ -15,10 +18,20 @@ public class Runner implements CommandLineRunner {
         ManagedChannel localhost = ManagedChannelBuilder.forAddress("localhost", 9080).usePlaintext().build();
         OrderBookServiceGrpc.OrderBookServiceBlockingStub stub = OrderBookServiceGrpc.newBlockingStub(localhost);
 
-        ItemOrderBookRequest request = ItemOrderBookRequest.newBuilder().setClientId("test")
-                .setItemName("cheese").setQuantity(8).build();
+        Aurora.AuroraRequest request = Aurora.AuroraRequest.newBuilder().setTopic("orderbook/cheese/5").setClientId("calculator")
+                .build();
 
-        ItemOrderBookResponse orderBookItemLayers = stub.getOrderBookItemLayers(request);
-        System.out.println();
+        Aurora.AuroraResponse orderBookItemLayers = stub.getOrderBookItemLayers(request);
+        if (orderBookItemLayers.getMessage().is(ItemOrderBookResponse.class)) {
+            ItemOrderBookResponse response;
+
+            try {
+                response = orderBookItemLayers.getMessage().unpack(ItemOrderBookResponse.class);
+                System.out.println(response.toString());
+            } catch (InvalidProtocolBufferException e) {
+                System.out.println(e.getMessage());
+            }
+            System.out.println();
+        }
     }
 }

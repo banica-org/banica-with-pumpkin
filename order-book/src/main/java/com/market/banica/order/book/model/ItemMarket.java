@@ -53,15 +53,6 @@ public class ItemMarket {
     }
 
     public void updateItem(Aurora.AuroraResponse response) {
-//         if (response.getMessage().is(TickResponse.class)) {
-//                    TickResponse tickResponse;
-//
-//                    try {
-//                        tickResponse = response.getMessage().unpack(TickResponse.class);
-//                    } catch (InvalidProtocolBufferException e) {
-//                        throw new IncorrectResponseException("Response is not correct!");
-//                    }
-
         if (response.getMessage().is(TickResponse.class)) {
             TickResponse tickResponse;
 
@@ -97,8 +88,8 @@ public class ItemMarket {
         }
     }
 
-    public List<OrderBookLayer> getRequestedItem(ItemOrderBookRequest request) {
-        TreeSet<Item> items = this.allItems.get(request.getItemName());
+    public List<OrderBookLayer> getRequestedItem(String itemName, long quantity) {
+        TreeSet<Item> items = this.allItems.get(itemName);
 
         if (items == null) {
             return new ArrayList<>();
@@ -111,7 +102,7 @@ public class ItemMarket {
             layers = new ArrayList<>();
 
             Iterator<Item> iterator = items.iterator();
-            long itemLeft = request.getQuantity();
+            long itemLeft = quantity;
 
             while (iterator.hasNext() && itemLeft > 0) {
                 Item currentItem = iterator.next();
@@ -121,8 +112,6 @@ public class ItemMarket {
 
                 if (currentItem.getQuantity() >= itemLeft) {
                     currentLayer.setQuantity(itemLeft);
-
-//                    currentItem.setQuantity(currentItem.getQuantity() - itemLeft);
 
                     if (currentItem.getQuantity() == itemLeft) {
                         iterator.remove();
@@ -134,7 +123,6 @@ public class ItemMarket {
 
                     iterator.remove();
                 }
-//                itemLeft -= currentItem.getQuantity();
                 itemLeft -= currentLayer.getQuantity();
 
                 OrderBookLayer build = currentLayer
@@ -151,9 +139,9 @@ public class ItemMarket {
     private void addDummyData() {
 
         TreeSet<Item> cheeseItems = new TreeSet<>();
-        cheeseItems.add(new Item(2.6, 8, Origin.AMERICA));
+        cheeseItems.add(new Item(2.6, 2, Origin.AMERICA));
         cheeseItems.add(new Item(4.0, 2, Origin.ASIA));
-        cheeseItems.add(new Item(4.0, 10, Origin.EUROPE));
+        cheeseItems.add(new Item(4.0, 5, Origin.EUROPE));
         cheeseItems.add(new Item(4.1, 2, Origin.ASIA));
         allItems.put("cheese", cheeseItems);
 

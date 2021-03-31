@@ -1,13 +1,12 @@
 package com.market.banica.order.book.service.grpc;
 
+import com.aurora.Aurora;
+import com.google.protobuf.Any;
 import com.market.banica.order.book.exception.TrackingException;
 import com.market.banica.order.book.model.Item;
 import com.market.banica.order.book.model.ItemMarket;
-import com.orderbook.CancelSubscriptionRequest;
 import com.orderbook.CancelSubscriptionResponse;
-import com.orderbook.InterestsRequest;
 import com.orderbook.InterestsResponse;
-import com.orderbook.ItemOrderBookRequest;
 import com.orderbook.ItemOrderBookResponse;
 import com.orderbook.OrderBookLayer;
 import com.orderbook.OrderBookServiceGrpc;
@@ -26,6 +25,7 @@ import java.util.Set;
 public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplBase {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OrderBookService.class);
+    private static final String REGEX = "/+";
 
     private final AuroraClient auroraClient;
     private final ItemMarket itemMarket;
@@ -37,21 +37,30 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
     }
 
     @Override
-    public void getOrderBookItemLayers(ItemOrderBookRequest request, StreamObserver<ItemOrderBookResponse> responseObserver) {
+    public void getOrderBookItemLayers(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
+        String[] topicSplit = request.getTopic().split(REGEX);
+        String itemName = topicSplit[1];
+        long itemQuantity = Long.parseLong(topicSplit[2]);
 
-        Optional<Set<Item>> result = itemMarket.getItemSetByName(request.getItemName());
+        Optional<Set<Item>> result = itemMarket.getItemSetByName(itemName);
 
-        List<OrderBookLayer> requestedItem = itemMarket.getRequestedItem(request);
+        List<OrderBookLayer> requestedItem = itemMarket.getRequestedItem(itemName, itemQuantity);
 
         if (result.isPresent()) {
-            responseObserver.onNext(ItemOrderBookResponse.newBuilder()
-                    .setItemName(request.getItemName())
-                    .addAllOrderbookLayers(requestedItem)
-                    .build());
+            responseObserver.onNext(
+                    Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(
+                            ItemOrderBookResponse.newBuilder()
+                                    .setItemName(itemName)
+                                    .addAllOrderbookLayers(requestedItem).build()))
+                            .build()
+            );
         } else {
-            responseObserver.onNext(ItemOrderBookResponse.newBuilder()
-                    .setItemName(request.getItemName())
-                    .build());
+            responseObserver.onNext(Aurora.AuroraResponse.newBuilder().setMessage(
+                    Any.pack(
+                            ItemOrderBookResponse.newBuilder()
+                                    .setItemName(itemName)
+                                    .build()
+                    )).build());
         }
         responseObserver.onCompleted();
 
@@ -60,36 +69,47 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
     }
 
     @Override
-    public void announceItemInterest(InterestsRequest request, StreamObserver<InterestsResponse> responseObserver) {
-
+    public void announceItemInterest(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
+        String[] topicSplit = request.getTopic().split(REGEX);
+        String itemName = topicSplit[1];
+        String marketName = "";
+        if (topicSplit.length == 3) {
+            marketName = topicSplit[2];
+        }
         try {
 
-            auroraClient.startSubscription(request.getItemName(), request.getClientId());
-            responseObserver.onNext(InterestsResponse.newBuilder().build());
+            auroraClient.startSubscription(itemName, request.getClientId(), marketName);
+            responseObserver.onNext(Aurora.AuroraResponse.newBuilder().setMessage(
+                    Any.pack(InterestsResponse.newBuilder().build())).build());
             responseObserver.onCompleted();
             LOGGER.info("Announce item interest by client id: {}", request.getClientId());
 
         } catch (TrackingException e) {
 
-            LOGGER.warn("Announce item interest by client id: {} has failed with item: {}", request.getClientId(), request.getItemName());
+            LOGGER.warn("Announce item interest by client id: {} has failed with item: {}",
+                    request.getClientId(), itemName);
             responseObserver.onError(Status.INVALID_ARGUMENT.withDescription("Invalid item name").asException());
 
         }
     }
 
     @Override
-    public void cancelItemSubscription(CancelSubscriptionRequest request, StreamObserver<CancelSubscriptionResponse> responseObserver) {
+    public void cancelItemSubscription(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
+        String[] topicSplit = request.getTopic().split(REGEX);
+        String itemName = topicSplit[1];
 
         try {
 
-            auroraClient.stopSubscription(request.getItemName(), request.getClientId());
-            responseObserver.onNext(CancelSubscriptionResponse.newBuilder().build());
+            auroraClient.stopSubscription(itemName, request.getClientId());
+            responseObserver.onNext(Aurora.AuroraResponse.newBuilder()
+                    .setMessage(Any.pack(CancelSubscriptionResponse.newBuilder().build()))
+                    .build());
             responseObserver.onCompleted();
             LOGGER.info("Cancel item subscription by client id: {}", request.getClientId());
 
         } catch (TrackingException e) {
 
-            LOGGER.error("Cancel item subscription by client id: {} has failed with item: {}", request.getClientId(), request.getItemName());
+            LOGGER.error("Cancel item subscription by client id: {} has failed with item: {}", request.getClientId(), itemName);
             responseObserver.onError(Status.INVALID_ARGUMENT.withDescription("Invalid item name").asException());
         }
     }

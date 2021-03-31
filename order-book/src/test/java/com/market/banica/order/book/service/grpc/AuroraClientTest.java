@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class AuroraClientTest {
-    private static final String EGGS_ITEM_NAME = "eggs";
+   /* private static final String EGGS_ITEM_NAME = "eggs";
     private static final String RICE_ITEM_NAME = "rice";
     private static final String MEAT_ITEM_NAME = "meat";
 
@@ -120,5 +120,5 @@ public class AuroraClientTest {
         items.add(new Item(2.2, 1, Origin.EUROPE));
         items.add(new Item(3.2, 2, Origin.EUROPE));
         return items;
-    }
+    }*/
 }

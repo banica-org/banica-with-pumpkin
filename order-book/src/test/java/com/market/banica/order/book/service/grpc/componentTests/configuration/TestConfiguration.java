@@ -17,34 +17,34 @@ import static org.mockito.Mockito.mock;
 public class TestConfiguration {
 
 
-public AuroraServiceGrpc.AuroraServiceImplBase getMockGrpcService(Aurora.AuroraResponse auroraResponse) {
-
-    return mock(AuroraServiceGrpc.AuroraServiceImplBase.class, delegatesTo(new AuroraServiceGrpc.AuroraServiceImplBase() {
-        @Override
-        public void subscribe(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
-
-            responseObserver.onNext(auroraResponse);
-
-            responseObserver.onCompleted();
-        }
-    }));
-}
-
-    public OrderBookServiceGrpc.OrderBookServiceImplBase getGrpcOrderBookServiceItemLayers(ItemOrderBookResponse response) {
-
-        return new OrderBookServiceGrpc.OrderBookServiceImplBase() {
-            @Override
-            public void getOrderBookItemLayers(ItemOrderBookRequest request, StreamObserver<ItemOrderBookResponse> responseObserver) {
-                responseObserver.onNext(response);
-
-                responseObserver.onCompleted();
-            }
-        };
-    }
-
-    public OrderBookServiceGrpc.OrderBookServiceImplBase getEmptyOrderBookGrpcService() {
-
-        return new OrderBookServiceGrpc.OrderBookServiceImplBase() {
-        };
-    }
+//public AuroraServiceGrpc.AuroraServiceImplBase getMockGrpcService(Aurora.AuroraResponse auroraResponse) {
+//
+//    return mock(AuroraServiceGrpc.AuroraServiceImplBase.class, delegatesTo(new AuroraServiceGrpc.AuroraServiceImplBase() {
+//        @Override
+//        public void subscribe(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
+//
+//            responseObserver.onNext(auroraResponse);
+//
+//            responseObserver.onCompleted();
+//        }
+//    }));
+//}
+//
+//    public OrderBookServiceGrpc.OrderBookServiceImplBase getGrpcOrderBookServiceItemLayers(ItemOrderBookResponse response) {
+//
+//        return new OrderBookServiceGrpc.OrderBookServiceImplBase() {
+//            @Override
+//            public void getOrderBookItemLayers(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
+//                responseObserver.onNext(response);
+//
+//                responseObserver.onCompleted();
+//            }
+//        };
+//    }
+//
+//    public OrderBookServiceGrpc.OrderBookServiceImplBase getEmptyOrderBookGrpcService() {
+//
+//        return new OrderBookServiceGrpc.OrderBookServiceImplBase() {
+//        };
+//    }
 }
