@@ -41,7 +41,7 @@ public class MarketStateImpl implements com.market.banica.generator.service.Mark
 
     @Autowired
     public MarketStateImpl(MarketSubscriptionManager subscriptionManager) throws IOException {
-        this.marketState = snapshotPersistence.getPersistedTicks();
+        this.marketState = snapshotPersistence.loadPersistedSnapshot();
         this.executorService = Executors.newSingleThreadExecutor();
         this.subscriptionManager = subscriptionManager;
     }
