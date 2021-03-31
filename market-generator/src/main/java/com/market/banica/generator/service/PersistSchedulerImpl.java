@@ -43,11 +43,7 @@ public class PersistSchedulerImpl {
                 this.frequencySchedule = frequency;
 
                 this.snapshotPersistenceTask.cancel();
-                this.snapshotPersistenceTask =
-                        new SnapshotPersistenceTask(snapshotPersistence, newTicks);
-                PERSIST_TIMER.scheduleAtFixedRate(snapshotPersistenceTask,
-                        TimeUnit.SECONDS.toMillis(frequencySchedule),
-                        TimeUnit.SECONDS.toMillis(frequencySchedule));
+                scheduleSnapshot();
 
             } else {
                 LOGGER.warn("Please, provide a positive frequency!");
@@ -57,17 +53,14 @@ public class PersistSchedulerImpl {
         }
     }
 
-    public void scheduleSnapshot() {
-        if (frequencySchedule != 0) {
-            this.snapshotPersistenceTask = new SnapshotPersistenceTask(snapshotPersistence, newTicks);
-            PERSIST_TIMER.scheduleAtFixedRate(snapshotPersistenceTask,
-                    TimeUnit.SECONDS.toMillis(frequencySchedule),
-                    TimeUnit.SECONDS.toMillis(frequencySchedule));
-            LOGGER.info(String.format("Successfully started taking snapshots in %d seconds!",
-                    frequencySchedule));
-        } else {
-            LOGGER.warn("There is no assigned frequency!");
-        }
+    private void scheduleSnapshot() {
+        this.snapshotPersistenceTask = new SnapshotPersistenceTask(snapshotPersistence, newTicks);
+        PERSIST_TIMER.scheduleAtFixedRate(snapshotPersistenceTask,
+                TimeUnit.SECONDS.toMillis(frequencySchedule),
+                TimeUnit.SECONDS.toMillis(frequencySchedule));
+        LOGGER.info(String.format("Successfully started taking snapshots in %d seconds!",
+                frequencySchedule));
+
     }
 
 
