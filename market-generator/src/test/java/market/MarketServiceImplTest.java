@@ -45,12 +45,12 @@ class MarketServiceImplTest {
                 TickResponse.newBuilder().setGoodName("secondTick").build());
 
         Mockito.when(marketSubscriptionServiceImpl.getRequestGoodName(MARKET_DATA_REQUEST_BANICA)).thenReturn(GOOD_BANICA);
-        Mockito.when(tickGenerator.generateTicks(GOOD_BANICA)).thenReturn(ticks);
+        Mockito.when(tickGenerator.getGeneratedTicksForGood(GOOD_BANICA)).thenReturn(ticks);
 
         marketService.subscribeForItem(MARKET_DATA_REQUEST_BANICA, subscriberOne);
 
 
-        verify(tickGenerator, times(1)).generateTicks(GOOD_BANICA);
+        verify(tickGenerator, times(1)).getGeneratedTicksForGood(GOOD_BANICA);
         verify(marketSubscriptionServiceImpl, times(1)).subscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
 
         verify(subscriberOne, times(2)).onNext(any());
