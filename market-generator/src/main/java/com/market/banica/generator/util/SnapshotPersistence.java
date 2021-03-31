@@ -38,7 +38,7 @@ public class SnapshotPersistence {
     }
 
     @SuppressWarnings({"unchecked"})
-    public Map<String, Set<MarketTick>> getPersistedTicks() throws IOException {
+    public Map<String, Set<MarketTick>> loadPersistedSnapshot() throws IOException {
 
         Map<String, Set<MarketTick>> loadedMarketTicks = new ConcurrentHashMap<>();
 
@@ -59,14 +59,13 @@ public class SnapshotPersistence {
             LOGGER.info("Loaded snapshot database!");
 
         }
-
         return loadedMarketTicks;
 
     }
 
     private static void initKryo() {
 
-        kryoHandle.register(java.util.HashMap.class);
+        kryoHandle.register(java.util.concurrent.ConcurrentHashMap.class);
         kryoHandle.register(java.util.HashSet.class);
         kryoHandle.register(MarketTick.class);
 
