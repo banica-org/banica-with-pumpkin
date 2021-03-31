@@ -3,6 +3,7 @@ package com.market.banica.generator.service.tickgeneration;
 import com.market.banica.generator.model.GoodSpecification;
 import com.market.banica.generator.model.MarketTick;
 import com.market.banica.generator.service.MarketState;
+import com.market.banica.generator.service.MarketStateImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,12 +23,12 @@ public class TickGeneratorImpl implements TickGenerator {
 
     private static final Map<String, TickTimerTask> tickTimerTasks = new ConcurrentHashMap<>();
 
-    @Autowired
-    private static MarketState marketState;
+    private final MarketState marketState;
 
     @Autowired
-    public TickGeneratorImpl(@Value("${market.name}") String marketName) {
+    public TickGeneratorImpl(@Value("${market.name}") String marketName, MarketState marketState) {
         MarketTick.setOrigin(marketName);
+        this.marketState = marketState;
     }
 
     @Override
