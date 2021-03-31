@@ -1,29 +1,43 @@
 package com.market.banica.generator.model;
 
-
 import com.market.Origin;
-import com.market.TickResponse;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.springframework.beans.factory.annotation.Value;
+
+import java.util.Locale;
 
 @Getter
-@AllArgsConstructor
 @ToString
+@NoArgsConstructor
 public class MarketTick {
 
-    private final String origin;
-    private final String good;
-    private final long amount;
-    private final double price;
+    private static Origin origin;
+    private String good;
+    private long quantity;
+    private double price;
+    private long timestamp;
 
-    public TickResponse toResponse() {
-        return TickResponse.newBuilder()
-                    .setOrigin(Origin.valueOf(origin.toUpperCase()))
-                    .setTimestamp(System.currentTimeMillis())
-                    .setGoodName(good)
-                    .setPrice(price)
-                    .setQuantity(amount)
-                    .build();
+    public MarketTick(String good, long amount, double price, long timestamp) {
+        this.good = good;
+        this.quantity = amount;
+        this.price = price;
+        this.timestamp = timestamp;
     }
+
+    public static Origin getOrigin() {
+        return origin;
+    }
+
+    public static void setOrigin(@Value("${market.name}") String marketName) {
+        origin = Origin.UNSPECIFIED;
+        for (Origin value : Origin.values()) {
+            if (value.toString().equals(marketName.toUpperCase(Locale.ROOT))) {
+                origin = value;
+                break;
+            }
+        }
+    }
+
 }

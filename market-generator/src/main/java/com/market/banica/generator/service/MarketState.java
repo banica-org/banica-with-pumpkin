@@ -1,16 +1,17 @@
 package com.market.banica.generator.service;
 
 import com.market.TickResponse;
+import com.market.banica.generator.model.MarketTick;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.BlockingQueue;
 
 public interface MarketState {
-    void addGoodToMarketState(String goodName, double goodPrice, long goodQuantity);
-
-    void updateSubscribers(String itemName, long itemQuantity, double itemPrice);
+    void addTickToMarketState(MarketTick marketTick);
 
     List<TickResponse> generateMarketTicks(String topic);
 
-    Map<String, Map<Double, Long>> getMarketState();
+    Map<String, Set<MarketTick>> getMarketState();
 }
