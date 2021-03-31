@@ -56,7 +56,6 @@ public class MarketStateImpl implements com.market.banica.generator.service.Mark
                     marketState.put(good, new TreeSet<>(Comparator.comparingLong(MarketTick::getTimestamp)));
                 }
                 marketState.get(good).add(marketTick);
-                System.out.println(marketState);
                 subscriptionManager.notifySubscribers(convertMarketTickToTickResponse(marketTick));
             }
             finally {
