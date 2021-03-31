@@ -76,25 +76,25 @@ public class CalculatorComponentIT {
     @Autowired
     private AuroraClientSideService auroraClientSideService;
 
-    @Value(value = "${client-id}")
+    @Value(value = "${client.id}")
     private String clientId;
 
-    @Value(value = "${product-name}")
+    @Value(value = "${product.name}")
     private String productName;
 
-    @Value(value = "${product-quantity}")
+    @Value(value = "${product.quantity}")
     private int productQuantity;
 
-    @Value(value = "${product-price}")
+    @Value(value = "${product.price}")
     private double price;
 
-    @Value(value = "${resource-timeout}")
+    @Value(value = "${resource.timeout}")
     private int timeout;
 
-    @Value(value = "${order-book-topic-prefix}")
+    @Value(value = "${order.book.topic.prefix}")
     private String orderBookTopicPrefix;
 
-    @Value(value = "${database-backup-url}")
+    @Value(value = "${database.backup.url}")
     private String databaseBackupUrl;
 
     private Product product;

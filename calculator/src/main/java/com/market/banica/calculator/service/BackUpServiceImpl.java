@@ -32,7 +32,7 @@ public class BackUpServiceImpl implements BackUpService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BackUpServiceImpl.class);
 
-    @Value("${database-backup-url}")
+    @Value("${database.backup.url}")
     private String databaseBackUpUrl;
     private final ProductBase productBase;
 
