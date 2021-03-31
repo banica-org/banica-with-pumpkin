@@ -2,6 +2,7 @@ package com.market.banica.order.book.service.grpc.componentTests;
 
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
+import com.google.protobuf.Any;
 import com.market.Origin;
 import com.market.TickResponse;
 import com.market.banica.order.book.OrderBookApplication;
@@ -221,13 +222,12 @@ class OrderBookComponentIT {
 
     private Aurora.AuroraResponse generateAuroraResponse() {
         Aurora.AuroraResponse auroraResponse = Aurora.AuroraResponse.newBuilder()
-                .setTickResponse(TickResponse.newBuilder()
-                        .setGoodName(productName)
-                        .build())
+                .setMessage(Any.pack(TickResponse.newBuilder().setGoodName(productName).build()))
                 .build();
         return auroraResponse;
     }
 }
+
 
 
 
