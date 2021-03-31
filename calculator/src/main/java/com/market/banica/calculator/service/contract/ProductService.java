@@ -25,7 +25,7 @@ public interface ProductService {
 
     void deleteProductFromParentIngredients(String parentProductName, String productName);
 
-    List<Product> getProductAsListProduct(String recipeName);
+    List<Product> getProductAsListProduct(String productName);
 
     void getAllProductsAsListProduct();
 }
