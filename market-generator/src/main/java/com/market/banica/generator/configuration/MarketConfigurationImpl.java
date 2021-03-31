@@ -1,8 +1,9 @@
 package com.market.banica.generator.configuration;
 
+import com.market.banica.common.util.ApplicationDirectoryUtil;
 import com.market.banica.generator.exception.NotFoundException;
 import com.market.banica.generator.model.GoodSpecification;
-import com.market.banica.generator.property.LinkedProperties;
+import com.market.banica.generator.service.TickGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,183 +16,218 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 @Component
 @ManagedResource
 public class MarketConfigurationImpl implements MarketConfiguration {
-    private static final String ORIGIN_GOOD_PATTERN = "%s.%s";
 
-    private final File file;
-    private final ReadWriteLock lock = new ReentrantReadWriteLock();
-    private final Logger LOGGER = LoggerFactory.getLogger(MarketConfigurationImpl.class);
+    private static final String PROPERTY_REGEX = "([a-z])+\\.([a-z])+\\.([a-z])+";
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(MarketConfigurationImpl.class);
+
+    private final ReadWriteLock propertiesWriteLock = new ReentrantReadWriteLock();
+
+    private final File configurationFile;
+    private final Properties properties = new Properties();
     private final Map<String, GoodSpecification> goods = new HashMap<>();
+    private final TickGenerator tickGenerator;
 
     @Autowired
-    public MarketConfigurationImpl(@Value("${market.properties.file.path}") String path) {
-        this.file = new File(path);
+    public MarketConfigurationImpl(@Value("${market.properties.file.name}") String fileName,
+                                   TickGenerator tickGenerator) throws IOException {
+        this.configurationFile = ApplicationDirectoryUtil.getConfigFile(fileName);
+        this.tickGenerator = tickGenerator;
+        loadProperties();
     }
 
     @Override
     @ManagedOperation
-    public void addGoodSpecification(String origin, String good,
-                                     long quantityLow, long quantityHigh, long quantityStep,
+    public void addGoodSpecification(String good, long quantityLow, long quantityHigh, long quantityStep,
                                      double priceLow, double priceHigh, double priceStep,
                                      int periodLow, int periodHigh, int periodStep) {
-
         try {
-            this.lock.writeLock().lock();
+            propertiesWriteLock.writeLock().lock();
 
-            String errorMessage = String.format("A good with name %s from %s already exists",
-                    good.toUpperCase(), origin.toUpperCase());
-            String loggerMessage = "Creating and adding a new goodSpecification.";
+            good = good.toLowerCase(Locale.ROOT);
+            if (this.doesGoodExist(good)) {
+                LOGGER.warn("A good with name {} already exists", good);
+                throw new IllegalArgumentException(String.format("A good with name %s already exists", good));
+            }
 
-            origin = origin.toLowerCase(Locale.getDefault());
-            good = good.toLowerCase(Locale.getDefault());
-
-            Properties properties = new LinkedProperties();
-            boolean append = false;
-            boolean condition = this.doesGoodExist(String.format(ORIGIN_GOOD_PATTERN,
-                    origin, good));
-
-            this.modifyProperty(origin, good,
-                    new IllegalArgumentException(errorMessage),
-                    condition,
+            GoodSpecification addedGoodSpecification = new GoodSpecification(good,
                     quantityLow, quantityHigh, quantityStep,
                     priceLow, priceHigh, priceStep,
-                    periodLow, periodHigh, periodStep, append, properties, properties::setProperty, loggerMessage);
+                    periodLow, periodHigh, periodStep);
 
+            this.modifyProperty(addedGoodSpecification);
+
+            tickGenerator.startTickGeneration(addedGoodSpecification);
+
+            LOGGER.info("Creating and adding a new goodSpecification.");
         } finally {
-            this.lock.writeLock().unlock();
+            propertiesWriteLock.writeLock().unlock();
         }
     }
 
     @Override
     @ManagedOperation
-    public void removeGoodSpecification(String origin, String good) {
+    public void removeGoodSpecification(String good) {
         try {
-            this.lock.writeLock().lock();
+            propertiesWriteLock.writeLock().lock();
 
-            origin = origin.toLowerCase(Locale.getDefault());
-            good = good.toLowerCase(Locale.getDefault());
+            good = good.toLowerCase(Locale.ROOT);
 
-            if (!doesGoodExist(String.format(ORIGIN_GOOD_PATTERN, origin, good))) {
-                throw new NotFoundException(String.format("A good with name %s from %s does " +
-                        "not exist and it cannot be removed", good.toUpperCase(), origin.toUpperCase()));
+            if (!doesGoodExist(good)) {
+                LOGGER.warn("A good with name {} does not exist and it cannot be removed", good);
+                throw new NotFoundException(String.format("A good with name %s does " +
+                        "not exist and it cannot be removed", good));
             }
-            Properties properties = new LinkedProperties();
-            Map<String, String> removedGoodSpecification = this.goods.remove(String.format(ORIGIN_GOOD_PATTERN, origin, good))
-                    .generateProperties(origin);
-            this.modifyProperties(removedGoodSpecification, properties,
-                    (k, v) -> properties.remove(k), this.file, false);
+
+            Map<String, String> removedGoodSpecification = this.goods.remove(good).generateProperties();
+
+            removedGoodSpecification.forEach((key, value) -> properties.remove(key));
+
+            saveProperties();
+
+            tickGenerator.stopTickGeneration(good);
 
             LOGGER.info("Removing an existing goodSpecification.");
         } finally {
-            this.lock.writeLock().unlock();
+            propertiesWriteLock.writeLock().unlock();
         }
     }
 
     @Override
     @ManagedOperation
-    public void updateGoodSpecification(String origin, String good, long quantityLow, long quantityHigh,
-                                        long quantityStep,
+    public void updateGoodSpecification(String good, long quantityLow, long quantityHigh, long quantityStep,
                                         double priceLow, double priceHigh, double priceStep,
                                         int periodLow, int periodHigh, int periodStep) {
-
-
         try {
-            this.lock.writeLock().lock();
+            propertiesWriteLock.writeLock().lock();
 
-            String errorMessage =
-                    String.format("A good with name %s from %s does not exist and cannot be updated", good.toUpperCase(), origin.toUpperCase());
-            String loggerMessage = "Updating an existing goodSpecification.";
-            origin = origin.toLowerCase(Locale.getDefault());
-            good = good.toLowerCase(Locale.getDefault());
+            good = good.toLowerCase(Locale.ROOT);
+            if (!this.doesGoodExist(good)) {
+                LOGGER.warn("A good with name {} does not exist and cannot be updated", good);
+                throw new IllegalArgumentException(String
+                        .format("A good with name %s does not exist and cannot be updated", good));
+            }
 
-            Properties properties = new LinkedProperties();
-            boolean append = false;
-            boolean condition = !this.doesGoodExist(String.format(ORIGIN_GOOD_PATTERN,
-                    origin, good));
-
-
-            this.modifyProperty(origin, good,
-                    new NotFoundException(errorMessage),
-                    condition,
+            GoodSpecification updatedGoodSpecification = new GoodSpecification(good,
                     quantityLow, quantityHigh, quantityStep,
                     priceLow, priceHigh, priceStep,
-                    periodLow, periodHigh, periodStep, append, properties, properties::setProperty, loggerMessage);
+                    periodLow, periodHigh, periodStep);
+
+            this.modifyProperty(updatedGoodSpecification);
+
+            tickGenerator.updateTickGeneration(updatedGoodSpecification);
+
+            LOGGER.info("Updating an existing goodSpecification.");
         } finally {
-            this.lock.writeLock().unlock();
+            propertiesWriteLock.writeLock().unlock();
         }
     }
 
-    private void modifyProperty(String origin, String good,
-                                RuntimeException exception, boolean condition,
-                                long quantityLow, long quantityHigh, long quantityStep,
-                                double priceLow, double priceHigh, double priceStep,
-                                int periodLow, int periodHigh, int periodStep, boolean append,
-                                Properties properties, BiConsumer<String, String> function, String loggerMessage) {
+    private void modifyProperty(GoodSpecification modifiedGoodSpecification) {
 
-        if (condition) {
-            throw exception;
-        }
+        validateGoodSpecification(modifiedGoodSpecification);
 
-        GoodSpecification goodSpecification = new GoodSpecification(good,
-                quantityLow, quantityHigh, quantityStep,
-                priceLow, priceHigh, priceStep,
-                periodLow, periodHigh, periodStep);
+        modifiedGoodSpecification.generateProperties().forEach(properties::setProperty);
 
-        validateGoodSpecification(goodSpecification);
+        this.saveProperties();
 
-        this.modifyProperties(goodSpecification.generateProperties(origin)
-                , properties, function, this.file, append);
+        this.goods.put(modifiedGoodSpecification.getName(), modifiedGoodSpecification);
 
-        this.goods.put(String.format(ORIGIN_GOOD_PATTERN, origin, good), goodSpecification);
-
-        LOGGER.info(loggerMessage);
     }
 
     private void validateGoodSpecification(GoodSpecification goodSpecification) {
-        for (Map.Entry<String, String> keyValue : goodSpecification.generateProperties("europe").entrySet()) {
-            double currentPropertyValue = Double.parseDouble(keyValue.getValue());
-            if (!(keyValue.getKey().contains("pricerange.low") ||
-                    keyValue.getKey().contains("pricerange.high")) && Double.compare(currentPropertyValue, 0) < 0) {
-                throw new IllegalArgumentException("Value for key: " + keyValue.getKey() + " cannot be negative");
-            }
+
+        if (goodSpecification.getName().contains(".")) {
+            LOGGER.warn("Good name: {} cannot have dots.", goodSpecification.getName());
+            throw new IllegalArgumentException("Good name: " + goodSpecification.getName() + " cannot have dots.");
+        } else if (goodSpecification.getQuantityLow() <= 0 || goodSpecification.getQuantityHigh() <= 0 ||
+                goodSpecification.getQuantityStep() < 0 || goodSpecification.getPriceLow() <= 0 ||
+                goodSpecification.getPriceHigh() <= 0 || goodSpecification.getPriceStep() < 0 ||
+                goodSpecification.getPeriodLow() <= 0 || goodSpecification.getPeriodHigh() <= 0 ||
+                goodSpecification.getPeriodStep() < 0) {
+            LOGGER.warn("Low and high parameters can only be positive, steps cannot be negative");
+            throw new IllegalArgumentException("Low and high parameters can only be positive, steps cannot be negative");
+        } else if (goodSpecification.getQuantityHigh() < goodSpecification.getQuantityLow() ||
+                goodSpecification.getPriceHigh() < goodSpecification.getPriceLow() ||
+                goodSpecification.getPeriodHigh() < goodSpecification.getPeriodLow()) {
+            LOGGER.warn("High parameters should be higher than low parameters.");
+            throw new IllegalArgumentException("High parameters should be higher than low parameters.");
+        } else if (goodSpecification.getQuantityHigh() - goodSpecification.getQuantityLow() < goodSpecification.getQuantityStep() ||
+                goodSpecification.getPriceHigh() - goodSpecification.getPriceLow() < goodSpecification.getPriceStep() ||
+                goodSpecification.getPeriodHigh() - goodSpecification.getPeriodLow() < goodSpecification.getPeriodStep()) {
+            LOGGER.warn("Step parameter should be lower than the range between low and high parameters.");
+            throw new IllegalArgumentException("Step parameter should be lower than the range between low and high parameters.");
         }
 
     }
 
-    private void modifyProperties(Map<String, String> propertiesMap, Properties properties,
-                                  BiConsumer<String, String> function, File file, boolean append) {
+    private void saveProperties() {
 
-        try {
-            if (!file.exists()) {
-                Files.createFile(Paths.get(file.getPath()));
-                LOGGER.debug("Creating a new file in: {}", file.getPath());
-            }
-            try (FileInputStream inputStream = new FileInputStream(file)) {
-                properties.load(inputStream);
-            }
-            propertiesMap.forEach(function);
-            try (FileOutputStream outputStream = new FileOutputStream(file, append);) {
-                properties.store(outputStream, null);
-            }
+        try (Writer output = new OutputStreamWriter(new FileOutputStream(configurationFile), UTF_8)) {
+            properties.store(output, null);
         } catch (IOException e) {
             LOGGER.error("An error occurred while modifying the file: {}", e.getMessage());
         }
+
     }
 
     private boolean doesGoodExist(String good) {
         return this.goods.containsKey(good);
     }
+
+    private void loadProperties() throws IOException {
+        try (FileInputStream inputStream = new FileInputStream(configurationFile)) {
+            propertiesWriteLock.writeLock().lock();
+
+            properties.load(inputStream);
+
+            List<String> distinctGoods = properties.stringPropertyNames().stream()
+                    .filter(property -> property.matches(PROPERTY_REGEX))
+                    .map(property -> property.split("\\.")[0])
+                    .distinct()
+                    .collect(Collectors.toList());
+
+            for (String goodName : distinctGoods) {
+                GoodSpecification goodSpecification = createGoodSpecification(goodName);
+
+                goods.put(goodName, goodSpecification);
+
+                tickGenerator.startTickGeneration(goodSpecification);
+            }
+        } finally {
+            propertiesWriteLock.writeLock().unlock();
+        }
+    }
+
+    private GoodSpecification createGoodSpecification(String goodName) {
+
+        return new GoodSpecification(goodName,
+                Long.parseLong(properties.getProperty(goodName + ".quantityrange.low")),
+                Long.parseLong(properties.getProperty(goodName + ".quantityrange.high")),
+                Long.parseLong(properties.getProperty(goodName + ".quantityrange.step")),
+                Double.parseDouble(properties.getProperty(goodName + ".pricerange.low")),
+                Double.parseDouble(properties.getProperty(goodName + ".pricerange.high")),
+                Double.parseDouble(properties.getProperty(goodName + ".pricerange.step")),
+                Integer.parseInt(properties.getProperty(goodName + ".tickrange.low")),
+                Integer.parseInt(properties.getProperty(goodName + ".tickrange.high")),
+                Integer.parseInt(properties.getProperty(goodName + ".tickrange.step")));
+
+    }
+
 }
