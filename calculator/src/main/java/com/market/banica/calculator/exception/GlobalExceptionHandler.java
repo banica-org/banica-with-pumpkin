@@ -1,15 +1,15 @@
 package com.market.banica.calculator.exception;
 
 import com.market.banica.calculator.exception.exceptions.BadResponseException;
-import com.market.banica.calculator.exception.exceptions.FeatureNotSupportedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-
-import java.util.Collections;
+import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 /**
  * Date: 3/10/2021 Time: 5:30 PM
@@ -20,17 +20,20 @@ import java.util.Collections;
  */
 
 @ControllerAdvice
-public class GlobalExceptionHandler {
+public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    @ExceptionHandler({FeatureNotSupportedException.class})
-    public ResponseEntity<Object> notSupportedFeatureHandling(FeatureNotSupportedException exception) {
-        return new ResponseEntity<>(Collections.singletonMap("error", exception.getMessage()), HttpStatus.valueOf(501));
+    @ExceptionHandler(IllegalArgumentException.class)
+    protected ResponseEntity<Object> handleIllegalArgument(
+            RuntimeException runtimeException, WebRequest request) {
+        return handleExceptionInternal(runtimeException, runtimeException.getMessage(),
+                new HttpHeaders(), HttpStatus.BAD_REQUEST, request);
     }
 
     @ExceptionHandler({BadResponseException.class})
-    public void badAuroraResponse(BadResponseException exception){
-        LOGGER.warn("Exception caught: {}" ,exception.getMessage());
+    public ResponseEntity<Object> badAuroraResponse(RuntimeException runtimeException, WebRequest request) {
+        return handleExceptionInternal(runtimeException, runtimeException.getMessage(),
+                new HttpHeaders(), HttpStatus.INTERNAL_SERVER_ERROR, request);
     }
 }

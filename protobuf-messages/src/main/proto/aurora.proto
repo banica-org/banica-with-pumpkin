@@ -2,8 +2,7 @@ syntax = "proto3";
 
 package aurora;
 
-import "market.proto";
-import "orderbook.proto";
+import "google/protobuf/any.proto";
 
 option java_package = "com.aurora";
 
@@ -15,14 +14,7 @@ message AuroraRequest{
 }
 message AuroraResponse{
 
-  oneof responses{
-    market.TickResponse tickResponse = 2;
-    market.TradeActionProductResponse tradeActionProductResponse = 1;
-    orderbook.ItemOrderBookResponse itemOrderBookResponse = 3;
-    orderbook.InterestsResponse interestsResponse = 4;
-    orderbook.CancelSubscriptionResponse CancelSubscriptionResponse = 5;
-  }
-
+  google.protobuf.Any message = 1;
 }
 
 service AuroraService{

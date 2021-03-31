@@ -36,17 +36,15 @@ import static org.mockito.BDDMockito.given;
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(CalculatorController.class)
 public class CalculatorControllerTest {
-    @Autowired
-    private MockMvc mockMvc;
-
     @MockBean
     CalculatorService service;
-
+    @Autowired
+    private MockMvc mockMvc;
     private JacksonTester<RecipeDTO> jacksonResponseRecipe;
 
     @BeforeEach
-    private void setUp(){
-        JacksonTester.initFields(this,new ObjectMapper());
+    private void setUp() {
+        JacksonTester.initFields(this, new ObjectMapper());
     }
 
     @Test
@@ -61,14 +59,13 @@ public class CalculatorControllerTest {
         dummyRecipe.setTotalPrice(BigDecimal.valueOf(10));
 
 
-        given(service.getRecipe(clientId,product, 100)).willReturn(dummyRecipe);
+        given(service.getRecipe(clientId, product, 100)).willReturn(dummyRecipe);
 
 
         MockHttpServletResponse response = mockMvc.perform(MockMvcRequestBuilders.get
                 ("/calculator/" + clientId + "/" + product + "/" + quantity)
                 .accept(MediaType.APPLICATION_JSON))
                 .andReturn().getResponse();
-
 
 
         assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());

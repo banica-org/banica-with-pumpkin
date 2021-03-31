@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -229,9 +228,7 @@ public class ProductServiceImpl implements ProductService {
 
         for (String productName : productsNames) {
 
-            validateProductExists(productName);
-        }
-    }
+            validateProductExists(productName); } }
 
     private void validateProductExists(String productName) {
         LOGGER.debug("In validateProductExists private method");
