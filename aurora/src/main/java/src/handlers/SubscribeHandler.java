@@ -28,17 +28,16 @@ public class SubscribeHandler {
 
     public void handleSubscribe(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
         LOGGER.info("Handling subscribe from client {}", request.getClientId());
-        List<ManagedChannel> channels = this.channels.getAllChannelsContainingPrefix(request.getTopic().split("/")[0]);
-        if (!channels.isEmpty()) {
-            for (ManagedChannel channel : channels) {
-                generateAuroraStub(channel).subscribe(request, new AuroraObserver(request, responseObserver));
-            }
-        } else {
+        List<ManagedChannel> channelsWithPrefix = this.channels.getAllChannelsContainingPrefix(request.getTopic().split("/")[0]);
+        if (channelsWithPrefix.isEmpty()) {
             LOGGER.warn("Unsupported message have reached aurora.");
             responseObserver.onError(Status.INVALID_ARGUMENT
                     .withDescription(request.getTopic().split("/")[0] + " channel not available at the moment.")
                     .asException());
+            return;
         }
+        channelsWithPrefix.forEach(channel -> this.generateAuroraStub(channel)
+                .subscribe(request, new AuroraObserver(request, responseObserver)));
     }
 
     private AuroraServiceGrpc.AuroraServiceStub generateAuroraStub(ManagedChannel channelByKey) {
