@@ -5,6 +5,7 @@ import com.asarkar.grpc.test.Resources;
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.protobuf.Any;
 import com.market.banica.calculator.componentTests.configuration.TestConfigurationIT;
 import com.market.banica.calculator.data.contract.ProductBase;
 import com.market.banica.calculator.dto.RecipeDTO;
@@ -142,8 +143,8 @@ public class CalculatorComponentIT {
                         .build())
                 .build();
         Aurora.AuroraResponse auroraResponse = Aurora.AuroraResponse.newBuilder()
-                .setItemOrderBookResponse(itemOrderBookResponse).
-                        build();
+                .setMessage(Any.pack(itemOrderBookResponse))
+                .build();
 
         resources.register(testConfigurationIT.startInProcessService(
                 testConfigurationIT.getGrpcService(auroraResponse)), duration);
@@ -184,8 +185,8 @@ public class CalculatorComponentIT {
 
         InterestsResponse interestsResponse = InterestsResponse.newBuilder().build();
         Aurora.AuroraResponse auroraResponse = Aurora.AuroraResponse.newBuilder()
-                .setInterestsResponse(interestsResponse).
-                        build();
+                .setMessage(Any.pack(interestsResponse))
+                .build();
 
         resources.register(testConfigurationIT.startInProcessService(testConfigurationIT.getGrpcService(auroraResponse)), duration);
 
@@ -229,8 +230,8 @@ public class CalculatorComponentIT {
 
         CancelSubscriptionResponse cancelSubscriptionResponse = CancelSubscriptionResponse.newBuilder().build();
         Aurora.AuroraResponse auroraResponse = Aurora.AuroraResponse.newBuilder()
-                .setCancelSubscriptionResponse(cancelSubscriptionResponse).
-                        build();
+                .setMessage(Any.pack(cancelSubscriptionResponse))
+                .build();
 
         AuroraServiceGrpc.AuroraServiceImplBase server = testConfigurationIT.getMockGrpcService(auroraResponse);
         resources.register(InProcessServerBuilder.forName(testConfigurationIT.getServerName()).directExecutor()
@@ -286,4 +287,5 @@ public class CalculatorComponentIT {
         product.setUnitOfMeasure(UnitOfMeasure.GRAM);
         product.setIngredients(new HashMap<>());
     }
+
 }
