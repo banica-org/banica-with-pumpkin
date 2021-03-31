@@ -21,6 +21,12 @@
 
     <dependencies>
         <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>2.12.2</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
@@ -34,6 +40,10 @@
         <dependency>
             <groupId>com.market.banica</groupId>
             <artifactId>protobuf-messages</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.market.banica</groupId>
+            <artifactId>common</artifactId>
         </dependency>
 
     </dependencies>
@@ -65,7 +75,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>com.market.banica.aurora.AuroraApplication</mainClass>
+                            <mainClass>src.AuroraApplication</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>

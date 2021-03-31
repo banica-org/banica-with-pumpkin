@@ -2,6 +2,7 @@ package com.market.banica.order.book.service.grpc;
 
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.market.TickResponse;
 import com.market.banica.common.channel.ChannelRPCConfig;
 import com.market.banica.order.book.exception.IncorrectResponseException;
@@ -97,8 +98,15 @@ public class AuroraClient {
 
             @Override
             public void onNext(Aurora.AuroraResponse response) {
-                if (response.hasTickResponse()) {
-                    TickResponse tickResponse = response.getTickResponse();
+                if (response.getMessage().is(TickResponse.class)) {
+                    TickResponse tickResponse;
+
+                    try {
+                        tickResponse = response.getMessage().unpack(TickResponse.class);
+                    } catch (InvalidProtocolBufferException e) {
+                        throw new IncorrectResponseException("Response is not correct!");
+                    }
+
 
                     Item item = new Item();
                     item.setPrice(tickResponse.getPrice());
