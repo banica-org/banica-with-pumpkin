@@ -45,7 +45,6 @@ public class JMXConfig {
     }
 
 
-
     @ManagedOperation
     public void createChannel(String channelPrefix, String host, String port) {
         LOGGER.info("Creating new channel {} from JMX server", channelPrefix);
@@ -121,9 +120,8 @@ public class JMXConfig {
         }
     }
 
-    private void populateChannels(Map<String, ChannelProperty> channelPropertyMap){
-        channelPropertyMap.entrySet().stream()
-                .forEach(entry-> channels.addChannel(entry.getKey(), entry.getValue()));
+    private void populateChannels(Map<String, ChannelProperty> channelPropertyMap) {
+        channelPropertyMap.forEach((key, value) -> channels.addChannel(key, value));
     }
 
     private String getStringFromMap(Map<String, ChannelProperty> data, ObjectWriter objectWriter)

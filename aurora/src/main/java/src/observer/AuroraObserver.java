@@ -12,14 +12,14 @@ public class AuroraObserver implements StreamObserver<Aurora.AuroraResponse> {
     private Aurora.AuroraRequest request;
     private StreamObserver<Aurora.AuroraResponse> forwardResponse;
 
-    public AuroraObserver(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> forwardResponse){
+    public AuroraObserver(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> forwardResponse) {
         this.request = request;
         this.forwardResponse = forwardResponse;
     }
 
     @Override
     public void onNext(Aurora.AuroraResponse response) {
-        LOGGER.debug("Forwarding response to client {}",request.getClientId());
+        LOGGER.debug("Forwarding response to client {}", request.getClientId());
         forwardResponse.onNext(response);
     }
 
@@ -33,7 +33,7 @@ public class AuroraObserver implements StreamObserver<Aurora.AuroraResponse> {
 
     @Override
     public void onCompleted() {
-        LOGGER.info("Completing stream request for client {}",request.getClientId());
+        LOGGER.info("Completing stream request for client {}", request.getClientId());
         forwardResponse.onCompleted();
     }
 }

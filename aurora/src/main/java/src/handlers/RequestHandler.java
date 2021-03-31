@@ -1,6 +1,5 @@
 package src.handlers;
 
-import src.config.ChannelManager;
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
 import io.grpc.ManagedChannel;
@@ -10,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import src.config.ChannelManager;
 
 import java.util.Optional;
 
@@ -44,7 +44,7 @@ public class RequestHandler {
 
 
             responseObserver.onNext(response);
-            LOGGER.info("Completing request for client {}",request.getClientId());
+            LOGGER.info("Completing request for client {}", request.getClientId());
             responseObserver.onCompleted();
         } else {
             LOGGER.warn("Unsupported message have reached aurora.");

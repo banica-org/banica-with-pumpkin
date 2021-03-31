@@ -1,6 +1,5 @@
 package src;
 
-import src.service.AuroraServiceImpl;
 import io.grpc.Server;
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
 import org.slf4j.Logger;
@@ -8,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import src.service.AuroraServiceImpl;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
