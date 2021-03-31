@@ -29,7 +29,7 @@ public class MarketStateImpl implements com.market.banica.generator.service.Mark
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MarketStateImpl.class);
 
-    private static final ReadWriteLock lock = new ReentrantReadWriteLock();
+    private static final ReadWriteLock marketStateLock = new ReentrantReadWriteLock();
 
     private static final SnapshotPersistence snapshotPersistence = new SnapshotPersistence();
 
@@ -49,22 +49,29 @@ public class MarketStateImpl implements com.market.banica.generator.service.Mark
     @Override
     public void addTickToMarketState(MarketTick marketTick) {
         executorService.execute(() -> {
-            String goodName = marketTick.getGood();
-            if (marketState.get(goodName) == null) {
-                marketState.put(goodName, new TreeSet<>(Comparator.comparingLong(MarketTick::getTimestamp)));
+            try {
+                marketStateLock.writeLock().lock();
+                String good = marketTick.getGood();
+                if (!marketState.containsKey(good)) {
+                    marketState.put(good, new TreeSet<>(Comparator.comparingLong(MarketTick::getTimestamp)));
+                }
+                marketState.get(good).add(marketTick);
+                System.out.println(marketState);
+                subscriptionManager.notifySubscribers(convertMarketTickToTickResponse(marketTick));
             }
-            marketState.get(goodName).add(marketTick);
-            subscriptionManager.notifySubscribers(convertMarketTickToTickResponse(marketTick));
+            finally {
+                marketStateLock.writeLock().unlock();
+            }
         });
     }
 
     @Override
     public List<TickResponse> generateMarketTicks(String good) {
         try {
-            lock.readLock().lock();
+            marketStateLock.readLock().lock();
             LOGGER.info("Generate market ticks called for good {} .", good);
 
-            if (marketState.get(good) == null) {
+            if (!marketState.containsKey(good)) {
                 LOGGER.warn("Cannot generate ticks, No such good in market.");
                 return Collections.emptyList();
             }
@@ -75,19 +82,19 @@ public class MarketStateImpl implements com.market.banica.generator.service.Mark
                     .map(this::convertMarketTickToTickResponse)
                     .collect(Collectors.toList());
         } finally {
-            lock.readLock().unlock();
+            marketStateLock.readLock().unlock();
         }
     }
 
     @Override
     public Map<String, Set<MarketTick>> getMarketState() {
         try {
-            lock.readLock().lock();
+            marketStateLock.readLock().lock();
             Map<String, Set<MarketTick>> currentMarketState = new HashMap<>();
             marketState.forEach((good, ticks) -> currentMarketState.put(good, new TreeSet<>(ticks)));
             return currentMarketState;
         } finally {
-            lock.readLock().unlock();
+            marketStateLock.readLock().unlock();
         }
     }
 
