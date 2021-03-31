@@ -15,7 +15,8 @@ public class Runner implements CommandLineRunner {
         ManagedChannel localhost = ManagedChannelBuilder.forAddress("localhost", 9080).usePlaintext().build();
         OrderBookServiceGrpc.OrderBookServiceBlockingStub stub = OrderBookServiceGrpc.newBlockingStub(localhost);
 
-        ItemOrderBookRequest request = ItemOrderBookRequest.newBuilder().setClientId("test").setItemName("cheese").setQuantity(8).build();
+        ItemOrderBookRequest request = ItemOrderBookRequest.newBuilder().setClientId("test")
+                .setItemName("cheese").setQuantity(8).build();
 
         ItemOrderBookResponse orderBookItemLayers = stub.getOrderBookItemLayers(request);
         System.out.println();

@@ -106,18 +106,20 @@ public class ItemMarket {
                 if (currentItem.getQuantity() >= itemLeft) {
                     currentLayer.setQuantity(itemLeft);
 
-                    currentItem.setQuantity(currentItem.getQuantity() - itemLeft);
+//                    currentItem.setQuantity(currentItem.getQuantity() - itemLeft);
 
                     if (currentItem.getQuantity() == itemLeft) {
                         iterator.remove();
                     }
 
+                    currentItem.setQuantity(currentItem.getQuantity() - itemLeft);
                 } else if (currentItem.getQuantity() < itemLeft) {
                     currentLayer.setQuantity(currentItem.getQuantity());
 
                     iterator.remove();
                 }
-                itemLeft -= currentItem.getQuantity();
+//                itemLeft -= currentItem.getQuantity();
+                itemLeft -= currentLayer.getQuantity();
 
                 OrderBookLayer build = currentLayer
                         .setOrigin(currentItem.getOrigin())
@@ -133,9 +135,10 @@ public class ItemMarket {
     private void addDummyData() {
 
         TreeSet<Item> cheeseItems = new TreeSet<>();
-        cheeseItems.add(new Item(2.6, 2, Origin.AMERICA));
-        cheeseItems.add(new Item(4.0, 4, Origin.EUROPE));
-        cheeseItems.add(new Item(4.0, 1, Origin.ASIA));
+        cheeseItems.add(new Item(2.6, 8, Origin.AMERICA));
+        cheeseItems.add(new Item(4.0, 2, Origin.ASIA));
+        cheeseItems.add(new Item(4.0, 10, Origin.EUROPE));
+        cheeseItems.add(new Item(4.1, 2, Origin.ASIA));
         allItems.put("cheese", cheeseItems);
 
         TreeSet<Item> cocoaItems = new TreeSet<>();
