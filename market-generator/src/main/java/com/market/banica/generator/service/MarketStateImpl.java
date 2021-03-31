@@ -50,13 +50,12 @@ public class MarketStateImpl implements com.market.banica.generator.service.Mark
     public void addTickToMarketState(MarketTick marketTick) {
         executorService.execute(() -> {
             String goodName = marketTick.getGood();
-            LOGGER.info("Adding {} to market state.", goodName);
             if (marketState.get(goodName) == null) {
                 marketState.put(goodName, new TreeSet<>(Comparator.comparingLong(MarketTick::getTimestamp)));
             }
             marketState.get(goodName).add(marketTick);
             subscriptionManager.notifySubscribers(convertMarketTickToTickResponse(marketTick));
-            LOGGER.info("{} added to market state.", goodName);
+            System.out.println(marketState);
         });
     }
 
@@ -67,7 +66,7 @@ public class MarketStateImpl implements com.market.banica.generator.service.Mark
             LOGGER.info("Generate market ticks called for good {} .", good);
 
             if (marketState.get(good) == null) {
-                LOGGER.debug("Cannot generate ticks, No such good in market.");
+                LOGGER.warn("Cannot generate ticks, No such good in market.");
                 return Collections.emptyList();
             }
 
