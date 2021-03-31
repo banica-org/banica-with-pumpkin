@@ -17,6 +17,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.AbstractMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -40,6 +41,13 @@ public class ChannelManager {
     public Optional<ManagedChannel> getChannelByKey(String key) {
         LOGGER.debug("Getting channel with key {}", key);
         return Optional.ofNullable(channels.get(key));
+    }
+
+    public List<ManagedChannel> getAllChannelsContainingPrefix(String prefix){
+        return this.channels.entrySet().stream()
+                .filter(entry->entry.getKey().startsWith(prefix))
+                .map(entry->entry.getValue())
+                .collect(Collectors.toList());
     }
 
     protected void addChannel(String key, ChannelProperty value) {
