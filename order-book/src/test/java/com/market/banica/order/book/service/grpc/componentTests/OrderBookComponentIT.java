@@ -70,16 +70,16 @@ class OrderBookComponentIT {
     @LocalServerPort
     private int grpcMockPort;
 
-    @Value(value = "${product-name}")
+    @Value(value = "${product.name}")
     private String productName;
 
-    @Value(value = "${client-id}")
+    @Value(value = "${client.id}")
     private String clientId;
 
-    @Value(value = "${product-price}")
+    @Value(value = "${product.price}")
     private double productPrice;
 
-    @Value(value = "${market-topic-prefix}")
+    @Value(value = "${market.topic.prefix}")
     private String orderBookTopicPrefix;
 
     private ItemOrderBookResponse itemOrderBookResponse;
