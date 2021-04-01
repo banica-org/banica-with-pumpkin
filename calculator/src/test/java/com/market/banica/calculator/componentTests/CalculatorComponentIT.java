@@ -144,7 +144,7 @@ public class CalculatorComponentIT {
                 .build();
         Aurora.AuroraResponse auroraResponse = Aurora.AuroraResponse.newBuilder()
                 .setMessage(Any.pack(itemOrderBookResponse))
-                        .build();
+                .build();
 
         resources.register(testConfigurationIT.startInProcessService(
                 testConfigurationIT.getGrpcService(auroraResponse)), duration);
@@ -186,7 +186,7 @@ public class CalculatorComponentIT {
         InterestsResponse interestsResponse = InterestsResponse.newBuilder().build();
         Aurora.AuroraResponse auroraResponse = Aurora.AuroraResponse.newBuilder()
                 .setMessage(Any.pack(interestsResponse))
-                        .build();
+                .build();
 
         resources.register(testConfigurationIT.startInProcessService(testConfigurationIT.getGrpcService(auroraResponse)), duration);
 
@@ -231,7 +231,7 @@ public class CalculatorComponentIT {
         CancelSubscriptionResponse cancelSubscriptionResponse = CancelSubscriptionResponse.newBuilder().build();
         Aurora.AuroraResponse auroraResponse = Aurora.AuroraResponse.newBuilder()
                 .setMessage(Any.pack(cancelSubscriptionResponse))
-                        .build();
+                .build();
 
         AuroraServiceGrpc.AuroraServiceImplBase server = testConfigurationIT.getMockGrpcService(auroraResponse);
         resources.register(InProcessServerBuilder.forName(testConfigurationIT.getServerName()).directExecutor()
@@ -287,4 +287,5 @@ public class CalculatorComponentIT {
         product.setUnitOfMeasure(UnitOfMeasure.GRAM);
         product.setIngredients(new HashMap<>());
     }
+
 }

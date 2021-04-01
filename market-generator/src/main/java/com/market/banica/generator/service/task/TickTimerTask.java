@@ -29,7 +29,7 @@ public class TickTimerTask extends TimerTask {
         MarketTick marketTick = new MarketTick(good.getName(),
                 generateRandomQuantity(),
                 generateRandomPrice(),
-                new Date());
+                new Date().getTime());
 
         tickGenerator.getGeneratedTicks().add(marketTick);
 
