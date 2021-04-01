@@ -12,11 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 
 @Service
@@ -36,7 +32,7 @@ public class CalculatorServiceImpl implements CalculatorService {
         Map<String, ProductDto> productDtoMap = new HashMap<>();
 
         for (Product product : products) {
-            fillProductSpecificationMapWithData(clientId,productDtoMap,product,quantity);
+            fillProductSpecificationMapWithData(clientId, productDtoMap, product, quantity);
         }
 //        populateProductDtoMapWithData(clientId, products, productDtoMap,
 //                parentProduct, quantity);
@@ -72,9 +68,9 @@ public class CalculatorServiceImpl implements CalculatorService {
             BigDecimal productPrice = BigDecimal.ZERO;
             BigDecimal ingredientsPrice = BigDecimal.ZERO;
 
-            while (compositeProductsDtoVerifyParentMap.keySet().iterator().hasNext()) {
+            for (String s : compositeProductsDtoVerifyParentMap.keySet()) {
 
-                ProductDto productDto = compositeProductsDtoVerifyParentMap.values().iterator().next();
+                ProductDto productDto = compositeProductsDtoVerifyParentMap.get(s);
 
                 if (productDto.getIngredients().containsKey(tempProduct.getItemName())) {
 
