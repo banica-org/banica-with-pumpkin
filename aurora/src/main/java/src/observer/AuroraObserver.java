@@ -5,20 +5,20 @@ import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 public class AuroraObserver implements StreamObserver<Aurora.AuroraResponse> {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuroraObserver.class);
 
-    private final CountDownLatch latch;
+    AtomicInteger openStreams;
 
     private final Aurora.AuroraRequest request;
     private final StreamObserver<Aurora.AuroraResponse> forwardResponse;
 
-    public AuroraObserver(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> forwardResponse, CountDownLatch latch) {
+    public AuroraObserver(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> forwardResponse, AtomicInteger openStreams) {
         this.request = request;
-        this.latch = latch;
+        this.openStreams = openStreams;
         this.forwardResponse = forwardResponse;
     }
 
@@ -32,13 +32,18 @@ public class AuroraObserver implements StreamObserver<Aurora.AuroraResponse> {
     @Override
     public void onError(Throwable throwable) {
         LOGGER.warn("Unable to forward.");
-        LOGGER.error(throwable.toString());
-        latch.countDown();
+        LOGGER.error(throwable.getMessage());
+
+        if (openStreams.decrementAndGet() == 0) {
+            forwardResponse.onCompleted();
+        }
     }
 
     @Override
     public void onCompleted() {
         LOGGER.info("Completing stream request for client {}", request.getClientId());
-        latch.countDown();
+        if (openStreams.decrementAndGet() == 0) {
+            forwardResponse.onCompleted();
+        }
     }
 }
