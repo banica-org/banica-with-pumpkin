@@ -287,4 +287,5 @@ public class CalculatorComponentIT {
         product.setUnitOfMeasure(UnitOfMeasure.GRAM);
         product.setIngredients(new HashMap<>());
     }
+
 }

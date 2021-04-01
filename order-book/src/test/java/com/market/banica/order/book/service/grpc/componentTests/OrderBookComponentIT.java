@@ -221,13 +221,15 @@ class OrderBookComponentIT {
     }
 
     private Aurora.AuroraResponse generateAuroraResponse() {
-        Aurora.AuroraResponse auroraResponse = Aurora.AuroraResponse.newBuilder()
-                .setMessage(Any.pack(TickResponse.newBuilder().setGoodName(productName).build()))
+        Aurora.AuroraResponse auroraResponse = Aurora.AuroraResponse.newBuilder().
+                setMessage(Any.pack(TickResponse.newBuilder()
+                        .setGoodName(productName)
+                        .build()))
                 .build();
         return auroraResponse;
     }
-}
 
+}
 
 
 
