@@ -15,7 +15,7 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.concurrent.TimeUnit;
 
-@Component
+
 @ManagedResource
 public class PersistSchedulerImpl implements PersistScheduler {
 
@@ -26,7 +26,7 @@ public class PersistSchedulerImpl implements PersistScheduler {
     private final SnapshotPersistence snapshotPersistence;
     private final Map<String, Set<MarketTick>> newTicks;
 
-    @Autowired
+
     public PersistSchedulerImpl(SnapshotPersistence snapshotPersistence,
                                 Map<String, Set<MarketTick>> newTicks) {
         this.snapshotPersistence = snapshotPersistence;

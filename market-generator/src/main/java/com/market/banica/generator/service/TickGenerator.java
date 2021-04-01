@@ -1,6 +1,7 @@
-package com.market.banica.generator.service.tickgeneration;
+package com.market.banica.generator.service;
 
 import com.market.banica.generator.model.GoodSpecification;
+import com.market.banica.generator.service.task.TickTimerTask;
 
 import java.util.Map;
 import java.util.Timer;

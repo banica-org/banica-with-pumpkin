@@ -1,8 +1,9 @@
-package com.market.banica.generator.service.tickgeneration;
+package com.market.banica.generator.service.task;
 
 import com.market.banica.generator.model.GoodSpecification;
 import com.market.banica.generator.model.MarketTick;
 import com.market.banica.generator.service.MarketState;
+import com.market.banica.generator.service.TickGenerator;
 
 
 import java.math.BigDecimal;

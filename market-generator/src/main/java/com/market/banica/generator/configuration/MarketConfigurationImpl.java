@@ -3,7 +3,7 @@ package com.market.banica.generator.configuration;
 import com.market.banica.common.util.ApplicationDirectoryUtil;
 import com.market.banica.generator.exception.NotFoundException;
 import com.market.banica.generator.model.GoodSpecification;
-import com.market.banica.generator.service.tickgeneration.TickGenerator;
+import com.market.banica.generator.service.TickGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -4,7 +4,7 @@ import com.market.banica.generator.exception.NotFoundException;
 import com.market.banica.generator.model.GoodSpecification;
 import com.market.banica.generator.service.MarketStateImpl;
 import com.market.banica.generator.service.MarketSubscriptionManager;
-import com.market.banica.generator.service.tickgeneration.TickGeneratorImpl;
+import com.market.banica.generator.service.TickGeneratorImpl;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

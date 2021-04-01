@@ -1,9 +1,8 @@
-package com.market.banica.generator.service.tickgeneration;
+package com.market.banica.generator.service;
 
 import com.market.banica.generator.model.GoodSpecification;
 import com.market.banica.generator.model.MarketTick;
-import com.market.banica.generator.service.MarketState;
-import com.market.banica.generator.service.MarketStateImpl;
+import com.market.banica.generator.service.task.TickTimerTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
