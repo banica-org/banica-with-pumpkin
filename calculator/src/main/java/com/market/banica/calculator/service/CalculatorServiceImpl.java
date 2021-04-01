@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 
 @Service
@@ -25,18 +26,20 @@ public class CalculatorServiceImpl implements CalculatorService {
 
     private final AuroraClientSideService auroraService;
     private final ProductService productService;
+    private final TestData testData;
 
     @Override
     public List<ProductDto> getRecipe(String clientId, String itemName, int quantity) {
 
-        List<Product> products = productService.getProductAsListProduct(itemName);
+        Set<Product> products = productService.getProductAsListProduct(itemName);
 
         Map<String, ProductDto> productDtoMap = new HashMap<>();
 
-        Product parentProduct = getProduct(products, itemName);
-
-        populateProductDtoMapWithData(clientId, products, productDtoMap,
-                parentProduct, quantity);
+        for (Product product : products) {
+            fillProductSpecificationMapWithData(clientId,productDtoMap,product,quantity);
+        }
+//        populateProductDtoMapWithData(clientId, products, productDtoMap,
+//                parentProduct, quantity);
 
         List<ProductDto> result = new ArrayList<>();
 
@@ -69,7 +72,7 @@ public class CalculatorServiceImpl implements CalculatorService {
             BigDecimal productPrice = BigDecimal.ZERO;
             BigDecimal ingredientsPrice = BigDecimal.ZERO;
 
-            while (compositeProductsDtoMap.keySet().iterator().hasNext()) {
+            while (compositeProductsDtoVerifyParentMap.keySet().iterator().hasNext()) {
 
                 ProductDto productDto = compositeProductsDtoVerifyParentMap.values().iterator().next();
 
@@ -168,8 +171,7 @@ public class CalculatorServiceImpl implements CalculatorService {
 
     private void fillProductSpecificationMapWithData(String clientId, Map<String, ProductDto> productDtoMap, Product product, int quantity) {
 
-        ItemOrderBookResponse orderBookResponse = auroraService.getIngredient(product.getProductName(),
-                clientId, quantity);
+        ItemOrderBookResponse orderBookResponse = testData.getTestData().get(product.getProductName());
 
         String productName = orderBookResponse.getItemName();
 

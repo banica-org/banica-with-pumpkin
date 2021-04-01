@@ -12,13 +12,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -168,13 +169,13 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public List<Product> getProductAsListProduct(String productName) {
+    public Set<Product> getProductAsListProduct(String productName) {
         LOGGER.debug("In getProductAsListProduct method with parameters:productName {}"
                 , productName);
 
         Product product = getProductFromDatabase(productName);
 
-        List<Product> result = new ArrayList<>();
+        Set<Product> result = new HashSet<>();
 
         result.add(product);
 
@@ -208,7 +209,7 @@ public class ProductServiceImpl implements ProductService {
     private void writeProductToDatabase(String newProductName, Product newProduct) {
         LOGGER.debug("In writeProductToDatabase private method");
 
-        announceInterestToOrderBookProductBase(newProductName);
+//        announceInterestToOrderBookProductBase(newProductName);
 
         productBase.getDatabase().put(newProductName, newProduct);
 
@@ -313,7 +314,7 @@ public class ProductServiceImpl implements ProductService {
         return products.get(0).getProductName();
     }
 
-    private void addAllIngredientsFromProductInListAsProduct(List<Product> result, Product recipe) {
+    private void addAllIngredientsFromProductInListAsProduct(Set<Product> result, Product recipe) {
         LOGGER.debug("In addAllIngredientsFromProductInListAsProduct private method");
 
         Queue<Product> tempContainer = convertListOfProductNamesInQueueOfProducts(recipe);
@@ -330,10 +331,9 @@ public class ProductServiceImpl implements ProductService {
 
                 result.addAll(tempIngredientsQueue);
 
-            } else {
-
-                result.add(tempProduct);
             }
+
+            result.add(tempProduct);
         }
     }
 

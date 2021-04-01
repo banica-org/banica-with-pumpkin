@@ -20,6 +20,8 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
@@ -40,7 +42,7 @@ public class CalculatorControllerTest {
     CalculatorService service;
     @Autowired
     private MockMvc mockMvc;
-    private JacksonTester<ProductDto> jacksonResponseRecipe;
+    private JacksonTester<List<ProductDto>> jacksonResponseProductDtoList;
 
     @BeforeEach
     private void setUp() {
@@ -53,13 +55,15 @@ public class CalculatorControllerTest {
         String product = "baklava";
         int quantity = 100;
 
+        List<ProductDto> productDtoList = new ArrayList<>();
         ProductDto dummyRecipe = new ProductDto();
-        dummyRecipe.setIngredients(new ArrayList<>());
+        dummyRecipe.setIngredients(new HashMap<>());
         dummyRecipe.setItemName("baklava");
         dummyRecipe.setTotalPrice(BigDecimal.valueOf(10));
+        productDtoList.add(dummyRecipe);
 
 
-        given(service.getRecipe(clientId, product, 100)).willReturn(dummyRecipe);
+        given(service.getRecipe(clientId, product, 100)).willReturn(productDtoList);
 
 
         MockHttpServletResponse response = mockMvc.perform(MockMvcRequestBuilders.get
@@ -69,6 +73,6 @@ public class CalculatorControllerTest {
 
 
         assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
-        assertThat(response.getContentAsString()).isEqualTo(jacksonResponseRecipe.write(dummyRecipe).getJson());
+        assertThat(response.getContentAsString()).isEqualTo(jacksonResponseProductDtoList.write(productDtoList).getJson());
     }
 }

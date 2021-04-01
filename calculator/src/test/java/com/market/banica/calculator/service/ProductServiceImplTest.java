@@ -16,6 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -290,11 +291,11 @@ class ProductServiceImplTest {
         when(productBase.getDatabase()).thenReturn(demoDataBase);
 
         //Act
-        List<Product> products = productService.getProductAsListProduct(BANICA);
+        Set<Product> products = productService.getProductAsListProduct(BANICA);
 
         //Assert
-        assertEquals(products.get(0), banica);
-        assertEquals(products.get(1), pumpkin);
+        assertTrue(products.contains(banica));
+        assertTrue(products.contains(pumpkin));
 
     }
 
@@ -304,10 +305,10 @@ class ProductServiceImplTest {
         when(productBase.getDatabase()).thenReturn(demoDataBase);
 
         //Act
-        List<Product> products = productService.getProductAsListProduct(BANICA);
+        Set<Product> products = productService.getProductAsListProduct(BANICA);
 
         //Assert
-        assertEquals(products.get(0), banica);
+        assertTrue(products.contains(banica));
 
     }
 
