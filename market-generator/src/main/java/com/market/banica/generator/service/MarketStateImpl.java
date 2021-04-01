@@ -41,8 +41,6 @@ public class MarketStateImpl implements com.market.banica.generator.service.Mark
 
     private final MarketSubscriptionManager subscriptionManager;
 
-    private final static int DEFAULT_PERSISTENT_FREQUENCY = 60;
-
     @Autowired
     public MarketStateImpl(MarketSubscriptionManager subscriptionManager) throws IOException {
         this.marketState = snapshotPersistence.loadPersistedSnapshot();
