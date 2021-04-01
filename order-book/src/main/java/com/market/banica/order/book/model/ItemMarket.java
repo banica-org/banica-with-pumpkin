@@ -96,11 +96,7 @@ public class ItemMarket {
     public List<OrderBookLayer> getRequestedItem(String itemName, long quantity) {
         TreeSet<Item> items = this.allItems.get(itemName);
 
-        if (items == null) {
-            return Collections.emptyList();
-        }
-
-        if (productsQuantity.get(itemName) < quantity) {
+        if (items == null || productsQuantity.get(itemName) < quantity) {
             return Collections.emptyList();
         }
 
