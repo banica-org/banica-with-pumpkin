@@ -93,6 +93,9 @@ class OrderBookComponentIT {
     private OrderBookServiceGrpc.OrderBookServiceBlockingStub blockingStub;
     private AuroraServiceGrpc.AuroraServiceStub asynchronousStub;
 
+    private final static String MARKET_PREFIX = "market/";
+    private final static String DELIMITER = "/";
+
     @BeforeEach
     void setupChannel() {
         serverName = InProcessServerBuilder.generateName();
@@ -136,7 +139,6 @@ class OrderBookComponentIT {
                 .build().start());
 
         // Act and Assert
-//        assertThrows(StatusRuntimeException.class, () -> blockingStub.getOrderBookItemLayers(ItemOrderBookRequest.newBuilder().build()));
         assertThrows(StatusRuntimeException.class, () -> blockingStub.getOrderBookItemLayers(Aurora.AuroraRequest.newBuilder().build()));
     }
 
@@ -151,7 +153,7 @@ class OrderBookComponentIT {
                     @Override
                     public void announceItemInterest(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
                         try {
-                            auroraClient.startSubscription(request.getTopic().split("/")[1], request.getClientId());
+                            auroraClient.startSubscription(request.getTopic().split(DELIMITER)[1], request.getClientId());
                         } catch (TrackingException e) {
                             e.printStackTrace();
                         }
@@ -173,7 +175,7 @@ class OrderBookComponentIT {
         // Act
         Aurora.AuroraResponse response = blockingStub
                 .announceItemInterest(Aurora.AuroraRequest.newBuilder()
-                        .setTopic("market/" + productName).build());
+                        .setTopic(MARKET_PREFIX+ productName).build());
 
         // Assert
         verify(server).subscribe(requestCaptor.capture(), ArgumentMatchers.any());
@@ -192,7 +194,7 @@ class OrderBookComponentIT {
                     @Override
                     public void cancelItemSubscription(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
                         try {
-                            auroraClient.stopSubscription(request.getTopic().split("/")[1], request.getClientId());
+                            auroraClient.stopSubscription(request.getTopic().split(DELIMITER)[1], request.getClientId());
                         } catch (TrackingException e) {
                             e.printStackTrace();
                         }
@@ -205,7 +207,7 @@ class OrderBookComponentIT {
 
         // Act
         blockingStub.cancelItemSubscription(Aurora.AuroraRequest.newBuilder()
-                .setTopic("market/" + productName)
+                .setTopic(MARKET_PREFIX + productName)
                 .setClientId(clientId)
                 .build());
 
@@ -227,7 +229,7 @@ class OrderBookComponentIT {
     private Aurora.AuroraResponse generateItemOrderBookResponseFromRequest() {
         Aurora.AuroraResponse reply =
                 blockingStub.getOrderBookItemLayers(Aurora.AuroraRequest.newBuilder()
-                        .setTopic("market/" + productName)
+                        .setTopic(MARKET_PREFIX + productName)
                         .setClientId(clientId)
                         .build());
         return reply;

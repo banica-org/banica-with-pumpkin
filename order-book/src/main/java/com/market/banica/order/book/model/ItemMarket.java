@@ -25,8 +25,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 @Component
 public class ItemMarket {
 
-    private final Map<String, TreeSet<Item>> allItems;
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private final Map<String, TreeSet<Item>> allItems;
     private final Map<String, Long> productsQuantity;
 
     private static final Logger LOGGER = LogManager.getLogger(ItemMarket.class);
@@ -93,6 +93,7 @@ public class ItemMarket {
     }
 
     public List<OrderBookLayer> getRequestedItem(String itemName, long quantity) {
+        LOGGER.info("Getting requested item: {} with quantity: {}", itemName, quantity);
         TreeSet<Item> items = this.allItems.get(itemName);
 
         if (items == null || productsQuantity.get(itemName) < quantity) {
@@ -145,7 +146,7 @@ public class ItemMarket {
 
         TreeSet<Item> cheeseItems = new TreeSet<>();
         cheeseItems.add(new Item(2.6, 2, Origin.AMERICA));
-        cheeseItems.add(new Item(4.0, 2, Origin.ASIA));
+        cheeseItems.add(new Item(2.6, 2, Origin.AMERICA));
         cheeseItems.add(new Item(4.0, 5, Origin.EUROPE));
         cheeseItems.add(new Item(4.1, 2, Origin.ASIA));
         allItems.put("cheese", cheeseItems);

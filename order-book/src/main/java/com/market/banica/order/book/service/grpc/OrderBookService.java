@@ -1,7 +1,6 @@
 package com.market.banica.order.book.service.grpc;
 
 import com.aurora.Aurora;
-import com.aurora.AuroraServiceGrpc;
 import com.google.protobuf.Any;
 import com.market.banica.order.book.exception.TrackingException;
 import com.market.banica.order.book.model.ItemMarket;

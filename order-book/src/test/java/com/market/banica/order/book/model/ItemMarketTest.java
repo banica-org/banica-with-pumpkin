@@ -23,6 +23,7 @@ class ItemMarketTest {
     private static final String EGGS_ITEM_NAME = "eggs";
     private static final String RICE_ITEM_NAME = "rice";
     private static final String MEAT_ITEM_NAME = "meat";
+    private static final String CHEESE_ITEM_NAME = "cheese";
 
     private static final String ALL_ITEMS_FIELD = "allItems";
     private static final String PRODUCTS_QUANTITY_FIELD = "productsQuantity";
@@ -45,14 +46,14 @@ class ItemMarketTest {
     @Test
     public void updateItemUpdatesProductQuantityAndAllItemsMaps() {
         //Arrange
-        itemMarket.addTrackedItem("cheese");
-        TickResponse cheese = TickResponse.newBuilder().setGoodName("cheese").setQuantity(2).setPrice(2.6).setOrigin(Origin.ASIA).build();
+        itemMarket.addTrackedItem(CHEESE_ITEM_NAME);
+        TickResponse cheese = TickResponse.newBuilder().setGoodName(CHEESE_ITEM_NAME).setQuantity(2).setPrice(2.6).setOrigin(Origin.ASIA).build();
         Aurora.AuroraResponse build = Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(cheese)).build();
 
-        TickResponse cheese2 = TickResponse.newBuilder().setGoodName("cheese").setQuantity(2).setPrice(2.6).setOrigin(Origin.ASIA).build();
+        TickResponse cheese2 = TickResponse.newBuilder().setGoodName(CHEESE_ITEM_NAME).setQuantity(2).setPrice(2.6).setOrigin(Origin.ASIA).build();
         Aurora.AuroraResponse build2 = Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(cheese2)).build();
 
-        TickResponse cheese3 = TickResponse.newBuilder().setGoodName("cheese").setQuantity(2).setPrice(2.6).setOrigin(Origin.AMERICA).build();
+        TickResponse cheese3 = TickResponse.newBuilder().setGoodName(CHEESE_ITEM_NAME).setQuantity(2).setPrice(2.6).setOrigin(Origin.AMERICA).build();
         Aurora.AuroraResponse build3 = Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(cheese3)).build();
 
         //Act
@@ -61,9 +62,9 @@ class ItemMarketTest {
         itemMarket.updateItem(build3);
 
         //Assert
-        assertEquals(2, allItems.get("cheese").size());
+        assertEquals(2, allItems.get(CHEESE_ITEM_NAME).size());
 
-        assertEquals(6, productsQuantity.get("cheese"));
+        assertEquals(6, productsQuantity.get(CHEESE_ITEM_NAME));
         assertEquals(1, productsQuantity.size());
     }
     @Test
@@ -81,14 +82,14 @@ class ItemMarketTest {
     @Test
     public void getRequestedItemReturnsListOfLayersAndUpdatesProductQuantityAndAllItemsMaps() {
         //Arrange
-        itemMarket.addTrackedItem("cheese");
-        TickResponse cheese = TickResponse.newBuilder().setGoodName("cheese").setQuantity(2).setPrice(2.6).setOrigin(Origin.ASIA).build();
+        itemMarket.addTrackedItem(CHEESE_ITEM_NAME);
+        TickResponse cheese = TickResponse.newBuilder().setGoodName(CHEESE_ITEM_NAME).setQuantity(2).setPrice(2.6).setOrigin(Origin.ASIA).build();
         Aurora.AuroraResponse build = Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(cheese)).build();
 
-        TickResponse cheese2 = TickResponse.newBuilder().setGoodName("cheese").setQuantity(2).setPrice(2.6).setOrigin(Origin.ASIA).build();
+        TickResponse cheese2 = TickResponse.newBuilder().setGoodName(CHEESE_ITEM_NAME).setQuantity(2).setPrice(2.6).setOrigin(Origin.ASIA).build();
         Aurora.AuroraResponse build2 = Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(cheese2)).build();
 
-        TickResponse cheese3 = TickResponse.newBuilder().setGoodName("cheese").setQuantity(2).setPrice(2.6).setOrigin(Origin.AMERICA).build();
+        TickResponse cheese3 = TickResponse.newBuilder().setGoodName(CHEESE_ITEM_NAME).setQuantity(2).setPrice(2.6).setOrigin(Origin.AMERICA).build();
         Aurora.AuroraResponse build3 = Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(cheese3)).build();
 
         //Act
@@ -96,7 +97,7 @@ class ItemMarketTest {
         itemMarket.updateItem(build2);
         itemMarket.updateItem(build3);
 
-        List<OrderBookLayer> layers = itemMarket.getRequestedItem("cheese", 3);
+        List<OrderBookLayer> layers = itemMarket.getRequestedItem(CHEESE_ITEM_NAME, 3);
 
         //Assert
         assertEquals(2, layers.size());
