@@ -151,7 +151,7 @@ class OrderBookComponentIT {
                     @Override
                     public void announceItemInterest(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
                         try {
-                            auroraClient.startSubscription(request.getTopic().split("/")[1], request.getClientId(), marketName);
+                            auroraClient.startSubscription(request.getTopic().split("/")[1], request.getClientId());
                         } catch (TrackingException e) {
                             e.printStackTrace();
                         }
@@ -177,7 +177,7 @@ class OrderBookComponentIT {
 
         // Assert
         verify(server).subscribe(requestCaptor.capture(), ArgumentMatchers.any());
-        assertEquals(orderBookTopicPrefix + productName + "/" + marketName, requestCaptor.getValue().getTopic());
+        assertEquals(orderBookTopicPrefix + productName, requestCaptor.getValue().getTopic());
         assertTrue(response.isInitialized());
     }
 

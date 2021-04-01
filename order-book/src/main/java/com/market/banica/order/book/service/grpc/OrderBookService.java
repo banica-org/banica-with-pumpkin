@@ -1,6 +1,7 @@
 package com.market.banica.order.book.service.grpc;
 
 import com.aurora.Aurora;
+import com.aurora.AuroraServiceGrpc;
 import com.google.protobuf.Any;
 import com.market.banica.order.book.exception.TrackingException;
 import com.market.banica.order.book.model.ItemMarket;
@@ -41,7 +42,7 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
 
         List<OrderBookLayer> requestedItem = itemMarket.getRequestedItem(itemName, itemQuantity);
 
-        if (requestedItem.size()>0) {
+        if (requestedItem.size() > 0) {
             responseObserver.onNext(
                     Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(
                             ItemOrderBookResponse.newBuilder()
@@ -67,13 +68,9 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
     public void announceItemInterest(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
         String[] topicSplit = request.getTopic().split(REGEX);
         String itemName = topicSplit[1];
-        String marketName = "";
-        if (topicSplit.length == 3) {
-            marketName = topicSplit[2];
-        }
         try {
 
-            auroraClient.startSubscription(itemName, request.getClientId(), marketName);
+            auroraClient.startSubscription(itemName, request.getClientId());
             responseObserver.onNext(Aurora.AuroraResponse.newBuilder().setMessage(
                     Any.pack(InterestsResponse.newBuilder().build())).build());
             responseObserver.onCompleted();

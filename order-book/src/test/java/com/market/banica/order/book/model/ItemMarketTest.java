@@ -25,9 +25,11 @@ class ItemMarketTest {
     private static final String MEAT_ITEM_NAME = "meat";
 
     private static final String ALL_ITEMS_FIELD = "allItems";
+    private static final String PRODUCTS_QUANTITY_FIELD = "productsQuantity";
 
     private final ItemMarket itemMarket = new ItemMarket();
     private final Map<String, TreeSet<Item>> allItems = new ConcurrentHashMap<>();
+    private final Map<String, Long> productsQuantity = new ConcurrentHashMap<>();
 
     @BeforeEach
     public void setUp() {
@@ -37,32 +39,73 @@ class ItemMarketTest {
         allItems.put(RICE_ITEM_NAME, new TreeSet<>());
 
         ReflectionTestUtils.setField(itemMarket, ALL_ITEMS_FIELD, allItems);
+        ReflectionTestUtils.setField(itemMarket, PRODUCTS_QUANTITY_FIELD, productsQuantity);
     }
 
     @Test
-    public void testUpdateItem() {
+    public void updateItemUpdatesProductQuantityAndAllItemsMaps() {
+        //Arrange
         itemMarket.addTrackedItem("cheese");
         TickResponse cheese = TickResponse.newBuilder().setGoodName("cheese").setQuantity(2).setPrice(2.6).setOrigin(Origin.ASIA).build();
         Aurora.AuroraResponse build = Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(cheese)).build();
-        itemMarket.updateItem(build);
 
         TickResponse cheese2 = TickResponse.newBuilder().setGoodName("cheese").setQuantity(2).setPrice(2.6).setOrigin(Origin.ASIA).build();
         Aurora.AuroraResponse build2 = Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(cheese2)).build();
-        itemMarket.updateItem(build2);
 
         TickResponse cheese3 = TickResponse.newBuilder().setGoodName("cheese").setQuantity(2).setPrice(2.6).setOrigin(Origin.AMERICA).build();
         Aurora.AuroraResponse build3 = Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(cheese3)).build();
+
+        //Act
+        itemMarket.updateItem(build);
+        itemMarket.updateItem(build2);
         itemMarket.updateItem(build3);
 
-        List<OrderBookLayer> result = itemMarket.getRequestedItem("cheese", 5);
-        System.out.println();
+        //Assert
+        assertEquals(2, allItems.get("cheese").size());
 
-        TickResponse cheese4 = TickResponse.newBuilder().setGoodName("cheese").setQuantity(2).setPrice(2.6).setOrigin(Origin.AMERICA).build();
-        Aurora.AuroraResponse build4 = Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(cheese4)).build();
-        itemMarket.updateItem(build4);
+        assertEquals(6, productsQuantity.get("cheese"));
+        assertEquals(1, productsQuantity.size());
+    }
+    @Test
+    public void updateItemThrowsExceptionWhenPassingRequestOfDifferentType() {
+        //Arrange
+        itemMarket.addTrackedItem("cheese");
+        TickResponse cheese = TickResponse.newBuilder().setGoodName("cheese").setQuantity(2).setPrice(2.6).setOrigin(Origin.ASIA).build();
+        Aurora.AuroraResponse build = Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(cheese)).build();
 
-        List<OrderBookLayer> result2 = itemMarket.getRequestedItem("cheese", 3);
-        System.out.println();
+
+        //Act
+        itemMarket.updateItem(build);
+    }
+
+    @Test
+    public void getRequestedItemReturnsListOfLayersAndUpdatesProductQuantityAndAllItemsMaps() {
+        //Arrange
+        itemMarket.addTrackedItem("cheese");
+        TickResponse cheese = TickResponse.newBuilder().setGoodName("cheese").setQuantity(2).setPrice(2.6).setOrigin(Origin.ASIA).build();
+        Aurora.AuroraResponse build = Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(cheese)).build();
+
+        TickResponse cheese2 = TickResponse.newBuilder().setGoodName("cheese").setQuantity(2).setPrice(2.6).setOrigin(Origin.ASIA).build();
+        Aurora.AuroraResponse build2 = Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(cheese2)).build();
+
+        TickResponse cheese3 = TickResponse.newBuilder().setGoodName("cheese").setQuantity(2).setPrice(2.6).setOrigin(Origin.AMERICA).build();
+        Aurora.AuroraResponse build3 = Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(cheese3)).build();
+
+        //Act
+        itemMarket.updateItem(build);
+        itemMarket.updateItem(build2);
+        itemMarket.updateItem(build3);
+
+        List<OrderBookLayer> layers = itemMarket.getRequestedItem("cheese", 3);
+
+        //Assert
+        assertEquals(2, layers.size());
+
+        assertEquals(2, layers.get(0).getQuantity());
+        assertEquals(Origin.AMERICA, layers.get(0).getOrigin());
+
+        assertEquals(1, layers.get(1).getQuantity());
+        assertEquals(Origin.ASIA, layers.get(1).getOrigin());
     }
 
     @Test

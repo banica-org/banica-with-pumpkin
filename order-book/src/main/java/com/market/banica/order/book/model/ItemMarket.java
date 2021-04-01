@@ -35,7 +35,7 @@ public class ItemMarket {
     public ItemMarket() {
         allItems = new ConcurrentHashMap<>();
         productsQuantity = new ConcurrentHashMap<>();
-//        addDummyData();
+        addDummyData();
     }
 
     public Optional<Set<Item>> getItemSetByName(String itemName) {
@@ -69,8 +69,7 @@ public class ItemMarket {
             item.setQuantity(tickResponse.getQuantity());
             item.setOrigin(tickResponse.getOrigin());
 
-            productsQuantity.putIfAbsent(tickResponse.getGoodName(), 0L);
-            productsQuantity.put(tickResponse.getGoodName(), productsQuantity.get(tickResponse.getGoodName()) + tickResponse.getQuantity());
+            productsQuantity.merge(tickResponse.getGoodName(), tickResponse.getQuantity(), Long::sum);
 
             Set<Item> itemSet = allItems.get(tickResponse.getGoodName());
             if (itemSet != null) {
@@ -146,10 +145,14 @@ public class ItemMarket {
 
         TreeSet<Item> cheeseItems = new TreeSet<>();
         cheeseItems.add(new Item(2.6, 2, Origin.AMERICA));
-//        cheeseItems.add(new Item(4.0, 2, Origin.ASIA));
-//        cheeseItems.add(new Item(4.0, 5, Origin.EUROPE));
-//        cheeseItems.add(new Item(4.1, 2, Origin.ASIA));
+        cheeseItems.add(new Item(4.0, 2, Origin.ASIA));
+        cheeseItems.add(new Item(4.0, 5, Origin.EUROPE));
+        cheeseItems.add(new Item(4.1, 2, Origin.ASIA));
         allItems.put("cheese", cheeseItems);
+        for (Item cheeseItem : cheeseItems) {
+            productsQuantity.merge("cheese", cheeseItem.getQuantity(), Long::sum);
+        }
+
 
         TreeSet<Item> cocoaItems = new TreeSet<>();
 
@@ -157,7 +160,9 @@ public class ItemMarket {
         cocoaItems.add(new Item(1.5, 4, Origin.AMERICA));
         cocoaItems.add(new Item(1.7, 1, Origin.EUROPE));
         allItems.put("cocoa", cocoaItems);
-
+        for (Item cocoaItem : cocoaItems) {
+            productsQuantity.merge("cocoa", cocoaItem.getQuantity(), Long::sum);
+        }
     }
 
 }

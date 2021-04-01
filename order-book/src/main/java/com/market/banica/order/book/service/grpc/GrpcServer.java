@@ -1,5 +1,6 @@
 package com.market.banica.order.book.service.grpc;
 
+import com.market.banica.order.book.service.AuroraRequestHandler;
 import io.grpc.Server;
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
 import org.slf4j.Logger;
@@ -28,7 +29,7 @@ public class GrpcServer {
     private GrpcServer(
             @Value("${application.executor.pool.size}") final int applicationExecutorPoolSize,
             @Value("${orderbook.server.port}") final int port,
-            final OrderBookService orderBookService) {
+            final OrderBookService orderBookService, final AuroraRequestHandler auroraRequestHandler) {
 
         applicationExecutor = Executors.newFixedThreadPool(applicationExecutorPoolSize);
 
@@ -37,6 +38,7 @@ public class GrpcServer {
                 .keepAliveTime(1, TimeUnit.MINUTES)
                 .permitKeepAliveTime(1, TimeUnit.MINUTES)
                 .addService(orderBookService)
+                .addService(auroraRequestHandler)
                 .build();
 
     }

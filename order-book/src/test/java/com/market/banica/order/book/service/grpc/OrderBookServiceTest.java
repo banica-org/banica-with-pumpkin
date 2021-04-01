@@ -135,7 +135,7 @@ public class OrderBookServiceTest {
     @Test(expected = StatusRuntimeException.class)
     public void announceItemInterestThrowsStatusRuntimeExceptionWhenAuroraClientThrowsTrackingException() throws TrackingException {
         //Arrange
-        doThrow(new TrackingException(EXCEPTION_MESSAGE)).when(auroraClient).startSubscription(any(), any(), any());
+        doThrow(new TrackingException(EXCEPTION_MESSAGE)).when(auroraClient).startSubscription(any(), any());
 
         //Act
         blockingStub.announceItemInterest(AURORA_ANNOUNCE_REQUEST);

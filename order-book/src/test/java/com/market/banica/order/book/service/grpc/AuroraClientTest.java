@@ -64,9 +64,9 @@ public class AuroraClientTest {
     @Test
     public void startSubscriptionAddsItemsInAllItemsMapAndCancellableStub() throws TrackingException {
         //Act
-        this.auroraClient.startSubscription(EGGS_ITEM_NAME, CLIENT, EUROPE_MARKET_NAME);
-        this.auroraClient.startSubscription(RICE_ITEM_NAME, CLIENT, EUROPE_MARKET_NAME);
-        this.auroraClient.startSubscription(MEAT_ITEM_NAME, CLIENT, EUROPE_MARKET_NAME);
+        this.auroraClient.startSubscription(EGGS_ITEM_NAME, CLIENT);
+        this.auroraClient.startSubscription(RICE_ITEM_NAME, CLIENT);
+        this.auroraClient.startSubscription(MEAT_ITEM_NAME, CLIENT);
 
         //Assert
         assertEquals(3, this.cancellableStubs.size());
@@ -80,7 +80,7 @@ public class AuroraClientTest {
         this.cancellableStubs.put(MEAT_ITEM_NAME, Context.current().withCancellation());
 
         //Act
-        this.auroraClient.startSubscription(MEAT_ITEM_NAME, CLIENT, EUROPE_MARKET_NAME);
+        this.auroraClient.startSubscription(MEAT_ITEM_NAME, CLIENT);
     }
 
     @Test

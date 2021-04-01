@@ -25,11 +25,11 @@ import java.util.concurrent.TimeUnit;
 @Service
 @Getter
 public class AuroraClient {
-
-
     private final ItemMarket itemMarket;
     private final ManagedChannel managedChannel;
     private final Map<String, Context.CancellableContext> cancellableStubs;
+
+    private static final String MARKET_PREFIX = "market/";
     private static final Logger LOGGER = LogManager.getLogger(AuroraClient.class);
 
     @Autowired
@@ -48,14 +48,14 @@ public class AuroraClient {
 
     }
 
-    public void startSubscription(String requestedItem, String clientId, String marketName) throws TrackingException {
+    public void startSubscription(String requestedItem, String clientId) throws TrackingException {
 
         if (cancellableStubs.containsKey(requestedItem)) {
             throw new TrackingException("Item is already being tracked!");
         }
 
         final Aurora.AuroraRequest request = Aurora.AuroraRequest.newBuilder()
-                .setTopic("market/" + requestedItem + "/" + marketName)
+                .setTopic(MARKET_PREFIX + requestedItem)
                 .setClientId(clientId)
                 .build();
 
