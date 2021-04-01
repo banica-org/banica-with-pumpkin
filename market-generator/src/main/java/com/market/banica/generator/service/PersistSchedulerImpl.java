@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 
 @Component
 @ManagedResource
-public class PersistSchedulerImpl {
+public class PersistSchedulerImpl implements PersistScheduler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PersistSchedulerImpl.class);
     private int frequencySchedule;
@@ -33,7 +33,7 @@ public class PersistSchedulerImpl {
         this.newTicks = newTicks;
     }
 
-
+    @Override
     @ManagedOperation
     public void setFrequency(int frequency) {
         if (this.frequencySchedule != frequency) {
@@ -62,6 +62,5 @@ public class PersistSchedulerImpl {
                 frequencySchedule));
 
     }
-
 
 }
