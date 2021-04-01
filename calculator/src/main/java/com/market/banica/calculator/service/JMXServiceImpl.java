@@ -75,12 +75,12 @@ public class JMXServiceImpl implements JMXServiceMBean {
 
     @Override
     @ManagedOperation
-    public int getProductQuantity(String parentProductName, String productName) {
+    public long getProductQuantity(String parentProductName, String productName) {
         LOGGER.debug("In getProductQuantity method with parameters: parentProductName {} and productName {}"
                 , parentProductName, productName);
         LOGGER.info("GetProductQuantity called from JMX server");
 
-        int result = productService.getProductQuantity(parentProductName, productName);
+        long result = productService.getProductQuantity(parentProductName, productName);
 
         LOGGER.debug("Quantity checked from JMX server for product {} with parent product {}", parentProductName, productName);
         return result;

@@ -67,7 +67,7 @@ public class ProductServiceImpl implements ProductService {
 
         newProduct.setUnitOfMeasure(UnitOfMeasure.valueOf(unitOfMeasure.toUpperCase(Locale.ROOT)));
 
-        Map<String, Integer> ingredients = new HashMap<>();
+        Map<String, Long> ingredients = new HashMap<>();
 
         if (!ingredientsMap.isEmpty()) {
 
@@ -80,7 +80,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public void addIngredient(String parentProductName, String productName, int quantity) {
+    public void addIngredient(String parentProductName, String productName, long quantity) {
         LOGGER.debug("In addIngredient method with parameters: parentProductName {},productName {} and quantity {}" +
                 parentProductName, productName, quantity);
 
@@ -94,7 +94,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public void setProductQuantity(String parentProductName, String productName, int newQuantity) {
+    public void setProductQuantity(String parentProductName, String productName, long newQuantity) {
         LOGGER.debug("In setProductQuantity method with parameters: parentProductName {},productName {}" +
                 " and newQuantity {}", parentProductName, productName, newQuantity);
 
@@ -108,7 +108,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public int getProductQuantity(String parentProductName, String productName) {
+    public long getProductQuantity(String parentProductName, String productName) {
         LOGGER.debug("In getProductQuantity method with parameters: parentProductName {} and productName {}"
                 , parentProductName, productName);
 
@@ -228,7 +228,9 @@ public class ProductServiceImpl implements ProductService {
 
         for (String productName : productsNames) {
 
-            validateProductExists(productName); } }
+            validateProductExists(productName);
+        }
+    }
 
     private void validateProductExists(String productName) {
         LOGGER.debug("In validateProductExists private method");
@@ -246,26 +248,26 @@ public class ProductServiceImpl implements ProductService {
         return productBase.getDatabase().containsKey(productName);
     }
 
-    private Map<String, Integer> setCompositeProductIngredients(String ingredientsMap) {
+    private Map<String, Long> setCompositeProductIngredients(String ingredientsMap) {
         LOGGER.debug("In setCompositeProductIngredients private method");
 
-        Map<String, Integer> ingredients = convertStringOfIngredientsToMap(ingredientsMap);
+        Map<String, Long> ingredients = convertStringOfIngredientsToMap(ingredientsMap);
 
         validateProductsOfListExists(ingredients.keySet());
 
         return ingredients;
     }
 
-    private Map<String, Integer> convertStringOfIngredientsToMap(String ingredientsMap) {
+    private Map<String, Long> convertStringOfIngredientsToMap(String ingredientsMap) {
         LOGGER.debug("In convertStringOfIngredientsToMap private method");
 
-        Map<String, Integer> ingredients = new HashMap<>();
+        Map<String, Long> ingredients = new HashMap<>();
         String[] ingredientsAsArray = ingredientsMap.split(REGEX_DELIMITER_NEW_PRODUCT_INGREDIENTS);
 
         for (String s : ingredientsAsArray) {
 
             String[] mapEntry = s.split(REGEX_DELIMITER_NEW_PRODUCT_ENTRY_PAIRS);
-            int quantity = getValueAsInt(mapEntry[1]);
+            long quantity = getValueAsInt(mapEntry[1]);
             ingredients.put(mapEntry[0], quantity);
         }
 

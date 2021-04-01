@@ -1,5 +1,6 @@
 package com.market.banica.calculator.controller;
 
+import com.market.banica.calculator.dto.ProductDto;
 import com.market.banica.calculator.dto.RecipeDTO;
 import com.market.banica.calculator.service.contract.CalculatorService;
 import lombok.RequiredArgsConstructor;
@@ -28,15 +29,15 @@ public class CalculatorController {
 
 
     @GetMapping("/{clientId}/{itemName}/{quantity}")
-    public ResponseEntity<RecipeDTO> getRecipe(@PathVariable("clientId") @NotBlank String clientId,
-                                               @PathVariable("itemName") @NotBlank String itemName,
-                                               @PathVariable("quantity") @Min(1) int quantity) {
+    public ResponseEntity<ProductDto> getRecipe(@PathVariable("clientId") @NotBlank String clientId,
+                                                @PathVariable("itemName") @NotBlank String itemName,
+                                                @PathVariable("quantity") @Min(1) int quantity) {
 
         //Here service should be called
         //replace new RecipeDTO with service call when service is completed
-        RecipeDTO recipeDTO = service.getRecipe(clientId,itemName, quantity);
+        ProductDto productDto = service.getRecipe(clientId,itemName, quantity);
 
 
-        return ResponseEntity.ok().body(recipeDTO);
+        return ResponseEntity.ok().body(productDto);
     }
 }

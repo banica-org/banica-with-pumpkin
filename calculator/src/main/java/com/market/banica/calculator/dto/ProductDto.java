@@ -5,10 +5,9 @@ import lombok.Data;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 @Data
-public class RecipeBase {
+public class ProductDto {
 
     private String itemName;
 
@@ -16,5 +15,5 @@ public class RecipeBase {
 
     private List<ProductSpecification> productSpecifications = new ArrayList<>();
 
-    private  Set<RecipeBase> ingredients;
+    private  List<ProductDto> ingredients =  new ArrayList<>();
 }

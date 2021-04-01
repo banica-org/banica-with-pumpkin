@@ -21,7 +21,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class ProductServiceImplTest {
     public static final String INGREDIENTS_MAP = "pumpkin:2";
-    public static final Integer QUANTITY = 2;
+    public static final long QUANTITY = 2;
     private static final String BANICA = "banica";
     private static final String PUMPKIN = "pumpkin";
     private Product banica;
@@ -192,7 +192,7 @@ class ProductServiceImplTest {
         when(productBase.getDatabase()).thenReturn(demoDataBase);
 
         //Act
-        int ingredientQuantity = productService.getProductQuantity(BANICA, PUMPKIN);
+        long ingredientQuantity = productService.getProductQuantity(BANICA, PUMPKIN);
 
         assertEquals(ingredientQuantity, QUANTITY);
     }
@@ -313,7 +313,7 @@ class ProductServiceImplTest {
 
     private void setBanicaIngredients() {
         demoDataBase.put(PUMPKIN, pumpkin);
-        Map<String, Integer> ingredients = new ConcurrentHashMap<>();
+        Map<String, Long> ingredients = new ConcurrentHashMap<>();
         ingredients.put(PUMPKIN, QUANTITY);
         banica.setIngredients(ingredients);
     }
