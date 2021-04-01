@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.Any;
 import com.market.banica.calculator.componentTests.configuration.TestConfigurationIT;
 import com.market.banica.calculator.data.contract.ProductBase;
-import com.market.banica.calculator.dto.RecipeDTO;
+import com.market.banica.calculator.dto.ProductDto;
 import com.market.banica.calculator.enums.UnitOfMeasure;
 import com.market.banica.calculator.model.Product;
 import com.market.banica.calculator.service.contract.JMXServiceMBean;
@@ -105,7 +105,7 @@ public class CalculatorComponentIT {
 
     private AuroraServiceGrpc.AuroraServiceBlockingStub blockingStub;
 
-    private JacksonTester<RecipeDTO> jsonResponseRecipeDto;
+    private JacksonTester<ProductDto> jsonResponseProductDto;
     private JacksonTester<List<Product>> jsonRequestProductList;
     private JacksonTester<Product> jsonRequestProduct;
 
@@ -133,7 +133,7 @@ public class CalculatorComponentIT {
     @Test
     public void getRecipeShouldReturnRecipeDtoWhenThereIsResponse() throws IOException {
         //given
-        RecipeDTO response = createRecipeDTO();
+        ProductDto response = createRecipeDTO();
         productBase.getDatabase().put(productName, product);
 
         ItemOrderBookResponse itemOrderBookResponse = ItemOrderBookResponse.newBuilder()
@@ -157,7 +157,7 @@ public class CalculatorComponentIT {
                 .then()
                 .assertThat()
                 .statusCode(HttpStatus.OK.value())
-                .body(is(jsonResponseRecipeDto.write(response).getJson()));
+                .body(is(jsonResponseProductDto.write(response).getJson()));
     }
 
     @Test
@@ -274,8 +274,8 @@ public class CalculatorComponentIT {
     }
 
     @NotNull
-    private RecipeDTO createRecipeDTO() {
-        RecipeDTO response = new RecipeDTO();
+    private ProductDto createRecipeDTO() {
+        ProductDto response = new ProductDto();
         response.setItemName(productName);
         response.setTotalPrice(BigDecimal.valueOf(price));
         return response;
