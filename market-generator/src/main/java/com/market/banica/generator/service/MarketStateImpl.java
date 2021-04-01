@@ -6,8 +6,10 @@ import com.market.banica.generator.util.SnapshotPersistence;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.Collections;
@@ -39,11 +41,15 @@ public class MarketStateImpl implements com.market.banica.generator.service.Mark
 
     private final MarketSubscriptionManager subscriptionManager;
 
+    private final static int DEFAULT_PERSISTENT_FREQUENCY = 60;
+
     @Autowired
     public MarketStateImpl(MarketSubscriptionManager subscriptionManager) throws IOException {
         this.marketState = snapshotPersistence.loadPersistedSnapshot();
         this.executorService = Executors.newSingleThreadExecutor();
         this.subscriptionManager = subscriptionManager;
+        PersistScheduler persistScheduler = new PersistSchedulerImpl(snapshotPersistence, marketState);
+        persistScheduler.setFrequency(DEFAULT_PERSISTENT_FREQUENCY);
     }
 
     @Override
