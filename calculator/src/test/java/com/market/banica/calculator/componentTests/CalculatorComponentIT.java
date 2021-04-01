@@ -5,6 +5,7 @@ import com.asarkar.grpc.test.Resources;
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.protobuf.Any;
 import com.market.banica.calculator.componentTests.configuration.TestConfigurationIT;
 import com.market.banica.calculator.data.contract.ProductBase;
 import com.market.banica.calculator.dto.RecipeDTO;
@@ -54,236 +55,237 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 
-//@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-//@ExtendWith({GrpcCleanupExtension.class})
-//@ActiveProfiles("testIT")
-//@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ExtendWith({GrpcCleanupExtension.class})
+@ActiveProfiles("testIT")
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class CalculatorComponentIT {
 
-//    @LocalServerPort
-//    private int port;
-//
-//    @Autowired
-//    private JMXServiceMBean jmxService;
-//
-//    @Autowired
-//    private ProductBase productBase;
-//
-//    @Autowired
-//    private TestConfigurationIT testConfigurationIT;
-//
-//    @SpyBean
-//    @Autowired
-//    private AuroraClientSideService auroraClientSideService;
-//
-//    @Value(value = "${client.id}")
-//    private String clientId;
-//
-//    @Value(value = "${product.name}")
-//    private String productName;
-//
-//    @Value(value = "${product.quantity}")
-//    private int productQuantity;
-//
-//    @Value(value = "${product.price}")
-//    private double price;
-//
-//    @Value(value = "${resource.timeout}")
-//    private int timeout;
-//
-//    @Value(value = "${order.book.topic.prefix}")
-//    private String orderBookTopicPrefix;
-//
-//    @Value(value = "${database.backup.url}")
-//    private String databaseBackupUrl;
-//
-//    private Product product;
-//
-//    private Resources resources;
-//    private Duration duration;
-//
-//    private AuroraServiceGrpc.AuroraServiceBlockingStub blockingStub;
-//
-//    private JacksonTester<RecipeDTO> jsonResponseRecipeDto;
-//    private JacksonTester<List<Product>> jsonRequestProductList;
-//    private JacksonTester<Product> jsonRequestProduct;
-//
-//    private String calculatorControllerGetRecipeUrl;
-//    private String productControllerCreateProductUrl;
-//
-//    @BeforeEach
-//    public void SetUp() {
-//        JacksonTester.initFields(this, new ObjectMapper());
-//        RestAssured.port = port;
-//
-//        calculatorControllerGetRecipeUrl =
-//                "calculator/" + clientId + "/" + productName + "/" + productQuantity;
-//        productControllerCreateProductUrl = "product";
-//
-//        createProduct();
-//
-//        duration = Duration.of(timeout, ChronoUnit.MILLIS);
-//
-//        resources.register(testConfigurationIT.getChannel(), duration);
-//
-//        blockingStub = testConfigurationIT.getBlockingStub();
-//    }
-//
-//    @Test
-//    public void getRecipeShouldReturnRecipeDtoWhenThereIsResponse() throws IOException {
-//        //given
-//        RecipeDTO response = createRecipeDTO();
-//        productBase.getDatabase().put(productName, product);
-//
-//        ItemOrderBookResponse itemOrderBookResponse = ItemOrderBookResponse.newBuilder()
-//                .setItemName(productName)
-//                .addOrderbookLayers(0, OrderBookLayer.newBuilder()
-//                        .setPrice(price)
-//                        .build())
-//                .build();
-//        Aurora.AuroraResponse auroraResponse = Aurora.AuroraResponse.newBuilder()
-//                .setItemOrderBookResponse(itemOrderBookResponse).
-//                        build();
-//
-//        resources.register(testConfigurationIT.startInProcessService(
-//                testConfigurationIT.getGrpcService(auroraResponse)), duration);
-//
-//        doReturn(blockingStub).when(auroraClientSideService).getBlockingStub();
-//
-//        //when & then
-//        when()
-//                .get(calculatorControllerGetRecipeUrl)
-//                .then()
-//                .assertThat()
-//                .statusCode(HttpStatus.OK.value())
-//                .body(is(jsonResponseRecipeDto.write(response).getJson()));
-//    }
-//
-//    @Test
-//    public void getRecipeShouldReturnErrorWhenThereIsNoResponse() throws IOException {
-//        //given
-//        productBase.getDatabase().put(productName, product);
-//
-//        resources.register(testConfigurationIT.startInProcessService(
-//                testConfigurationIT.getEmptyGrpcService()), duration);
-//
-//        doReturn(blockingStub).when(auroraClientSideService).getBlockingStub();
-//
-//        //when & then
-//        when()
-//                .get(calculatorControllerGetRecipeUrl)
-//                .then()
-//                .assertThat()
-//                .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
-//    }
-//
-//    @Test
-//    public void createProductShouldReturnProductWhenThereIsResponse() throws IOException {
-//        //given
-//        List<Product> products = Collections.singletonList(product);
-//
-//        InterestsResponse interestsResponse = InterestsResponse.newBuilder().build();
-//        Aurora.AuroraResponse auroraResponse = Aurora.AuroraResponse.newBuilder()
-//                .setInterestsResponse(interestsResponse).
-//                        build();
-//
-//        resources.register(testConfigurationIT.startInProcessService(testConfigurationIT.getGrpcService(auroraResponse)), duration);
-//
-//        doReturn(blockingStub).when(auroraClientSideService).getBlockingStub();
-//
-//        //when & then
-//        given()
-//                .contentType(ContentType.JSON)
-//                .body(products)
-//                .post(productControllerCreateProductUrl)
-//                .then()
-//                .assertThat()
-//                .statusCode(HttpStatus.OK.value())
-//                .body(is(jsonRequestProduct.write(product).getJson()));
-//    }
-//
-//    @Test
-//    public void createProductShouldReturnErrorWhenThereIsNoResponse() throws IOException {
-//        //given
-//        List<Product> products = Collections.singletonList(product);
-//
-//        resources.register(testConfigurationIT.startInProcessService(testConfigurationIT.getEmptyGrpcService()), duration);
-//
-//        doReturn(blockingStub).when(auroraClientSideService).getBlockingStub();
-//
-//        //when & then
-//        given()
-//                .contentType(ContentType.JSON)
-//                .body(products)
-//                .post(productControllerCreateProductUrl)
-//                .then()
-//                .assertThat()
-//                .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
-//    }
-//
-//    @Test
-//    public void deleteProductShouldSendRequestWithProductNameWhenThereIsService() throws IOException {
-//        //given
-//        ArgumentCaptor<Aurora.AuroraRequest> requestCaptor = ArgumentCaptor.forClass(Aurora.AuroraRequest.class);
-//        productBase.getDatabase().put(productName, product);
-//
-//        CancelSubscriptionResponse cancelSubscriptionResponse = CancelSubscriptionResponse.newBuilder().build();
-//        Aurora.AuroraResponse auroraResponse = Aurora.AuroraResponse.newBuilder()
-//                .setCancelSubscriptionResponse(cancelSubscriptionResponse).
-//                        build();
-//
-//        AuroraServiceGrpc.AuroraServiceImplBase server = testConfigurationIT.getMockGrpcService(auroraResponse);
-//        resources.register(InProcessServerBuilder.forName(testConfigurationIT.getServerName()).directExecutor()
-//                .addService(server).build().start(), duration);
-//
-//        doReturn(blockingStub).when(auroraClientSideService).getBlockingStub();
-//
-//        //when
-//        jmxService.deleteProductFromDatabase(productName);
-//
-//        //then
-//        verify(server)
-//                .request(requestCaptor.capture(), ArgumentMatchers.any());
-//        assertEquals(orderBookTopicPrefix + productName, requestCaptor.getValue().getTopic());
-//    }
-//
-//    @Test
-//    public void deleteProductShouldReturnErrorWhenThereIsNoService() throws IOException {
-//        //given
-//        productBase.getDatabase().put(productName, product);
-//
-//        resources.register(testConfigurationIT.startInProcessService(testConfigurationIT.getEmptyGrpcService()), duration);
-//
-//        doReturn(blockingStub).when(auroraClientSideService).getBlockingStub();
-//
-//        //when & then
-//        assertThrows(StatusRuntimeException.class, () -> jmxService.deleteProductFromDatabase(productName));
-//    }
-//
-//    @AfterEach
-//    public void cleanUp() {
-//
-//        productBase.getDatabase().clear();
-//
-//        File data = new File(databaseBackupUrl);
-//
-//        if (data.length() > 0) {
-//            data.delete();
-//        }
-//    }
-//
-//    @NotNull
-//    private RecipeDTO createRecipeDTO() {
-//        RecipeDTO response = new RecipeDTO();
-//        response.setItemName(productName);
-//        response.setTotalPrice(BigDecimal.valueOf(price));
-//        return response;
-//    }
-//
-//    private void createProduct() {
-//        product = new Product();
-//        product.setProductName(productName);
-//        product.setUnitOfMeasure(UnitOfMeasure.GRAM);
-//        product.setIngredients(new HashMap<>());
-//    }
+    @LocalServerPort
+    private int port;
+
+    @Autowired
+    private JMXServiceMBean jmxService;
+
+    @Autowired
+    private ProductBase productBase;
+
+    @Autowired
+    private TestConfigurationIT testConfigurationIT;
+
+    @SpyBean
+    @Autowired
+    private AuroraClientSideService auroraClientSideService;
+
+    @Value(value = "${client.id}")
+    private String clientId;
+
+    @Value(value = "${product.name}")
+    private String productName;
+
+    @Value(value = "${product.quantity}")
+    private int productQuantity;
+
+    @Value(value = "${product.price}")
+    private double price;
+
+    @Value(value = "${resource.timeout}")
+    private int timeout;
+
+    @Value(value = "${order.book.topic.prefix}")
+    private String orderBookTopicPrefix;
+
+    @Value(value = "${database.backup.url}")
+    private String databaseBackupUrl;
+
+    private Product product;
+
+    private Resources resources;
+    private Duration duration;
+
+    private AuroraServiceGrpc.AuroraServiceBlockingStub blockingStub;
+
+    private JacksonTester<RecipeDTO> jsonResponseRecipeDto;
+    private JacksonTester<List<Product>> jsonRequestProductList;
+    private JacksonTester<Product> jsonRequestProduct;
+
+    private String calculatorControllerGetRecipeUrl;
+    private String productControllerCreateProductUrl;
+
+    @BeforeEach
+    public void SetUp() {
+        JacksonTester.initFields(this, new ObjectMapper());
+        RestAssured.port = port;
+
+        calculatorControllerGetRecipeUrl =
+                "calculator/" + clientId + "/" + productName + "/" + productQuantity;
+        productControllerCreateProductUrl = "product";
+
+        createProduct();
+
+        duration = Duration.of(timeout, ChronoUnit.MILLIS);
+
+        resources.register(testConfigurationIT.getChannel(), duration);
+
+        blockingStub = testConfigurationIT.getBlockingStub();
+    }
+
+    @Test
+    public void getRecipeShouldReturnRecipeDtoWhenThereIsResponse() throws IOException {
+        //given
+        RecipeDTO response = createRecipeDTO();
+        productBase.getDatabase().put(productName, product);
+
+        ItemOrderBookResponse itemOrderBookResponse = ItemOrderBookResponse.newBuilder()
+                .setItemName(productName)
+                .addOrderbookLayers(0, OrderBookLayer.newBuilder()
+                        .setPrice(price)
+                        .build())
+                .build();
+        Aurora.AuroraResponse auroraResponse = Aurora.AuroraResponse.newBuilder()
+                .setMessage(Any.pack(itemOrderBookResponse))
+                .build();
+
+        resources.register(testConfigurationIT.startInProcessService(
+                testConfigurationIT.getGrpcService(auroraResponse)), duration);
+
+        doReturn(blockingStub).when(auroraClientSideService).getBlockingStub();
+
+        //when & then
+        when()
+                .get(calculatorControllerGetRecipeUrl)
+                .then()
+                .assertThat()
+                .statusCode(HttpStatus.OK.value())
+                .body(is(jsonResponseRecipeDto.write(response).getJson()));
+    }
+
+    @Test
+    public void getRecipeShouldReturnErrorWhenThereIsNoResponse() throws IOException {
+        //given
+        productBase.getDatabase().put(productName, product);
+
+        resources.register(testConfigurationIT.startInProcessService(
+                testConfigurationIT.getEmptyGrpcService()), duration);
+
+        doReturn(blockingStub).when(auroraClientSideService).getBlockingStub();
+
+        //when & then
+        when()
+                .get(calculatorControllerGetRecipeUrl)
+                .then()
+                .assertThat()
+                .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
+    }
+
+    @Test
+    public void createProductShouldReturnProductWhenThereIsResponse() throws IOException {
+        //given
+        List<Product> products = Collections.singletonList(product);
+
+        InterestsResponse interestsResponse = InterestsResponse.newBuilder().build();
+        Aurora.AuroraResponse auroraResponse = Aurora.AuroraResponse.newBuilder()
+                .setMessage(Any.pack(interestsResponse))
+                .build();
+
+        resources.register(testConfigurationIT.startInProcessService(testConfigurationIT.getGrpcService(auroraResponse)), duration);
+
+        doReturn(blockingStub).when(auroraClientSideService).getBlockingStub();
+
+        //when & then
+        given()
+                .contentType(ContentType.JSON)
+                .body(products)
+                .post(productControllerCreateProductUrl)
+                .then()
+                .assertThat()
+                .statusCode(HttpStatus.OK.value())
+                .body(is(jsonRequestProduct.write(product).getJson()));
+    }
+
+    @Test
+    public void createProductShouldReturnErrorWhenThereIsNoResponse() throws IOException {
+        //given
+        List<Product> products = Collections.singletonList(product);
+
+        resources.register(testConfigurationIT.startInProcessService(testConfigurationIT.getEmptyGrpcService()), duration);
+
+        doReturn(blockingStub).when(auroraClientSideService).getBlockingStub();
+
+        //when & then
+        given()
+                .contentType(ContentType.JSON)
+                .body(products)
+                .post(productControllerCreateProductUrl)
+                .then()
+                .assertThat()
+                .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
+    }
+
+    @Test
+    public void deleteProductShouldSendRequestWithProductNameWhenThereIsService() throws IOException {
+        //given
+        ArgumentCaptor<Aurora.AuroraRequest> requestCaptor = ArgumentCaptor.forClass(Aurora.AuroraRequest.class);
+        productBase.getDatabase().put(productName, product);
+
+        CancelSubscriptionResponse cancelSubscriptionResponse = CancelSubscriptionResponse.newBuilder().build();
+        Aurora.AuroraResponse auroraResponse = Aurora.AuroraResponse.newBuilder()
+                .setMessage(Any.pack(cancelSubscriptionResponse))
+                .build();
+
+        AuroraServiceGrpc.AuroraServiceImplBase server = testConfigurationIT.getMockGrpcService(auroraResponse);
+        resources.register(InProcessServerBuilder.forName(testConfigurationIT.getServerName()).directExecutor()
+                .addService(server).build().start(), duration);
+
+        doReturn(blockingStub).when(auroraClientSideService).getBlockingStub();
+
+        //when
+        jmxService.deleteProductFromDatabase(productName);
+
+        //then
+        verify(server)
+                .request(requestCaptor.capture(), ArgumentMatchers.any());
+        assertEquals(orderBookTopicPrefix + productName, requestCaptor.getValue().getTopic());
+    }
+
+    @Test
+    public void deleteProductShouldReturnErrorWhenThereIsNoService() throws IOException {
+        //given
+        productBase.getDatabase().put(productName, product);
+
+        resources.register(testConfigurationIT.startInProcessService(testConfigurationIT.getEmptyGrpcService()), duration);
+
+        doReturn(blockingStub).when(auroraClientSideService).getBlockingStub();
+
+        //when & then
+        assertThrows(StatusRuntimeException.class, () -> jmxService.deleteProductFromDatabase(productName));
+    }
+
+    @AfterEach
+    public void cleanUp() {
+
+        productBase.getDatabase().clear();
+
+        File data = new File(databaseBackupUrl);
+
+        if (data.length() > 0) {
+            data.delete();
+        }
+    }
+
+    @NotNull
+    private RecipeDTO createRecipeDTO() {
+        RecipeDTO response = new RecipeDTO();
+        response.setItemName(productName);
+        response.setTotalPrice(BigDecimal.valueOf(price));
+        return response;
+    }
+
+    private void createProduct() {
+        product = new Product();
+        product.setProductName(productName);
+        product.setUnitOfMeasure(UnitOfMeasure.GRAM);
+        product.setIngredients(new HashMap<>());
+    }
+
 }
