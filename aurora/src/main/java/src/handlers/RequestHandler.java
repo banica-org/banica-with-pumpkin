@@ -28,30 +28,35 @@ public class RequestHandler {
     public void handleRequest(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
         LOGGER.info("Handling request from client {}", request.getClientId());
         Optional<ManagedChannel> channelByKey = channels.getChannelByKey(request.getTopic().split("/")[0]);
-        if (channelByKey.isPresent()) {
-            AuroraServiceGrpc.AuroraServiceBlockingStub stub = generateAuroraStub(channelByKey.get());
-
-            Aurora.AuroraResponse response;
-
-            try {
-                response = stub.request(request);
-            } catch (Exception e) {
-                LOGGER.warn("Unable to forward.");
-                LOGGER.error(e.getMessage());
-                responseObserver.onError(e.getCause());
-                return;
-            }
-
-
-            responseObserver.onNext(response);
-            LOGGER.info("Completing request for client {}", request.getClientId());
-            responseObserver.onCompleted();
-        } else {
+        if (!channelByKey.isPresent()) {
             LOGGER.warn("Unsupported message have reached aurora.");
             responseObserver.onError(Status.INVALID_ARGUMENT
                     .withDescription(request.getTopic().split("/")[0] + " channel not available at the moment.")
                     .asException());
+            return;
         }
+        AuroraServiceGrpc.AuroraServiceBlockingStub stub = generateAuroraStub(channelByKey.get());
+
+        processRequest(request, responseObserver, stub);
+    }
+
+    private void processRequest(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver,
+                                AuroraServiceGrpc.AuroraServiceBlockingStub stub) {
+        Aurora.AuroraResponse response;
+
+        try {
+            response = stub.request(request);
+        } catch (Exception e) {
+            LOGGER.warn("Unable to forward.");
+            LOGGER.error(e.getMessage());
+            responseObserver.onError(e.getCause());
+            return;
+        }
+
+
+        responseObserver.onNext(response);
+        LOGGER.info("Completing request for client {}", request.getClientId());
+        responseObserver.onCompleted();
     }
 
     private AuroraServiceGrpc.AuroraServiceBlockingStub generateAuroraStub(ManagedChannel channelByKey) {

@@ -5,15 +5,20 @@ import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.CountDownLatch;
+
 
 public class AuroraObserver implements StreamObserver<Aurora.AuroraResponse> {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuroraObserver.class);
 
-    private Aurora.AuroraRequest request;
-    private StreamObserver<Aurora.AuroraResponse> forwardResponse;
+    private final CountDownLatch latch;
 
-    public AuroraObserver(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> forwardResponse) {
+    private final Aurora.AuroraRequest request;
+    private final StreamObserver<Aurora.AuroraResponse> forwardResponse;
+
+    public AuroraObserver(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> forwardResponse, CountDownLatch latch) {
         this.request = request;
+        this.latch = latch;
         this.forwardResponse = forwardResponse;
     }
 
@@ -28,12 +33,12 @@ public class AuroraObserver implements StreamObserver<Aurora.AuroraResponse> {
     public void onError(Throwable throwable) {
         LOGGER.warn("Unable to forward.");
         LOGGER.error(throwable.toString());
-        forwardResponse.onError(throwable);
+        latch.countDown();
     }
 
     @Override
     public void onCompleted() {
         LOGGER.info("Completing stream request for client {}", request.getClientId());
-        forwardResponse.onCompleted();
+        latch.countDown();
     }
 }

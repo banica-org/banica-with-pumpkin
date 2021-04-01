@@ -13,6 +13,7 @@ import src.config.ChannelManager;
 import src.observer.AuroraObserver;
 
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 @Service
 public class SubscribeHandler {
@@ -36,8 +37,20 @@ public class SubscribeHandler {
                     .asException());
             return;
         }
+        CountDownLatch latch = new CountDownLatch(channelsWithPrefix.size());
+
         channelsWithPrefix.forEach(channel -> this.generateAuroraStub(channel)
-                .subscribe(request, new AuroraObserver(request, responseObserver)));
+                .subscribe(request, new AuroraObserver(request, responseObserver, latch)));
+
+        try {
+            latch.await();
+            LOGGER.info("Completing streams for client {}", request.getClientId());
+            responseObserver.onCompleted();
+        } catch (InterruptedException e) {
+            LOGGER.warn("Latch have been interrupted completing streams for client {}", request.getClientId());
+            LOGGER.error(e.getMessage());
+            responseObserver.onError(e);
+        }
     }
 
     private AuroraServiceGrpc.AuroraServiceStub generateAuroraStub(ManagedChannel channelByKey) {
