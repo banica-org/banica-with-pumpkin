@@ -11,6 +11,7 @@ import src.model.ChannelProperty;
 
 import javax.annotation.PreDestroy;
 import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -33,8 +34,12 @@ public class ChannelManager {
     }
 
     public List<ManagedChannel> getAllChannelsContainingPrefix(String prefix) {
+        String loweredPrefix = prefix.toLowerCase();
+        if (prefix.equalsIgnoreCase("*")){
+            return new ArrayList<>(this.channels.values());
+        }
         return this.channels.entrySet().stream()
-                .filter(entry -> entry.getKey().startsWith(prefix))
+                .filter(entry -> entry.getKey().startsWith(loweredPrefix))
                 .map(Map.Entry::getValue)
                 .collect(Collectors.toList());
     }
