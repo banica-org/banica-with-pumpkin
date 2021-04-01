@@ -1,10 +1,8 @@
 package com.market.banica.calculator.controller;
 
 import com.market.banica.calculator.dto.ProductDto;
-import com.market.banica.calculator.dto.RecipeDTO;
 import com.market.banica.calculator.service.contract.CalculatorService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,6 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
+import java.util.List;
 
 /**
  * Date: 3/10/2021 Time: 7:44 AM
@@ -29,15 +28,15 @@ public class CalculatorController {
 
 
     @GetMapping("/{clientId}/{itemName}/{quantity}")
-    public ResponseEntity<ProductDto> getRecipe(@PathVariable("clientId") @NotBlank String clientId,
+    public List<ProductDto> getRecipe(@PathVariable("clientId") @NotBlank String clientId,
                                                 @PathVariable("itemName") @NotBlank String itemName,
                                                 @PathVariable("quantity") @Min(1) int quantity) {
 
         //Here service should be called
         //replace new RecipeDTO with service call when service is completed
-        ProductDto productDto = service.getRecipe(clientId,itemName, quantity);
+        List<ProductDto> productDto = service.getRecipe(clientId,itemName, quantity);
 
 
-        return ResponseEntity.ok().body(productDto);
+        return productDto;
     }
 }
