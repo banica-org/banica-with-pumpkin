@@ -48,9 +48,10 @@ public class MarketStateImpl implements com.market.banica.generator.service.Mark
         this.marketState = snapshotPersistence.loadPersistedSnapshot();
         this.executorService = Executors.newSingleThreadExecutor();
         this.subscriptionManager = subscriptionManager;
-        PersistScheduler persistScheduler = new PersistSchedulerImpl(snapshotPersistence, marketState);
-        persistScheduler.setFrequency(DEFAULT_PERSISTENT_FREQUENCY);
+        PersistScheduler persistScheduler = new PersistSchedulerImpl(marketStateLock, snapshotPersistence, marketState);
+        persistScheduler.scheduleSnapshot();
     }
+
 
     @Override
     public void addTickToMarketState(MarketTick marketTick) {

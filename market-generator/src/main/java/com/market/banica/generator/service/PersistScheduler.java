@@ -4,4 +4,6 @@ public interface PersistScheduler {
 
     void setFrequency(int frequency);
 
+    void scheduleSnapshot();
+
 }
