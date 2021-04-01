@@ -23,6 +23,8 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -32,6 +34,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 @RequiredArgsConstructor
 public class JMXConfig {
     private static final Logger LOGGER = LoggerFactory.getLogger(JMXConfig.class);
+
+    private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
     private ChannelManager channels;
 
@@ -47,58 +51,75 @@ public class JMXConfig {
 
     @ManagedOperation
     public void createChannel(String channelPrefix, String host, String port) {
-        LOGGER.info("Creating new channel {} from JMX server", channelPrefix);
+        try {
+            this.lock.writeLock().lock();
+            LOGGER.info("Creating new channel {} from JMX server", channelPrefix);
 
-        if (channelPropertyMap.containsKey(channelPrefix)) {
-            LOGGER.error("Channel with prefix {} already exists", channelPrefix);
-            throw new IllegalArgumentException("Channel with this name already exists");
+            if (channelPropertyMap.containsKey(channelPrefix)) {
+                LOGGER.error("Channel with prefix {} already exists", channelPrefix);
+                throw new IllegalArgumentException("Channel with this name already exists");
+            }
+
+            ChannelProperty channelProperty = new ChannelProperty();
+            channelProperty.setPort(Integer.parseInt(port));
+            channelProperty.setHost(host);
+
+            channelPropertyMap.put(channelPrefix, channelProperty);
+            channels.addChannel(channelPrefix, channelProperty);
+
+            this.writeBackUp();
+
+            LOGGER.debug("New channel created from JMX server with host {} and port {}"
+                    , host, port);
+
+        } finally {
+            this.lock.writeLock().unlock();
         }
-
-        ChannelProperty channelProperty = new ChannelProperty();
-        channelProperty.setPort(Integer.parseInt(port));
-        channelProperty.setHost(host);
-
-        channelPropertyMap.put(channelPrefix, channelProperty);
-        channels.addChannel(channelPrefix, channelProperty);
-
-        this.writeBackUp();
-
-        LOGGER.debug("New channel created from JMX server with host {} and port {}"
-                , host, port);
     }
 
     @ManagedOperation
     public void deleteChannel(String channelPrefix) {
-        LOGGER.info("Deleting channel {} from  JMX server", channelPrefix);
-        if (!channelPropertyMap.containsKey(channelPrefix)) {
-            LOGGER.error("Channel with prefix {} does not exists", channelPrefix);
-            throw new IllegalArgumentException("Channel with this name does not exists");
+        try {
+            this.lock.writeLock().lock();
+            LOGGER.info("Deleting channel {} from  JMX server", channelPrefix);
+            if (!channelPropertyMap.containsKey(channelPrefix)) {
+                LOGGER.error("Channel with prefix {} does not exists", channelPrefix);
+                throw new IllegalArgumentException("Channel with this name does not exists");
+            }
+
+            this.channelPropertyMap.remove(channelPrefix);
+
+            this.channels.deleteChannel(channelPrefix);
+
+            this.writeBackUp();
+        } finally {
+            this.lock.writeLock().unlock();
         }
-
-        this.channelPropertyMap.remove(channelPrefix);
-
-        this.channels.deleteChannel(channelPrefix);
-
-        this.writeBackUp();
     }
 
     @ManagedOperation
     public void editChannel(String channelPrefix, String host, String port) {
-        LOGGER.info("Editing channel {} from  JMX server", channelPrefix);
-        if (!channelPropertyMap.containsKey(channelPrefix)) {
-            LOGGER.error("Channel with prefix {} does not exists", channelPrefix);
-            throw new IllegalArgumentException("Channel with this name does not exists");
+        try {
+            this.lock.writeLock().lock();
+            LOGGER.info("Editing channel {} from  JMX server", channelPrefix);
+            if (!channelPropertyMap.containsKey(channelPrefix)) {
+                LOGGER.error("Channel with prefix {} does not exists", channelPrefix);
+                throw new IllegalArgumentException("Channel with this name does not exists");
+            }
+
+            ChannelProperty channelProperty = this.channelPropertyMap.remove(channelPrefix);
+            channelProperty.setHost(host);
+            channelProperty.setPort(Integer.parseInt(port));
+
+            this.channelPropertyMap.put(channelPrefix, channelProperty);
+
+            this.channels.editChannel(channelPrefix, channelProperty);
+
+            this.writeBackUp();
+
+        } finally {
+            this.lock.writeLock().unlock();
         }
-
-        ChannelProperty channelProperty = this.channelPropertyMap.remove(channelPrefix);
-        channelProperty.setHost(host);
-        channelProperty.setPort(Integer.parseInt(port));
-
-        this.channelPropertyMap.put(channelPrefix, channelProperty);
-
-        this.channels.editChannel(channelPrefix, channelProperty);
-
-        this.writeBackUp();
     }
 
 
