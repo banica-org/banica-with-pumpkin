@@ -5,7 +5,6 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.market.Origin;
 import com.market.TickResponse;
 import com.market.banica.order.book.exception.IncorrectResponseException;
-import com.orderbook.ItemOrderBookRequest;
 import com.orderbook.OrderBookLayer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -13,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -27,13 +27,15 @@ public class ItemMarket {
 
     private final Map<String, TreeSet<Item>> allItems;
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private final Map<String, Long> productsQuantity;
 
     private static final Logger LOGGER = LogManager.getLogger(ItemMarket.class);
 
     @Autowired
     public ItemMarket() {
         allItems = new ConcurrentHashMap<>();
-        addDummyData();
+        productsQuantity = new ConcurrentHashMap<>();
+//        addDummyData();
     }
 
     public Optional<Set<Item>> getItemSetByName(String itemName) {
@@ -67,6 +69,9 @@ public class ItemMarket {
             item.setQuantity(tickResponse.getQuantity());
             item.setOrigin(tickResponse.getOrigin());
 
+            productsQuantity.putIfAbsent(tickResponse.getGoodName(), 0L);
+            productsQuantity.put(tickResponse.getGoodName(), productsQuantity.get(tickResponse.getGoodName()) + tickResponse.getQuantity());
+
             Set<Item> itemSet = allItems.get(tickResponse.getGoodName());
             if (itemSet != null) {
                 if (itemSet.contains(item)) {
@@ -92,7 +97,11 @@ public class ItemMarket {
         TreeSet<Item> items = this.allItems.get(itemName);
 
         if (items == null) {
-            return new ArrayList<>();
+            return Collections.emptyList();
+        }
+
+        if (productsQuantity.get(itemName) < quantity) {
+            return Collections.emptyList();
         }
 
         List<OrderBookLayer> layers;
@@ -123,6 +132,7 @@ public class ItemMarket {
 
                     iterator.remove();
                 }
+                productsQuantity.put(itemName, productsQuantity.get(itemName) - currentLayer.getQuantity());
                 itemLeft -= currentLayer.getQuantity();
 
                 OrderBookLayer build = currentLayer
@@ -140,9 +150,9 @@ public class ItemMarket {
 
         TreeSet<Item> cheeseItems = new TreeSet<>();
         cheeseItems.add(new Item(2.6, 2, Origin.AMERICA));
-        cheeseItems.add(new Item(4.0, 2, Origin.ASIA));
-        cheeseItems.add(new Item(4.0, 5, Origin.EUROPE));
-        cheeseItems.add(new Item(4.1, 2, Origin.ASIA));
+//        cheeseItems.add(new Item(4.0, 2, Origin.ASIA));
+//        cheeseItems.add(new Item(4.0, 5, Origin.EUROPE));
+//        cheeseItems.add(new Item(4.1, 2, Origin.ASIA));
         allItems.put("cheese", cheeseItems);
 
         TreeSet<Item> cocoaItems = new TreeSet<>();

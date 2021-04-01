@@ -1,10 +1,15 @@
 package com.market.banica.order.book.model;
 
+import com.aurora.Aurora;
+import com.google.protobuf.Any;
 import com.market.Origin;
+import com.market.TickResponse;
+import com.orderbook.OrderBookLayer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -32,6 +37,32 @@ class ItemMarketTest {
         allItems.put(RICE_ITEM_NAME, new TreeSet<>());
 
         ReflectionTestUtils.setField(itemMarket, ALL_ITEMS_FIELD, allItems);
+    }
+
+    @Test
+    public void testUpdateItem() {
+        itemMarket.addTrackedItem("cheese");
+        TickResponse cheese = TickResponse.newBuilder().setGoodName("cheese").setQuantity(2).setPrice(2.6).setOrigin(Origin.ASIA).build();
+        Aurora.AuroraResponse build = Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(cheese)).build();
+        itemMarket.updateItem(build);
+
+        TickResponse cheese2 = TickResponse.newBuilder().setGoodName("cheese").setQuantity(2).setPrice(2.6).setOrigin(Origin.ASIA).build();
+        Aurora.AuroraResponse build2 = Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(cheese2)).build();
+        itemMarket.updateItem(build2);
+
+        TickResponse cheese3 = TickResponse.newBuilder().setGoodName("cheese").setQuantity(2).setPrice(2.6).setOrigin(Origin.AMERICA).build();
+        Aurora.AuroraResponse build3 = Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(cheese3)).build();
+        itemMarket.updateItem(build3);
+
+        List<OrderBookLayer> result = itemMarket.getRequestedItem("cheese", 5);
+        System.out.println();
+
+        TickResponse cheese4 = TickResponse.newBuilder().setGoodName("cheese").setQuantity(2).setPrice(2.6).setOrigin(Origin.AMERICA).build();
+        Aurora.AuroraResponse build4 = Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(cheese4)).build();
+        itemMarket.updateItem(build4);
+
+        List<OrderBookLayer> result2 = itemMarket.getRequestedItem("cheese", 3);
+        System.out.println();
     }
 
     @Test

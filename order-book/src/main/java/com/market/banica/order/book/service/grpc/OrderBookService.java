@@ -3,7 +3,6 @@ package com.market.banica.order.book.service.grpc;
 import com.aurora.Aurora;
 import com.google.protobuf.Any;
 import com.market.banica.order.book.exception.TrackingException;
-import com.market.banica.order.book.model.Item;
 import com.market.banica.order.book.model.ItemMarket;
 import com.orderbook.CancelSubscriptionResponse;
 import com.orderbook.InterestsResponse;
@@ -18,8 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 
 @Component
 public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplBase {
