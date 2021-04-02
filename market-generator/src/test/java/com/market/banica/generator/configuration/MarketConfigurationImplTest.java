@@ -2,6 +2,8 @@ package com.market.banica.generator.configuration;
 
 import com.market.banica.generator.exception.NotFoundException;
 import com.market.banica.generator.model.GoodSpecification;
+import com.market.banica.generator.service.MarketStateImpl;
+import com.market.banica.generator.service.MarketSubscriptionManager;
 import com.market.banica.generator.service.TickGeneratorImpl;
 import org.junit.After;
 import org.junit.Before;
@@ -44,10 +46,15 @@ public class MarketConfigurationImplTest {
                         0, 2, 3,
                         4, 5, 6,
                         9, 8, 9));
-        this.marketConfiguration = new MarketConfigurationImpl(FILE_NAME,new TickGeneratorImpl("europe"));
+        this.marketConfiguration = new MarketConfigurationImpl(FILE_NAME,
+                new TickGeneratorImpl("test",
+                        new MarketStateImpl("test-tickdatabase.dat",
+                                new MarketSubscriptionManager())),
+                new MarketStateImpl("test-tickdatabase.dat",
+                        new MarketSubscriptionManager()));
         ReflectionTestUtils.setField(marketConfiguration, "goods", goods);
-        this.testFile = new File(file, "marketTest.properties");
-        ReflectionTestUtils.setField(marketConfiguration, "file", testFile);
+        this.testFile = new File(file, "test-market.properties");
+        ReflectionTestUtils.setField(marketConfiguration, "configurationFile", testFile);
     }
 
     @After
@@ -59,9 +66,9 @@ public class MarketConfigurationImplTest {
     public void addGoodSpecificationShouldAddGoodSpecificationIntoPropertiesFile() throws IOException {
         //Arrange, Act
         marketConfiguration.addGoodSpecification(MEAT_GOOD,
-                0, 2, 3,
-                -6, -2, 6,
-                9, 8, 9);
+                1, 2, 1,
+                6, 12, 1,
+                5, 8, 1);
         Map<String, String> propertiesFromFile = this.readFile(testFile);
 
         Map<String, String> europeBreadMap =
@@ -130,9 +137,9 @@ public class MarketConfigurationImplTest {
 
         //Act
         marketConfiguration.updateGoodSpecification(BREAD_GOOD,
-                0, 0, 0,
-                4, 5, 6,
-                9, 8, 9);
+                2, 3, 1,
+                6, 9, 2,
+                4, 9, 3);
         GoodSpecification updated = this.goods.get(BREAD_GOOD);
         Map<String, String> propertiesMapFromFile = this.readFile(this.testFile);
         Map<String, String> updatedGoodSpecificationMap = updated.generateProperties();
@@ -149,7 +156,7 @@ public class MarketConfigurationImplTest {
 
     }
 
-    @Test(expected = NotFoundException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void updateGoodSpecificationShouldThrowNotFoundExceptionWhenUpdatingNonExistentGoodSpecification() {
         //Arrange, Act
         marketConfiguration.updateGoodSpecification(MEAT_GOOD,

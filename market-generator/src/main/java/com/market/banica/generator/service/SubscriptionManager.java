@@ -1,16 +1,13 @@
 package com.market.banica.generator.service;
 
+import com.aurora.Aurora;
+import com.market.TickResponse;
 import io.grpc.stub.StreamObserver;
 
-public interface SubscriptionManager<T, S> {
+public interface SubscriptionManager {
 
-    void subscribe(T request, StreamObserver<S> responseObserver);
+    void subscribe(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver);
 
-    void unsubscribe(T request, StreamObserver<S> responseObserver);
+    void notifySubscribers(TickResponse response);
 
-    void notifySubscribers(S response);
-
-    String getRequestGoodName(T request);
-
-    String getTickResponseGoodName(S response);
 }

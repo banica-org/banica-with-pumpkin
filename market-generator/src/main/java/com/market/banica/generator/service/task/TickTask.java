@@ -8,17 +8,15 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Date;
 import java.util.Random;
-import java.util.TimerTask;
-import java.util.concurrent.TimeUnit;
 
-public class TickTimerTask extends TimerTask {
+public class TickTask implements Runnable {
 
     private static final Random RANDOM = new Random();
 
     private final TickGenerator tickGenerator;
     private final GoodSpecification good;
 
-    public TickTimerTask(TickGenerator tickGenerator, GoodSpecification good) {
+    public TickTask(TickGenerator tickGenerator, GoodSpecification good) {
         this.tickGenerator = tickGenerator;
         this.good = good;
     }
@@ -26,16 +24,13 @@ public class TickTimerTask extends TimerTask {
     @Override
     public void run() {
 
-        MarketTick marketTick = new MarketTick(good.getName(),
+        MarketTick currentTick = new MarketTick(good.getName(),
                 generateRandomQuantity(),
                 generateRandomPrice(),
                 new Date().getTime());
 
-        tickGenerator.getGeneratedTicks().add(marketTick);
-
-        TickTimerTask nextTick = new TickTimerTask(tickGenerator, good);
-        tickGenerator.getTickTimerTasks().put(good.getName(), nextTick);
-        tickGenerator.getTickTimer().schedule(nextTick, TimeUnit.SECONDS.toMillis(generateRandomPeriod()));
+        TickTask nextTick = new TickTask(tickGenerator, good);
+        tickGenerator.executeTickTask(currentTick, nextTick, generateRandomPeriod());
 
     }
 

@@ -1,16 +1,19 @@
 package market;
 
-import com.market.MarketDataRequest;
+import com.aurora.Aurora;
 import com.market.TickResponse;
 import com.market.banica.generator.exception.NotFoundException;
 import com.market.banica.generator.service.MarketSubscriptionManager;
+import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.HashSet;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -26,79 +29,41 @@ class MarketSubscriptionManagerTest {
     @InjectMocks
     private MarketSubscriptionManager marketSubscriptionManager;
 
-    private final StreamObserver<TickResponse> subscriberOne = mock(StreamObserver.class);
+    private final ServerCallStreamObserver<Aurora.AuroraResponse> subscriberOne = mock(ServerCallStreamObserver.class);
 
-    private final StreamObserver<TickResponse> subscriberTwo = mock(StreamObserver.class);
+    private final ServerCallStreamObserver<Aurora.AuroraResponse> subscriberTwo = mock(ServerCallStreamObserver.class);
 
-    private static final String GOOD_BANICA = "Banica";
+    private static final String GOOD_BANICA = "banica";
 
-    private static final String GOOD_EGGS = "Eggs";
+    private static final String TOPIC_EGGS = "market/eggs";
 
-    private static final MarketDataRequest MARKET_DATA_REQUEST_BANICA = MarketDataRequest.newBuilder().setGoodName(GOOD_BANICA).build();
+    private static final Aurora.AuroraRequest AURORA_REQUEST_BANICA = Aurora.AuroraRequest.newBuilder().setTopic("market/"+GOOD_BANICA).build();
 
-    private static final MarketDataRequest MARKET_DATA_REQUEST_INVALID = MarketDataRequest.newBuilder().build();
+    private static final Aurora.AuroraRequest AURORA_REQUEST_INVALID = Aurora.AuroraRequest.newBuilder().build();
 
     @Test
     void subscribeForItemWithValidDataInputExecutesWithSuccess() {
         // Arrange
-        assertNull(marketSubscriptionManager.getSubscribers(MARKET_DATA_REQUEST_BANICA.getGoodName()));
-        marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
+        assertNull(marketSubscriptionManager.getSubscribers(GOOD_BANICA));
+        marketSubscriptionManager.subscribe(AURORA_REQUEST_BANICA, subscriberOne);
         int expected = 1;
 
         // Act
-        int actual = marketSubscriptionManager.getSubscribers(MARKET_DATA_REQUEST_BANICA.getGoodName()).size();
+        int actual = marketSubscriptionManager.getSubscribers(GOOD_BANICA).size();
 
         // Assert
-        assertEquals(expected, actual);
+        Assertions.assertEquals(expected, actual);
     }
 
     @Test
     void subscribeForItemWithInputParameterWithInvalidGoodNameThrowsException() {
-        assertThrows(NotFoundException.class, () -> marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_INVALID, subscriberOne));
-    }
-
-    @Test
-    void unsubscribeForItemWithValidDataInputExecutesWithSuccess() {
-        // Arrange
-        marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
-        marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberTwo);
-        int expected = 1;
-
-        // Act
-        marketSubscriptionManager.unsubscribe(MARKET_DATA_REQUEST_BANICA, subscriberTwo);
-        int actual = marketSubscriptionManager.getSubscribers(MARKET_DATA_REQUEST_BANICA.getGoodName()).size();
-
-        // Assert
-        assertEquals(expected, actual);
-    }
-
-    @Test
-    void unsubscribeForItemWithInputParameterWithInvalidGoodNameThrowsException() {
-        assertThrows(NotFoundException.class, () -> marketSubscriptionManager.unsubscribe(MARKET_DATA_REQUEST_INVALID, subscriberOne));
-    }
-
-    @Test
-    void unsubscribeForItemWithInputParameterWithValidGoodNameRemovesSubscriber() {
-        // Arrange
-        marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
-        assertEquals(1, marketSubscriptionManager.getSubscribers(GOOD_BANICA).size());
-
-        // Act
-        marketSubscriptionManager.unsubscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
-
-        // Assert
-        assertNull(marketSubscriptionManager.getSubscribers(GOOD_BANICA));
-    }
-
-    @Test
-    public void unsubscribeForItemWithNonExistentGoodNameInMapThrowsException() {
-        assertThrows(NotFoundException.class, () -> marketSubscriptionManager.unsubscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne));
+        assertThrows(IllegalArgumentException.class, () -> marketSubscriptionManager.subscribe(AURORA_REQUEST_INVALID, subscriberOne));
     }
 
     @Test
     void notifySubscribersWithParameterGoodNameBanicaNotifiesSubscriberForBanica() {
         // Arrange
-        marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
+        marketSubscriptionManager.subscribe(AURORA_REQUEST_BANICA, subscriberOne);
 
         TickResponse tickResponse = TickResponse.newBuilder()
                 .setGoodName(GOOD_BANICA)
@@ -110,16 +75,16 @@ class MarketSubscriptionManagerTest {
         marketSubscriptionManager.notifySubscribers(tickResponse);
 
         // Assert
-        verify(marketSubscriptionManager.getSubscribers(GOOD_BANICA).iterator().next(), times(1)).onNext(any());
+        verify(subscriberOne, times(1)).onNext(any());
     }
 
     @Test
     void notifySubscribersWithParameterGoodNameEggsDoesNotNotifySubscriberForBanica() {
         // Arrange
-        marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
+        marketSubscriptionManager.subscribe(AURORA_REQUEST_BANICA, subscriberOne);
 
         TickResponse tickResponse = TickResponse.newBuilder()
-                .setGoodName(GOOD_EGGS)
+                .setGoodName(TOPIC_EGGS)
                 .setPrice(1)
                 .setQuantity(1)
                 .build();
@@ -127,50 +92,35 @@ class MarketSubscriptionManagerTest {
         marketSubscriptionManager.notifySubscribers(tickResponse);
 
         // Assert
-        verify(marketSubscriptionManager.getSubscribers(GOOD_BANICA).iterator().next(), times(0)).onNext(any());
+        verify(subscriberOne, times(0)).onNext(any());
     }
 
     @Test
-    public void notifySubscribersForItemWithInputParameterWithInvalidGoodNameThrowsException() {
+    void getTickResponseGoodName_ReturnsTickGoodName() {
         TickResponse tickResponse = TickResponse.newBuilder()
-                .setGoodName("")
+                .setGoodName(TOPIC_EGGS)
                 .setPrice(1)
                 .setQuantity(1)
                 .build();
 
-        assertThrows(NotFoundException.class, () -> marketSubscriptionManager.notifySubscribers(tickResponse));
-    }
-
-    @Test
-    void getRequestItemNameReturnsItemName() {
-        assertEquals(GOOD_BANICA, marketSubscriptionManager.getRequestGoodName(MARKET_DATA_REQUEST_BANICA));
-    }
-
-    @Test
-    void getTickResponseGoodNameReturnsTickGoodName() {
-        TickResponse tickResponse = TickResponse.newBuilder()
-                .setGoodName(GOOD_EGGS)
-                .setPrice(1)
-                .setQuantity(1)
-                .build();
-
-        assertEquals(marketSubscriptionManager.getTickResponseGoodName(tickResponse), GOOD_EGGS);
+        Assertions.assertEquals(TOPIC_EGGS, tickResponse.getGoodName());
     }
 
     @Test
     void getSubscribersReturnsGivenSubscribers() {
         // Arrange
-        marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberOne);
-        marketSubscriptionManager.subscribe(MARKET_DATA_REQUEST_BANICA, subscriberTwo);
+        marketSubscriptionManager.subscribe(AURORA_REQUEST_BANICA, subscriberOne);
+        marketSubscriptionManager.subscribe(AURORA_REQUEST_BANICA, subscriberTwo);
 
         // Act
-        HashSet<StreamObserver<TickResponse>> actual = marketSubscriptionManager.getSubscribers(MARKET_DATA_REQUEST_BANICA.getGoodName());
+        Set<StreamObserver<Aurora.AuroraResponse>> actual = marketSubscriptionManager.getSubscribers(AURORA_REQUEST_BANICA.getTopic().split("/")[1]);
 
-        HashSet<StreamObserver<TickResponse>> expected = new HashSet<>();
+        HashSet<StreamObserver<Aurora.AuroraResponse>> expected = new HashSet<>();
         expected.add(subscriberOne);
         expected.add(subscriberTwo);
 
         // Assert
-        assertEquals(expected, actual);
+        Assertions.assertEquals(expected, actual);
     }
+
 }
