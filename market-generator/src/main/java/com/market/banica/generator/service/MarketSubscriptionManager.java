@@ -6,6 +6,7 @@ import com.market.TickResponse;
 import io.grpc.Context;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
+import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,7 +64,8 @@ public class MarketSubscriptionManager implements SubscriptionManager {
 
     private void sendNotification(TickResponse response, Set<StreamObserver<Aurora.AuroraResponse>> subscribers) {
         for (StreamObserver<Aurora.AuroraResponse> currentSubscriber : subscribers) {
-            if (Context.current().isCancelled()) {
+            ServerCallStreamObserver<Aurora.AuroraResponse> cancellableSubscriber = (ServerCallStreamObserver<Aurora.AuroraResponse>) currentSubscriber;
+            if (cancellableSubscriber.isCancelled()){
                 currentSubscriber.onError(Status.CANCELLED
                         .withDescription(currentSubscriber.toString() + " has stopped requesting product " + response.getGoodName())
                         .asException());

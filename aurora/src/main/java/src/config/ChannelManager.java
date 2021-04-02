@@ -17,6 +17,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -42,6 +44,16 @@ public class ChannelManager {
         return Optional.ofNullable(channels.get(key));
     }
 
+    public List<ManagedChannel> getAllChannelsContainingPrefix(String prefix) {
+        String loweredPrefix = prefix.toLowerCase();
+        if (prefix.equalsIgnoreCase("*")){
+            return new ArrayList<>(this.channels.values());
+        }
+        return this.channels.entrySet().stream()
+                .filter(entry -> entry.getKey().startsWith(loweredPrefix))
+                .map(Map.Entry::getValue)
+                .collect(Collectors.toList());
+    }
     protected void addChannel(String key, ChannelProperty value) {
         LOGGER.info("Adding new channel {} to map", key);
         Map.Entry<String, ManagedChannel> entry = this.convertPropertyToChannel(new AbstractMap.SimpleEntry<>(key, value));

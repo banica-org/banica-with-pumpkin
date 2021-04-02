@@ -4,6 +4,7 @@ import com.aurora.Aurora;
 import com.market.TickResponse;
 import com.market.banica.generator.exception.NotFoundException;
 import com.market.banica.generator.service.MarketSubscriptionManager;
+import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -28,9 +29,9 @@ class MarketSubscriptionManagerTest {
     @InjectMocks
     private MarketSubscriptionManager marketSubscriptionManager;
 
-    private final StreamObserver<Aurora.AuroraResponse> subscriberOne = mock(StreamObserver.class);
+    private final ServerCallStreamObserver<Aurora.AuroraResponse> subscriberOne = mock(ServerCallStreamObserver.class);
 
-    private final StreamObserver<Aurora.AuroraResponse> subscriberTwo = mock(StreamObserver.class);
+    private final ServerCallStreamObserver<Aurora.AuroraResponse> subscriberTwo = mock(ServerCallStreamObserver.class);
 
     private static final String GOOD_BANICA = "banica";
 

@@ -7,6 +7,7 @@ import com.market.banica.generator.service.MarketState;
 import com.market.banica.generator.service.MarketSubscriptionManager;
 import io.grpc.Context;
 import io.grpc.Status;
+import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -40,9 +41,9 @@ public class AuroraService extends AuroraServiceGrpc.AuroraServiceImplBase {
     private boolean bootstrapGeneratedTicks(Aurora.AuroraRequest request,
                                             StreamObserver<Aurora.AuroraResponse> responseStreamObserver) {
         String goodName = marketSubscriptionManager.getGoodNameFromRequest(request);
-
+        ServerCallStreamObserver<Aurora.AuroraResponse> cancellableSubscriber = (ServerCallStreamObserver<Aurora.AuroraResponse>) responseStreamObserver;
         for (TickResponse tick : marketState.generateMarketTicks(goodName)) {
-            if (Context.current().isCancelled()) {
+            if (cancellableSubscriber.isCancelled()){
                 responseStreamObserver.onError(Status.CANCELLED
                         .withDescription(responseStreamObserver.toString() + " has stopped requesting product " + goodName)
                         .asException());

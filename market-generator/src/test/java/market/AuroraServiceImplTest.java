@@ -6,6 +6,7 @@ import com.market.TickResponse;
 import com.market.banica.generator.service.MarketState;
 import com.market.banica.generator.service.MarketSubscriptionManager;
 import com.market.banica.generator.service.grpc.AuroraService;
+import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -41,7 +42,7 @@ class AuroraServiceImplTest {
             .setTopic(TOPIC_BANICA)
             .build();
 
-    private final StreamObserver<Aurora.AuroraResponse> subscriber = mock(StreamObserver.class);
+    private final ServerCallStreamObserver<Aurora.AuroraResponse> subscriber = mock(ServerCallStreamObserver.class);
 
     @Test
     void subscribeForItemShouldVerifyMethodCalls() {

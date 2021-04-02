@@ -2,6 +2,8 @@ package com.market.banica.generator.configuration;
 
 import com.market.banica.generator.exception.NotFoundException;
 import com.market.banica.generator.model.GoodSpecification;
+import com.market.banica.generator.service.MarketStateImpl;
+import com.market.banica.generator.service.MarketSubscriptionManager;
 import com.market.banica.generator.service.TickGeneratorImpl;
 import org.junit.After;
 import org.junit.Before;
@@ -44,7 +46,7 @@ public class MarketConfigurationImplTest {
                         0, 2, 3,
                         4, 5, 6,
                         9, 8, 9));
-        this.marketConfiguration = new MarketConfigurationImpl(FILE_NAME,new TickGeneratorImpl("test"));
+        this.marketConfiguration = new MarketConfigurationImpl(FILE_NAME,new TickGeneratorImpl("test",new MarketStateImpl(new MarketSubscriptionManager())));
         ReflectionTestUtils.setField(marketConfiguration, "goods", goods);
         this.testFile = new File(file, "test-market.properties");
         ReflectionTestUtils.setField(marketConfiguration, "configurationFile", testFile);
