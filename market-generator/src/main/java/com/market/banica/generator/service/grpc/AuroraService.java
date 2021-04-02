@@ -5,7 +5,6 @@ import com.aurora.AuroraServiceGrpc;
 import com.market.TickResponse;
 import com.market.banica.generator.service.MarketState;
 import com.market.banica.generator.service.MarketSubscriptionManager;
-import io.grpc.Context;
 import io.grpc.Status;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
@@ -43,7 +42,7 @@ public class AuroraService extends AuroraServiceGrpc.AuroraServiceImplBase {
         String goodName = marketSubscriptionManager.getGoodNameFromRequest(request);
         ServerCallStreamObserver<Aurora.AuroraResponse> cancellableSubscriber = (ServerCallStreamObserver<Aurora.AuroraResponse>) responseStreamObserver;
         for (TickResponse tick : marketState.generateMarketTicks(goodName)) {
-            if (cancellableSubscriber.isCancelled()){
+            if (cancellableSubscriber.isCancelled()) {
                 responseStreamObserver.onError(Status.CANCELLED
                         .withDescription(responseStreamObserver.toString() + " has stopped requesting product " + goodName)
                         .asException());

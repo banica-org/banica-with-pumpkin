@@ -12,8 +12,8 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -56,7 +56,7 @@ public class MarketStateImpl implements MarketState {
                 marketStateLock.writeLock().lock();
                 String good = marketTick.getGood();
                 if (!marketState.containsKey(good)) {
-                    marketState.put(good, new TreeSet<>(Comparator.comparingLong(MarketTick::getTimestamp)));
+                    marketState.put(good, new HashSet<>());
                 }
                 marketState.get(good).add(marketTick);
                 subscriptionManager.notifySubscribers(convertMarketTickToTickResponse(marketTick));

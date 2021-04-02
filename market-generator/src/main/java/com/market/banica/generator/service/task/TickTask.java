@@ -2,44 +2,35 @@ package com.market.banica.generator.service.task;
 
 import com.market.banica.generator.model.GoodSpecification;
 import com.market.banica.generator.model.MarketTick;
-import com.market.banica.generator.service.MarketState;
 import com.market.banica.generator.service.TickGenerator;
-
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Date;
 import java.util.Random;
-import java.util.TimerTask;
-import java.util.concurrent.TimeUnit;
 
-public class TickTimerTask extends TimerTask {
+public class TickTask implements Runnable {
 
     private static final Random RANDOM = new Random();
 
     private final TickGenerator tickGenerator;
     private final GoodSpecification good;
-    private final MarketState marketState;
 
-    public TickTimerTask(TickGenerator tickGenerator, GoodSpecification good, MarketState marketState) {
+    public TickTask(TickGenerator tickGenerator, GoodSpecification good) {
         this.tickGenerator = tickGenerator;
-        this.marketState = marketState;
         this.good = good;
     }
 
     @Override
     public void run() {
 
-        MarketTick marketTick = new MarketTick(good.getName(),
+        MarketTick currentTick = new MarketTick(good.getName(),
                 generateRandomQuantity(),
                 generateRandomPrice(),
                 new Date().getTime());
 
-        marketState.addTickToMarketState(marketTick);
-
-        TickTimerTask nextTick = new TickTimerTask(tickGenerator, good, marketState);
-        tickGenerator.getTickTimerTasks().put(good.getName(), nextTick);
-        tickGenerator.getTickTimer().schedule(nextTick, TimeUnit.SECONDS.toMillis(generateRandomPeriod()));
+        TickTask nextTick = new TickTask(tickGenerator, good);
+        tickGenerator.executeTickTask(currentTick, nextTick, generateRandomPeriod());
 
     }
 
@@ -66,4 +57,5 @@ public class TickTimerTask extends TimerTask {
                 .setScale(2, RoundingMode.HALF_UP)
                 .doubleValue();
     }
+
 }
