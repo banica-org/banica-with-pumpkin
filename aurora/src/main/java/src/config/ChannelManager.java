@@ -1,22 +1,18 @@
 package src.config;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.market.banica.common.channel.ChannelRPCConfig;
-import com.market.banica.common.util.ApplicationDirectoryUtil;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import lombok.NoArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import src.model.ChannelProperty;
 
 import javax.annotation.PreDestroy;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Component
+@NoArgsConstructor
 public class ChannelManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ChannelManager.class);
@@ -31,15 +28,20 @@ public class ChannelManager {
     private final Map<String, ManagedChannel> channels = new ConcurrentHashMap<>();
 
 
-    @Autowired
-    public ChannelManager() {
-
-    }
-
-
     public Optional<ManagedChannel> getChannelByKey(String key) {
         LOGGER.debug("Getting channel with key {}", key);
         return Optional.ofNullable(channels.get(key));
+    }
+
+    public List<ManagedChannel> getAllChannelsContainingPrefix(String prefix) {
+        String loweredPrefix = prefix.toLowerCase();
+        if (prefix.equalsIgnoreCase("*")){
+            return new ArrayList<>(this.channels.values());
+        }
+        return this.channels.entrySet().stream()
+                .filter(entry -> entry.getKey().startsWith(loweredPrefix))
+                .map(Map.Entry::getValue)
+                .collect(Collectors.toList());
     }
 
     protected void addChannel(String key, ChannelProperty value) {
@@ -53,9 +55,8 @@ public class ChannelManager {
         LOGGER.info("Deleting channel {} to map", key);
         Optional<ManagedChannel> managedChannel = Optional.ofNullable(this.channels.remove(key));
 
-        if (managedChannel.isPresent()) {
-            this.shutDownChannel(managedChannel.get());
-        }
+        managedChannel.ifPresent(this::shutDownChannel);
+
     }
 
     protected void editChannel(String key, ChannelProperty value) {
@@ -64,9 +65,7 @@ public class ChannelManager {
 
         Optional<ManagedChannel> managedChannel = Optional.ofNullable(this.channels.remove(key));
 
-        if (managedChannel.isPresent()) {
-            this.shutDownChannel(managedChannel.get());
-        }
+        managedChannel.ifPresent(this::shutDownChannel);
 
         this.channels.put(key, entry.getValue());
     }
@@ -87,17 +86,6 @@ public class ChannelManager {
         LOGGER.debug("Channel was successfully stopped!");
     }
 
-    private void populateChannels(ConcurrentHashMap<String, ChannelProperty> channelProperty) {
-        LOGGER.debug("Populating channel map");
-        channels.putAll(this.generateChannelMap(channelProperty));
-    }
-
-    private Map<String, ManagedChannel> generateChannelMap(Map<String, ChannelProperty> channelProperty) {
-        LOGGER.debug("Generating map with channels from map with channelProperty");
-        return channelProperty.entrySet().stream()
-                .map(this::convertPropertyToChannel)
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-    }
 
     private Map.Entry<String, ManagedChannel> convertPropertyToChannel(Map.Entry<String, ChannelProperty> entry) {
         LOGGER.debug("converting single entry from ChannelProperty to ManagedChannel");
