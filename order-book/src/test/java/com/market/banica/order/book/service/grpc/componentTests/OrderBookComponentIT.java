@@ -10,11 +10,8 @@ import com.market.banica.order.book.exception.TrackingException;
 import com.market.banica.order.book.service.grpc.AuroraClient;
 import com.market.banica.order.book.service.grpc.OrderBookService;
 import com.market.banica.order.book.service.grpc.componentTests.configuration.TestConfiguration;
-import com.orderbook.CancelSubscriptionRequest;
 import com.orderbook.CancelSubscriptionResponse;
-import com.orderbook.InterestsRequest;
 import com.orderbook.InterestsResponse;
-import com.orderbook.ItemOrderBookRequest;
 import com.orderbook.ItemOrderBookResponse;
 import com.orderbook.OrderBookLayer;
 import com.orderbook.OrderBookServiceGrpc;
@@ -71,6 +68,9 @@ class OrderBookComponentIT {
     @LocalServerPort
     private int grpcMockPort;
 
+    @Value(value = "${market.name}")
+    private String marketName;
+
     @Value(value = "${product.name}")
     private String productName;
 
@@ -93,6 +93,9 @@ class OrderBookComponentIT {
     private OrderBookServiceGrpc.OrderBookServiceBlockingStub blockingStub;
     private AuroraServiceGrpc.AuroraServiceStub asynchronousStub;
 
+    private final static String MARKET_PREFIX = "market/";
+    private final static String DELIMITER = "/";
+
     @BeforeEach
     void setupChannel() {
         serverName = InProcessServerBuilder.generateName();
@@ -107,19 +110,25 @@ class OrderBookComponentIT {
 
     @Test
     void getOrderBookItemLayers_Should_ReturnAUnaryResponse() throws IOException {
-
         // Arrange
-        ItemOrderBookResponse expected = generateItemOrderBookExpectedResponse();
+        Aurora.AuroraResponse expected = generateItemOrderBookExpectedResponse();
 
         grpcCleanup.register(InProcessServerBuilder
                 .forName(serverName).directExecutor().addService(testConfiguration.getGrpcOrderBookServiceItemLayers(expected))
                 .build().start());
 
+        ItemOrderBookResponse itemOrderBookResponse = null;
+        if (expected.getMessage().is(ItemOrderBookResponse.class)) {
+            itemOrderBookResponse = expected.getMessage().unpack(ItemOrderBookResponse.class);
+        }
         // Act
-        ItemOrderBookResponse reply = generateItemOrderBookResponseFromRequest();
-
+        Aurora.AuroraResponse reply = generateItemOrderBookResponseFromRequest();
+        ItemOrderBookResponse itemOrderBookResponseReply = null;
+        if (reply.getMessage().is(ItemOrderBookResponse.class)) {
+            itemOrderBookResponseReply = expected.getMessage().unpack(ItemOrderBookResponse.class);
+        }
         // Assert
-        assertEquals(expected.getItemName(), reply.getItemName());
+        assertEquals(itemOrderBookResponse.getItemName(), itemOrderBookResponseReply.getItemName());
     }
 
     @Test
@@ -130,7 +139,7 @@ class OrderBookComponentIT {
                 .build().start());
 
         // Act and Assert
-        assertThrows(StatusRuntimeException.class, () -> blockingStub.getOrderBookItemLayers(ItemOrderBookRequest.newBuilder().build()));
+        assertThrows(StatusRuntimeException.class, () -> blockingStub.getOrderBookItemLayers(Aurora.AuroraRequest.newBuilder().build()));
     }
 
     @Test
@@ -142,13 +151,15 @@ class OrderBookComponentIT {
                 .forName(serverName).directExecutor()
                 .addService(new OrderBookServiceGrpc.OrderBookServiceImplBase() {
                     @Override
-                    public void announceItemInterest(InterestsRequest request, StreamObserver<InterestsResponse> responseObserver) {
+                    public void announceItemInterest(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
                         try {
-                            auroraClient.startSubscription(request.getItemName(), request.getClientId());
+                            auroraClient.startSubscription(request.getTopic().split(DELIMITER)[1], request.getClientId());
                         } catch (TrackingException e) {
                             e.printStackTrace();
                         }
-                        responseObserver.onNext(InterestsResponse.newBuilder().build());
+                        responseObserver.onNext(Aurora.AuroraResponse.newBuilder().setMessage(
+                                Any.pack(InterestsResponse.newBuilder().build())).build());
+
                         responseObserver.onCompleted();
                     }
                 }).build().start());
@@ -162,7 +173,9 @@ class OrderBookComponentIT {
         doReturn(asynchronousStub).when(auroraClient).getAsynchronousStub();
 
         // Act
-        InterestsResponse response = blockingStub.announceItemInterest(InterestsRequest.newBuilder().setItemName(productName).build());
+        Aurora.AuroraResponse response = blockingStub
+                .announceItemInterest(Aurora.AuroraRequest.newBuilder()
+                        .setTopic(MARKET_PREFIX+ productName).build());
 
         // Assert
         verify(server).subscribe(requestCaptor.capture(), ArgumentMatchers.any());
@@ -179,20 +192,22 @@ class OrderBookComponentIT {
         grpcCleanup.register(InProcessServerBuilder
                 .forName(serverName).directExecutor().addService(new OrderBookServiceGrpc.OrderBookServiceImplBase() {
                     @Override
-                    public void cancelItemSubscription(CancelSubscriptionRequest request, StreamObserver<CancelSubscriptionResponse> responseObserver) {
+                    public void cancelItemSubscription(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
                         try {
-                            auroraClient.stopSubscription(request.getItemName(), request.getClientId());
+                            auroraClient.stopSubscription(request.getTopic().split(DELIMITER)[1], request.getClientId());
                         } catch (TrackingException e) {
                             e.printStackTrace();
                         }
-                        responseObserver.onNext(CancelSubscriptionResponse.newBuilder().build());
+                        responseObserver.onNext(
+                                Aurora.AuroraResponse.newBuilder().setMessage(
+                                        Any.pack(CancelSubscriptionResponse.newBuilder().build())).build());
                         responseObserver.onCompleted();
                     }
                 }).build().start());
 
         // Act
-        blockingStub.cancelItemSubscription(CancelSubscriptionRequest.newBuilder()
-                .setItemName(productName)
+        blockingStub.cancelItemSubscription(Aurora.AuroraRequest.newBuilder()
+                .setTopic(MARKET_PREFIX + productName)
                 .setClientId(clientId)
                 .build());
 
@@ -200,7 +215,7 @@ class OrderBookComponentIT {
         assertNull(auroraClient.getCancellableStubs().get(productName));
     }
 
-    private ItemOrderBookResponse generateItemOrderBookExpectedResponse() {
+    private Aurora.AuroraResponse generateItemOrderBookExpectedResponse() {
         ItemOrderBookResponse expected = ItemOrderBookResponse.newBuilder()
                 .setItemName(productName)
                 .addOrderbookLayers(0, OrderBookLayer.newBuilder()
@@ -208,27 +223,27 @@ class OrderBookComponentIT {
                         .setOrigin(Origin.AMERICA)
                         .build())
                 .build();
-        return expected;
+        return Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(expected)).build();
     }
 
-    private ItemOrderBookResponse generateItemOrderBookResponseFromRequest() {
-        ItemOrderBookResponse reply =
-                blockingStub.getOrderBookItemLayers(ItemOrderBookRequest.newBuilder()
-                        .setItemName(productName)
+    private Aurora.AuroraResponse generateItemOrderBookResponseFromRequest() {
+        Aurora.AuroraResponse reply =
+                blockingStub.getOrderBookItemLayers(Aurora.AuroraRequest.newBuilder()
+                        .setTopic(MARKET_PREFIX + productName)
                         .setClientId(clientId)
                         .build());
         return reply;
     }
 
     private Aurora.AuroraResponse generateAuroraResponse() {
-        Aurora.AuroraResponse auroraResponse = Aurora.AuroraResponse.newBuilder().
-                setMessage(Any.pack(TickResponse.newBuilder()
-                        .setGoodName(productName)
-                        .build()))
+        TickResponse tick = TickResponse.newBuilder()
+                .setGoodName(productName)
+                .build();
+        Aurora.AuroraResponse auroraResponse = Aurora.AuroraResponse.newBuilder()
+                .setMessage(Any.pack(tick))
                 .build();
         return auroraResponse;
     }
-
 }
 
 

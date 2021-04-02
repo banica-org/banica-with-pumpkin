@@ -2,8 +2,6 @@ package com.market.banica.order.book.service.grpc.componentTests.configuration;
 
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
-import com.orderbook.ItemOrderBookRequest;
-import com.orderbook.ItemOrderBookResponse;
 import com.orderbook.OrderBookServiceGrpc;
 import io.grpc.stub.StreamObserver;
 import org.springframework.context.annotation.Configuration;
@@ -17,24 +15,24 @@ import static org.mockito.Mockito.mock;
 public class TestConfiguration {
 
 
-public AuroraServiceGrpc.AuroraServiceImplBase getMockGrpcService(Aurora.AuroraResponse auroraResponse) {
+    public AuroraServiceGrpc.AuroraServiceImplBase getMockGrpcService(Aurora.AuroraResponse auroraResponse) {
 
-    return mock(AuroraServiceGrpc.AuroraServiceImplBase.class, delegatesTo(new AuroraServiceGrpc.AuroraServiceImplBase() {
-        @Override
-        public void subscribe(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
+        return mock(AuroraServiceGrpc.AuroraServiceImplBase.class, delegatesTo(new AuroraServiceGrpc.AuroraServiceImplBase() {
+            @Override
+            public void subscribe(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
 
-            responseObserver.onNext(auroraResponse);
+                responseObserver.onNext(auroraResponse);
 
-            responseObserver.onCompleted();
-        }
-    }));
-}
+                responseObserver.onCompleted();
+            }
+        }));
+    }
 
-    public OrderBookServiceGrpc.OrderBookServiceImplBase getGrpcOrderBookServiceItemLayers(ItemOrderBookResponse response) {
+    public OrderBookServiceGrpc.OrderBookServiceImplBase getGrpcOrderBookServiceItemLayers(Aurora.AuroraResponse response) {
 
         return new OrderBookServiceGrpc.OrderBookServiceImplBase() {
             @Override
-            public void getOrderBookItemLayers(ItemOrderBookRequest request, StreamObserver<ItemOrderBookResponse> responseObserver) {
+            public void getOrderBookItemLayers(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
                 responseObserver.onNext(response);
 
                 responseObserver.onCompleted();

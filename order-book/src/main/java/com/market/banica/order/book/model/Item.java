@@ -1,6 +1,5 @@
 package com.market.banica.order.book.model;
 
-
 import com.market.Origin;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -21,7 +20,11 @@ public class Item implements Comparable<Item> {
 
     @Override
     public int compareTo(Item other) {
-        return Double.compare(this.price, other.price);
+        int result = Double.compare(this.price, other.price);
+        if (result == 0) {
+            result = this.origin.compareTo(other.origin);
+        }
+        return result;
     }
 
 }
