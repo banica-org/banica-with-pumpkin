@@ -28,7 +28,7 @@ public class ItemMarket {
     public ItemMarket() {
         allItems = new ConcurrentHashMap<>();
         productsQuantity = new ConcurrentHashMap<>();
-        addDummyData2();
+        addDummyData3();
     }
 
     public Optional<Set<Item>> getItemSetByName(String itemName) {
@@ -148,6 +148,32 @@ public class ItemMarket {
         fillMapsWithDummyData("ketchup", 0.03, 50);
         fillMapsWithDummyData("tomatoes", 0.01, 65);
     }
+
+    private void addDummyData3() {
+        fillMapsWithDummyData("banica", 1, 2);
+        fillMapsWithDummyData("pumpkin", 0.003, 300);
+        fillMapsWithDummyData("milk", 1.0, 2);
+        fillMapsWithDummyData("crusts", 0.0001, 200);
+        fillMapsWithDummyData("water", 0.01, 300);
+        fillMapsWithDummyData("eggs", 0.01, 12);
+        fillMapsWithDummyData("sauce", 4.0, 150);
+        fillMapsWithDummyData("sugar", 0.02, 50);
+        fillMapsWithDummyData("ketchup", 0.03, 50);
+        fillMapsWithDummyData("tomatoes", 0.01, 65);
+    }
+
+//    private void addDummyData4() {
+//        fillMapsWithDummyData("banica", 1560000.0, 2);
+//        fillMapsWithDummyData("pumpkin", 0.003, 300);
+//        fillMapsWithDummyData("milk", 1.0, 2);
+//        fillMapsWithDummyData("crusts", 4, 200);
+//        fillMapsWithDummyData("water", 0.01, 300);
+//        fillMapsWithDummyData("eggs", 0.01, 12);
+//        fillMapsWithDummyData("sauce", 400.0, 150);
+//        fillMapsWithDummyData("sugar", 0.02, 50);
+//        fillMapsWithDummyData("ketchup", 4, 50);
+//        fillMapsWithDummyData("tomatoes", 0.01, 65);
+//    }
 
     private void fillMapsWithDummyData(String productName, double price, int quantity) {
         TreeSet<Item> objects = new TreeSet<>();

@@ -169,6 +169,7 @@ public class CalculatorServiceImpl implements CalculatorService {
 
                 tempProduct.setTotalPrice(productPrice);
 
+
                 for (String ingredientName : tempProduct.getIngredients().keySet()) {
                     ProductDto productDto = productDtoMap.get(ingredientName);
                     if (!productDto.getIngredients().isEmpty()) {
@@ -194,6 +195,7 @@ public class CalculatorServiceImpl implements CalculatorService {
                     }
                 }
 
+
                 tempProduct.getIngredients().clear();
                 writePriceToProduct(tempProduct, orderedProductQuantity, productSpecificationMap);
             }
@@ -205,6 +207,8 @@ public class CalculatorServiceImpl implements CalculatorService {
 
             return Collections.singletonList(compositeProductsDtoMap.get(itemName));
         }
+
+        Collections.reverse(result);
 
         return result;
     }
