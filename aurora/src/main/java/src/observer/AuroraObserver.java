@@ -25,7 +25,9 @@ public class AuroraObserver implements StreamObserver<Aurora.AuroraResponse> {
     @Override
     public void onNext(Aurora.AuroraResponse response) {
         LOGGER.debug("Forwarding response to client {}", request.getClientId());
-        forwardResponse.onNext(response);
+        synchronized (forwardResponse){
+            forwardResponse.onNext(response);
+        }
     }
 
 
