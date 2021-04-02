@@ -1,6 +1,5 @@
 package com.market.banica.generator.service;
 
-import com.market.TickResponse;
 import com.market.banica.generator.model.GoodSpecification;
 import com.market.banica.generator.model.MarketTick;
 import com.market.banica.generator.service.task.TickTimerTask;
@@ -10,13 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Timer;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.stream.Collectors;
 
 @Component
 public class TickGeneratorImpl implements TickGenerator {
@@ -24,18 +19,21 @@ public class TickGeneratorImpl implements TickGenerator {
     private static final Logger LOGGER = LoggerFactory.getLogger(TickGeneratorImpl.class);
 
     private static final Timer TICK_TIMER = new Timer();
-    private static final BlockingQueue<MarketTick> generatedTicks = new LinkedBlockingQueue<>();
+
     private static final Map<String, TickTimerTask> tickTimerTasks = new ConcurrentHashMap<>();
 
+    private final MarketState marketState;
+
     @Autowired
-    public TickGeneratorImpl(@Value("${market.name}") String marketName) {
+    public TickGeneratorImpl(@Value("${market.name}") String marketName, MarketState marketState) {
         MarketTick.setOrigin(marketName);
+        this.marketState = marketState;
     }
 
     @Override
     public void startTickGeneration(GoodSpecification goodSpecification) {
         if (!tickTimerTasks.containsKey(goodSpecification.getName())) {
-            TickTimerTask startedTask = new TickTimerTask(this, goodSpecification);
+            TickTimerTask startedTask = new TickTimerTask(this, goodSpecification, marketState);
             tickTimerTasks.put(goodSpecification.getName(), startedTask);
             TICK_TIMER.schedule(startedTask, startedTask.generateRandomPeriod());
             LOGGER.info("Started new tick generation for {}!", goodSpecification.getName());
@@ -61,7 +59,7 @@ public class TickGeneratorImpl implements TickGenerator {
         if (tickTimerTasks.containsKey(goodSpecification.getName())) {
             tickTimerTasks.remove(goodSpecification.getName()).cancel();
 
-            TickTimerTask startedTask = new TickTimerTask(this, goodSpecification);
+            TickTimerTask startedTask = new TickTimerTask(this, goodSpecification, marketState);
             tickTimerTasks.put(goodSpecification.getName(), startedTask);
             TICK_TIMER.schedule(startedTask, startedTask.generateRandomPeriod());
             LOGGER.info("Updated tick generation for {}!", goodSpecification.getName());
@@ -71,30 +69,11 @@ public class TickGeneratorImpl implements TickGenerator {
         }
     }
 
-    @Override
-    public List<TickResponse> getGeneratedTicksForGood(String nameGood) {
-        return generatedTicks.stream()
-                .filter(marketTick -> marketTick.getGood().equals(nameGood))
-                .map(marketTick -> TickResponse.newBuilder()
-                        .setOrigin(MarketTick.getOrigin())
-                        .setGoodName(marketTick.getGood())
-                        .setQuantity(marketTick.getQuantity())
-                        .setPrice(marketTick.getPrice())
-                        .setTimestamp(marketTick.getTimestamp())
-                        .build())
-                .collect(Collectors.toList());
-    }
-
     public Timer getTickTimer() {
         return TICK_TIMER;
-    }
-
-    public BlockingQueue<MarketTick> getGeneratedTicks() {
-        return generatedTicks;
     }
 
     public Map<String, TickTimerTask> getTickTimerTasks() {
         return tickTimerTasks;
     }
-
 }
