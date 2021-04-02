@@ -2,7 +2,6 @@ package src.handlers;
 
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
-import src.config.ChannelManager;
 import io.grpc.ManagedChannel;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -10,10 +9,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import src.config.ChannelManager;
 import src.observer.AuroraObserver;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
