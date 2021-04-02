@@ -15,12 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 
 @Service
@@ -30,7 +25,6 @@ public class CalculatorServiceImpl implements CalculatorService {
 
     private final AuroraClientSideService auroraService;
     private final ProductService productService;
-    private final TestData testData;
 
     @Override
     public List<ProductDto> getRecipe(String clientId, String itemName, int quantity) {
@@ -98,7 +92,7 @@ public class CalculatorServiceImpl implements CalculatorService {
             }
 
             productPrice = productPrice.add(checkPriceForProduct(tempProduct,
-                    orderedProductQuantity,productSpecificationMap));
+                    orderedProductQuantity, productSpecificationMap));
 
 
             for (String productDtoName : tempProduct.getIngredients().keySet()) {
@@ -110,12 +104,12 @@ public class CalculatorServiceImpl implements CalculatorService {
                 if (!compositeProductsDtoMap.containsKey(productDtoName)) {
 
                     tempIngredientPrice = tempIngredientPrice.add(checkPriceForProduct(currentProductDto,
-                            ingredientRecipeQuantity,productSpecificationMap));
+                            ingredientRecipeQuantity, productSpecificationMap));
 
                 } else {
 
-                    tempIngredientPrice = currentProductDto.getTotalPrice()
-                            .multiply(BigDecimal.valueOf(ingredientRecipeQuantity));
+                    tempIngredientPrice = currentProductDto.getTotalPrice();
+                            /*.multiply(BigDecimal.valueOf(ingredientRecipeQuantity));*/
                 }
                 ingredientsPrice = ingredientsPrice.add(tempIngredientPrice);
 
@@ -150,13 +144,13 @@ public class CalculatorServiceImpl implements CalculatorService {
 
                 tempProduct.setTotalPrice(productPrice);
                 tempProduct.getIngredients().clear();
-                writePriceToProduct(tempProduct,orderedProductQuantity,productSpecificationMap);
+                writePriceToProduct(tempProduct, orderedProductQuantity, productSpecificationMap);
             }
 
             result.add(tempProduct);
         }
 
-        if(!compositeProductsDtoMap.get(itemName).getProductSpecifications().isEmpty()){
+        if (!compositeProductsDtoMap.get(itemName).getProductSpecifications().isEmpty()) {
 
             return Collections.singletonList(compositeProductsDtoMap.get(itemName));
         }
@@ -165,7 +159,7 @@ public class CalculatorServiceImpl implements CalculatorService {
     }
 
     private BigDecimal writePriceToProduct(final ProductDto productDto, final long orderedProductQuantity,
-                                     final Map<String, List<ProductSpecification>> productSpecificationMap) {
+                                           final Map<String, List<ProductSpecification>> productSpecificationMap) {
 
         BigDecimal result = BigDecimal.ZERO;
         long productQuantity = orderedProductQuantity;
@@ -235,7 +229,8 @@ public class CalculatorServiceImpl implements CalculatorService {
     private void getProductsDataFromOrderBook(String clientId, Product product, int quantity, Map<String,
             ProductDto> productDtoMap, Map<String, List<ProductSpecification>> productSpecificationMap) {
 
-        ItemOrderBookResponse orderBookResponse = testData.getTestData().get(product.getProductName());
+   /*     ItemOrderBookResponse orderBookResponse = auroraService.getIngredient(product.getProductName(), clientId, quantity);*/
+        ItemOrderBookResponse orderBookResponse = auroraService.getIngredient(product.getProductName(), clientId, quantity);
 
         String productName = orderBookResponse.getItemName();
 

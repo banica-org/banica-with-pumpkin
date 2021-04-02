@@ -34,6 +34,7 @@ public class AuroraClientSideService {
 
     public void announceInterests(String productName) {
         LOGGER.debug("Inside announceInterests method with parameter product name: {}", productName);
+
         Aurora.AuroraResponse auroraResponse = getAuroraResponse(CLIENT_ID, productName);
 
         if (!auroraResponse.getMessage().is(InterestsResponse.class)) {
@@ -75,7 +76,6 @@ public class AuroraClientSideService {
     }
 
     public AuroraServiceGrpc.AuroraServiceBlockingStub getBlockingStub() {
-
         return blockingStub;
     }
 

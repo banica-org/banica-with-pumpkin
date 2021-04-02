@@ -11,14 +11,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -35,7 +28,7 @@ public class ItemMarket {
     public ItemMarket() {
         allItems = new ConcurrentHashMap<>();
         productsQuantity = new ConcurrentHashMap<>();
-        addDummyData();
+        addDummyData2();
     }
 
     public Optional<Set<Item>> getItemSetByName(String itemName) {
@@ -142,28 +135,31 @@ public class ItemMarket {
         return layers;
     }
 
-    private void addDummyData() {
 
-        TreeSet<Item> cheeseItems = new TreeSet<>();
-        cheeseItems.add(new Item(2.6, 2, Origin.AMERICA));
-        cheeseItems.add(new Item(2.6, 2, Origin.AMERICA));
-        cheeseItems.add(new Item(4.0, 5, Origin.EUROPE));
-        cheeseItems.add(new Item(4.1, 2, Origin.ASIA));
-        allItems.put("cheese", cheeseItems);
-        for (Item cheeseItem : cheeseItems) {
-            productsQuantity.merge("cheese", cheeseItem.getQuantity(), Long::sum);
-        }
-
-
-        TreeSet<Item> cocoaItems = new TreeSet<>();
-
-        cocoaItems.add(new Item(1.6, 3, Origin.ASIA));
-        cocoaItems.add(new Item(1.5, 4, Origin.AMERICA));
-        cocoaItems.add(new Item(1.7, 1, Origin.EUROPE));
-        allItems.put("cocoa", cocoaItems);
-        for (Item cocoaItem : cocoaItems) {
-            productsQuantity.merge("cocoa", cocoaItem.getQuantity(), Long::sum);
-        }
+    private void addDummyData2() {
+        fillMapsWithDummyData("banica", 156000.0, 2);
+        fillMapsWithDummyData("pumpkin", 0.003, 300);
+        fillMapsWithDummyData("milk", 1.0, 2);
+        fillMapsWithDummyData("crusts", 0.0001, 200);
+        fillMapsWithDummyData("water", 0.01, 300);
+        fillMapsWithDummyData("eggs", 0.01, 12);
+        fillMapsWithDummyData("sauce", 4.0, 150);
+        fillMapsWithDummyData("sugar", 0.02, 50);
+        fillMapsWithDummyData("ketchup", 0.03, 50);
+        fillMapsWithDummyData("tomatoes", 0.01, 65);
     }
+
+    private void fillMapsWithDummyData(String productName, double price, int quantity) {
+        TreeSet<Item> objects = new TreeSet<>();
+        Item item = new Item(price, quantity, getRandomOrigin());
+        objects.add(item);
+        allItems.put(productName, objects);
+        productsQuantity.merge(productName, item.getQuantity(), Long::sum);
+    }
+
+    private Origin getRandomOrigin() {
+        return Origin.forNumber(new Random().nextInt(3) + 1);
+    }
+
 
 }
