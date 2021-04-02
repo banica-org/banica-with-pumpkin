@@ -28,6 +28,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 @Getter
@@ -39,6 +40,7 @@ public class AuroraClient {
     private final ManagedChannel managedChannel;
     private final Map<String, Context.CancellableContext> cancellableStubs;
     private static final Logger LOGGER = LogManager.getLogger(AuroraClient.class);
+    private AtomicInteger integer = new AtomicInteger(0);
 
     @Autowired
     AuroraClient(ItemMarket itemMarket,
@@ -106,7 +108,7 @@ public class AuroraClient {
                     } catch (InvalidProtocolBufferException e) {
                         throw new IncorrectResponseException("Response is not correct!");
                     }
-
+                    LOGGER.info("Current received ticks {} current tick is item: {}",integer.incrementAndGet(),tickResponse.getGoodName());
 
                     Item item = new Item();
                     item.setPrice(tickResponse.getPrice());
@@ -121,7 +123,7 @@ public class AuroraClient {
                                 tickResponse.getGoodName());
                     }
 
-                    LOGGER.info("Products data updated!");
+                    //LOGGER.info("Products data updated!");
                 } else {
                     throw new IncorrectResponseException("Response is not correct!");
                 }
@@ -131,7 +133,6 @@ public class AuroraClient {
             public void onError(final Throwable throwable) {
                 LOGGER.warn("Unable to request");
                 LOGGER.error(throwable.getMessage());
-                throwable.printStackTrace();
             }
 
             @Override
