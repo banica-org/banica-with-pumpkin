@@ -27,7 +27,6 @@ public class AuroraStreamObserver implements StreamObserver<Aurora.AuroraRespons
     public void onError(Throwable throwable) {
         LOGGER.warn("Unable to request");
         LOGGER.error(throwable.getMessage());
-        throwable.printStackTrace();
     }
 
     @Override
