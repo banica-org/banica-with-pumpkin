@@ -2,6 +2,7 @@ package com.market.banica.generator.service;
 
 import com.market.TickResponse;
 import com.market.banica.generator.model.MarketTick;
+import com.market.banica.generator.util.PersistScheduler;
 import com.market.banica.generator.util.SnapshotPersistence;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +39,8 @@ public class MarketStateImpl implements MarketState {
 
     private final MarketSubscriptionManager subscriptionManager;
 
+    private final PersistScheduler persistScheduler;
+
     @Autowired
     public MarketStateImpl(@Value("${tick.database.file.name}") String fileName,
                            MarketSubscriptionManager subscriptionManager) throws IOException {
@@ -45,7 +48,7 @@ public class MarketStateImpl implements MarketState {
         this.marketState = snapshotPersistence.loadPersistedSnapshot();
         this.executorService = Executors.newSingleThreadExecutor();
         this.subscriptionManager = subscriptionManager;
-        PersistScheduler persistScheduler = new PersistSchedulerImpl(marketStateLock, snapshotPersistence, marketState);
+        persistScheduler = new PersistScheduler(marketStateLock, snapshotPersistence, marketState);
         persistScheduler.scheduleSnapshot();
     }
 
@@ -97,6 +100,10 @@ public class MarketStateImpl implements MarketState {
         } finally {
             marketStateLock.readLock().unlock();
         }
+    }
+
+    public PersistScheduler getPersistScheduler() {
+        return persistScheduler;
     }
 
     private TickResponse convertMarketTickToTickResponse(MarketTick marketTick) {

@@ -1,12 +1,9 @@
-package com.market.banica.generator.service;
+package com.market.banica.generator.util;
 
 import com.market.banica.generator.model.MarketTick;
 import com.market.banica.generator.service.task.SnapshotPersistenceTask;
-import com.market.banica.generator.util.SnapshotPersistence;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.jmx.export.annotation.ManagedOperation;
-import org.springframework.jmx.export.annotation.ManagedResource;
 
 import java.util.Map;
 import java.util.Set;
@@ -14,10 +11,9 @@ import java.util.Timer;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReadWriteLock;
 
-@ManagedResource
-public class PersistSchedulerImpl implements PersistScheduler {
+public class PersistScheduler {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(PersistSchedulerImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(PersistScheduler.class);
 
     private static final Timer PERSIST_TIMER = new Timer();
 
@@ -28,16 +24,14 @@ public class PersistSchedulerImpl implements PersistScheduler {
     private final SnapshotPersistence snapshotPersistence;
     private final Map<String, Set<MarketTick>> newTicks;
 
-    public PersistSchedulerImpl(ReadWriteLock marketStateLock,
-                                SnapshotPersistence snapshotPersistence,
-                                Map<String, Set<MarketTick>> newTicks) {
+    public PersistScheduler(ReadWriteLock marketStateLock,
+                            SnapshotPersistence snapshotPersistence,
+                            Map<String, Set<MarketTick>> newTicks) {
         this.marketStateLock = marketStateLock;
         this.snapshotPersistence = snapshotPersistence;
         this.newTicks = newTicks;
     }
 
-    @Override
-    @ManagedOperation
     public void setFrequency(int frequency) {
         if (this.frequencySchedule != frequency) {
             if (frequency > 0) {

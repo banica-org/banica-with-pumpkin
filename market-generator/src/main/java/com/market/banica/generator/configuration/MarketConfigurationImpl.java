@@ -3,7 +3,9 @@ package com.market.banica.generator.configuration;
 import com.market.banica.common.util.ApplicationDirectoryUtil;
 import com.market.banica.generator.exception.NotFoundException;
 import com.market.banica.generator.model.GoodSpecification;
+import com.market.banica.generator.service.MarketState;
 import com.market.banica.generator.service.TickGenerator;
+import com.market.banica.generator.util.PersistScheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,12 +45,14 @@ public class MarketConfigurationImpl implements MarketConfiguration {
     private final Properties properties = new Properties();
     private final Map<String, GoodSpecification> goods = new HashMap<>();
     private final TickGenerator tickGenerator;
+    private final PersistScheduler persistScheduler;
 
     @Autowired
     public MarketConfigurationImpl(@Value("${market.properties.file.name}") String fileName,
-                                   TickGenerator tickGenerator) throws IOException {
+                                   TickGenerator tickGenerator, MarketState marketState) throws IOException {
         this.configurationFile = ApplicationDirectoryUtil.getConfigFile(fileName);
         this.tickGenerator = tickGenerator;
+        this.persistScheduler = marketState.getPersistScheduler();
         loadProperties();
     }
 
@@ -135,6 +139,11 @@ public class MarketConfigurationImpl implements MarketConfiguration {
         } finally {
             propertiesWriteLock.writeLock().unlock();
         }
+    }
+
+    @ManagedOperation
+    public void setPersistenceFrequencyInSeconds(int frequency) {
+        persistScheduler.setFrequency(frequency);
     }
 
     private void modifyProperty(GoodSpecification modifiedGoodSpecification) {
