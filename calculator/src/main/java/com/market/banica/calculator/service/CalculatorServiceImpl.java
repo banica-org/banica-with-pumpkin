@@ -187,8 +187,8 @@ public class CalculatorServiceImpl implements CalculatorService {
                             }
                         }
                     }
-                    if (result.contains(productDto)){
-                        if(productDto.getProductSpecifications().isEmpty() || productDto.getProductSpecifications().size() ==1){
+                    if (result.contains(productDto)) {
+                        if (productDto.getProductSpecifications().isEmpty() || productDto.getProductSpecifications().size() == 1) {
                             result.remove(productDto);
                         }
                     }
@@ -280,7 +280,7 @@ public class CalculatorServiceImpl implements CalculatorService {
     private void getProductsDataFromOrderBook(String clientId, Product product, long quantity, Map<String,
             ProductDto> productDtoMap, Map<String, List<ProductSpecification>> productSpecificationMap) {
 
-        ItemOrderBookResponse orderBookResponse = auroraService.getIngredient(product.getProductName(),clientId,quantity);
+        ItemOrderBookResponse orderBookResponse = auroraService.getIngredient(product.getProductName(), clientId, quantity);
 
         String productName = orderBookResponse.getItemName();
 
