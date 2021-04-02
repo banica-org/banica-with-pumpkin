@@ -25,44 +25,44 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
-//@ExtendWith(MockitoExtension.class)
+@ExtendWith(MockitoExtension.class)
 public class ProductControllerTests {
 
-//    private MockMvc mockMvc;
-//
-//    @Mock
-//    private ProductService productService;
-//
-//    @InjectMocks
-//    private ProductController productController;
-//
-//    private JacksonTester<List<Product>> jsonResponseListProduct;
-//    private JacksonTester<Product> jsonResponseProduct;
-//
-//    @BeforeEach
-//    private void setUp() {
-//        JacksonTester.initFields(this, new ObjectMapper());
-//        mockMvc = MockMvcBuilders.standaloneSetup(productController).build();
-//    }
-//
-//    @Test
-//    public void createProduct_Should_returnProduct() throws Exception {
-//        //given
-//        Product product = new Product();
-//        List<Product> products = new ArrayList<>(Collections.singletonList(product));
-//        given(productService.createProduct(products)).willReturn(product);
-//
-//        //when
-//        MockHttpServletResponse response = mockMvc.perform(
-//                post("/product")
-//                        .contentType(MediaType.APPLICATION_JSON)
-//                        .content(jsonResponseListProduct.write(products).getJson())
-//                        .accept(MediaType.APPLICATION_JSON))
-//                .andReturn().getResponse();
-//
-//        //then
-//        assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
-//        assertThat(response.getContentAsString())
-//                .isEqualTo(jsonResponseProduct.write(product).getJson());
-//    }
+    private MockMvc mockMvc;
+
+    @Mock
+    private ProductService productService;
+
+    @InjectMocks
+    private ProductController productController;
+
+    private JacksonTester<List<Product>> jsonResponseListProduct;
+    private JacksonTester<Product> jsonResponseProduct;
+
+    @BeforeEach
+    private void setUp() {
+        JacksonTester.initFields(this, new ObjectMapper());
+        mockMvc = MockMvcBuilders.standaloneSetup(productController).build();
+    }
+
+    @Test
+    public void createProduct_Should_returnProduct() throws Exception {
+        //given
+        Product product = new Product();
+        List<Product> products = new ArrayList<>(Collections.singletonList(product));
+        given(productService.createProduct(products)).willReturn(product);
+
+        //when
+        MockHttpServletResponse response = mockMvc.perform(
+                post("/product")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonResponseListProduct.write(products).getJson())
+                        .accept(MediaType.APPLICATION_JSON))
+                .andReturn().getResponse();
+
+        //then
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
+        assertThat(response.getContentAsString())
+                .isEqualTo(jsonResponseProduct.write(product).getJson());
+    }
 }
