@@ -6,6 +6,7 @@ import com.market.banica.generator.util.SnapshotPersistence;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PreDestroy;
@@ -31,8 +32,6 @@ public class MarketStateImpl implements MarketState {
 
     private static final ReadWriteLock marketStateLock = new ReentrantReadWriteLock();
 
-    private static final SnapshotPersistence snapshotPersistence = new SnapshotPersistence();
-
     private final Map<String, Set<MarketTick>> marketState;
 
     private final ExecutorService executorService;
@@ -40,7 +39,9 @@ public class MarketStateImpl implements MarketState {
     private final MarketSubscriptionManager subscriptionManager;
 
     @Autowired
-    public MarketStateImpl(MarketSubscriptionManager subscriptionManager) throws IOException {
+    public MarketStateImpl(@Value("${tick.database.file.name}") String fileName,
+                           MarketSubscriptionManager subscriptionManager) throws IOException {
+        SnapshotPersistence snapshotPersistence = new SnapshotPersistence(fileName);
         this.marketState = snapshotPersistence.loadPersistedSnapshot();
         this.executorService = Executors.newSingleThreadExecutor();
         this.subscriptionManager = subscriptionManager;

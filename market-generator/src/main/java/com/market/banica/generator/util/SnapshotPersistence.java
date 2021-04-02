@@ -20,17 +20,18 @@ public class SnapshotPersistence {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SnapshotPersistence.class);
 
-    private static final String DATABASE_FILE_NAME = "tickDatabase.dat";
+    private final String databaseFileName;
 
     private static final Kryo kryoHandle = new Kryo();
 
-    public SnapshotPersistence() {
+    public SnapshotPersistence(String fileName) {
         initKryo();
+        this.databaseFileName = fileName;
     }
 
     public void persistTicks(Map<String, Set<MarketTick>> newTicks) throws FileNotFoundException {
 
-        Output output = new Output(new FileOutputStream(DATABASE_FILE_NAME));
+        Output output = new Output(new FileOutputStream(databaseFileName));
         kryoHandle.writeClassAndObject(output, newTicks);
         output.close();
         LOGGER.info("Persisting snapshot database!");
@@ -42,18 +43,18 @@ public class SnapshotPersistence {
 
         Map<String, Set<MarketTick>> loadedMarketTicks = new ConcurrentHashMap<>();
 
-        if (!ApplicationDirectoryUtil.doesFileExist(DATABASE_FILE_NAME)) {
+        if (!ApplicationDirectoryUtil.doesFileExist(databaseFileName)) {
 
-            LOGGER.info("Creating \"{}\" file!", DATABASE_FILE_NAME);
-            ApplicationDirectoryUtil.getConfigFile(DATABASE_FILE_NAME);
+            LOGGER.info("Creating \"{}\" file!", databaseFileName);
+            ApplicationDirectoryUtil.getConfigFile(databaseFileName);
 
-        } else if (ApplicationDirectoryUtil.getConfigFile(DATABASE_FILE_NAME).length() == 0) {
+        } else if (ApplicationDirectoryUtil.getConfigFile(databaseFileName).length() == 0) {
 
-            LOGGER.info("File \"{}\" is empty, no ticks were loaded!", DATABASE_FILE_NAME);
+            LOGGER.info("File \"{}\" is empty, no ticks were loaded!", databaseFileName);
 
         } else {
 
-            Input input = new Input(new FileInputStream(DATABASE_FILE_NAME));
+            Input input = new Input(new FileInputStream(databaseFileName));
             loadedMarketTicks = (Map<String, Set<MarketTick>>) kryoHandle.readClassAndObject(input);
             input.close();
             LOGGER.info("Loaded snapshot database!");

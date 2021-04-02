@@ -3,7 +3,6 @@ package com.market.banica.generator.service;
 import com.aurora.Aurora;
 import com.google.protobuf.Any;
 import com.market.TickResponse;
-import io.grpc.Context;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.ServerCallStreamObserver;
