@@ -9,12 +9,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -27,13 +26,11 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 @Component
-public class MarketStateImpl implements com.market.banica.generator.service.MarketState {
+public class MarketStateImpl implements MarketState {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MarketStateImpl.class);
 
     private static final ReadWriteLock marketStateLock = new ReentrantReadWriteLock();
-
-    private static final SnapshotPersistence snapshotPersistence = new SnapshotPersistence();
 
     private final Map<String, Set<MarketTick>> marketState;
 
@@ -42,14 +39,15 @@ public class MarketStateImpl implements com.market.banica.generator.service.Mark
     private final MarketSubscriptionManager subscriptionManager;
 
     @Autowired
-    public MarketStateImpl(MarketSubscriptionManager subscriptionManager) throws IOException {
+    public MarketStateImpl(@Value("${tick.database.file.name}") String fileName,
+                           MarketSubscriptionManager subscriptionManager) throws IOException {
+        SnapshotPersistence snapshotPersistence = new SnapshotPersistence(fileName);
         this.marketState = snapshotPersistence.loadPersistedSnapshot();
         this.executorService = Executors.newSingleThreadExecutor();
         this.subscriptionManager = subscriptionManager;
         PersistScheduler persistScheduler = new PersistSchedulerImpl(marketStateLock, snapshotPersistence, marketState);
         persistScheduler.scheduleSnapshot();
     }
-
 
     @Override
     public void addTickToMarketState(MarketTick marketTick) {
@@ -58,7 +56,7 @@ public class MarketStateImpl implements com.market.banica.generator.service.Mark
                 marketStateLock.writeLock().lock();
                 String good = marketTick.getGood();
                 if (!marketState.containsKey(good)) {
-                    marketState.put(good, new TreeSet<>(Comparator.comparingLong(MarketTick::getTimestamp)));
+                    marketState.put(good, new HashSet<>());
                 }
                 marketState.get(good).add(marketTick);
                 subscriptionManager.notifySubscribers(convertMarketTickToTickResponse(marketTick));
@@ -121,4 +119,5 @@ public class MarketStateImpl implements com.market.banica.generator.service.Mark
             Thread.currentThread().interrupt();
         }
     }
+
 }

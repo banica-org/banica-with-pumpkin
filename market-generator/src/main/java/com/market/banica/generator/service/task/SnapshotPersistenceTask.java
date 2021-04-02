@@ -14,6 +14,7 @@ public class SnapshotPersistenceTask extends TimerTask {
     private final ReadWriteLock marketStateLock;
     private final SnapshotPersistence snapshotPersistence;
     private final Map<String, Set<MarketTick>> newTicks;
+
     public SnapshotPersistenceTask(ReadWriteLock marketStateLock,
                                    SnapshotPersistence snapshotPersistence,
                                    Map<String, Set<MarketTick>> newTicks) {
@@ -28,11 +29,9 @@ public class SnapshotPersistenceTask extends TimerTask {
         try {
             marketStateLock.readLock().lock();
             snapshotPersistence.persistTicks(newTicks);
-        }finally {
+        } finally {
             marketStateLock.readLock().unlock();
         }
     }
+
 }
-
-
-
