@@ -72,9 +72,7 @@ public class MarketConfigurationImpl implements MarketConfiguration {
                     periodLow, periodHigh, periodStep);
 
             this.modifyProperty(addedGoodSpecification);
-
             tickGenerator.startTickGeneration(addedGoodSpecification);
-
             LOGGER.info("Creating and adding a new goodSpecification.");
         } finally {
             propertiesWriteLock.writeLock().unlock();

@@ -2,7 +2,9 @@ package com.market.banica.generator.service.task;
 
 import com.market.banica.generator.model.GoodSpecification;
 import com.market.banica.generator.model.MarketTick;
+import com.market.banica.generator.service.MarketState;
 import com.market.banica.generator.service.TickGenerator;
+
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -17,9 +19,11 @@ public class TickTimerTask extends TimerTask {
 
     private final TickGenerator tickGenerator;
     private final GoodSpecification good;
+    private final MarketState marketState;
 
-    public TickTimerTask(TickGenerator tickGenerator, GoodSpecification good) {
+    public TickTimerTask(TickGenerator tickGenerator, GoodSpecification good, MarketState marketState) {
         this.tickGenerator = tickGenerator;
+        this.marketState = marketState;
         this.good = good;
     }
 
@@ -31,9 +35,9 @@ public class TickTimerTask extends TimerTask {
                 generateRandomPrice(),
                 new Date().getTime());
 
-        tickGenerator.getGeneratedTicks().add(marketTick);
+        marketState.addTickToMarketState(marketTick);
 
-        TickTimerTask nextTick = new TickTimerTask(tickGenerator, good);
+        TickTimerTask nextTick = new TickTimerTask(tickGenerator, good, marketState);
         tickGenerator.getTickTimerTasks().put(good.getName(), nextTick);
         tickGenerator.getTickTimer().schedule(nextTick, TimeUnit.SECONDS.toMillis(generateRandomPeriod()));
 
@@ -62,5 +66,4 @@ public class TickTimerTask extends TimerTask {
                 .setScale(2, RoundingMode.HALF_UP)
                 .doubleValue();
     }
-
 }

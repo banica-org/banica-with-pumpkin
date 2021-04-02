@@ -6,21 +6,27 @@ import com.market.MarketDataRequest;
 import com.market.MarketServiceGrpc;
 import com.market.TickResponse;
 import io.grpc.stub.StreamObserver;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class MarketServiceImpl extends MarketServiceGrpc.MarketServiceImplBase implements MarketService {
 
-    private MarketSubscriptionManager marketSubscriptionManager;
+    private final MarketSubscriptionManager marketSubscriptionManager;
 
-    private TickGenerator tickGenerator;
+    private final MarketState marketState;
+
+    @Autowired
+    public MarketServiceImpl(MarketSubscriptionManager marketSubscriptionManager, MarketState marketState) {
+        this.marketSubscriptionManager = marketSubscriptionManager;
+        this.marketState = marketState;
+    }
 
     @Override
     public void subscribeForItem(MarketDataRequest request, StreamObserver<TickResponse> responseObserver) {
         String topic = marketSubscriptionManager.getRequestGoodName(request);
-        tickGenerator.getGeneratedTicksForGood(topic).forEach(responseObserver::onNext);
+        marketState.generateMarketTicks(topic).forEach(responseObserver::onNext);
         marketSubscriptionManager.subscribe(request, responseObserver);
-        responseObserver.onCompleted();
     }
 
     @Override

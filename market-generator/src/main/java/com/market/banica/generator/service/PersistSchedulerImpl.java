@@ -14,21 +14,26 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Timer;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReadWriteLock;
 
-@Component
 @ManagedResource
 public class PersistSchedulerImpl implements PersistScheduler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PersistSchedulerImpl.class);
-    private int frequencySchedule;
-    private SnapshotPersistenceTask snapshotPersistenceTask;
+
     private static final Timer PERSIST_TIMER = new Timer();
+
+    private int frequencySchedule = 60;
+    private SnapshotPersistenceTask currentSnapshotPersistenceTask;
+
+    private final ReadWriteLock marketStateLock;
     private final SnapshotPersistence snapshotPersistence;
     private final Map<String, Set<MarketTick>> newTicks;
 
-    @Autowired
-    public PersistSchedulerImpl(SnapshotPersistence snapshotPersistence,
+    public PersistSchedulerImpl(ReadWriteLock marketStateLock,
+                                SnapshotPersistence snapshotPersistence,
                                 Map<String, Set<MarketTick>> newTicks) {
+        this.marketStateLock = marketStateLock;
         this.snapshotPersistence = snapshotPersistence;
         this.newTicks = newTicks;
     }
@@ -39,27 +44,32 @@ public class PersistSchedulerImpl implements PersistScheduler {
         if (this.frequencySchedule != frequency) {
             if (frequency > 0) {
 
-                LOGGER.info(String.format("Changing the snapshot frequency to %d!", frequency));
+                LOGGER.info("Changing the snapshot frequency to {}!", frequency);
                 this.frequencySchedule = frequency;
 
-                this.snapshotPersistenceTask.cancel();
+                this.currentSnapshotPersistenceTask.cancel();
                 scheduleSnapshot();
 
             } else {
                 LOGGER.warn("Please, provide a positive frequency!");
+                throw new IllegalArgumentException("Please, provide a positive frequency!");
             }
         } else {
             LOGGER.warn("The current frequency is the same!");
+            throw new IllegalArgumentException("The current frequency is the same!");
         }
     }
 
-    private void scheduleSnapshot() {
-        this.snapshotPersistenceTask = new SnapshotPersistenceTask(snapshotPersistence, newTicks);
-        PERSIST_TIMER.scheduleAtFixedRate(snapshotPersistenceTask,
+    public synchronized void scheduleSnapshot() {
+
+        this.currentSnapshotPersistenceTask = new SnapshotPersistenceTask(marketStateLock,
+                snapshotPersistence, newTicks);
+
+        PERSIST_TIMER.scheduleAtFixedRate(currentSnapshotPersistenceTask,
                 TimeUnit.SECONDS.toMillis(frequencySchedule),
                 TimeUnit.SECONDS.toMillis(frequencySchedule));
-        LOGGER.info(String.format("Successfully started taking snapshots in %d seconds!",
-                frequencySchedule));
+
+        LOGGER.info("Successfully started taking snapshots in {} seconds!", frequencySchedule);
 
     }
 

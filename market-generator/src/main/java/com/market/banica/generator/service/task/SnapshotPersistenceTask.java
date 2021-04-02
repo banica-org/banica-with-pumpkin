@@ -7,13 +7,17 @@ import lombok.SneakyThrows;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimerTask;
+import java.util.concurrent.locks.ReadWriteLock;
 
 public class SnapshotPersistenceTask extends TimerTask {
+
+    private final ReadWriteLock marketStateLock;
     private final SnapshotPersistence snapshotPersistence;
     private final Map<String, Set<MarketTick>> newTicks;
-
-    public SnapshotPersistenceTask(SnapshotPersistence snapshotPersistence,
+    public SnapshotPersistenceTask(ReadWriteLock marketStateLock,
+                                   SnapshotPersistence snapshotPersistence,
                                    Map<String, Set<MarketTick>> newTicks) {
+        this.marketStateLock = marketStateLock;
         this.snapshotPersistence = snapshotPersistence;
         this.newTicks = newTicks;
     }
@@ -21,6 +25,14 @@ public class SnapshotPersistenceTask extends TimerTask {
     @SneakyThrows
     @Override
     public void run() {
-        snapshotPersistence.persistTicks(newTicks);
+        try {
+            marketStateLock.readLock().lock();
+            snapshotPersistence.persistTicks(newTicks);
+        }finally {
+            marketStateLock.readLock().unlock();
+        }
     }
 }
+
+
+
