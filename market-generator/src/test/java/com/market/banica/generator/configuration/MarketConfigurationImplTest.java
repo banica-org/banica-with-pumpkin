@@ -46,7 +46,12 @@ public class MarketConfigurationImplTest {
                         0, 2, 3,
                         4, 5, 6,
                         9, 8, 9));
-        this.marketConfiguration = new MarketConfigurationImpl(FILE_NAME, new TickGeneratorImpl("test", new MarketStateImpl("test-tickdatabase.dat", new MarketSubscriptionManager())));
+        this.marketConfiguration = new MarketConfigurationImpl(FILE_NAME,
+                new TickGeneratorImpl("test",
+                        new MarketStateImpl("test-tickdatabase.dat",
+                                new MarketSubscriptionManager())),
+                new MarketStateImpl("test-tickdatabase.dat",
+                        new MarketSubscriptionManager()));
         ReflectionTestUtils.setField(marketConfiguration, "goods", goods);
         this.testFile = new File(file, "test-market.properties");
         ReflectionTestUtils.setField(marketConfiguration, "configurationFile", testFile);
