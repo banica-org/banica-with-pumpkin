@@ -28,7 +28,7 @@ public class ItemMarket {
     public ItemMarket() {
         allItems = new ConcurrentHashMap<>();
         productsQuantity = new ConcurrentHashMap<>();
-        addDummyData3();
+        addDummyData2();
     }
 
     public Optional<Set<Item>> getItemSetByName(String itemName) {

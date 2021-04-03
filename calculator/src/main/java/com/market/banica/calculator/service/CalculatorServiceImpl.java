@@ -31,7 +31,6 @@ public class CalculatorServiceImpl implements CalculatorService {
 
     private final AuroraClientSideService auroraService;
     private final ProductService productService;
-//    private final TestData testData;
 
     @Override
     public List<ProductDto> getRecipe(String clientId, String itemName, int quantity) {
