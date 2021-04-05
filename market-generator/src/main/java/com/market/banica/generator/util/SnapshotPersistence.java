@@ -67,7 +67,7 @@ public class SnapshotPersistence {
     private static void initKryo() {
 
         kryoHandle.register(java.util.concurrent.ConcurrentHashMap.class);
-        kryoHandle.register(java.util.HashSet.class);
+        kryoHandle.register(java.util.TreeSet.class);
         kryoHandle.register(MarketTick.class);
 
     }
