@@ -5,7 +5,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.market.banica.common.util.ApplicationDirectoryUtil;
-import io.grpc.ConnectivityState;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +21,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -131,7 +129,7 @@ public class JMXConfig {
         builder.append("Channel : State of channel.\n");
 
         channels.getChannels().entrySet()
-                .forEach(channels -> builder.append(String.format("%s : %s \n", channels.getKey(), channels.getValue().getState(true)))
+                .forEach(entry -> builder.append(String.format("%s : %s \n", entry.getKey(), entry.getValue().getState(true)))
                 );
 
 
