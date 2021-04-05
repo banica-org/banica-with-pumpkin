@@ -30,21 +30,17 @@ jobs:
 
       - name: Build docker images
         run: |
-          docker build -t tikvenik/protobuf-messages protobuf-messages
           docker build -t tikvenik/aurora aurora
           docker build -t tikvenik/calculator calculator
           docker build -t tikvenik/market-generator market-generator
           docker build -t tikvenik/order-book order-book
-          docker build -t tikvenik/common common
 
       - name: Docker login
         run: docker login -u tikvenik -p ${{ secrets.DOCKER_TOKEN }}
 
       - name: Publish images
         run: |
-          docker push tikvenik/protobuf-messages
           docker push tikvenik/aurora
           docker push tikvenik/calculator
           docker push tikvenik/market-generator
           docker push tikvenik/order-book
-          docker push tikvenik/common
