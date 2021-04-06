@@ -41,7 +41,6 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
 
         List<OrderBookLayer> requestedItem = itemMarket.getRequestedItem(itemName, itemQuantity);
 
-        if (requestedItem.size() > 0) {
             responseObserver.onNext(
                     Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(
                             ItemOrderBookResponse.newBuilder()
@@ -49,14 +48,6 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
                                     .addAllOrderbookLayers(requestedItem).build()))
                             .build()
             );
-        } else {
-            responseObserver.onNext(Aurora.AuroraResponse.newBuilder().setMessage(
-                    Any.pack(
-                            ItemOrderBookResponse.newBuilder()
-                                    .setItemName(itemName)
-                                    .build()
-                    )).build());
-        }
         responseObserver.onCompleted();
 
         LOGGER.info("Get orderbook item layers by client id: {}", request.getClientId());

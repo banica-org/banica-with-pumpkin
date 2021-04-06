@@ -55,41 +55,45 @@ public class ItemMarket {
     }
 
     public void updateItem(Aurora.AuroraResponse response) {
-        if (response.getMessage().is(TickResponse.class)) {
-            TickResponse tickResponse;
-
-            try {
-                tickResponse = response.getMessage().unpack(TickResponse.class);
-            } catch (InvalidProtocolBufferException e) {
-                throw new IncorrectResponseException("Response is not correct!");
-            }
-
-            Item item = new Item();
-            item.setPrice(tickResponse.getPrice());
-            item.setQuantity(tickResponse.getQuantity());
-            item.setOrigin(tickResponse.getOrigin());
-
-            productsQuantity.merge(tickResponse.getGoodName(), tickResponse.getQuantity(), Long::sum);
-
-            Set<Item> itemSet = allItems.get(tickResponse.getGoodName());
-            if (itemSet != null) {
-                if (itemSet.contains(item)) {
-                    Item presentItem = itemSet.stream().filter(item1 -> Double.compare(item1.getPrice(), item.getPrice()) == 0
-                            && item1.getOrigin().equals(item.getOrigin())).findFirst().get();
-                    presentItem.setQuantity(presentItem.getQuantity() + item.getQuantity());
-                    return;
-                }
-
-                itemSet.add(item);
-            } else {
-                LOGGER.error("Item: {} is not being tracked and cannot be added to itemMarket!",
-                        tickResponse.getGoodName());
-            }
-
-            LOGGER.info("Products data updated!");
-        } else {
+        if (!response.getMessage().is(TickResponse.class)) {
             throw new IncorrectResponseException("Response is not correct!");
         }
+        TickResponse tickResponse;
+
+        try {
+            tickResponse = response.getMessage().unpack(TickResponse.class);
+        } catch (InvalidProtocolBufferException e) {
+            throw new IncorrectResponseException("Response is not correct!");
+        }
+        Set<Item> itemSet = allItems.get(tickResponse.getGoodName());
+        if (itemSet == null) {
+            LOGGER.error("Item: {} is not being tracked and cannot be added to itemMarket!",
+                    tickResponse.getGoodName());
+            return;
+        }
+        Item item = populateItem(tickResponse);
+
+        productsQuantity.merge(tickResponse.getGoodName(), tickResponse.getQuantity(), Long::sum);
+
+        LOGGER.info("Products data updated!");
+
+        if (itemSet.contains(item)) {
+            Item presentItem = itemSet.stream().filter(currentItem -> Double.compare(currentItem.getPrice(), item.getPrice()) == 0
+                    && currentItem.getOrigin().equals(item.getOrigin())).findFirst().get();
+            presentItem.setQuantity(presentItem.getQuantity() + item.getQuantity());
+            return;
+        }
+
+        itemSet.add(item);
+
+    }
+
+    private Item populateItem(TickResponse tickResponse) {
+        Item item = new Item();
+        item.setPrice(tickResponse.getPrice());
+        item.setQuantity(tickResponse.getQuantity());
+        item.setOrigin(tickResponse.getOrigin());
+        return item;
     }
 
     public List<OrderBookLayer> getRequestedItem(String itemName, long quantity) {
