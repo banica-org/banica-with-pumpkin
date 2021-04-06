@@ -1,21 +1,21 @@
 package com.market.banica.aurora.handlers;
 
 import com.aurora.Aurora;
+import com.aurora.AuroraServiceGrpc;
+import com.market.banica.aurora.config.ChannelManager;
+import io.grpc.Channel;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import io.grpc.Status;
-import io.grpc.StatusException;
 import io.grpc.stub.StreamObserver;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import com.market.banica.aurora.config.ChannelManager;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -25,41 +25,52 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class RequestHandlerTest {
 
-    @InjectMocks
-    private static RequestHandler requestHandler;
-
-    private final ChannelManager channels = mock(ChannelManager.class);
+    private static final ChannelManager channels = mock(ChannelManager.class);
 
     private static final Aurora.AuroraRequest AURORA_REQUEST_BANICA = Aurora.AuroraRequest.newBuilder().setTopic("market/banica").build();
 
-    private static final StatusException STATUS_EXCEPTION =  Status.INVALID_ARGUMENT.asException();
+    private static final String TOPIC_PREFIX = "market";
+
+    private static final ManagedChannel MANAGED_CHANNEL_EUROPE = ManagedChannelBuilder
+            .forAddress("localhost", 1010)
+            .usePlaintext()
+            .build();
 
     private final StreamObserver<Aurora.AuroraResponse> auroraResponse = mock(StreamObserver.class);
 
-    private static final String TOPIC_PREFIX = "market";
-
-    @Mock
-    private final List<ManagedChannel> managedChannels = new ArrayList<>();
-
-    private static final ManagedChannel MANAGED_CHANNEL_EUROPE = ManagedChannelBuilder
-            .forAddress("localhost", 1030)
-            .usePlaintext()
-            .build();
-
-    private static final ManagedChannel MANAGED_CHANNEL_ASIA = ManagedChannelBuilder
-            .forAddress("localhost", 1040)
-            .usePlaintext()
-            .build();
+    @InjectMocks
+    @Spy
+    private static RequestHandler requestHandler;
 
     @Test
     void handleRequestWithAuroraRequestForNonExistentChannelInvokesOnError() {
         //Arrange
-        when(channels.getAllChannelsContainingPrefix(TOPIC_PREFIX)).thenReturn(new ArrayList<>());
+        when(channels.getChannelByKey(TOPIC_PREFIX)).thenReturn(Optional.empty());
 
         //Act
         requestHandler.handleRequest(AURORA_REQUEST_BANICA, auroraResponse);
 
         //Assert
-        verify(auroraResponse,times(1)).onError(any());
+        verify(auroraResponse, times(1)).onError(any());
+    }
+
+    @Test
+    void handleRequestWithAuroraRequestForExistingChannelStartsToProcessTheRequest() {
+        //Arrange
+        when(channels.getChannelByKey(TOPIC_PREFIX)).thenReturn(Optional.ofNullable(MANAGED_CHANNEL_EUROPE));
+
+        //Act
+        requestHandler.handleRequest(AURORA_REQUEST_BANICA, auroraResponse);
+
+        //Assert
+        verify(requestHandler, times(1)).generateAuroraStub(any());
+        verify(auroraResponse, times(1)).onError(any());
+    }
+
+    @Test
+    void generateAuroraStubGeneratesStubCorrectly() {
+        Channel expected = AuroraServiceGrpc.newStub(MANAGED_CHANNEL_EUROPE).getChannel();
+        Channel actual = requestHandler.generateAuroraStub(MANAGED_CHANNEL_EUROPE).getChannel();
+        assertEquals(expected, actual);
     }
 }
