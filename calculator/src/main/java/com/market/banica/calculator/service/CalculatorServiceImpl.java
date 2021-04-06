@@ -16,143 +16,100 @@ import org.springframework.stereotype.Service;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 
 @Service
 @RequiredArgsConstructor
 public class CalculatorServiceImpl implements CalculatorService {
 
-
     private final AuroraClientSideService auroraService;
     private final ProductService productService;
-//    private final TestData testData;
+    private final TestData testData;
 
     @Override
-    public List<ProductDto> getRecipe(String clientId, String itemName, int quantity) {
+    public List<ProductDto> getRecipe(String clientId, String itemName, long quantity) {
 
-        Set<Product> products = productService.getProductAsListProduct(itemName);
+        Map<Product, List<Long>> products = productService.getProductIngredientsWithQuantity(itemName);
 
-        Gson gson = new Gson();
-        String jsonString = gson.toJson(products);
-        Type type = new TypeToken<HashSet<Product>>() {
-        }.getType();
-        Set<Product> productsVerifyParentSet = gson.fromJson(jsonString, type);
-
-        List<ProductDto> result = new ArrayList<>();
-
-        Map<String, ProductDto> productDtoMap = new HashMap<>();
+        Map<ProductDto, List<Long>> productDtoMap = new HashMap<>();
 
         Map<String, List<ProductSpecification>> productSpecificationMap = new HashMap<>();
 
-        for (Product product : products) {
+        populateOrderedProductDataToDataStructures(clientId, itemName, quantity,
+                products, productDtoMap, productSpecificationMap);
 
-            long tempQuantity = quantity;
-            for (Product setProduct : productsVerifyParentSet) {
+        populateConstituentProductsDataToDataStructures(clientId, products,
+                productDtoMap, productSpecificationMap);
 
-                if (setProduct.getIngredients().containsKey(product.getProductName())) {
+        Map<String, ProductDto> productDtoNamesMap = productDtoMap.keySet().stream()
+                .collect(Collectors.toMap(ProductDto::getItemName, Function.identity()));
 
-                    tempQuantity = setProduct.getIngredients().get(product.getProductName());
-                    setProduct.getIngredients().remove(product.getProductName());
-                    break;
-                }
-            }
-            getProductsDataFromOrderBook(clientId, product, tempQuantity, productDtoMap,
-                    productSpecificationMap);
-        }
+        List<ProductDto> result = new ArrayList<>();
 
-        Map<String, ProductDto> compositeProductsDtoMap = new HashMap<>();
-
-        for (Map.Entry<String, ProductDto> entry : productDtoMap.entrySet()) {
-
-            if (!entry.getValue().getIngredients().isEmpty()) {
-
-                compositeProductsDtoMap.put(entry.getKey(), entry.getValue());
-            }
-        }
-
-        jsonString = gson.toJson(compositeProductsDtoMap);
-        type = new TypeToken<HashMap<String, ProductDto>>() {
+        Gson gson = new Gson();
+        Type type = new TypeToken<HashMap<String, List<ProductSpecification>>>() {
         }.getType();
-        Map<String, ProductDto> compositeProductsDtoVerifyParentMap = gson.fromJson(jsonString, type);
 
-        for (int i = 0; i < compositeProductsDtoMap.size(); i++) {
+        String productSpecificationJsonString = gson.toJson(productSpecificationMap);
 
-            ProductDto tempProduct = compositeProductsDtoMap.values().stream()
-                    .filter(m -> m.getTotalPrice() == null)
-                    .filter(k -> {
-                        boolean hasCompositeIngredients = false;
-                        for (String ingredientName : k.getIngredients().keySet()) {
+        boolean isCompositeProductWithCompositeIngredientsSetAsSimpleProduct = true;
+        while (isCompositeProductWithCompositeIngredientsSetAsSimpleProduct) {
 
-                            hasCompositeIngredients = productDtoMap.get(ingredientName).getTotalPrice() != null;
-                        }
-                        return hasCompositeIngredients;
-                    })
-                    .findFirst()
-                    .orElseThrow(IllegalArgumentException::new);
+            result = new ArrayList<>();
 
-            long orderedProductQuantity = quantity;
-            BigDecimal productPrice = BigDecimal.ZERO;
-            BigDecimal ingredientsPrice = BigDecimal.ZERO;
-
-            for (String productDtoName : compositeProductsDtoVerifyParentMap.keySet()) {
-
-                ProductDto productDto = compositeProductsDtoVerifyParentMap.get(productDtoName);
-
-                if (productDto.getIngredients().containsKey(tempProduct.getItemName())) {
-
-                    orderedProductQuantity = productDto.getIngredients().get(tempProduct.getItemName());
-                    compositeProductsDtoVerifyParentMap.get(productDto.getItemName()).getIngredients()
-                            .remove(tempProduct.getItemName());
-                    break;
-                }
-            }
-
-            productPrice = productPrice.add(checkPriceForProduct(tempProduct,
-                    orderedProductQuantity, productSpecificationMap));
+            isCompositeProductWithCompositeIngredientsSetAsSimpleProduct = checkBestPrices(
+                    productDtoMap, productSpecificationMap,
+                    productDtoNamesMap, result);
 
 
-            for (String productDtoName : tempProduct.getIngredients().keySet()) {
+            productSpecificationMap = gson.fromJson(productSpecificationJsonString,type);
+        }
 
-                BigDecimal tempIngredientPrice = BigDecimal.ZERO;
-                ProductDto currentProductDto = productDtoMap.get(productDtoName);
-                long ingredientRecipeQuantity = tempProduct.getIngredients().get(productDtoName);
+        calculateBestPrices(productDtoMap, productSpecificationMap,
+                productDtoNamesMap, result);
 
-                if (!compositeProductsDtoMap.containsKey(productDtoName)) {
+        if (!productDtoNamesMap.get(itemName).getProductSpecifications().isEmpty()) {
 
-                    tempIngredientPrice = tempIngredientPrice.add(checkPriceForProduct(currentProductDto,
-                            ingredientRecipeQuantity, productSpecificationMap));
+            result = Arrays.asList(productDtoNamesMap.get(itemName));
+        }
 
-                } else {
+        Collections.reverse(result);
 
-                    tempIngredientPrice = currentProductDto.getTotalPrice();
+        return result;
+    }
 
-                }
-                ingredientsPrice = ingredientsPrice.add(tempIngredientPrice);
+    private void calculateBestPrices(Map<ProductDto, List<Long>> productDtoMap,
+                                     Map<String, List<ProductSpecification>> productSpecificationMap,
+                                     Map<String, ProductDto> productDtoNamesMap, List<ProductDto> result) {
 
-            }
+        for (ProductDto tempProduct : result) {
 
+            if (tempProduct.getIngredients().isEmpty()) continue;
 
-            ingredientsPrice = ingredientsPrice.multiply(BigDecimal.valueOf(orderedProductQuantity));
+            for (long tempQuantity : productDtoMap.get(tempProduct)) {
 
-            if (productPrice.compareTo(ingredientsPrice) > 0) {
+                BigDecimal ingredientsPrice = BigDecimal.ZERO;
+
+                ingredientsPrice = calculateIngredientsPrice(productSpecificationMap,
+                        productDtoNamesMap, tempProduct, ingredientsPrice);
+
+                ingredientsPrice = ingredientsPrice.multiply(BigDecimal.valueOf(tempQuantity));
 
                 tempProduct.setTotalPrice(ingredientsPrice);
 
                 for (String ingredientName : tempProduct.getIngredients().keySet()) {
 
-                    ProductDto ingredient = productDtoMap.get(ingredientName);
+                    ProductDto ingredient = productDtoNamesMap.get(ingredientName);
 
-                    if (!result.contains(ingredient)) {
-                        result.add(ingredient);
-                    }
-
-                    if (!compositeProductsDtoMap.containsKey(ingredientName)) {
+                    if (ingredient.getIngredients().isEmpty()) {
 
                         BigDecimal tempIngredientPrice = BigDecimal.ZERO;
 
@@ -163,50 +120,167 @@ public class CalculatorServiceImpl implements CalculatorService {
                         ingredient.setTotalPrice(ingredient.getTotalPrice().add(tempIngredientPrice));
                     }
                 }
+            }
+        }
+    }
 
+    private boolean checkBestPrices(Map<ProductDto, List<Long>> productDtoMap,
+                                    Map<String, List<ProductSpecification>> productSpecificationMap,
+                                    Map<String, ProductDto> productDtoNamesMap, List<ProductDto> result) {
+
+        while(true) {
+
+            Optional<ProductDto> optionalProductDto = getNotCompositeProductWhichIngredientsDoesNotHaveIngredients
+                    (productDtoNamesMap, productDtoMap);
+
+            if (!optionalProductDto.isPresent()) break;
+
+            ProductDto tempProduct = optionalProductDto.get();
+
+            for (long tempQuantity : productDtoMap.get(tempProduct)) {
+
+                BigDecimal productPrice = BigDecimal.ZERO;
+                BigDecimal ingredientsPrice = BigDecimal.ZERO;
+
+                productPrice = productPrice.add(checkPriceForProduct(tempProduct,
+                        tempQuantity, productSpecificationMap));
+
+                ingredientsPrice = calculateIngredientsPrice(productSpecificationMap,
+                        productDtoNamesMap, tempProduct, ingredientsPrice);
+
+
+                ingredientsPrice = ingredientsPrice.multiply(BigDecimal.valueOf(tempQuantity));
+
+
+                if (productPrice.compareTo(ingredientsPrice) > 0) {
+
+                    tempProduct.setTotalPrice(ingredientsPrice);
+
+                    for (String ingredientName : tempProduct.getIngredients().keySet()) {
+
+                        ProductDto ingredient = productDtoNamesMap.get(ingredientName);
+
+                        if (!result.contains(ingredient)) {
+
+                            result.add(ingredient);
+                        }
+
+                        if (ingredient.getIngredients().isEmpty()) {
+
+                            reserveProductQuantities(ingredient,
+                                    tempProduct.getIngredients().get(ingredientName),
+                                    productSpecificationMap);
+
+                        }
+                    }
+                } else {
+                    tempProduct.setTotalPrice(BigDecimal.ZERO);
+
+                    for (String ingredientName : tempProduct.getIngredients().keySet()) {
+
+                        ProductDto ingredient = productDtoNamesMap.get(ingredientName);
+                        if (!ingredient.getIngredients().isEmpty()) {
+
+                            //should be done in a dfs
+                            productDtoMap.get(ingredient).remove(tempProduct.getIngredients().get(ingredientName));
+                            tempProduct.getIngredients().clear();
+
+                            return true;
+                        }
+                    }
+
+                    tempProduct.getIngredients().clear();
+
+                    reserveProductQuantities(tempProduct, tempQuantity, productSpecificationMap);
+                }
+                result.add(tempProduct);
+            }
+        }
+        return false;
+    }
+
+    private Optional<ProductDto> getNotCompositeProductWhichIngredientsDoesNotHaveIngredients(Map<String, ProductDto> productDtoNamesMap,
+                                                                                              Map<ProductDto, List<Long>> productDtoMap) {
+
+        return productDtoMap.keySet().stream().filter(
+                m -> !m.getIngredients().isEmpty() && m.getTotalPrice() == null &&
+                        m.getIngredients().keySet()
+                                .stream()
+                                .allMatch(productName -> productDtoNamesMap.get(productName).getTotalPrice() != null))
+                .findFirst();
+    }
+
+    private BigDecimal calculateIngredientsPrice(Map<String, List<ProductSpecification>> productSpecificationMap,
+                                                 Map<String, ProductDto> productDtoNamesMap, ProductDto tempProduct,
+                                                 BigDecimal ingredientsPrice) {
+
+        for (String ingredientName : tempProduct.getIngredients().keySet()) {
+
+            BigDecimal tempIngredientPrice = BigDecimal.ZERO;
+            ProductDto currentIngredient = productDtoNamesMap.get(ingredientName);
+            long ingredientRecipeQuantity = tempProduct.getIngredients().get(ingredientName);
+
+            if (currentIngredient.getTotalPrice().equals(BigDecimal.ZERO)) {
+
+                tempIngredientPrice = tempIngredientPrice.add(checkPriceForProduct(currentIngredient,
+                        ingredientRecipeQuantity, productSpecificationMap));
 
             } else {
 
-                tempProduct.setTotalPrice(productPrice);
+                tempIngredientPrice = currentIngredient.getTotalPrice();
 
-                for (String ingredientName : tempProduct.getIngredients().keySet()) {
-                    ProductDto productDto = productDtoMap.get(ingredientName);
-                    if (!productDto.getIngredients().isEmpty()) {
-                        for (String tempIngredientName : productDto.getIngredients().keySet()) {
-                            ProductDto tempProductDto = productDtoMap.get(tempIngredientName);
-                            long ingredientQuantity = productDto.getIngredients().get(tempIngredientName);
-                            if (result.contains(tempProductDto)) {
-                                ProductSpecification productSpecification = tempProductDto.getProductSpecifications().stream()
-                                        .filter(k -> k.getQuantity() == ingredientQuantity)
-                                        .findFirst()
-                                        .orElseThrow(IllegalArgumentException::new);
-                                tempProductDto.getProductSpecifications().remove(productSpecification);
-                                if (tempProductDto.getProductSpecifications().isEmpty()) {
-                                    result.remove(tempProductDto);
-                                }
-                            }
-                        }
-                    }
-                    if (result.contains(productDto)){
-                        if(productDto.getProductSpecifications().isEmpty() || productDto.getProductSpecifications().size() ==1){
-                            result.remove(productDto);
-                        }
-                    }
-                }
-
-                tempProduct.getIngredients().clear();
-                writePriceToProduct(tempProduct, orderedProductQuantity, productSpecificationMap);
             }
+            ingredientsPrice = ingredientsPrice.add(tempIngredientPrice);
 
-            result.add(tempProduct);
+        }
+        return ingredientsPrice;
+    }
+
+    private void populateConstituentProductsDataToDataStructures(String clientId, Map<Product, List<Long>> products,
+                                                                 Map<ProductDto, List<Long>> productDtoMap,
+                                                                 Map<String, List<ProductSpecification>> productSpecificationMap) {
+
+        for (Product product : products.keySet()) {
+
+            long tempQuantity = products.get(product).stream().mapToLong(Long::longValue).sum();
+
+            getProductsMarketDataFromOrderBook(clientId, product, tempQuantity,
+                    productSpecificationMap);
+
+            convertProductToProductDto(product, products, productDtoMap);
+        }
+    }
+
+    private void populateOrderedProductDataToDataStructures(String clientId, String itemName, long quantity,
+                                                            Map<Product, List<Long>> products, Map<ProductDto,
+            List<Long>> productDtoMap, Map<String, List<ProductSpecification>> productSpecificationMap) {
+
+        Product orderedProduct = productService.getProductFromDatabase(itemName);
+
+        products.put(orderedProduct, new ArrayList<>(Arrays.asList(quantity)));
+
+        getProductsMarketDataFromOrderBook(clientId, orderedProduct, quantity,
+                productSpecificationMap);
+        convertProductToProductDto(orderedProduct, products, productDtoMap);
+    }
+
+    private void convertProductToProductDto(Product product, Map<Product, List<Long>> products,
+                                            Map<ProductDto, List<Long>> productDtoMap) {
+
+        ProductDto productDto = new ProductDto();
+
+        productDto.setItemName(product.getProductName());
+
+        if (product.getIngredients().isEmpty()) {
+
+            productDto.setTotalPrice(BigDecimal.ZERO);
+
+        } else {
+
+            productDto.setIngredients(product.getIngredients());
         }
 
-        if (!compositeProductsDtoMap.get(itemName).getProductSpecifications().isEmpty()) {
-
-            return Collections.singletonList(compositeProductsDtoMap.get(itemName));
-        }
-
-        return result;
+        productDtoMap.put(productDto, products.get(product));
     }
 
     private BigDecimal writePriceToProduct(final ProductDto productDto, final long orderedProductQuantity,
@@ -215,7 +289,7 @@ public class CalculatorServiceImpl implements CalculatorService {
         BigDecimal result = BigDecimal.ZERO;
         long productQuantity = orderedProductQuantity;
 
-        for (ProductSpecification productSpecification : productSpecificationMap.get(productDto.getItemName())) {
+         for (ProductSpecification productSpecification : productSpecificationMap.get(productDto.getItemName())) {
 
             if (productSpecification.getQuantity() == 0) {
                 continue;
@@ -223,10 +297,8 @@ public class CalculatorServiceImpl implements CalculatorService {
 
             long tempQuantity = productSpecification.getQuantity();
 
-            ProductSpecification tempProductSpecification = new ProductSpecification();
+            ProductSpecification tempProductSpecification = createProductSpecificationFromExisting(productSpecification);
 
-            tempProductSpecification.setPrice(productSpecification.getPrice());
-            tempProductSpecification.setLocation(productSpecification.getLocation());
             productDto.getProductSpecifications().add(tempProductSpecification);
 
             if (tempQuantity < productQuantity) {
@@ -248,6 +320,42 @@ public class CalculatorServiceImpl implements CalculatorService {
             }
         }
         return result;
+    }
+
+    private ProductSpecification createProductSpecificationFromExisting(ProductSpecification productSpecification) {
+
+        ProductSpecification tempProductSpecification = new ProductSpecification();
+        tempProductSpecification.setPrice(productSpecification.getPrice());
+        tempProductSpecification.setLocation(productSpecification.getLocation());
+
+        return tempProductSpecification;
+    }
+
+    private void reserveProductQuantities(final ProductDto productDto, final long orderedProductQuantity,
+                                          final Map<String, List<ProductSpecification>> productSpecificationMap) {
+
+        long productQuantity = orderedProductQuantity;
+
+        for (ProductSpecification productSpecification : productSpecificationMap.get(productDto.getItemName())) {
+
+            if (productSpecification.getQuantity() == 0) {
+                continue;
+            }
+
+            long tempQuantity = productSpecification.getQuantity();
+
+            if (tempQuantity < productQuantity) {
+
+                productSpecification.setQuantity(0L);
+                productQuantity -= tempQuantity;
+
+            } else {
+
+                productSpecification.setQuantity(tempQuantity - productQuantity);
+
+                break;
+            }
+        }
     }
 
     private BigDecimal checkPriceForProduct(final ProductDto productDto, final long orderedProductQuantity,
@@ -277,10 +385,10 @@ public class CalculatorServiceImpl implements CalculatorService {
         return result;
     }
 
-    private void getProductsDataFromOrderBook(String clientId, Product product, long quantity, Map<String,
-            ProductDto> productDtoMap, Map<String, List<ProductSpecification>> productSpecificationMap) {
+    private void getProductsMarketDataFromOrderBook(String clientId, Product product, long quantity, Map<String, List<ProductSpecification>> productSpecificationMap) {
 
-        ItemOrderBookResponse orderBookResponse = auroraService.getIngredient(product.getProductName(),clientId,quantity);
+        ItemOrderBookResponse orderBookResponse = testData.getTestData1().get(product.getProductName());
+//        ItemOrderBookResponse orderBookResponse = auroraService.getIngredient(product.getProductName(),clientId,quantity);
 
         String productName = orderBookResponse.getItemName();
 
@@ -293,19 +401,6 @@ public class CalculatorServiceImpl implements CalculatorService {
         }
 
         productSpecificationMap.put(productName, productSpecifications);
-
-        ProductDto productDto = new ProductDto();
-        productDto.setItemName(productName);
-
-        if (product.getIngredients().isEmpty()) {
-
-            productDto.setTotalPrice(BigDecimal.ZERO);
-
-        } else {
-
-            productDto.setIngredients(product.getIngredients());
-        }
-        productDtoMap.put(productDto.getItemName(), productDto);
     }
 
     private ProductSpecification createProductSpecification(OrderBookLayer layer) {

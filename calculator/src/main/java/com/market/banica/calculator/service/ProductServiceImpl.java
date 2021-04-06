@@ -12,14 +12,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Queue;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -169,41 +169,35 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Set<Product> getProductAsListProduct(String productName) {
-        LOGGER.debug("In getProductAsListProduct method with parameters:productName {}"
+    public Map<Product, List<Long>> getProductIngredientsWithQuantity(String productName) {
+        LOGGER.debug("In getProductIngredientsWithQuantity method with parameters:productName {}"
                 , productName);
 
         Product product = getProductFromDatabase(productName);
 
-        Set<Product> result = new HashSet<>();
-
-        result.add(product);
+        Map<Product, List<Long>> result = new HashMap<>();
 
         if (!product.getIngredients().isEmpty()) {
-            addAllIngredientsFromProductInListAsProduct(result, product);
+            addAllIngredientsFromProductToMapOfProductAndQuantity(result, product);
         }
 
-        LOGGER.debug("GetProductAsListProduct with product name {} successfully invoked", productName);
+        LOGGER.debug("GetProductIngredientsWithQuantity with product name {} successfully invoked", productName);
         return result;
     }
 
-    //TODO to be implemented once expectations are clear
     @Override
-    public void getAllProductsAsListProduct() {
+    public Product getProductFromDatabase(String productName) {
+        LOGGER.debug("In getProductFromDatabase method");
+
+        validateProductExists(productName);
+
+        return productBase.getDatabase().get(productName);
     }
 
     private void removeDeletedProductFromAllRecipes(String productName) {
         LOGGER.debug("In removeProductFromAllRecipes private method with parameters: productName {}", productName);
 
         productBase.getDatabase().forEach((key, value) -> value.getIngredients().remove(productName));
-    }
-
-    private Product getProductFromDatabase(String productName) {
-        LOGGER.debug("In getProductFromDatabase private method");
-
-        validateProductExists(productName);
-
-        return productBase.getDatabase().get(productName);
     }
 
     private void writeProductToDatabase(String newProductName, Product newProduct) {
@@ -314,35 +308,44 @@ public class ProductServiceImpl implements ProductService {
         return products.get(0).getProductName();
     }
 
-    private void addAllIngredientsFromProductInListAsProduct(Set<Product> result, Product recipe) {
-        LOGGER.debug("In addAllIngredientsFromProductInListAsProduct private method");
+    private void addAllIngredientsFromProductToMapOfProductAndQuantity(Map<Product, List<Long>> productQuantitiesMap,
+                                                                       Product parentProduct) {
+        LOGGER.debug("In addAllIngredientsFromProductToMapOfProductAndQuantity private method");
 
-        Queue<Product> tempContainer = convertListOfProductNamesInQueueOfProducts(recipe);
+        Queue<Product> tempContainer = new ArrayDeque<>();
+        tempContainer.add(parentProduct);
 
         while (!tempContainer.isEmpty()) {
 
-            Product tempProduct = tempContainer.remove();
+            Product tempParentProduct = tempContainer.remove();
 
-            if (!tempProduct.getIngredients().isEmpty()) {
+            if (!tempParentProduct.getIngredients().isEmpty()) {
 
-                Queue<Product> tempIngredientsQueue = convertListOfProductNamesInQueueOfProducts(tempProduct);
+                Collection<Product> tempIngredients =
+                        convertProductIngredientsNamesToCollectionOfProducts(tempParentProduct);
 
-                tempContainer.addAll(tempIngredientsQueue);
+                tempContainer.addAll(tempIngredients);
 
-                result.addAll(tempIngredientsQueue);
-
+                tempIngredients.forEach(ingredient -> {
+                    if (productQuantitiesMap.containsKey(ingredient)) {
+                        productQuantitiesMap
+                                .get(ingredient).add(tempParentProduct.getIngredients().get(ingredient.getProductName()));
+                    } else {
+                        productQuantitiesMap.put(ingredient, new ArrayList<>(Arrays.asList(
+                                tempParentProduct.getIngredients().get(ingredient.getProductName()))));
+                    }
+                });
             }
-
-            result.add(tempProduct);
         }
     }
 
-    private Queue<Product> convertListOfProductNamesInQueueOfProducts(Product recipe) {
-        LOGGER.debug("In convertListOfProductNamesInQueueOfProducts private method");
+    private Collection<Product> convertProductIngredientsNamesToCollectionOfProducts(Product parent) {
+        LOGGER.debug("In convertProductIngredientsNamesToCollectionOfProducts private method");
 
-        return recipe.getIngredients().keySet().stream()
+        return parent.getIngredients().keySet().stream()
                 .map(this::getProductFromDatabase)
                 .collect(Collectors.toCollection(ArrayDeque::new));
+
     }
 
     private void validateParameterForNullAndEmpty(List<Product> products) {

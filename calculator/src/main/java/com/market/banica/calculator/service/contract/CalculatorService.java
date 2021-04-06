@@ -17,5 +17,5 @@ public interface CalculatorService {
      * @param quantity quantity of the item
      * @return recipe for item
      */
-   List<ProductDto> getRecipe(String clientId, String itemName, int quantity);
+   List<ProductDto> getRecipe(String clientId, String itemName, long quantity);
 }

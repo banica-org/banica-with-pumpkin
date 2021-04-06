@@ -291,11 +291,11 @@ class ProductServiceImplTest {
         when(productBase.getDatabase()).thenReturn(demoDataBase);
 
         //Act
-        Set<Product> products = productService.getProductAsListProduct(BANICA);
+        Map<Product,List<Long>> products = productService.getProductIngredientsWithQuantity(BANICA);
 
         //Assert
-        assertTrue(products.contains(banica));
-        assertTrue(products.contains(pumpkin));
+        assertTrue(products.containsKey(banica));
+        assertTrue(products.containsKey(pumpkin));
 
     }
 
@@ -305,10 +305,10 @@ class ProductServiceImplTest {
         when(productBase.getDatabase()).thenReturn(demoDataBase);
 
         //Act
-        Set<Product> products = productService.getProductAsListProduct(BANICA);
+        Map<Product,List<Long>> products = productService.getProductIngredientsWithQuantity(BANICA);
 
         //Assert
-        assertTrue(products.contains(banica));
+        assertTrue(products.containsKey(banica));
 
     }
 

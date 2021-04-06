@@ -32,7 +32,7 @@ public class CalculatorController {
     @GetMapping("/{clientId}/{itemName}/{quantity}")
     public List<ProductDto> getRecipe(@PathVariable("clientId") @NotBlank String clientId,
                                                 @PathVariable("itemName") @NotBlank String itemName,
-                                                @PathVariable("quantity") @Min(1) int quantity) {
+                                                @PathVariable("quantity") @Min(1) long quantity) {
         LOGGER.info("GET /calculator called");
 
 
