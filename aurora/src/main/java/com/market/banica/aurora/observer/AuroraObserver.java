@@ -1,4 +1,4 @@
-package src.observer;
+package com.market.banica.aurora.observer;
 
 import com.aurora.Aurora;
 import io.grpc.stub.StreamObserver;

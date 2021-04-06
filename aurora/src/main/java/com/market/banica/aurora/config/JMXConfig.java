@@ -1,9 +1,10 @@
-package src.config;
+package com.market.banica.aurora.config;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import com.market.banica.aurora.model.ChannelProperty;
 import com.market.banica.common.util.ApplicationDirectoryUtil;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -14,7 +15,6 @@ import org.springframework.context.annotation.EnableMBeanExport;
 import org.springframework.jmx.export.annotation.ManagedOperation;
 import org.springframework.jmx.export.annotation.ManagedResource;
 import org.springframework.stereotype.Service;
-import src.model.ChannelProperty;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;

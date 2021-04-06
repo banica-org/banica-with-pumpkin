@@ -1,4 +1,4 @@
-package src.handlers;
+package com.market.banica.aurora.handlers;
 
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import src.config.ChannelManager;
+import com.market.banica.aurora.config.ChannelManager;
 
 import java.util.Optional;
 
