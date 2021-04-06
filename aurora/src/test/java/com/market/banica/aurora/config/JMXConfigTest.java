@@ -1,5 +1,10 @@
 package com.market.banica.aurora.config;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.market.banica.aurora.model.ChannelProperty;
+import com.market.banica.common.util.ApplicationDirectoryUtil;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -9,11 +14,18 @@ import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
-import com.market.banica.aurora.model.ChannelProperty;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -28,9 +40,14 @@ class JMXConfigTest {
 
     private static final String PORT = "1010";
 
+    private static final String EDITED_HOST = "edited-localhost";
+
+    private static final String TEST_FILE_NAME = "test";
+
     @Mock
     private ChannelManager channels;
 
+    @Spy
     private final Map<String, ChannelProperty> channelPropertyMap = new HashMap<>();
 
     @InjectMocks
@@ -39,15 +56,15 @@ class JMXConfigTest {
 
     @BeforeEach
     void setUp() {
-        //jmxConfig = new JMXConfig(channels);
-        //   populateChannels(channelPropertyMap);
         ReflectionTestUtils.setField(jmxConfig, "channelPropertyMap", channelPropertyMap);
+        ReflectionTestUtils.setField(jmxConfig, "channelsBackupUrl", TEST_FILE_NAME);
     }
 
-//    @After
-//    public void clearChannelsFile() {
-//        jmxConfig.deleteChannel(CHANNEL_PREFIX); delete---
-//    }
+    @AfterAll
+    public static void clearChannelsFile() {
+        Paths.get("null").toFile().delete();
+        Paths.get("test").toFile().delete();
+    }
 
     @Test
     void createChannelWithInputOfAlreadySavedChannelPrefixThrowsException() {
@@ -58,15 +75,18 @@ class JMXConfigTest {
 
     @Test
     void createChannelWithInputOfNewChannelPrefixCreatesChannel() {
-        jmxConfig.createChannel(CHANNEL_PREFIX, HOST, PORT);
-
-        assertTrue(channelPropertyMap.containsKey(CHANNEL_PREFIX));
-
+        //Arrange
         ChannelProperty channelProperty = new ChannelProperty();
         channelProperty.setHost(HOST);
         channelProperty.setPort(Integer.parseInt(PORT));
 
+        //Act
+        jmxConfig.createChannel(CHANNEL_PREFIX, HOST, PORT);
+
+        //Assert
+        assertTrue(channelPropertyMap.containsKey(CHANNEL_PREFIX));
         Mockito.verify(channels, Mockito.times(1)).addChannel(CHANNEL_PREFIX, channelProperty);
+        Mockito.verify(jmxConfig, Mockito.times(1)).writeBackUp();
         jmxConfig.deleteChannel(CHANNEL_PREFIX);
     }
 
@@ -75,57 +95,84 @@ class JMXConfigTest {
         assertThrows(IllegalArgumentException.class, () -> jmxConfig.deleteChannel(INVALID_CHANNEL_PREFIX));
     }
 
-//
-//    @Test
-//    void editChannel() {
-//    }
-//
-//    @Test
-//    void getChannelsStatus() {
-//    }
-//
-//    @Test
-//    void writeBackUps() {
-//    }
+    @Test
+    void deleteChannelWithInputOfExistingChannelPrefixDeletesChannel() {
+        //Arrange, Act
+        jmxConfig.createChannel(CHANNEL_PREFIX, HOST, PORT);
+        assertTrue(channelPropertyMap.containsKey(CHANNEL_PREFIX));
+
+        jmxConfig.deleteChannel(CHANNEL_PREFIX);
+        assertFalse(channelPropertyMap.containsKey(CHANNEL_PREFIX));
+
+        //Assert
+        Mockito.verify(channelPropertyMap, Mockito.times(1)).remove(CHANNEL_PREFIX);
+        Mockito.verify(channels, Mockito.times(1)).deleteChannel(CHANNEL_PREFIX);
+        Mockito.verify(jmxConfig, Mockito.times(2)).writeBackUp();
+    }
 
 
-//    protected void writeBackUp() {
-//
-//        ObjectWriter objectWriter = new ObjectMapper().writerWithDefaultPrettyPrinter();
-//
-//        try (Writer output = new OutputStreamWriter(new FileOutputStream(ApplicationDirectoryUtil.getConfigFile("test.channels.json")), UTF_8)) {
-//
-//            String jsonData = getStringFromMap(this.channelPropertyMap, objectWriter);
-//
-//            output.write(jsonData);
-//
-//
-//        } catch (IOException e) {
-//            System.out.println("Exception thrown during writing back-up");
-//        }
-//    }
-//
-//    private String getStringFromMap(Map<String, ChannelProperty> data, ObjectWriter objectWriter)
-//            throws JsonProcessingException {
-//        System.out.println("In getStringFromMap private method");
-//
-//        return objectWriter.writeValueAsString(data);
-//    }
-//
-//    private void populateChannels(Map<String, ChannelProperty> channelPropertyMap) {
-//        channelPropertyMap.forEach((key, value) -> channels.addChannel(key, value));
-//    }
-//
-//    private ConcurrentHashMap<String, ChannelProperty> readChannelsConfigsFromFile() {
-//        try (InputStream input = new FileInputStream(ApplicationDirectoryUtil.getConfigFile("channels.json"))) {
-//
-//            return new ObjectMapper().readValue(input,
-//                    new TypeReference<ConcurrentHashMap<String, ChannelProperty>>() {
-//                    });
-//
-//        } catch (IOException e) {
-//            //log exception
-//        }
-//        return new ConcurrentHashMap<>();
-//    }
+    @Test
+    void editChannelWithInputOfNonExistentChannelPrefixThrowsException() {
+        assertThrows(IllegalArgumentException.class, () -> jmxConfig.editChannel(INVALID_CHANNEL_PREFIX, HOST, PORT));
+    }
+
+    @Test
+    void editChannelWithInputOfExistingChannelPrefixEditsChannel() {
+        //Arrange
+        jmxConfig.createChannel(CHANNEL_PREFIX, HOST, PORT);
+        String channelHostBeforeEdit = channelPropertyMap.get(CHANNEL_PREFIX).getHost();
+
+        ChannelProperty channelProperty = this.channelPropertyMap.get(CHANNEL_PREFIX);
+        channelProperty.setHost(EDITED_HOST);
+        channelProperty.setPort(Integer.parseInt(PORT));
+
+        //Act
+        jmxConfig.editChannel(CHANNEL_PREFIX, EDITED_HOST, PORT);
+        String channelHostAfterEdit = channelPropertyMap.get(CHANNEL_PREFIX).getHost();
+
+        //Assert
+        assertNotEquals(channelHostBeforeEdit, channelHostAfterEdit);
+        Mockito.verify(channelPropertyMap, Mockito.times(1)).remove(CHANNEL_PREFIX);
+        Mockito.verify(channelPropertyMap, Mockito.times(2)).put(CHANNEL_PREFIX, channelProperty);
+        Mockito.verify(channels, Mockito.times(1)).editChannel(CHANNEL_PREFIX, channelProperty);
+        Mockito.verify(jmxConfig, Mockito.times(2)).writeBackUp();
+        jmxConfig.deleteChannel(CHANNEL_PREFIX);
+    }
+
+    @Test
+    void getChannelsStatusVerifiesGetChannelsMethodCall() {
+        jmxConfig.getChannelsStatus();
+        Mockito.verify(channels, Mockito.times(1)).getChannels();
+    }
+
+    @Test
+    void writeBackUp() {
+        //Arrange
+        ChannelProperty actualChannelProperty = new ChannelProperty();
+        actualChannelProperty.setHost(HOST);
+        actualChannelProperty.setPort(Integer.parseInt(PORT));
+
+        channelPropertyMap.put("testWritingToFile", actualChannelProperty);
+
+        //Act
+        jmxConfig.writeBackUp();
+
+        ChannelProperty expectedChannelProperty = readChannelsConfigsFromFile().get("testWritingToFile");
+
+        //Assert
+        assertEquals(expectedChannelProperty, actualChannelProperty);
+    }
+
+    private ConcurrentHashMap<String, ChannelProperty> readChannelsConfigsFromFile() {
+        try (InputStream input = new FileInputStream(ApplicationDirectoryUtil.getConfigFile(TEST_FILE_NAME))) {
+
+            return new ObjectMapper().readValue(input,
+                    new TypeReference<ConcurrentHashMap<String, ChannelProperty>>() {
+                    });
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return new ConcurrentHashMap<>();
+    }
 }
