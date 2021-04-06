@@ -59,7 +59,7 @@ public class RequestHandler {
         responseObserver.onCompleted();
     }
 
-    private AuroraServiceGrpc.AuroraServiceBlockingStub generateAuroraStub(ManagedChannel channelByKey) {
+    protected AuroraServiceGrpc.AuroraServiceBlockingStub generateAuroraStub(ManagedChannel channelByKey) {
         LOGGER.debug("Generating blocking stub.");
         return AuroraServiceGrpc.newBlockingStub(channelByKey);
     }
