@@ -14,7 +14,6 @@ import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -59,7 +58,7 @@ public class MarketStateImpl implements MarketState {
                 marketStateLock.writeLock().lock();
                 String good = marketTick.getGood();
                 if (!marketState.containsKey(good)) {
-                    marketState.put(good, new HashSet<>());
+                    marketState.put(good, new TreeSet<>());
                 }
                 marketState.get(good).add(marketTick);
                 subscriptionManager.notifySubscribers(convertMarketTickToTickResponse(marketTick));
@@ -109,7 +108,7 @@ public class MarketStateImpl implements MarketState {
     private TickResponse convertMarketTickToTickResponse(MarketTick marketTick) {
         return TickResponse.newBuilder()
                 .setOrigin(MarketTick.getOrigin())
-                .setTimestamp(System.currentTimeMillis())
+                .setTimestamp(marketTick.getTimestamp())
                 .setGoodName(marketTick.getGood())
                 .setPrice(marketTick.getPrice())
                 .setQuantity(marketTick.getQuantity())

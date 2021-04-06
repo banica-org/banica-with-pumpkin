@@ -1,6 +1,7 @@
 package src.config;
 
 import com.market.banica.common.channel.ChannelRPCConfig;
+import io.grpc.ConnectivityState;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import lombok.NoArgsConstructor;
@@ -30,17 +31,23 @@ public class ChannelManager {
 
     public Optional<ManagedChannel> getChannelByKey(String key) {
         LOGGER.debug("Getting channel with key {}", key);
-        return Optional.ofNullable(channels.get(key));
+        Optional<ManagedChannel> managedChannel = Optional.ofNullable(channels.get(key));
+        if (managedChannel.isPresent() && !managedChannel.get()
+                .getState(true).equals(ConnectivityState.READY)) {
+            managedChannel = Optional.ofNullable(null);
+        }
+        return managedChannel;
     }
 
     public List<ManagedChannel> getAllChannelsContainingPrefix(String prefix) {
         String loweredPrefix = prefix.toLowerCase();
-        if (prefix.equalsIgnoreCase("*")){
+        if (prefix.equalsIgnoreCase("*")) {
             return new ArrayList<>(this.channels.values());
         }
         return this.channels.entrySet().stream()
                 .filter(entry -> entry.getKey().startsWith(loweredPrefix))
                 .map(Map.Entry::getValue)
+                .filter(channel -> channel.getState(true).equals(ConnectivityState.READY))
                 .collect(Collectors.toList());
     }
 
@@ -68,6 +75,10 @@ public class ChannelManager {
         managedChannel.ifPresent(this::shutDownChannel);
 
         this.channels.put(key, entry.getValue());
+    }
+
+    protected Map<String, ManagedChannel> getChannels() {
+        return this.channels;
     }
 
     @PreDestroy
