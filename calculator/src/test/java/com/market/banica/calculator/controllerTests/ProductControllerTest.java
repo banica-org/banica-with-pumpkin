@@ -26,7 +26,7 @@ import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 @ExtendWith(MockitoExtension.class)
-public class ProductControllerTests {
+public class ProductControllerTest {
 
     private MockMvc mockMvc;
 
