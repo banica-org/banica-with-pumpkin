@@ -44,7 +44,7 @@ public class SubscribeHandler {
 
     }
 
-    private AuroraServiceGrpc.AuroraServiceStub generateAuroraStub(ManagedChannel channelByKey) {
+    protected AuroraServiceGrpc.AuroraServiceStub generateAuroraStub(ManagedChannel channelByKey) {
         LOGGER.debug("Generating stub.");
         return AuroraServiceGrpc.newStub(channelByKey);
     }
