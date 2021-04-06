@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 /**
  * Date: 3/10/2021 Time: 7:31 AM
  * <p>
- *
+ * <p>
  * Class is representation of an ingredient
  * in a recipe
  *

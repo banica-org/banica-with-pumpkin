@@ -11,14 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Queue;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -228,7 +221,9 @@ public class ProductServiceImpl implements ProductService {
 
         for (String productName : productsNames) {
 
-            validateProductExists(productName); } }
+            validateProductExists(productName);
+        }
+    }
 
     private void validateProductExists(String productName) {
         LOGGER.debug("In validateProductExists private method");
