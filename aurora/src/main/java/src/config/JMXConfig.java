@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.EnableMBeanExport;
 import org.springframework.jmx.export.annotation.ManagedOperation;
 import org.springframework.jmx.export.annotation.ManagedResource;
@@ -40,6 +41,9 @@ public class JMXConfig {
     private ChannelManager channels;
 
     private Map<String, ChannelProperty> channelPropertyMap;
+
+    @Value("${channels.backup.url}")
+    private String channelsBackupUrl;
 
     @Autowired
     public JMXConfig(ChannelManager channelManager) {
@@ -143,7 +147,7 @@ public class JMXConfig {
 
         ObjectWriter objectWriter = new ObjectMapper().writerWithDefaultPrettyPrinter();
 
-        try (Writer output = new OutputStreamWriter(new FileOutputStream(ApplicationDirectoryUtil.getConfigFile("channels.json")), UTF_8)) {
+        try (Writer output = new OutputStreamWriter(new FileOutputStream(ApplicationDirectoryUtil.getConfigFile(channelsBackupUrl)), UTF_8)) {
 
             String jsonData = getStringFromMap(this.channelPropertyMap, objectWriter);
 
@@ -168,7 +172,7 @@ public class JMXConfig {
 
     private ConcurrentHashMap<String, ChannelProperty> readChannelsConfigsFromFile() {
         LOGGER.debug("Reading channel property from file.");
-        try (InputStream input = new FileInputStream(ApplicationDirectoryUtil.getConfigFile("channels.json"))) {
+        try (InputStream input = new FileInputStream(ApplicationDirectoryUtil.getConfigFile(channelsBackupUrl))) {
 
             return new ObjectMapper().readValue(input,
                     new TypeReference<ConcurrentHashMap<String, ChannelProperty>>() {
