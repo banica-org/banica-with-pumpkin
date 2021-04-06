@@ -1,4 +1,4 @@
-package src.config;
+package com.market.banica.aurora.config;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -9,7 +9,7 @@ import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
-import src.model.ChannelProperty;
+import com.market.banica.aurora.model.ChannelProperty;
 
 import java.util.HashMap;
 import java.util.Map;

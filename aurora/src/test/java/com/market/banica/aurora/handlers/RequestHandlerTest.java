@@ -1,4 +1,4 @@
-package src.handlers;
+package com.market.banica.aurora.handlers;
 
 import com.aurora.Aurora;
 import io.grpc.ManagedChannel;
@@ -11,7 +11,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import src.config.ChannelManager;
+import com.market.banica.aurora.config.ChannelManager;
 
 import java.util.ArrayList;
 import java.util.List;

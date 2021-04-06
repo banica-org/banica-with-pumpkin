@@ -1,5 +1,6 @@
-package src.config;
+package com.market.banica.aurora.config;
 
+import com.market.banica.aurora.model.ChannelProperty;
 import com.market.banica.common.channel.ChannelRPCConfig;
 import io.grpc.ConnectivityState;
 import io.grpc.ManagedChannel;
@@ -8,7 +9,6 @@ import lombok.NoArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import src.model.ChannelProperty;
 
 import javax.annotation.PreDestroy;
 import java.util.AbstractMap;

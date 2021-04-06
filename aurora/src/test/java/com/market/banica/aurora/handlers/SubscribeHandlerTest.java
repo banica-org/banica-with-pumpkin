@@ -1,27 +1,19 @@
-package src.handlers;
+package com.market.banica.aurora.handlers;
 
 import com.aurora.Aurora;
-import com.aurora.AuroraServiceGrpc;
-import com.market.banica.common.channel.ChannelRPCConfig;
-import io.grpc.ConnectivityState;
+import com.market.banica.aurora.config.ChannelManager;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.Status;
 import io.grpc.StatusException;
-import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import src.config.ChannelManager;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
