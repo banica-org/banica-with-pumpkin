@@ -42,14 +42,15 @@ public class JMXConfig {
 
     private Map<String, ChannelProperty> channelPropertyMap;
 
-    @Value("${channels.backup.url}")
     private String channelsBackupUrl;
 
     @Autowired
-    public JMXConfig(ChannelManager channelManager) {
+    public JMXConfig(ChannelManager channelManager, @Value("${aurora.channels.file.name}") String fileName) {
+        this.channelsBackupUrl = fileName;
         this.channels = channelManager;
         this.channelPropertyMap = this.readChannelsConfigsFromFile();
         this.populateChannels(this.channelPropertyMap);
+
     }
 
 
