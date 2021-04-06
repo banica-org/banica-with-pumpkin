@@ -12,17 +12,17 @@ import org.springframework.stereotype.Component;
 
 import java.util.Locale;
 
-import static com.market.banica.order.book.helper.ConstantsAuroraRequestHandler.INVALID_REQUEST;
-import static com.market.banica.order.book.helper.ConstantsAuroraRequestHandler.INVALID_REQUEST_PREFIX;
-import static com.market.banica.order.book.helper.ConstantsAuroraRequestHandler.IN_ANNOUNCE_ITEM_INTEREST_METHOD;
-import static com.market.banica.order.book.helper.ConstantsAuroraRequestHandler.IN_CANCEL_ITEM_SUBSCRIPTION_METHOD;
-import static com.market.banica.order.book.helper.ConstantsAuroraRequestHandler.IN_GET_ORDER_BOOK_ITEM_LAYERS_METHOD;
-import static com.market.banica.order.book.helper.ConstantsAuroraRequestHandler.METHOD_IS_NOT_IMPLEMENTED;
-import static com.market.banica.order.book.helper.ConstantsAuroraRequestHandler.NUMBER_CHECK_PATTERN;
-import static com.market.banica.order.book.helper.ConstantsAuroraRequestHandler.ORDERBOOK;
-import static com.market.banica.order.book.helper.ConstantsAuroraRequestHandler.SPLIT_EQUALS_REGEX;
-import static com.market.banica.order.book.helper.ConstantsAuroraRequestHandler.SPLIT_SLASH_REGEX;
-import static com.market.banica.order.book.helper.ConstantsAuroraRequestHandler.SUBSCRIBE;
+import static com.market.banica.order.book.helper.AuroraRequestHandlerConstants.INVALID_REQUEST;
+import static com.market.banica.order.book.helper.AuroraRequestHandlerConstants.INVALID_REQUEST_PREFIX;
+import static com.market.banica.order.book.helper.AuroraRequestHandlerConstants.IN_ANNOUNCE_ITEM_INTEREST_METHOD;
+import static com.market.banica.order.book.helper.AuroraRequestHandlerConstants.IN_CANCEL_ITEM_SUBSCRIPTION_METHOD;
+import static com.market.banica.order.book.helper.AuroraRequestHandlerConstants.IN_GET_ORDER_BOOK_ITEM_LAYERS_METHOD;
+import static com.market.banica.order.book.helper.AuroraRequestHandlerConstants.METHOD_IS_NOT_IMPLEMENTED;
+import static com.market.banica.order.book.helper.AuroraRequestHandlerConstants.NUMBER_CHECK_PATTERN;
+import static com.market.banica.order.book.helper.AuroraRequestHandlerConstants.ORDERBOOK;
+import static com.market.banica.order.book.helper.AuroraRequestHandlerConstants.SPLIT_EQUALS_REGEX;
+import static com.market.banica.order.book.helper.AuroraRequestHandlerConstants.SPLIT_SLASH_REGEX;
+import static com.market.banica.order.book.helper.AuroraRequestHandlerConstants.SUBSCRIBE;
 
 
 @Component

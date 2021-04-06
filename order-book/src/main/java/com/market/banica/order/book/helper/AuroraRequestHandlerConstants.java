@@ -2,7 +2,7 @@ package com.market.banica.order.book.helper;
 
 import java.util.regex.Pattern;
 
-public class ConstantsAuroraRequestHandler {
+public class AuroraRequestHandlerConstants {
 
     public static final String SPLIT_SLASH_REGEX = "/+";
     public static final String SPLIT_EQUALS_REGEX = "=";
