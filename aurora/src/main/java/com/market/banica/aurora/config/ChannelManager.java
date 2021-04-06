@@ -32,7 +32,7 @@ public class ChannelManager {
     public Optional<ManagedChannel> getChannelByKey(String key) {
         LOGGER.debug("Getting channel with key {}", key);
         Optional<ManagedChannel> managedChannel = Optional.ofNullable(channels.get(key));
-        if (managedChannel.isPresent() && managedChannel.get()
+        if (managedChannel.isPresent() && !managedChannel.get()
                 .getState(true).equals(ConnectivityState.READY)) {
             managedChannel = Optional.ofNullable(null);
         }
