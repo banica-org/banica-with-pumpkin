@@ -44,9 +44,9 @@ class JMXConfigTest {
         ReflectionTestUtils.setField(jmxConfig, "channelPropertyMap", channelPropertyMap);
     }
 
-//    @AfterEach
+//    @After
 //    public void clearChannelsFile() {
-//        jmxConfig.deleteChannel(CHANNEL_PREFIX);
+//        jmxConfig.deleteChannel(CHANNEL_PREFIX); delete---
 //    }
 
     @Test
