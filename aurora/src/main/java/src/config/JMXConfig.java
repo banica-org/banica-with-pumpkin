@@ -122,6 +122,20 @@ public class JMXConfig {
         }
     }
 
+    @ManagedOperation
+    public String getChannelsStatus() {
+        StringBuilder builder = new StringBuilder();
+
+        builder.append("Channel : State of channel.\n");
+
+        channels.getChannels().entrySet()
+                .forEach(entry -> builder.append(String.format("%s : %s \n", entry.getKey(), entry.getValue().getState(true)))
+                );
+
+
+        return builder.toString();
+    }
+
 
     protected void writeBackUp() {
         LOGGER.info("Writing back-up to json");
