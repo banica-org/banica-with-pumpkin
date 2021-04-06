@@ -33,25 +33,25 @@ public class ItemMarket {
 
     @Autowired
     public ItemMarket() {
-        allItems = new ConcurrentHashMap<>();
-        productsQuantity = new ConcurrentHashMap<>();
+        this.allItems = new ConcurrentHashMap<>();
+        this.productsQuantity = new ConcurrentHashMap<>();
         addDummyData();
     }
 
     public Optional<Set<Item>> getItemSetByName(String itemName) {
-        return Optional.of(allItems.get(itemName));
+        return Optional.of(this.allItems.get(itemName));
     }
 
     public Set<String> getItemNameSet() {
-        return allItems.keySet();
+        return this.allItems.keySet();
     }
 
     public void addTrackedItem(String itemName) {
-        allItems.put(itemName, new TreeSet<>());
+        this.allItems.put(itemName, new TreeSet<>());
     }
 
     public void removeUntrackedItem(String itemName) {
-        allItems.remove(itemName);
+        this.allItems.remove(itemName);
     }
 
     public void updateItem(Aurora.AuroraResponse response) {
@@ -65,7 +65,7 @@ public class ItemMarket {
         } catch (InvalidProtocolBufferException e) {
             throw new IncorrectResponseException("Response is not correct!");
         }
-        Set<Item> itemSet = allItems.get(tickResponse.getGoodName());
+        Set<Item> itemSet = this.allItems.get(tickResponse.getGoodName());
         if (itemSet == null) {
             LOGGER.error("Item: {} is not being tracked and cannot be added to itemMarket!",
                     tickResponse.getGoodName());
@@ -73,7 +73,7 @@ public class ItemMarket {
         }
         Item item = populateItem(tickResponse);
 
-        productsQuantity.merge(tickResponse.getGoodName(), tickResponse.getQuantity(), Long::sum);
+        this.productsQuantity.merge(tickResponse.getGoodName(), tickResponse.getQuantity(), Long::sum);
 
         LOGGER.info("Products data updated!");
 
@@ -88,19 +88,11 @@ public class ItemMarket {
 
     }
 
-    private Item populateItem(TickResponse tickResponse) {
-        Item item = new Item();
-        item.setPrice(tickResponse.getPrice());
-        item.setQuantity(tickResponse.getQuantity());
-        item.setOrigin(tickResponse.getOrigin());
-        return item;
-    }
-
     public List<OrderBookLayer> getRequestedItem(String itemName, long quantity) {
         LOGGER.info("Getting requested item: {} with quantity: {}", itemName, quantity);
         TreeSet<Item> items = this.allItems.get(itemName);
 
-        if (items == null || productsQuantity.get(itemName) < quantity) {
+        if (items == null || this.productsQuantity.get(itemName) < quantity) {
             return Collections.emptyList();
         }
 
@@ -116,34 +108,48 @@ public class ItemMarket {
             while (iterator.hasNext() && itemLeft > 0) {
                 Item currentItem = iterator.next();
 
-                OrderBookLayer.Builder currentLayer = OrderBookLayer.newBuilder()
-                        .setPrice(currentItem.getPrice());
+                OrderBookLayer.Builder currentLayer = populateItemLayer(iterator, itemLeft, currentItem);
 
-                if (currentItem.getQuantity() >= itemLeft) {
-                    currentLayer.setQuantity(itemLeft);
-
-                    if (currentItem.getQuantity() == itemLeft) {
-                        iterator.remove();
-                    }
-
-                    currentItem.setQuantity(currentItem.getQuantity() - itemLeft);
-                } else if (currentItem.getQuantity() < itemLeft) {
-                    currentLayer.setQuantity(currentItem.getQuantity());
-
-                    iterator.remove();
-                }
-                productsQuantity.put(itemName, productsQuantity.get(itemName) - currentLayer.getQuantity());
+                this.productsQuantity.put(itemName, this.productsQuantity.get(itemName) - currentLayer.getQuantity());
                 itemLeft -= currentLayer.getQuantity();
 
-                OrderBookLayer build = currentLayer
+                OrderBookLayer orderBookLayer = currentLayer
                         .setOrigin(currentItem.getOrigin())
                         .build();
-                layers.add(build);
+                layers.add(orderBookLayer);
             }
         } finally {
             lock.writeLock().unlock();
         }
         return layers;
+    }
+
+    private OrderBookLayer.Builder populateItemLayer(Iterator<Item> iterator, long itemLeft, Item currentItem) {
+        OrderBookLayer.Builder currentLayer = OrderBookLayer.newBuilder()
+                .setPrice(currentItem.getPrice());
+
+        if (currentItem.getQuantity() >= itemLeft) {
+            currentLayer.setQuantity(itemLeft);
+
+            if (currentItem.getQuantity() == itemLeft) {
+                iterator.remove();
+            }
+
+            currentItem.setQuantity(currentItem.getQuantity() - itemLeft);
+        } else if (currentItem.getQuantity() < itemLeft) {
+            currentLayer.setQuantity(currentItem.getQuantity());
+
+            iterator.remove();
+        }
+        return currentLayer;
+    }
+
+    private Item populateItem(TickResponse tickResponse) {
+        Item item = new Item();
+        item.setPrice(tickResponse.getPrice());
+        item.setQuantity(tickResponse.getQuantity());
+        item.setOrigin(tickResponse.getOrigin());
+        return item;
     }
 
     private void addDummyData() {
@@ -153,9 +159,9 @@ public class ItemMarket {
         cheeseItems.add(new Item(2.6, 2, Origin.AMERICA));
         cheeseItems.add(new Item(4.0, 5, Origin.EUROPE));
         cheeseItems.add(new Item(4.1, 2, Origin.ASIA));
-        allItems.put("cheese", cheeseItems);
+        this.allItems.put("cheese", cheeseItems);
         for (Item cheeseItem : cheeseItems) {
-            productsQuantity.merge("cheese", cheeseItem.getQuantity(), Long::sum);
+            this.productsQuantity.merge("cheese", cheeseItem.getQuantity(), Long::sum);
         }
 
 
@@ -164,9 +170,9 @@ public class ItemMarket {
         cocoaItems.add(new Item(1.6, 3, Origin.ASIA));
         cocoaItems.add(new Item(1.5, 4, Origin.AMERICA));
         cocoaItems.add(new Item(1.7, 1, Origin.EUROPE));
-        allItems.put("cocoa", cocoaItems);
+        this.allItems.put("cocoa", cocoaItems);
         for (Item cocoaItem : cocoaItems) {
-            productsQuantity.merge("cocoa", cocoaItem.getQuantity(), Long::sum);
+            this.productsQuantity.merge("cocoa", cocoaItem.getQuantity(), Long::sum);
         }
     }
 

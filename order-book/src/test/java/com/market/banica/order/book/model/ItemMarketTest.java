@@ -4,9 +4,11 @@ import com.aurora.Aurora;
 import com.google.protobuf.Any;
 import com.market.Origin;
 import com.market.TickResponse;
+import com.market.banica.order.book.exception.IncorrectResponseException;
+import com.orderbook.ItemOrderBookResponse;
 import com.orderbook.OrderBookLayer;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.Before;
+import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
@@ -19,7 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class ItemMarketTest {
+public class ItemMarketTest {
     private static final String EGGS_ITEM_NAME = "eggs";
     private static final String RICE_ITEM_NAME = "rice";
     private static final String MEAT_ITEM_NAME = "meat";
@@ -32,7 +34,7 @@ class ItemMarketTest {
     private final Map<String, TreeSet<Item>> allItems = new ConcurrentHashMap<>();
     private final Map<String, Long> productsQuantity = new ConcurrentHashMap<>();
 
-    @BeforeEach
+    @Before
     public void setUp() {
         TreeSet<Item> items = this.populateItems();
 
@@ -67,13 +69,13 @@ class ItemMarketTest {
         assertEquals(6, productsQuantity.get(CHEESE_ITEM_NAME));
         assertEquals(1, productsQuantity.size());
     }
-    @Test
+
+    @Test(expected = IncorrectResponseException.class)
     public void updateItemThrowsExceptionWhenPassingRequestOfDifferentType() {
         //Arrange
         itemMarket.addTrackedItem("cheese");
-        TickResponse cheese = TickResponse.newBuilder().setGoodName("cheese").setQuantity(2).setPrice(2.6).setOrigin(Origin.ASIA).build();
-        Aurora.AuroraResponse build = Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(cheese)).build();
-
+        ItemOrderBookResponse response = ItemOrderBookResponse.newBuilder().build();
+        Aurora.AuroraResponse build = Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(response)).build();
 
         //Act
         itemMarket.updateItem(build);

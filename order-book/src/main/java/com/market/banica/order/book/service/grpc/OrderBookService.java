@@ -11,6 +11,7 @@ import com.orderbook.OrderBookLayer;
 import com.orderbook.OrderBookServiceGrpc;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
+import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 @Component
+@AllArgsConstructor
 public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplBase {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OrderBookService.class);
@@ -26,12 +28,6 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
 
     private final AuroraClient auroraClient;
     private final ItemMarket itemMarket;
-
-    @Autowired
-    private OrderBookService(final AuroraClient auroraClient, final ItemMarket itemMarket) {
-        this.auroraClient = auroraClient;
-        this.itemMarket = itemMarket;
-    }
 
     @Override
     public void getOrderBookItemLayers(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
