@@ -1,51 +1,29 @@
 package com.market.banica.aurora.handlers;
 
 import com.aurora.Aurora;
-import com.aurora.AuroraServiceGrpc;
-import io.grpc.ManagedChannel;
-import io.grpc.Status;
+import com.market.banica.aurora.mapper.SubscribeMapper;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import com.market.banica.aurora.config.ChannelManager;
-import com.market.banica.aurora.observer.AuroraObserver;
-
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 public class SubscribeHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SubscribeHandler.class);
 
-    private final ChannelManager channels;
+    private final SubscribeMapper subscribeMapper;
 
     @Autowired
-    public SubscribeHandler(ChannelManager channelManager) {
-        channels = channelManager;
+    public SubscribeHandler(SubscribeMapper subscribeMapper) {
+        this.subscribeMapper = subscribeMapper;
     }
 
     public void handleSubscribe(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
         LOGGER.info("Handling subscribe from client {}", request.getClientId());
-        List<ManagedChannel> channelsWithPrefix = this.channels.getAllChannelsContainingPrefix(request.getTopic().split("/")[0]);
-        if (channelsWithPrefix.isEmpty()) {
-            LOGGER.warn("Unsupported message have reached aurora.");
-            responseObserver.onError(Status.INVALID_ARGUMENT
-                    .withDescription(request.getTopic().split("/")[0] + " channel not available at the moment.")
-                    .asException());
-            return;
-        }
-        AtomicInteger openStreams = new AtomicInteger(channelsWithPrefix.size());
-
-        channelsWithPrefix.forEach(channel -> this.generateAuroraStub(channel)
-                .subscribe(request, new AuroraObserver(request, responseObserver, openStreams)));
-
+        subscribeMapper.renderSubscribe(request, responseObserver);
     }
 
-    private AuroraServiceGrpc.AuroraServiceStub generateAuroraStub(ManagedChannel channelByKey) {
-        LOGGER.debug("Generating stub.");
-        return AuroraServiceGrpc.newStub(channelByKey);
-    }
+
 }
