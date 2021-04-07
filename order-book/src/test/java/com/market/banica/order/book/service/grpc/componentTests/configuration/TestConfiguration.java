@@ -2,6 +2,8 @@ package com.market.banica.order.book.service.grpc.componentTests.configuration;
 
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
+import com.orderbook.ItemOrderBookRequest;
+import com.orderbook.ItemOrderBookResponse;
 import com.orderbook.OrderBookServiceGrpc;
 import io.grpc.stub.StreamObserver;
 import org.springframework.context.annotation.Configuration;
@@ -28,11 +30,11 @@ public class TestConfiguration {
         }));
     }
 
-    public OrderBookServiceGrpc.OrderBookServiceImplBase getGrpcOrderBookServiceItemLayers(Aurora.AuroraResponse response) {
+    public OrderBookServiceGrpc.OrderBookServiceImplBase getGrpcOrderBookServiceItemLayers(ItemOrderBookResponse response) {
 
         return new OrderBookServiceGrpc.OrderBookServiceImplBase() {
             @Override
-            public void getOrderBookItemLayers(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
+            public void getOrderBookItemLayers(ItemOrderBookRequest request, StreamObserver<ItemOrderBookResponse> responseObserver) {
                 responseObserver.onNext(response);
 
                 responseObserver.onCompleted();

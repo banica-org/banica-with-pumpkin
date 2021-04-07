@@ -41,8 +41,8 @@ message CancelSubscriptionRequest {
 message CancelSubscriptionResponse {
 }
 
-service OrderBookService {
-  rpc getOrderBookItemLayers(aurora.AuroraRequest) returns (aurora.AuroraResponse);
-  rpc announceItemInterest(aurora.AuroraRequest) returns (aurora.AuroraResponse);
-  rpc cancelItemSubscription(aurora.AuroraRequest) returns (aurora.AuroraResponse);
+  service OrderBookService {
+  rpc getOrderBookItemLayers(ItemOrderBookRequest) returns (ItemOrderBookResponse);
+  rpc announceItemInterest(InterestsRequest) returns (InterestsResponse);
+  rpc cancelItemSubscription(CancelSubscriptionRequest) returns (CancelSubscriptionResponse);
 }

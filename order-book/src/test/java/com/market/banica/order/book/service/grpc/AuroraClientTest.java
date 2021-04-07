@@ -26,8 +26,6 @@ public class AuroraClientTest {
     private static final String RICE_ITEM_NAME = "rice";
     private static final String MEAT_ITEM_NAME = "meat";
 
-    private static final String EUROPE_MARKET_NAME = "europe";
-
     private static final String ALL_ITEMS_FIELD = "allItems";
     private static final String MANAGED_CHANNEL_FIELD = "managedChannel";
     private static final String CANCELLABLE_STUBS_FIELD = "cancellableStubs";
