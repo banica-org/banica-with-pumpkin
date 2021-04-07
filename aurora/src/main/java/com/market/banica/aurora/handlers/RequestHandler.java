@@ -2,6 +2,7 @@ package com.market.banica.aurora.handlers;
 
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
+import com.market.banica.aurora.config.ChannelManager;
 import io.grpc.ManagedChannel;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -9,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import com.market.banica.aurora.config.ChannelManager;
 
 import java.util.Optional;
 
@@ -49,7 +49,10 @@ public class RequestHandler {
         } catch (Exception e) {
             LOGGER.warn("Unable to forward.");
             LOGGER.error(e.getMessage());
-            responseObserver.onError(e.getCause());
+            responseObserver.onError(Status.ABORTED
+                    .withDescription("Receiver stopped sending message with description : " + e.getMessage())
+                    .withCause(e.getCause())
+                    .asException());
             return;
         }
 
