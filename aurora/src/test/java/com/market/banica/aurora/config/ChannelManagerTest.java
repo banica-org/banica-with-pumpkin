@@ -1,0 +1,142 @@
+package com.market.banica.aurora.config;
+
+import com.market.banica.aurora.model.ChannelProperty;
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+@ExtendWith(MockitoExtension.class)
+class ChannelManagerTest {
+    private static final String CHANNEL_KEY = "market/europe";
+    private static final String CHANNEL_PREFIX_MARKET = "market";
+    private static final String CHANNEL_PREFIX_WEATHER = "weather";
+    private static final String CHANNEL_PREFIX_ASTERISK = "*";
+
+    private static final String HOST = "localhost";
+    private static final int PORT = 1010;
+    private static final int EDITED_PORT = 1011;
+    private static ChannelProperty channelProperty;
+
+
+    @Mock
+    private ManagedChannel managedChannel = ManagedChannelBuilder
+            .forAddress(HOST, PORT)
+            .usePlaintext()
+            .build();
+
+    @Spy
+    private ChannelManager channelManager;
+
+    @BeforeEach
+    void setUp() {
+        channelProperty = new ChannelProperty();
+        channelProperty.setHost(HOST);
+        channelProperty.setPort(PORT);
+    }
+
+    @Test
+    void getAllChannelsContainingPrefixAsteriskReturnsAllChannels() {
+        //Arrange
+        channelManager.getChannels().put(CHANNEL_PREFIX_MARKET, managedChannel);
+        channelManager.getChannels().put(CHANNEL_PREFIX_WEATHER, managedChannel);
+
+        ManagedChannel marketChannel = channelManager.getChannels().get(CHANNEL_PREFIX_MARKET);
+        ManagedChannel marketWeather = channelManager.getChannels().get(CHANNEL_PREFIX_WEATHER);
+        List<ManagedChannel> expectedList = Arrays.asList(marketWeather, marketChannel);
+        //Act
+        List<ManagedChannel> actualList = channelManager.getAllChannelsContainingPrefix(CHANNEL_PREFIX_ASTERISK);
+
+        //Assert
+        assertEquals(expectedList, actualList);
+    }
+
+    @Test
+    void addChannelAddsChannelInMap() {
+        //Arrange
+        assertEquals(new HashMap<>(), channelManager.getChannels());
+
+        //Act
+        channelManager.addChannel(CHANNEL_KEY, channelProperty);
+
+        //Assert
+        assertNotNull(channelManager.getChannels().get(CHANNEL_KEY));
+    }
+
+    @Test
+    void deleteChannelDeletesChannelInMap() {
+        //Arrange
+        assertEquals(new HashMap<>(), channelManager.getChannels());
+
+        //Act
+        channelManager.addChannel(CHANNEL_KEY, channelProperty);
+        assertNotNull(channelManager.getChannels().get(CHANNEL_KEY));
+
+        channelManager.deleteChannel(CHANNEL_KEY);
+        //Assert
+        assertNull(channelManager.getChannels().get(CHANNEL_KEY));
+    }
+
+    @Test
+    void deleteChannelShutDownsChannel() {
+        //Arrange
+        assertEquals(new HashMap<>(), channelManager.getChannels());
+
+        channelManager.addChannel(CHANNEL_KEY, channelProperty);
+        assertNotNull(channelManager.getChannels().get(CHANNEL_KEY));
+
+        ManagedChannel channelToBeShutDown = channelManager.getChannels().get(CHANNEL_KEY);
+
+        //Act
+        channelManager.deleteChannel(CHANNEL_KEY);
+
+        //Assert
+        assertNull(channelManager.getChannels().get(CHANNEL_KEY));
+        assertTrue(channelToBeShutDown.isShutdown());
+    }
+
+    @Test
+    void editChannelEditsChannelInMap() {
+        //Arrange
+        assertEquals(new HashMap<>(), channelManager.getChannels());
+
+        channelManager.addChannel(CHANNEL_KEY, channelProperty);
+        assertNotNull(channelManager.getChannels().get(CHANNEL_KEY));
+
+        ManagedChannel channelBeforeEdit = channelManager.getChannels().get(CHANNEL_KEY);
+
+        ChannelProperty newChannelProperties = new ChannelProperty();
+        newChannelProperties.setHost(HOST);
+        newChannelProperties.setPort(EDITED_PORT);
+
+        //Act
+        channelManager.editChannel(CHANNEL_KEY, newChannelProperties);
+        ManagedChannel channelAfterEdit = channelManager.getChannels().get(CHANNEL_KEY);
+
+        //Assert
+        assertTrue(channelBeforeEdit.isShutdown());
+        assertNotEquals(channelBeforeEdit, channelAfterEdit);
+    }
+
+    @Test
+    void getChannelsReturnsChannels() {
+        assertEquals(new HashMap<>(), channelManager.getChannels());
+
+        channelManager.addChannel(CHANNEL_KEY, channelProperty);
+        assertEquals(1, channelManager.getChannels().size());
+    }
+}
