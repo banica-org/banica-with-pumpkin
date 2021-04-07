@@ -21,10 +21,10 @@ class AuroraServiceImplTest {
             .setTopic("market/banica").setClientId("orderBook").build();
 
     @Mock
-    private static RequestHandler requestHandler;
+    private RequestHandler requestHandler;
 
     @Mock
-    private static SubscribeHandler subscribeHandler;
+    private SubscribeHandler subscribeHandler;
 
     private final StreamObserver<Aurora.AuroraResponse> responseObserver = mock(StreamObserver.class);
 
