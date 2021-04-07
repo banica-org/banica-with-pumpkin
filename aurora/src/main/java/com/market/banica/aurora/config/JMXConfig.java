@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -42,11 +43,14 @@ public class JMXConfig {
 
     private Map<String, ChannelProperty> channelPropertyMap;
 
+    private Publishers publishers;
+
     private String channelsBackupUrl;
 
     @Autowired
-    public JMXConfig(ChannelManager channelManager, @Value("${aurora.channels.file.name}") String fileName) {
+    public JMXConfig(Publishers publishers,ChannelManager channelManager, @Value("${aurora.channels.file.name}") String fileName) {
         this.channelsBackupUrl = fileName;
+        this.publishers = publishers;
         this.channels = channelManager;
         this.channelPropertyMap = this.readChannelsConfigsFromFile();
         this.populateChannels(this.channelPropertyMap);
@@ -58,6 +62,10 @@ public class JMXConfig {
     public void createChannel(String channelPrefix, String host, String port) {
         try {
             this.lock.writeLock().lock();
+            if (!checkChannelCompatibility(channelPrefix)){
+                throw new IllegalArgumentException("Unsupported publisher");
+            }
+
             LOGGER.info("Creating new channel {} from JMX server", channelPrefix);
 
             if (channelPropertyMap.containsKey(channelPrefix)) {
@@ -183,5 +191,16 @@ public class JMXConfig {
             //log exception
         }
         return new ConcurrentHashMap<>();
+    }
+
+    private boolean checkChannelCompatibility(String channelPrefix){
+        List<String> allowedPublishers = publishers.getPublishers();
+
+        for (String publisher : allowedPublishers) {
+            if (channelPrefix.contains(publisher)){
+                return true;
+            }
+        }
+        return false;
     }
 }

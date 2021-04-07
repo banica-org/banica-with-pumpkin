@@ -39,6 +39,7 @@ public class RequestMapper {
 
     public static final String ORDERBOOK = "orderbook";
     public static final String AURORA = "aurora";
+    public static final String MARKET = "market";
     public static final String BAD_PUBLISHER_REQUEST = "Unknown Publisher";
     public static final String IN_CANCEL_ITEM_SUBSCRIPTION_METHOD = "Forwarding to orderBookService.cancelItemSubscription method";
     public static final String IN_ANNOUNCE_ITEM_INTEREST_METHOD = "Forwarding to orderBookService.announceItemInterest method";
@@ -67,6 +68,8 @@ public class RequestMapper {
             return this.processOrderBookMapping(incomingRequest, channelByKey);
         } else if (destinationOfMessage.contains(AURORA)) {
             return processAuroraRequest(incomingRequest, channelByKey);
+        } else if (destinationOfMessage.contains(MARKET)){
+            throw new ServiceNotFoundException("Unimplemented publisher!");
         }
 
         throw new ServiceNotFoundException(BAD_PUBLISHER_REQUEST + ". Requested publisher is: " + destinationOfMessage);
