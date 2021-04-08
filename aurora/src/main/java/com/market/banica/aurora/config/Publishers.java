@@ -22,6 +22,8 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -30,6 +32,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 @Configuration
 public class Publishers {
     private static final Logger LOGGER = LoggerFactory.getLogger(Publishers.class);
+
+    private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
     private final String publishersFileName;
 
@@ -66,19 +70,24 @@ public class Publishers {
     }
 
     protected void writeBackUp() {
-        LOGGER.info("Writing back-up to json");
+        try {
+            lock.writeLock().lock();
+            LOGGER.info("Writing back-up to json");
 
-        ObjectWriter objectWriter = new ObjectMapper().writerWithDefaultPrettyPrinter();
+            ObjectWriter objectWriter = new ObjectMapper().writerWithDefaultPrettyPrinter();
 
-        try (Writer output = new OutputStreamWriter(new FileOutputStream(ApplicationDirectoryUtil.getConfigFile(publishersFileName)), UTF_8)) {
+            try (Writer output = new OutputStreamWriter(new FileOutputStream(ApplicationDirectoryUtil.getConfigFile(publishersFileName)), UTF_8)) {
 
-            String jsonData = getStringFromList(publishersList, objectWriter);
+                String jsonData = getStringFromList(publishersList, objectWriter);
 
-            output.write(jsonData);
+                output.write(jsonData);
 
-            LOGGER.info("Back-up written successfully");
-        } catch (IOException e) {
-            LOGGER.error("Exception thrown during writing back-up");
+                LOGGER.info("Back-up written successfully");
+            } catch (IOException e) {
+                LOGGER.error("Exception thrown during writing back-up");
+            }
+        } finally {
+            lock.writeLock().unlock();
         }
     }
 

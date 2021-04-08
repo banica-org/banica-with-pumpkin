@@ -151,20 +151,24 @@ public class JMXConfig {
 
 
     protected void writeBackUp() {
-        LOGGER.info("Writing back-up to json");
+        try {
+            lock.writeLock().lock();
+            LOGGER.info("Writing back-up to json");
 
+            ObjectWriter objectWriter = new ObjectMapper().writerWithDefaultPrettyPrinter();
 
-        ObjectWriter objectWriter = new ObjectMapper().writerWithDefaultPrettyPrinter();
+            try (Writer output = new OutputStreamWriter(new FileOutputStream(ApplicationDirectoryUtil.getConfigFile(channelsBackupUrl)), UTF_8)) {
 
-        try (Writer output = new OutputStreamWriter(new FileOutputStream(ApplicationDirectoryUtil.getConfigFile(channelsBackupUrl)), UTF_8)) {
+                String jsonData = getStringFromMap(this.channelPropertyMap, objectWriter);
 
-            String jsonData = getStringFromMap(this.channelPropertyMap, objectWriter);
+                output.write(jsonData);
 
-            output.write(jsonData);
-
-            LOGGER.info("Back-up written successfully");
-        } catch (IOException e) {
-            LOGGER.error("Exception thrown during writing back-up");
+                LOGGER.info("Back-up written successfully");
+            } catch (IOException e) {
+                LOGGER.error("Exception thrown during writing back-up");
+            }
+        } finally {
+            lock.writeLock().unlock();
         }
     }
 
