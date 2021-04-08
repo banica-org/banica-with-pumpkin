@@ -1,6 +1,7 @@
 package com.market.banica.generator.util;
 
 import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import com.market.banica.common.util.ApplicationDirectoryUtil;
 import com.market.banica.generator.model.MarketTick;
@@ -12,6 +13,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Map;
@@ -25,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -50,13 +53,14 @@ class SnapshotPersistenceTest {
     @AfterEach
     void teardown() throws IOException {
 
+        reset(kryoHandle);
         File testTickDB = ApplicationDirectoryUtil.getConfigFile(fileName);
         assert testTickDB.delete();
 
     }
 
     @Test
-    void persistTicks() throws FileNotFoundException {
+    void persistTicks() throws IOException {
 
         SnapshotPersistence snapshotPersistence = new SnapshotPersistence(fileName);
         ReflectionTestUtils.setField(snapshotPersistence, "kryoHandle", kryoHandle);
@@ -97,7 +101,6 @@ class SnapshotPersistenceTest {
     @Test
     void loadPersistedSnapshot_WhenFileExistsAndHasTicks() throws IOException {
 
-        ApplicationDirectoryUtil.getConfigFile(fileName);
         Map<String, Set<MarketTick>> expected = new ConcurrentHashMap<>();
         expected.put(GOOD_NAME, new TreeSet<>());
         expected.get(GOOD_NAME).add(new MarketTick(GOOD_NAME, 1, 1, 1));

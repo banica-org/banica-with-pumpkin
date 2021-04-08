@@ -8,6 +8,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
@@ -37,7 +38,7 @@ class SnapshotPersistenceTaskTest {
     }
 
     @Test
-    void run() throws FileNotFoundException {
+    void run() throws IOException {
 
         Lock newTicksReadLock = mock(ReentrantReadWriteLock.ReadLock.class);
         when(marketStateLock.readLock()).thenReturn(newTicksReadLock);
