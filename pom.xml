@@ -27,6 +27,7 @@
         <lombok.version>1.18.16</lombok.version>
         <prtobuf-messages.version>1.0-SNAPSHOT</prtobuf-messages.version>
         <common.version>1.0-SNAPSHOT</common.version>
+        <order-book.version>1.0-SNAPSHOT</order-book.version>
         <mockito.version>3.6.28</mockito.version>
         <junit-jupiter.version>5.7.0</junit-jupiter.version>
         <kryo.version>5.0.4</kryo.version>
@@ -177,7 +178,11 @@
                 <artifactId>protobuf-messages</artifactId>
                 <version>${prtobuf-messages.version}</version>
             </dependency>
-
+            <dependency>
+                <groupId>com.market.banica</groupId>
+                <artifactId>order-book</artifactId>
+                <version>${order-book.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 

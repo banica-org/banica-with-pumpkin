@@ -41,6 +41,9 @@ public class JMXServiceImpl implements JMXServiceMBean {
                 ingredientsList);
         LOGGER.info("CreateProduct called from JMX server");
 
+        checkForValidData(newProductName);
+        checkForValidData(unitOfMeasure);
+
         productService.createProduct(newProductName, unitOfMeasure, ingredientsList);
 
         LOGGER.debug("New product created from JMX server with product name {} and unit of measure {}"
@@ -53,6 +56,9 @@ public class JMXServiceImpl implements JMXServiceMBean {
         LOGGER.debug("In addIngredient method with parameters: parentProductName {},productName {} and quantity {}" +
                 parentProductName, productName, quantity);
         LOGGER.info("AddIngredient called from JMX server");
+
+        checkForValidData(parentProductName);
+        checkForValidData(productName);
 
         productService.addIngredient(parentProductName, productName, quantity);
 
@@ -67,6 +73,9 @@ public class JMXServiceImpl implements JMXServiceMBean {
                 " and newQuantity {}", parentProductName, productName, newQuantity);
         LOGGER.info("SetProductQuantity called from JMX server");
 
+        checkForValidData(parentProductName);
+        checkForValidData(productName);
+
         productService.setProductQuantity(parentProductName, productName, newQuantity);
 
         LOGGER.debug("Quantity set from JMX server to new quantity {} for product {} with parent product {}",
@@ -80,6 +89,9 @@ public class JMXServiceImpl implements JMXServiceMBean {
                 , parentProductName, productName);
         LOGGER.info("GetProductQuantity called from JMX server");
 
+        checkForValidData(parentProductName);
+        checkForValidData(productName);
+
         int result = productService.getProductQuantity(parentProductName, productName);
 
         LOGGER.debug("Quantity checked from JMX server for product {} with parent product {}", parentProductName, productName);
@@ -91,6 +103,8 @@ public class JMXServiceImpl implements JMXServiceMBean {
     public String getUnitOfMeasure(String productName) {
         LOGGER.debug("In getUnitOfMeasure method with parameters: productName {}", productName);
         LOGGER.info("GetUnitOfMeasure called from JMX server");
+
+        checkForValidData(productName);
 
         String result = productService.getUnitOfMeasure(productName);
 
@@ -104,6 +118,9 @@ public class JMXServiceImpl implements JMXServiceMBean {
         LOGGER.debug("In setUnitOfMeasure method with parameters: productName {} and unitOfMeasure {}", productName, unitOfMeasure);
         LOGGER.info("SetUnitOfMeasure called from JMX server");
 
+        checkForValidData(productName);
+        checkForValidData(unitOfMeasure);
+
         productService.setUnitOfMeasure(productName, unitOfMeasure);
 
         LOGGER.debug("UnitOfMeasure set from JMX server for product {}" +
@@ -115,7 +132,7 @@ public class JMXServiceImpl implements JMXServiceMBean {
     public void deleteProductFromDatabase(String productName) {
         LOGGER.debug("In deleteProductFromDatabase method with parameters: productName {}", productName);
         LOGGER.info("DeleteProductFromDatabase called from JMX server");
-
+        checkForValidData(productName);
         productService.deleteProductFromDatabase(productName);
 
         LOGGER.debug("Product {} deleted from JMX server", productName);
@@ -126,12 +143,18 @@ public class JMXServiceImpl implements JMXServiceMBean {
     public void deleteProductFromParentIngredients(String parentProductName, String productName) {
         LOGGER.debug("In deleteIngredient method with parameters: parentProductName {} and productName {}", parentProductName, productName);
         LOGGER.info("DeleteIngredient called from JMX server");
-
+        checkForValidData(parentProductName);
+        checkForValidData(productName);
         productService.deleteProductFromParentIngredients(parentProductName, productName);
 
         LOGGER.debug("Product deleted from JMX server for parent product {} and product {}"
                 , parentProductName, productName);
     }
 
+    private void checkForValidData(String parameter) {
+        if (parameter == null || parameter.isEmpty()) {
+            throw new IllegalArgumentException("The incoming data is invalid!");
+        }
+    }
 
 }

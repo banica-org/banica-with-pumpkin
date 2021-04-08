@@ -56,14 +56,14 @@ public class ItemMarket {
 
     public void updateItem(Aurora.AuroraResponse response) {
         if (!response.getMessage().is(TickResponse.class)) {
-            throw new IncorrectResponseException("Response is not correct!");
+            throw new IncorrectResponseException("Response is not from type TickResponse!");
         }
         TickResponse tickResponse;
 
         try {
             tickResponse = response.getMessage().unpack(TickResponse.class);
         } catch (InvalidProtocolBufferException e) {
-            throw new IncorrectResponseException("Response is not correct!");
+            throw new IncorrectResponseException("Response is not from type TickResponse!");
         }
         Set<Item> itemSet = this.allItems.get(tickResponse.getGoodName());
         if (itemSet == null) {

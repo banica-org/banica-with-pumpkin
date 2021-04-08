@@ -52,6 +52,11 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public void createProduct(String newProductName, String unitOfMeasure,
                               String ingredientsMap) {
+
+        checkForValidData(newProductName);
+        checkForValidData(unitOfMeasure);
+        checkForValidData(ingredientsMap);
+
         LOGGER.debug("In createProduct method with parameters: newProductName {}, unitOfMeasure {} and ingredientsMap {}"
                 , newProductName, unitOfMeasure, ingredientsMap);
 
@@ -70,7 +75,6 @@ public class ProductServiceImpl implements ProductService {
         Map<String, Integer> ingredients = new HashMap<>();
 
         if (!ingredientsMap.isEmpty()) {
-
             ingredients = setCompositeProductIngredients(ingredientsMap);
         }
 
@@ -83,6 +87,9 @@ public class ProductServiceImpl implements ProductService {
     public void addIngredient(String parentProductName, String productName, int quantity) {
         LOGGER.debug("In addIngredient method with parameters: parentProductName {},productName {} and quantity {}" +
                 parentProductName, productName, quantity);
+
+        checkForValidData(parentProductName);
+        checkForValidData(productName);
 
         validateProductExists(productName);
 
@@ -98,6 +105,9 @@ public class ProductServiceImpl implements ProductService {
         LOGGER.debug("In setProductQuantity method with parameters: parentProductName {},productName {}" +
                 " and newQuantity {}", parentProductName, productName, newQuantity);
 
+        checkForValidData(parentProductName);
+        checkForValidData(productName);
+
         Product parentProduct = getProductFromDatabase(parentProductName);
 
         validateProductBelongToParentProductIngredients(productName, parentProduct);
@@ -112,6 +122,9 @@ public class ProductServiceImpl implements ProductService {
         LOGGER.debug("In getProductQuantity method with parameters: parentProductName {} and productName {}"
                 , parentProductName, productName);
 
+        checkForValidData(parentProductName);
+        checkForValidData(productName);
+
         Product parentProduct = getProductFromDatabase(parentProductName);
 
         validateProductBelongToParentProductIngredients(productName, parentProduct);
@@ -122,6 +135,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public String getUnitOfMeasure(String productName) {
         LOGGER.debug("In getUnitOfMeasure method with parameters: productName {}", productName);
+        checkForValidData(productName);
 
         Product product = getProductFromDatabase(productName);
 
@@ -131,6 +145,9 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public void setUnitOfMeasure(String productName, String unitOfMeasure) {
         LOGGER.debug("In setUnitOfMeasure method with parameters: productName {} and unitOfMeasure {}", productName, unitOfMeasure);
+
+        checkForValidData(productName);
+        checkForValidData(unitOfMeasure);
 
         Product product = getProductFromDatabase(productName);
 
@@ -143,6 +160,7 @@ public class ProductServiceImpl implements ProductService {
     public void deleteProductFromDatabase(String productName) {
         LOGGER.debug("In deleteProductFromDatabase method with parameters: productName {}", productName);
 
+        checkForValidData(productName);
         validateProductExists(productName);
 
         productBase.getDatabase().remove(productName);
@@ -158,6 +176,9 @@ public class ProductServiceImpl implements ProductService {
     public void deleteProductFromParentIngredients(String parentProductName, String productName) {
         LOGGER.debug("In deleteIngredient method with parameters: parentProductName {} and productName {}", parentProductName, productName);
 
+        checkForValidData(parentProductName);
+        checkForValidData(productName);
+
         Product parentProduct = getProductFromDatabase(parentProductName);
 
         validateProductBelongToParentProductIngredients(productName, parentProduct);
@@ -171,6 +192,8 @@ public class ProductServiceImpl implements ProductService {
     public List<Product> getProductAsListProduct(String productName) {
         LOGGER.debug("In getProductAsListProduct method with parameters:productName {}"
                 , productName);
+
+        checkForValidData(productName);
 
         Product product = getProductFromDatabase(productName);
 
@@ -186,11 +209,17 @@ public class ProductServiceImpl implements ProductService {
         return result;
     }
 
+    private void checkForValidData(String parameter) {
+        if ( parameter == null || parameter.isEmpty()){
+            throw new IllegalArgumentException("The incoming data is invalid!");
+        }
+    }
+
     //TODO to be implemented once expectations are clear
+
     @Override
     public void getAllProductsAsListProduct() {
     }
-
     private void removeDeletedProductFromAllRecipes(String productName) {
         LOGGER.debug("In removeProductFromAllRecipes private method with parameters: productName {}", productName);
 
@@ -364,4 +393,5 @@ public class ProductServiceImpl implements ProductService {
             throw new IllegalArgumentException("Product does not belong to ingredients of the parent product");
         }
     }
+
 }

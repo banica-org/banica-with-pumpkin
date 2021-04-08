@@ -149,6 +149,10 @@
             <groupId>com.market.banica</groupId>
             <artifactId>common</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.market.banica</groupId>
+            <artifactId>order-book</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

@@ -2,14 +2,7 @@ package com.market.banica.order.book.service.grpc;
 
 import com.market.banica.order.book.exception.TrackingException;
 import com.market.banica.order.book.model.ItemMarket;
-import com.orderbook.CancelSubscriptionRequest;
-import com.orderbook.CancelSubscriptionResponse;
-import com.orderbook.InterestsRequest;
-import com.orderbook.InterestsResponse;
-import com.orderbook.ItemOrderBookRequest;
-import com.orderbook.ItemOrderBookResponse;
-import com.orderbook.OrderBookLayer;
-import com.orderbook.OrderBookServiceGrpc;
+import com.orderbook.*;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import lombok.AllArgsConstructor;
@@ -30,6 +23,8 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
 
     @Override
     public void getOrderBookItemLayers(ItemOrderBookRequest request, StreamObserver<ItemOrderBookResponse> responseObserver) {
+        checkForValidData(request.getItemName());
+
         String itemName = request.getItemName();
         long itemQuantity = request.getQuantity();
 
@@ -47,6 +42,8 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
 
     @Override
     public void announceItemInterest(InterestsRequest request, StreamObserver<InterestsResponse> responseObserver) {
+        checkForValidData(request.getItemName());
+
         String itemName = request.getItemName();
         try {
 
@@ -66,7 +63,10 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
 
     @Override
     public void cancelItemSubscription(CancelSubscriptionRequest request, StreamObserver<CancelSubscriptionResponse> responseObserver) {
+        checkForValidData(request.getItemName());
+
         String itemName = request.getItemName();
+
 
         try {
 
@@ -79,6 +79,12 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
 
             LOGGER.error("Cancel item subscription by client id: {} has failed with item: {}", request.getClientId(), itemName);
             responseObserver.onError(Status.INVALID_ARGUMENT.withDescription("Invalid item name").asException());
+        }
+    }
+
+    private void checkForValidData(String parameter) {
+        if (parameter == null || parameter.isEmpty()) {
+            throw new IllegalArgumentException("The incoming data is invalid!");
         }
     }
 }
