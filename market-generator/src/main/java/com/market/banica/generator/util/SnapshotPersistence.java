@@ -22,7 +22,7 @@ public class SnapshotPersistence {
 
     private final String databaseFileName;
 
-    private static final Kryo kryoHandle = new Kryo();
+    private final Kryo kryoHandle = new Kryo();
 
     public SnapshotPersistence(String fileName) {
         initKryo();
@@ -64,7 +64,7 @@ public class SnapshotPersistence {
 
     }
 
-    private static void initKryo() {
+    private void initKryo() {
 
         kryoHandle.register(java.util.concurrent.ConcurrentHashMap.class);
         kryoHandle.register(java.util.TreeSet.class);

@@ -1,7 +1,7 @@
 package com.market.banica.generator.util;
 
 import com.market.banica.generator.model.MarketTick;
-import com.market.banica.generator.service.task.SnapshotPersistenceTask;
+import com.market.banica.generator.task.SnapshotPersistenceTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,7 +15,7 @@ public class PersistScheduler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PersistScheduler.class);
 
-    private static final Timer PERSIST_TIMER = new Timer();
+    private final Timer persistTimer = new Timer();
 
     private int frequencySchedule = 60;
     private SnapshotPersistenceTask currentSnapshotPersistenceTask;
@@ -57,7 +57,7 @@ public class PersistScheduler {
         this.currentSnapshotPersistenceTask = new SnapshotPersistenceTask(marketStateLock,
                 snapshotPersistence, newTicks);
 
-        PERSIST_TIMER.scheduleAtFixedRate(currentSnapshotPersistenceTask,
+        persistTimer.scheduleAtFixedRate(currentSnapshotPersistenceTask,
                 TimeUnit.SECONDS.toMillis(frequencySchedule),
                 TimeUnit.SECONDS.toMillis(frequencySchedule));
 
