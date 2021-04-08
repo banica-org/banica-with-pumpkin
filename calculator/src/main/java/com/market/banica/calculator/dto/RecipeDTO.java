@@ -17,13 +17,11 @@ import java.util.Set;
 @Data
 @NoArgsConstructor
 public class RecipeDTO {
+    //ingredients required for the recipe
+    Set<IngredientDTO> ingredients;
     //Name of the recipe
     private String itemName;
-
     //total price of the recipe
     //price should be evaluated from total price of the ingredients
     private BigDecimal totalPrice;
-
-    //ingredients required for the recipe
-    Set<IngredientDTO> ingredients;
 }

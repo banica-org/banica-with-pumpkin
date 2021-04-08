@@ -6,5 +6,5 @@ import java.util.Map;
 
 public interface ProductBase {
 
-   Map<String, Product> getDatabase();
+    Map<String, Product> getDatabase();
 }

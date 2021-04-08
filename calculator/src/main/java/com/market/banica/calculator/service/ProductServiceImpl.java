@@ -228,7 +228,9 @@ public class ProductServiceImpl implements ProductService {
 
         for (String productName : productsNames) {
 
-            validateProductExists(productName); } }
+            validateProductExists(productName);
+        }
+    }
 
     private void validateProductExists(String productName) {
         LOGGER.debug("In validateProductExists private method");
