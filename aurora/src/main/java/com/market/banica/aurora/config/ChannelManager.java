@@ -64,6 +64,10 @@ public class ChannelManager {
         this.channels.put(key, value);
     }
 
+    public ManagedChannel removeChannel(String key) {
+        return this.channels.remove(key);
+    }
+
     protected void deleteChannel(String key) {
         LOGGER.info("Deleting channel {} to map", key);
         Optional<ManagedChannel> managedChannel = Optional.ofNullable(this.channels.remove(key));

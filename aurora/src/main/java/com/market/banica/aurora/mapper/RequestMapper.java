@@ -41,9 +41,10 @@ public class RequestMapper {
     public static final String AURORA = "aurora";
     public static final String MARKET = "market";
     public static final String BAD_PUBLISHER_REQUEST = "Unknown Publisher";
-    public static final String IN_CANCEL_ITEM_SUBSCRIPTION_METHOD = "Forwarding to orderBookService.cancelItemSubscription method";
-    public static final String IN_ANNOUNCE_ITEM_INTEREST_METHOD = "Forwarding to orderBookService.announceItemInterest method";
-    public static final String IN_GET_ORDER_BOOK_ITEM_LAYERS_METHOD = "Forwarding to orderBookService.getOrderBookItemLayers method";
+    public static final String IN_CANCEL_ITEM_SUBSCRIPTION = "Forwarding to orderbook - cancelItemSubscription.";
+    public static final String IN_ANNOUNCE_ITEM_INTEREST = "Forwarding to orderbook - announceItemInterest.";
+    public static final String IN_GET_ORDER_BOOK_ITEM_LAYERS = "Forwarding to orderbook - getOrderBookItemLayers.";
+    public static final String IN_AURORA_REQUEST = "Forwarding to aurora - request.";
 
     public static final String SUBSCRIBE = "subscribe";
 
@@ -65,9 +66,9 @@ public class RequestMapper {
         }
 
         if (destinationOfMessage.contains(ORDERBOOK)) {
-            return this.processOrderBookMapping(incomingRequest, channelByKey);
+            return this.renderOrderbookMapping(incomingRequest, channelByKey.get());
         } else if (destinationOfMessage.contains(AURORA)) {
-            return processAuroraRequest(incomingRequest, channelByKey);
+            return renderAuroraMapping(incomingRequest, channelByKey.get());
         } else if (destinationOfMessage.contains(MARKET)){
             throw new ServiceNotFoundException("Unimplemented publisher!");
         }
@@ -75,12 +76,12 @@ public class RequestMapper {
         throw new ServiceNotFoundException(BAD_PUBLISHER_REQUEST + ". Requested publisher is: " + destinationOfMessage);
     }
 
-    private Aurora.AuroraResponse processAuroraRequest(Aurora.AuroraRequest incomingRequest, Optional<ManagedChannel> channelByKey) {
+    private Aurora.AuroraResponse renderAuroraMapping(Aurora.AuroraRequest incomingRequest, ManagedChannel channelByKey) {
         LOGGER.info("Mapping request for aurora.");
-        AuroraServiceGrpc.AuroraServiceBlockingStub auroraBlockingStub = stubManager.getAuroraBlockingStub(channelByKey.get());
+        AuroraServiceGrpc.AuroraServiceBlockingStub auroraBlockingStub = stubManager.getAuroraBlockingStub(channelByKey);
 
-        Aurora.AuroraResponse request = auroraBlockingStub.request(incomingRequest);
-        return request;
+        LOGGER.info(IN_AURORA_REQUEST);
+        return auroraBlockingStub.request(incomingRequest);
     }
 
 
@@ -88,7 +89,7 @@ public class RequestMapper {
         return NUMBER_CHECK_PATTERN.matcher(number).matches();
     }
 
-    private Aurora.AuroraResponse processOrderBookMapping(Aurora.AuroraRequest incomingRequest, Optional<ManagedChannel> channelByKey) {
+    private Aurora.AuroraResponse renderOrderbookMapping(Aurora.AuroraRequest incomingRequest, ManagedChannel channelByKey) {
         LOGGER.info("Mapping messages for orderbook.");
         String[] topicSplit = incomingRequest.getTopic().split(SPLIT_SLASH_REGEX);
 
@@ -97,27 +98,30 @@ public class RequestMapper {
                 return processItemOrderBookRequest(incomingRequest, channelByKey, topicSplit);
 
             } else if (topicSplit.length == 2 && topicSplit[1].contains(SPLIT_EQUALS_REGEX)) {
-                String command = topicSplit[1].split(SPLIT_EQUALS_REGEX)[1].toLowerCase(Locale.ROOT);
-
-                OrderBookServiceGrpc.OrderBookServiceBlockingStub orderbookStub = stubManager.getOrderbookBlockingStub(channelByKey.get());
-
-                String itemName = topicSplit[1];
-
-                if (command.equals(SUBSCRIBE)) {
-                    return processSubscribeForItemRequest(incomingRequest, orderbookStub, itemName);
-                }
-                LOGGER.info(IN_CANCEL_ITEM_SUBSCRIPTION_METHOD);
-
-                return processCancelItemSubscriptionRequest(incomingRequest, orderbookStub, itemName);
+                return renderOrderbookRequestSubscribeRequest(incomingRequest, channelByKey, topicSplit[1]);
             }
         } catch (Exception e) {
             RuntimeException runtimeException = new RuntimeException("Got error from orderbook with message " + e.getMessage());
             runtimeException.setStackTrace(e.getStackTrace());
-            runtimeException.initCause(e.getCause());
             throw runtimeException;
         }
 
         throw new IllegalArgumentException("Client requested an unsupported message from orderbook. Message is: " + incomingRequest.getTopic());
+    }
+
+    private Aurora.AuroraResponse renderOrderbookRequestSubscribeRequest(Aurora.AuroraRequest incomingRequest, ManagedChannel channelByKey, String s) {
+        String command = s.split(SPLIT_EQUALS_REGEX)[1].toLowerCase(Locale.ROOT);
+
+        OrderBookServiceGrpc.OrderBookServiceBlockingStub orderbookStub = stubManager.getOrderbookBlockingStub(channelByKey);
+
+        String itemName = s.split(SPLIT_EQUALS_REGEX)[0].toLowerCase(Locale.ROOT);
+
+        if (command.equals(SUBSCRIBE)) {
+            return processSubscribeForItemRequest(incomingRequest, orderbookStub, itemName);
+        }
+        LOGGER.info(IN_CANCEL_ITEM_SUBSCRIPTION);
+
+        return processCancelItemSubscriptionRequest(incomingRequest, orderbookStub, itemName);
     }
 
 
@@ -136,7 +140,7 @@ public class RequestMapper {
 
 
     private Aurora.AuroraResponse processSubscribeForItemRequest(Aurora.AuroraRequest incomingRequest, OrderBookServiceGrpc.OrderBookServiceBlockingStub orderbookStub, String itemName) {
-        LOGGER.info(IN_ANNOUNCE_ITEM_INTEREST_METHOD);
+        LOGGER.info(IN_ANNOUNCE_ITEM_INTEREST);
 
         InterestsResponse interestsResponse = orderbookStub.announceItemInterest(InterestsRequest.newBuilder()
                 .setClientId(incomingRequest.getClientId())
@@ -148,9 +152,9 @@ public class RequestMapper {
                 .build();
     }
 
-    private Aurora.AuroraResponse processItemOrderBookRequest(Aurora.AuroraRequest incomingRequest, Optional<ManagedChannel> channelByKey, String[] topicSplit) {
-        LOGGER.info(IN_GET_ORDER_BOOK_ITEM_LAYERS_METHOD);
-        OrderBookServiceGrpc.OrderBookServiceBlockingStub orderbookStub = stubManager.getOrderbookBlockingStub(channelByKey.get());
+    private Aurora.AuroraResponse processItemOrderBookRequest(Aurora.AuroraRequest incomingRequest, ManagedChannel channelByKey, String[] topicSplit) {
+        LOGGER.info(IN_GET_ORDER_BOOK_ITEM_LAYERS);
+        OrderBookServiceGrpc.OrderBookServiceBlockingStub orderbookStub = stubManager.getOrderbookBlockingStub(channelByKey);
         ItemOrderBookRequest build = ItemOrderBookRequest.newBuilder()
                 .setClientId(incomingRequest.getClientId())
                 .setItemName(topicSplit[1])

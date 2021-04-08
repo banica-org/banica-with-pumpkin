@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -30,36 +31,37 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class Publishers {
     private static final Logger LOGGER = LoggerFactory.getLogger(Publishers.class);
 
-    private String publishersFileName;
+    private final String publishersFileName;
 
-    CopyOnWriteArrayList<String> publishers;
+    CopyOnWriteArrayList<String> publishersList;
+
 
     @Autowired
     public Publishers(@Value("${aurora.channels.publishers}") String fileName) {
         this.publishersFileName = fileName;
-        this.publishers = this.readPublishersFromFile();
+        this.publishersList = this.readPublishersFromFile();
     }
 
     @ManagedOperation
-    public CopyOnWriteArrayList<String> getPublishers() {
-        return publishers;
+    public List<String> getPublishersList() {
+        return publishersList;
     }
 
     @ManagedOperation
     public void addPublisher(String publisher) {
-        if (publishers.contains(publisher)) {
+        if (publishersList.contains(publisher)) {
             throw new IllegalArgumentException("Publisher is already defined.");
         }
-        publishers.add(publisher);
+        publishersList.add(publisher);
         writeBackUp();
     }
 
     @ManagedOperation
-    public void deletePublisher(String publisher){
-        if (!publishers.contains(publisher)){
+    public void deletePublisher(String publisher) {
+        if (!publishersList.contains(publisher)) {
             throw new IllegalArgumentException("Publisher is not defined.");
         }
-        publishers.remove(publisher);
+        publishersList.remove(publisher);
         writeBackUp();
     }
 
@@ -70,7 +72,7 @@ public class Publishers {
 
         try (Writer output = new OutputStreamWriter(new FileOutputStream(ApplicationDirectoryUtil.getConfigFile(publishersFileName)), UTF_8)) {
 
-            String jsonData = getStringFromList(publishers, objectWriter);
+            String jsonData = getStringFromList(publishersList, objectWriter);
 
             output.write(jsonData);
 

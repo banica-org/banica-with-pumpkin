@@ -194,7 +194,7 @@ public class JMXConfig {
     }
 
     private boolean checkChannelCompatibility(String channelPrefix){
-        List<String> allowedPublishers = publishers.getPublishers();
+        List<String> allowedPublishers = publishers.getPublishersList();
 
         for (String publisher : allowedPublishers) {
             if (channelPrefix.contains(publisher)){

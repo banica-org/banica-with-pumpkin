@@ -30,7 +30,9 @@ public class MarketTickObserver implements StreamObserver<TickResponse> {
         LOGGER.debug("Forwarding response to client {}", client);
         Aurora.AuroraResponse response = this.wrapResponse(tickResponse);
 
-        forwardResponse.onNext(response);
+        synchronized (forwardResponse){
+            forwardResponse.onNext(response);
+        }
     }
 
     @Override

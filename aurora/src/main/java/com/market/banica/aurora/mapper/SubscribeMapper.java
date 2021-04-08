@@ -27,6 +27,10 @@ public class SubscribeMapper {
     private final ChannelManager channelManager;
     private final StubManager stubManager;
 
+    public static final String ORDERBOOK = "orderbook";
+    public static final String AURORA = "aurora";
+    public static final String MARKET = "market";
+
     @Autowired
     public SubscribeMapper(ChannelManager channelManager, StubManager stubManager) {
 
@@ -46,28 +50,41 @@ public class SubscribeMapper {
             return;
         }
 
-        if (destinationOfMessage.contains("market")) {
-            String itemForSubscribing = incomingRequest.getTopic().split("/")[1];
-            AtomicInteger openStreams = new AtomicInteger(channelsWithPrefix.size());
+        if (destinationOfMessage.contains(MARKET)) {
+            renderMarketMapping(incomingRequest, responseObserver, channelsWithPrefix);
 
-            MarketDataRequest marketDataRequest = MarketDataRequest.newBuilder()
-                    .setClientId(incomingRequest.getClientId())
-                    .setGoodName(itemForSubscribing)
-                    .build();
-
-            channelsWithPrefix.forEach(channel -> stubManager.getMarketStub(channel)
-                    .subscribeForItem(marketDataRequest, new MarketTickObserver(incomingRequest.getClientId(), responseObserver, openStreams)));
-
-        } else if (destinationOfMessage.contains("aurora")) {
-            AtomicInteger openStreams = new AtomicInteger(channelsWithPrefix.size());
-
-            channelsWithPrefix.forEach(channel -> this.stubManager.getAuroraStub(channel)
-                    .subscribe(incomingRequest, new AuroraObserver(incomingRequest, responseObserver, openStreams)));
+        } else if (destinationOfMessage.contains(AURORA)) {
+            renderAuroraMapping(incomingRequest, responseObserver, channelsWithPrefix);
+        }else if(destinationOfMessage.contains(ORDERBOOK)){
+            LOGGER.warn("Unsupported mapping have reached aurora.");
+            responseObserver.onError(Status.NOT_FOUND
+                    .withDescription("No provided mapping for odrerbook streaming messages. " + incomingRequest.getTopic())
+                    .asException());
         } else {
             LOGGER.warn("Unsupported mapping have reached aurora.");
             responseObserver.onError(Status.ABORTED
                     .withDescription("No provided mapping for message " + incomingRequest.getTopic())
                     .asException());
         }
+    }
+
+    private void renderAuroraMapping(Aurora.AuroraRequest incomingRequest, StreamObserver<Aurora.AuroraResponse> responseObserver, List<ManagedChannel> channelsWithPrefix) {
+        AtomicInteger openStreams = new AtomicInteger(channelsWithPrefix.size());
+
+        channelsWithPrefix.forEach(channel -> this.stubManager.getAuroraStub(channel)
+                .subscribe(incomingRequest, new AuroraObserver(incomingRequest, responseObserver, openStreams)));
+    }
+
+    private void renderMarketMapping(Aurora.AuroraRequest incomingRequest, StreamObserver<Aurora.AuroraResponse> responseObserver, List<ManagedChannel> channelsWithPrefix) {
+        String itemForSubscribing = incomingRequest.getTopic().split("/")[1];
+        AtomicInteger openStreams = new AtomicInteger(channelsWithPrefix.size());
+
+        MarketDataRequest marketDataRequest = MarketDataRequest.newBuilder()
+                .setClientId(incomingRequest.getClientId())
+                .setGoodName(itemForSubscribing)
+                .build();
+
+        channelsWithPrefix.forEach(channel -> stubManager.getMarketStub(channel)
+                .subscribeForItem(marketDataRequest, new MarketTickObserver(incomingRequest.getClientId(), responseObserver, openStreams)));
     }
 }
