@@ -3,10 +3,12 @@ package com.market.banica.order.book.service.grpc.componentTests;
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
 import com.google.protobuf.Any;
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.market.Origin;
 import com.market.TickResponse;
 import com.market.banica.order.book.OrderBookApplication;
 import com.market.banica.order.book.exception.TrackingException;
+import com.market.banica.order.book.service.ChannelRPCConfig;
 import com.market.banica.order.book.service.grpc.AuroraClient;
 import com.market.banica.order.book.service.grpc.OrderBookService;
 import com.market.banica.order.book.service.grpc.componentTests.configuration.TestConfiguration;
@@ -22,6 +24,7 @@ import io.grpc.inprocess.InProcessChannelBuilder;
 import io.grpc.inprocess.InProcessServerBuilder;
 import io.grpc.stub.StreamObserver;
 import io.grpc.testing.GrpcCleanupRule;
+import lombok.SneakyThrows;
 import org.junit.Rule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -80,7 +83,13 @@ class OrderBookComponentIT {
     @Value(value = "${product.price}")
     private double productPrice;
 
+    @Value(value = "${product.quantity}")
+    private int productQuantity;
+
     @Value(value = "${market.topic.prefix}")
+    private String marketTopicPrefix;
+
+    @Value(value = "${orderbook.topic.prefix}")
     private String orderBookTopicPrefix;
 
     private ItemOrderBookResponse itemOrderBookResponse;
@@ -93,7 +102,6 @@ class OrderBookComponentIT {
     private OrderBookServiceGrpc.OrderBookServiceBlockingStub blockingStub;
     private AuroraServiceGrpc.AuroraServiceStub asynchronousStub;
 
-    private final static String MARKET_PREFIX = "market/";
     private final static String DELIMITER = "/";
 
     @BeforeEach
@@ -101,11 +109,49 @@ class OrderBookComponentIT {
         serverName = InProcessServerBuilder.generateName();
         serverNameTwo = InProcessServerBuilder.generateName();
 
-        channel = InProcessChannelBuilder.forName(serverName).directExecutor().build();
+        channel = InProcessChannelBuilder.forName(serverName).defaultServiceConfig(ChannelRPCConfig.getInstance().getServiceConfig())
+                .enableRetry().maxRetryAttempts(10).directExecutor().build();
+
+
         channelTwo = InProcessChannelBuilder.forName(serverNameTwo).executor(Executors.newSingleThreadExecutor()).build();
 
         asynchronousStub = AuroraServiceGrpc.newStub(channelTwo);
         blockingStub = OrderBookServiceGrpc.newBlockingStub(grpcCleanup.register(channel));
+    }
+
+    @Test
+    public void auroraServiceToOrderBookRequestsRetryExecutesWithSuccess() throws InvalidProtocolBufferException {
+        //Arrange
+        Aurora.AuroraResponse response = generateItemOrderBookExpectedResponse();
+
+        new Thread(() -> {
+            try {
+                Thread.sleep(1000);
+                grpcCleanup.register(InProcessServerBuilder
+                        .forName(serverName).directExecutor().addService(testConfiguration.getGrpcOrderBookServiceItemLayers(response))
+                        .build().start());
+            } catch (InterruptedException | IOException e) {
+                e.printStackTrace();
+            }
+        }).start();
+
+        Aurora.AuroraRequest auroraRequest = Aurora.AuroraRequest.newBuilder()
+                .setTopic(orderBookTopicPrefix + productName + DELIMITER + productQuantity).setClientId(clientId).build();
+
+        //Act
+        Aurora.AuroraResponse auroraResponse = blockingStub.getOrderBookItemLayers(auroraRequest);
+
+        ItemOrderBookResponse orderBookItemLayersResponse = null;
+        try {
+            orderBookItemLayersResponse = auroraResponse.getMessage().unpack(ItemOrderBookResponse.class);
+        } catch (InvalidProtocolBufferException e) {
+            e.printStackTrace();
+        }
+
+        ItemOrderBookResponse expected = generateItemOrderBookExpectedResponse().getMessage().unpack(ItemOrderBookResponse.class);
+
+        //Assert
+        assertEquals(expected, orderBookItemLayersResponse);
     }
 
     @Test
@@ -175,11 +221,11 @@ class OrderBookComponentIT {
         // Act
         Aurora.AuroraResponse response = blockingStub
                 .announceItemInterest(Aurora.AuroraRequest.newBuilder()
-                        .setTopic(MARKET_PREFIX+ productName).build());
+                        .setTopic(marketTopicPrefix + productName).build());
 
         // Assert
         verify(server).subscribe(requestCaptor.capture(), ArgumentMatchers.any());
-        assertEquals(orderBookTopicPrefix + productName, requestCaptor.getValue().getTopic());
+        assertEquals(marketTopicPrefix + productName, requestCaptor.getValue().getTopic());
         assertTrue(response.isInitialized());
     }
 
@@ -207,7 +253,7 @@ class OrderBookComponentIT {
 
         // Act
         blockingStub.cancelItemSubscription(Aurora.AuroraRequest.newBuilder()
-                .setTopic(MARKET_PREFIX + productName)
+                .setTopic(marketTopicPrefix + productName)
                 .setClientId(clientId)
                 .build());
 
@@ -229,7 +275,7 @@ class OrderBookComponentIT {
     private Aurora.AuroraResponse generateItemOrderBookResponseFromRequest() {
         Aurora.AuroraResponse reply =
                 blockingStub.getOrderBookItemLayers(Aurora.AuroraRequest.newBuilder()
-                        .setTopic(MARKET_PREFIX + productName)
+                        .setTopic(marketTopicPrefix + productName)
                         .setClientId(clientId)
                         .build());
         return reply;
