@@ -113,7 +113,7 @@ public class ChannelManager {
                 .usePlaintext()
                 .enableRetry()
                 .defaultServiceConfig(ChannelRPCConfig.getInstance().getServiceConfig())
-                .maxRetryAttempts(10)
+                .maxRetryAttempts(10000)
                 .build();
     }
 
