@@ -48,9 +48,9 @@ class SnapshotPersistenceTest {
     }
 
     @AfterEach
-    void afterAll() {
+    void teardown() throws IOException {
 
-        File testTickDB = new File(fileName);
+        File testTickDB = ApplicationDirectoryUtil.getConfigFile(fileName);
         assert testTickDB.delete();
 
     }
