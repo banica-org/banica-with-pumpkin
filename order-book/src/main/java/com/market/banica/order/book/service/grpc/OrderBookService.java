@@ -30,8 +30,8 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
 
     @Override
     public void getOrderBookItemLayers(ItemOrderBookRequest request, StreamObserver<ItemOrderBookResponse> responseObserver) {
-        String itemName = request.getItemName();
-        long itemQuantity = request.getQuantity();
+        final String itemName = request.getItemName();
+        final long itemQuantity = request.getQuantity();
 
         List<OrderBookLayer> requestedItem = itemMarket.getRequestedItem(itemName, itemQuantity);
 
@@ -47,7 +47,8 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
 
     @Override
     public void announceItemInterest(InterestsRequest request, StreamObserver<InterestsResponse> responseObserver) {
-        String itemName = request.getItemName();
+        final String itemName = request.getItemName();
+
         try {
 
             auroraClient.startSubscription(itemName, request.getClientId());
@@ -66,18 +67,19 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
 
     @Override
     public void cancelItemSubscription(CancelSubscriptionRequest request, StreamObserver<CancelSubscriptionResponse> responseObserver) {
-        String itemName = request.getItemName();
+        final String itemName = request.getItemName();
+        final String clientId = request.getClientId();
 
         try {
 
-            auroraClient.stopSubscription(itemName, request.getClientId());
+            auroraClient.stopSubscription(itemName, clientId);
             responseObserver.onNext(CancelSubscriptionResponse.newBuilder().build());
             responseObserver.onCompleted();
-            LOGGER.info("Cancel item subscription by client id: {}", request.getClientId());
+            LOGGER.info("Cancel item subscription by client id: {}", clientId);
 
         } catch (TrackingException e) {
 
-            LOGGER.error("Cancel item subscription by client id: {} has failed with item: {}", request.getClientId(), itemName);
+            LOGGER.error("Cancel item subscription by client id: {} has failed with item: {}", clientId, itemName);
             responseObserver.onError(Status.INVALID_ARGUMENT.withDescription("Invalid item name").asException());
         }
     }
