@@ -2,20 +2,15 @@ package com.market.banica.order.book.service.grpc;
 
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
-import com.google.protobuf.InvalidProtocolBufferException;
-import com.market.TickResponse;
 import com.market.banica.common.channel.ChannelRPCConfig;
-import com.market.banica.order.book.exception.IncorrectResponseException;
 import com.market.banica.order.book.exception.StoppedStreamException;
 import com.market.banica.order.book.exception.TrackingException;
-import com.market.banica.order.book.model.Item;
 import com.market.banica.order.book.model.ItemMarket;
+import com.market.banica.order.book.observer.AuroraStreamObserver;
 import io.grpc.Context;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import io.grpc.stub.StreamObserver;
 import lombok.Getter;
-import lombok.Setter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,20 +19,17 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.PreDestroy;
 import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 @Service
 @Getter
-@Setter
 public class AuroraClient {
-
-
     private final ItemMarket itemMarket;
     private final ManagedChannel managedChannel;
     private final Map<String, Context.CancellableContext> cancellableStubs;
+
+    private static final String MARKET_PREFIX = "market/";
     private static final Logger LOGGER = LogManager.getLogger(AuroraClient.class);
 
     @Autowired
@@ -63,7 +55,7 @@ public class AuroraClient {
         }
 
         final Aurora.AuroraRequest request = Aurora.AuroraRequest.newBuilder()
-                .setTopic("market/" + requestedItem)
+                .setTopic(MARKET_PREFIX + requestedItem)
                 .setClientId(clientId)
                 .build();
 
@@ -93,54 +85,7 @@ public class AuroraClient {
     private void startMarketStream(Aurora.AuroraRequest request) {
         final AuroraServiceGrpc.AuroraServiceStub asynchronousStub = getAsynchronousStub();
 
-
-        asynchronousStub.subscribe(request, new StreamObserver<Aurora.AuroraResponse>() {
-
-            @Override
-            public void onNext(Aurora.AuroraResponse response) {
-                if (response.getMessage().is(TickResponse.class)) {
-                    TickResponse tickResponse;
-
-                    try {
-                        tickResponse = response.getMessage().unpack(TickResponse.class);
-                    } catch (InvalidProtocolBufferException e) {
-                        throw new IncorrectResponseException("Response is not correct!");
-                    }
-
-
-                    Item item = new Item();
-                    item.setPrice(tickResponse.getPrice());
-                    item.setQuantity(tickResponse.getQuantity());
-                    item.setOrigin(tickResponse.getOrigin());
-
-                    Optional<Set<Item>> itemSet = itemMarket.getItemSetByName(tickResponse.getGoodName());
-                    if (itemSet.isPresent()) {
-                        itemSet.get().add(item);
-                    } else {
-                        LOGGER.error("Item: {} is not being tracked and cannot be added to itemMarket!",
-                                tickResponse.getGoodName());
-                    }
-
-                    LOGGER.info("Products data updated!");
-                } else {
-                    throw new IncorrectResponseException("Response is not correct!");
-                }
-            }
-
-            @Override
-            public void onError(final Throwable throwable) {
-                LOGGER.warn("Unable to request");
-                LOGGER.error(throwable.getMessage());
-                throwable.printStackTrace();
-            }
-
-            @Override
-            public void onCompleted() {
-                LOGGER.info("Market data gathered");
-            }
-
-        });
-
+        asynchronousStub.subscribe(request, new AuroraStreamObserver(itemMarket));
     }
 
     public AuroraServiceGrpc.AuroraServiceStub getAsynchronousStub() {
