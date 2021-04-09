@@ -32,10 +32,10 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
     public void getOrderBookItemLayers(ItemOrderBookRequest request, StreamObserver<ItemOrderBookResponse> responseObserver) {
         final String itemName = request.getItemName();
         final long itemQuantity = request.getQuantity();
-        checkForValidData(request.getItemName());
 
-        String itemName = request.getItemName();
-        long itemQuantity = request.getQuantity();
+        checkForValidData(itemName);
+
+
 
         List<OrderBookLayer> requestedItem = itemMarket.getRequestedItem(itemName, itemQuantity);
 
@@ -51,11 +51,12 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
 
     @Override
     public void announceItemInterest(InterestsRequest request, StreamObserver<InterestsResponse> responseObserver) {
-        checkForValidData(request.getItemName());
 
-        String itemName = request.getItemName();
         final String itemName = request.getItemName();
         final String clientId = request.getClientId();
+
+        checkForValidData(itemName);
+        checkForValidData(clientId);
 
         try {
 
@@ -75,11 +76,13 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
 
     @Override
     public void cancelItemSubscription(CancelSubscriptionRequest request, StreamObserver<CancelSubscriptionResponse> responseObserver) {
-        checkForValidData(request.getItemName());
 
-        String itemName = request.getItemName();
+
         final String itemName = request.getItemName();
         final String clientId = request.getClientId();
+
+        checkForValidData(itemName);
+        checkForValidData(clientId);
 
 
         try {
