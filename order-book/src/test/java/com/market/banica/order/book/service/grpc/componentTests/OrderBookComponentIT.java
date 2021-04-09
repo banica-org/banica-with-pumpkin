@@ -71,6 +71,9 @@ class OrderBookComponentIT {
     @LocalServerPort
     private int grpcMockPort;
 
+    @Value(value = "${market.name}")
+    private String marketName;
+
     @Value(value = "${product.name}")
     private String productName;
 
@@ -83,8 +86,6 @@ class OrderBookComponentIT {
     @Value(value = "${market.topic.prefix}")
     private String orderBookTopicPrefix;
 
-    private ItemOrderBookResponse itemOrderBookResponse;
-
     private static ManagedChannel channel;
     private static ManagedChannel channelTwo;
 
@@ -92,6 +93,8 @@ class OrderBookComponentIT {
     private String serverNameTwo;
     private OrderBookServiceGrpc.OrderBookServiceBlockingStub blockingStub;
     private AuroraServiceGrpc.AuroraServiceStub asynchronousStub;
+
+    private final static String MARKET_PREFIX = "market/";
 
     @BeforeEach
     void setupChannel() {
@@ -107,7 +110,6 @@ class OrderBookComponentIT {
 
     @Test
     void getOrderBookItemLayers_Should_ReturnAUnaryResponse() throws IOException {
-
         // Arrange
         ItemOrderBookResponse expected = generateItemOrderBookExpectedResponse();
 
@@ -135,7 +137,6 @@ class OrderBookComponentIT {
 
     @Test
     void announceItemInterest_Should_ReturnResponse() throws IOException {
-
         // Arrange
         grpcCleanup.register(channel);
         grpcCleanup.register(InProcessServerBuilder
@@ -172,7 +173,6 @@ class OrderBookComponentIT {
 
     @Test
     void cancelItemSubscription_Should_ReturnResponse() throws IOException {
-
         // Arrange
         auroraClient.getCancellableStubs().put(productName, Context.current().withCancellation());
         grpcCleanup.register(channel);
@@ -214,21 +214,21 @@ class OrderBookComponentIT {
     private ItemOrderBookResponse generateItemOrderBookResponseFromRequest() {
         ItemOrderBookResponse reply =
                 blockingStub.getOrderBookItemLayers(ItemOrderBookRequest.newBuilder()
-                        .setItemName(productName)
+                        .setItemName(MARKET_PREFIX + productName)
                         .setClientId(clientId)
                         .build());
         return reply;
     }
 
     private Aurora.AuroraResponse generateAuroraResponse() {
-        Aurora.AuroraResponse auroraResponse = Aurora.AuroraResponse.newBuilder().
-                setMessage(Any.pack(TickResponse.newBuilder()
-                        .setGoodName(productName)
-                        .build()))
+        TickResponse tick = TickResponse.newBuilder()
+                .setGoodName(productName)
+                .build();
+        Aurora.AuroraResponse auroraResponse = Aurora.AuroraResponse.newBuilder()
+                .setMessage(Any.pack(tick))
                 .build();
         return auroraResponse;
     }
-
 }
 
 

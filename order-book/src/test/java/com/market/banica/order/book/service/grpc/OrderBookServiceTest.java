@@ -1,5 +1,6 @@
 package com.market.banica.order.book.service.grpc;
 
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.market.Origin;
 import com.market.banica.order.book.exception.TrackingException;
 import com.market.banica.order.book.model.Item;
@@ -10,6 +11,7 @@ import com.orderbook.InterestsRequest;
 import com.orderbook.InterestsResponse;
 import com.orderbook.ItemOrderBookRequest;
 import com.orderbook.ItemOrderBookResponse;
+import com.orderbook.OrderBookLayer;
 import com.orderbook.OrderBookServiceGrpc;
 import io.grpc.StatusRuntimeException;
 import io.grpc.inprocess.InProcessChannelBuilder;
@@ -24,7 +26,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.util.Optional;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -42,20 +45,18 @@ public class OrderBookServiceTest {
 
     private static final String CLIENT = "europe";
 
-    private static final ItemOrderBookRequest ITEM_ORDER_BOOK_REQUEST = ItemOrderBookRequest.newBuilder()
-            .setItemName(EGGS_ITEM_NAME)
-            .setClientId(CLIENT)
-            .setQuantity(2)
-            .build();
+    private static final String MARKET = "market";
 
-    private static final InterestsRequest INTERESTS_REQUEST =
-            InterestsRequest.newBuilder().setItemName(EGGS_ITEM_NAME).setClientId(CLIENT).build();
+    private static final ItemOrderBookRequest ITEM_ORDER_BOOK_REQUEST =
+            ItemOrderBookRequest.newBuilder().setClientId("calculator").setItemName("eggs").setQuantity(3).build();
+
+    private static final InterestsRequest AURORA_ANNOUNCE_REQUEST =
+            InterestsRequest.newBuilder().setItemName(MARKET + "/" + EGGS_ITEM_NAME).setClientId(CLIENT).build();
 
     private static final CancelSubscriptionRequest CANCEL_SUBSCRIPTION_REQUEST =
-            CancelSubscriptionRequest.newBuilder().setClientId(EGGS_ITEM_NAME).setClientId(CLIENT).build();
+            CancelSubscriptionRequest.newBuilder().setItemName(MARKET + "/" + EGGS_ITEM_NAME).setClientId(CLIENT).build();
 
-
-    private Set<Item> items;
+    List<OrderBookLayer> orderBookLayers = new ArrayList<>();
     private OrderBookServiceGrpc.OrderBookServiceBlockingStub blockingStub;
 
     @Rule
@@ -70,11 +71,11 @@ public class OrderBookServiceTest {
     @InjectMocks
     private OrderBookService orderBookService;
 
-
     @SneakyThrows
     @Before
     public void setUp() {
-        items = this.populateItems();
+        Set<Item> items = this.populateItems();
+        populateList(items);
 
         String serverName = InProcessServerBuilder.generateName();
 
@@ -86,9 +87,9 @@ public class OrderBookServiceTest {
     }
 
     @Test
-    public void getOrderBookItemLayersSuccessfullyReturnsItemOrderBookResponseWhenItemMarketContainsRequestItemName() {
+    public void getOrderBookItemLayersSuccessfullyReturnsItemOrderBookResponseWhenItemMarketContainsRequestItemName() throws InvalidProtocolBufferException {
         //Arrange
-        when(itemMarket.getItemSetByName(any())).thenReturn(Optional.of(this.items));
+        when(itemMarket.getRequestedItem(any(), any(Long.class))).thenReturn(orderBookLayers);
 
         //Act
         ItemOrderBookResponse bookItemLayers = blockingStub.getOrderBookItemLayers(ITEM_ORDER_BOOK_REQUEST);
@@ -101,10 +102,7 @@ public class OrderBookServiceTest {
     }
 
     @Test
-    public void getOrderBookItemLayersReturnsAnEmptyItemOrderBookResponseWhenItemMarketDoesNotContainRequestItemName() {
-        //Arrange
-        when(itemMarket.getItemSetByName(any())).thenReturn(Optional.empty());
-
+    public void getOrderBookItemLayersReturnsAnEmptyItemOrderBookResponseWhenItemMarketDoesNotContainRequestItemName() throws InvalidProtocolBufferException {
         //Act
         ItemOrderBookResponse bookItemLayers = blockingStub.getOrderBookItemLayers(ITEM_ORDER_BOOK_REQUEST);
 
@@ -115,7 +113,7 @@ public class OrderBookServiceTest {
     @Test
     public void announceItemInterestExecutesSuccessfullyWithValidInterestRequest() {
         //Act
-        InterestsResponse interestsResponse = blockingStub.announceItemInterest(INTERESTS_REQUEST);
+        InterestsResponse interestsResponse = blockingStub.announceItemInterest(AURORA_ANNOUNCE_REQUEST);
 
         //Assert
         assertTrue(interestsResponse.isInitialized());
@@ -127,7 +125,7 @@ public class OrderBookServiceTest {
         doThrow(new TrackingException(EXCEPTION_MESSAGE)).when(auroraClient).startSubscription(any(), any());
 
         //Act
-        blockingStub.announceItemInterest(INTERESTS_REQUEST);
+        blockingStub.announceItemInterest(AURORA_ANNOUNCE_REQUEST);
     }
 
     @Test
@@ -149,10 +147,18 @@ public class OrderBookServiceTest {
     }
 
     private TreeSet<Item> populateItems() {
+
         TreeSet<Item> items = new TreeSet<>();
         items.add(new Item(1.2, 3, Origin.EUROPE));
         items.add(new Item(2.2, 1, Origin.EUROPE));
         items.add(new Item(3.2, 2, Origin.EUROPE));
         return items;
+    }
+
+    private void populateList(Set<Item> items) {
+        for (Item item : items) {
+            OrderBookLayer build = OrderBookLayer.newBuilder().setQuantity(item.getQuantity()).setPrice(item.getPrice()).setOrigin(item.getOrigin()).build();
+            orderBookLayers.add(build);
+        }
     }
 }
