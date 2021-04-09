@@ -1,6 +1,5 @@
 package com.market.banica.aurora.config;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -78,13 +77,13 @@ public class Publishers {
 
             try (Writer output = new OutputStreamWriter(new FileOutputStream(ApplicationDirectoryUtil.getConfigFile(publishersFileName)), UTF_8)) {
 
-                String jsonData = getStringFromList(publishersList, objectWriter);
+                String jsonData = Utility.getObjectAsJsonString(publishersList, objectWriter);
 
                 output.write(jsonData);
 
                 LOGGER.info("Back-up written successfully");
             } catch (IOException e) {
-                LOGGER.error("Exception thrown during writing back-up");
+                LOGGER.error("Exception thrown during writing back-up : {}", e.getMessage());
             }
         } finally {
             lock.writeLock().unlock();
@@ -100,16 +99,10 @@ public class Publishers {
                     });
 
         } catch (IOException e) {
-            //log exception
+            LOGGER.error("Exception occurred during reading file {} with message : {}", publishersFileName, e.getMessage());
         }
         return new CopyOnWriteArrayList<>();
     }
 
 
-    private String getStringFromList(CopyOnWriteArrayList<String> data, ObjectWriter objectWriter)
-            throws JsonProcessingException {
-        LOGGER.debug("In getStringFromMap private method");
-
-        return objectWriter.writeValueAsString(data);
-    }
 }
