@@ -81,8 +81,7 @@ public class ItemMarket {
 
         if (itemSet.contains(item)) {
 
-            Item presentItem = itemSet.stream().filter(currentItem -> Double.compare(currentItem.getPrice(), item.getPrice()) == 0
-                    && currentItem.getOrigin().equals(item.getOrigin())).findFirst().get();
+            Item presentItem = itemSet.stream().filter(currentItem -> currentItem.compareTo(item) == 0).findFirst().get();
             presentItem.setQuantity(presentItem.getQuantity() + item.getQuantity());
             return;
         }

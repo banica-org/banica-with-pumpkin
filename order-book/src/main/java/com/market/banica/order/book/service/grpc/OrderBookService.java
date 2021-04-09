@@ -48,10 +48,11 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
     @Override
     public void announceItemInterest(InterestsRequest request, StreamObserver<InterestsResponse> responseObserver) {
         final String itemName = request.getItemName();
+        final String clientId = request.getClientId();
 
         try {
 
-            auroraClient.startSubscription(itemName, request.getClientId());
+            auroraClient.startSubscription(itemName, clientId);
             responseObserver.onNext(InterestsResponse.newBuilder().build());
             responseObserver.onCompleted();
             LOGGER.info("Announce item interest by client id: {}", request.getClientId());
