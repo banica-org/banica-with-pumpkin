@@ -55,9 +55,11 @@ public class ItemMarket {
     }
 
     public void updateItem(Aurora.AuroraResponse response) {
+
         if (!response.getMessage().is(TickResponse.class)) {
             throw new IncorrectResponseException("Response is not from type TickResponse!");
         }
+
         TickResponse tickResponse;
 
         try {
@@ -78,21 +80,21 @@ public class ItemMarket {
         LOGGER.info("Products data updated!");
 
         if (itemSet.contains(item)) {
-            Item presentItem = itemSet.stream().filter(currentItem -> Double.compare(currentItem.getPrice(), item.getPrice()) == 0
-                    && currentItem.getOrigin().equals(item.getOrigin())).findFirst().get();
+
+            Item presentItem = itemSet.stream().filter(currentItem -> currentItem.compareTo(item) == 0).findFirst().get();
             presentItem.setQuantity(presentItem.getQuantity() + item.getQuantity());
             return;
         }
-
         itemSet.add(item);
-
     }
 
     public List<OrderBookLayer> getRequestedItem(String itemName, long quantity) {
+
         LOGGER.info("Getting requested item: {} with quantity: {}", itemName, quantity);
         TreeSet<Item> items = this.allItems.get(itemName);
 
         if (items == null || this.productsQuantity.get(itemName) < quantity) {
+
             return Collections.emptyList();
         }
 
@@ -105,7 +107,7 @@ public class ItemMarket {
             Iterator<Item> iterator = items.iterator();
             long itemLeft = quantity;
 
-            while (iterator.hasNext() && itemLeft > 0) {
+            while (itemLeft > 0) {
                 Item currentItem = iterator.next();
 
                 OrderBookLayer.Builder currentLayer = populateItemLayer(iterator, itemLeft, currentItem);
@@ -128,27 +130,26 @@ public class ItemMarket {
         OrderBookLayer.Builder currentLayer = OrderBookLayer.newBuilder()
                 .setPrice(currentItem.getPrice());
 
-        if (currentItem.getQuantity() >= itemLeft) {
+        if (currentItem.getQuantity() > itemLeft) {
+
             currentLayer.setQuantity(itemLeft);
-
-            if (currentItem.getQuantity() == itemLeft) {
-                iterator.remove();
-            }
-
             currentItem.setQuantity(currentItem.getQuantity() - itemLeft);
-        } else if (currentItem.getQuantity() < itemLeft) {
-            currentLayer.setQuantity(currentItem.getQuantity());
 
+        } else if (currentItem.getQuantity() <= itemLeft) {
+
+            currentLayer.setQuantity(currentItem.getQuantity());
             iterator.remove();
         }
         return currentLayer;
     }
 
     private Item populateItem(TickResponse tickResponse) {
+
         Item item = new Item();
         item.setPrice(tickResponse.getPrice());
         item.setQuantity(tickResponse.getQuantity());
         item.setOrigin(tickResponse.getOrigin());
+
         return item;
     }
 
@@ -164,7 +165,6 @@ public class ItemMarket {
             this.productsQuantity.merge("cheese", cheeseItem.getQuantity(), Long::sum);
         }
 
-
         TreeSet<Item> cocoaItems = new TreeSet<>();
 
         cocoaItems.add(new Item(1.6, 3, Origin.ASIA));
@@ -175,5 +175,4 @@ public class ItemMarket {
             this.productsQuantity.merge("cocoa", cocoaItem.getQuantity(), Long::sum);
         }
     }
-
 }

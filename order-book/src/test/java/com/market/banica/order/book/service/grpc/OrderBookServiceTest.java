@@ -56,7 +56,6 @@ public class OrderBookServiceTest {
     private static final CancelSubscriptionRequest CANCEL_SUBSCRIPTION_REQUEST =
             CancelSubscriptionRequest.newBuilder().setItemName(MARKET + "/" + EGGS_ITEM_NAME).setClientId(CLIENT).build();
 
-
     List<OrderBookLayer> orderBookLayers = new ArrayList<>();
     private OrderBookServiceGrpc.OrderBookServiceBlockingStub blockingStub;
 
@@ -72,13 +71,11 @@ public class OrderBookServiceTest {
     @InjectMocks
     private OrderBookService orderBookService;
 
-
     @SneakyThrows
     @Before
     public void setUp() {
         Set<Item> items = this.populateItems();
         populateList(items);
-
 
         String serverName = InProcessServerBuilder.generateName();
 
@@ -97,13 +94,11 @@ public class OrderBookServiceTest {
         //Act
         ItemOrderBookResponse bookItemLayers = blockingStub.getOrderBookItemLayers(ITEM_ORDER_BOOK_REQUEST);
 
-
         //Assert
         assertEquals(3, bookItemLayers.getOrderbookLayersList().size());
         assertEquals(1.2, bookItemLayers.getOrderbookLayersList().get(0).getPrice(), 0.0);
         assertEquals(2.2, bookItemLayers.getOrderbookLayersList().get(1).getPrice(), 0.0);
         assertEquals(3.2, bookItemLayers.getOrderbookLayersList().get(2).getPrice(), 0.0);
-
     }
 
     @Test
@@ -111,14 +106,13 @@ public class OrderBookServiceTest {
         //Act
         ItemOrderBookResponse bookItemLayers = blockingStub.getOrderBookItemLayers(ITEM_ORDER_BOOK_REQUEST);
 
-
         //Assert
         assertEquals(0, bookItemLayers.getOrderbookLayersList().size());
     }
 
     @Test
     public void announceItemInterestExecutesSuccessfullyWithValidInterestRequest() {
-        //Act interestsResponse
+        //Act
         InterestsResponse interestsResponse = blockingStub.announceItemInterest(AURORA_ANNOUNCE_REQUEST);
 
         //Assert
@@ -153,6 +147,7 @@ public class OrderBookServiceTest {
     }
 
     private TreeSet<Item> populateItems() {
+
         TreeSet<Item> items = new TreeSet<>();
         items.add(new Item(1.2, 3, Origin.EUROPE));
         items.add(new Item(2.2, 1, Origin.EUROPE));

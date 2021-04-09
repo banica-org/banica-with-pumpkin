@@ -2,7 +2,14 @@ package com.market.banica.order.book.service.grpc;
 
 import com.market.banica.order.book.exception.TrackingException;
 import com.market.banica.order.book.model.ItemMarket;
-import com.orderbook.*;
+import com.orderbook.CancelSubscriptionRequest;
+import com.orderbook.CancelSubscriptionResponse;
+import com.orderbook.InterestsRequest;
+import com.orderbook.InterestsResponse;
+import com.orderbook.ItemOrderBookRequest;
+import com.orderbook.ItemOrderBookResponse;
+import com.orderbook.OrderBookLayer;
+import com.orderbook.OrderBookServiceGrpc;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import lombok.AllArgsConstructor;
@@ -23,6 +30,8 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
 
     @Override
     public void getOrderBookItemLayers(ItemOrderBookRequest request, StreamObserver<ItemOrderBookResponse> responseObserver) {
+        final String itemName = request.getItemName();
+        final long itemQuantity = request.getQuantity();
         checkForValidData(request.getItemName());
 
         String itemName = request.getItemName();
@@ -45,6 +54,9 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
         checkForValidData(request.getItemName());
 
         String itemName = request.getItemName();
+        final String itemName = request.getItemName();
+        final String clientId = request.getClientId();
+
         try {
 
             auroraClient.startSubscription(itemName, request.getClientId());
@@ -66,6 +78,8 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
         checkForValidData(request.getItemName());
 
         String itemName = request.getItemName();
+        final String itemName = request.getItemName();
+        final String clientId = request.getClientId();
 
 
         try {

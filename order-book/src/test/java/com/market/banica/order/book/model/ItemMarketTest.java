@@ -66,6 +66,9 @@ public class ItemMarketTest {
         //Assert
         assertEquals(2, allItems.get(CHEESE_ITEM_NAME).size());
 
+        assertEquals(2, allItems.get(CHEESE_ITEM_NAME).first().getQuantity());
+        assertEquals(4, allItems.get(CHEESE_ITEM_NAME).last().getQuantity());
+
         assertEquals(6, productsQuantity.get(CHEESE_ITEM_NAME));
         assertEquals(1, productsQuantity.size());
     }
