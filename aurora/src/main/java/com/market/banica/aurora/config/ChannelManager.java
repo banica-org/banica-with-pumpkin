@@ -55,7 +55,17 @@ public class ChannelManager {
         LOGGER.info("Adding new channel {} to map", key);
         Map.Entry<String, ManagedChannel> entry = this.convertPropertyToChannel(new AbstractMap.SimpleEntry<>(key, value));
 
+        entry.getValue().getState(true);
+
         this.channels.put(entry.getKey(), entry.getValue());
+    }
+
+    public void addChannel(String key, ManagedChannel value) {
+        this.channels.put(key, value);
+    }
+
+    public ManagedChannel removeChannel(String key) {
+        return this.channels.remove(key);
     }
 
     protected void deleteChannel(String key) {

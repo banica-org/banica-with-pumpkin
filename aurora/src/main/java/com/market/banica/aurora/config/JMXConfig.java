@@ -1,6 +1,5 @@
 package com.market.banica.aurora.config;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -22,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -42,11 +42,14 @@ public class JMXConfig {
 
     private Map<String, ChannelProperty> channelPropertyMap;
 
+    private Publishers publishers;
+
     private String channelsBackupUrl;
 
     @Autowired
-    public JMXConfig(ChannelManager channelManager, @Value("${aurora.channels.file.name}") String fileName) {
+    public JMXConfig(Publishers publishers, ChannelManager channelManager, @Value("${aurora.channels.file.name}") String fileName) {
         this.channelsBackupUrl = fileName;
+        this.publishers = publishers;
         this.channels = channelManager;
         this.channelPropertyMap = this.readChannelsConfigsFromFile();
         this.populateChannels(this.channelPropertyMap);
@@ -58,6 +61,10 @@ public class JMXConfig {
     public void createChannel(String channelPrefix, String host, String port) {
         try {
             this.lock.writeLock().lock();
+            if (!checkChannelCompatibility(channelPrefix)) {
+                throw new IllegalArgumentException("Unsupported publisher");
+            }
+
             LOGGER.info("Creating new channel {} from JMX server", channelPrefix);
 
             if (channelPropertyMap.containsKey(channelPrefix)) {
@@ -143,20 +150,24 @@ public class JMXConfig {
 
 
     protected void writeBackUp() {
-        LOGGER.info("Writing back-up to json");
+        try {
+            lock.writeLock().lock();
+            LOGGER.info("Writing back-up to json");
 
+            ObjectWriter objectWriter = new ObjectMapper().writerWithDefaultPrettyPrinter();
 
-        ObjectWriter objectWriter = new ObjectMapper().writerWithDefaultPrettyPrinter();
+            try (Writer output = new OutputStreamWriter(new FileOutputStream(ApplicationDirectoryUtil.getConfigFile(channelsBackupUrl)), UTF_8)) {
 
-        try (Writer output = new OutputStreamWriter(new FileOutputStream(ApplicationDirectoryUtil.getConfigFile(channelsBackupUrl)), UTF_8)) {
+                String jsonData = Utility.getObjectAsJsonString(this.channelPropertyMap, objectWriter);
 
-            String jsonData = getStringFromMap(this.channelPropertyMap, objectWriter);
+                output.write(jsonData);
 
-            output.write(jsonData);
-
-            LOGGER.info("Back-up written successfully");
-        } catch (IOException e) {
-            LOGGER.error("Exception thrown during writing back-up");
+                LOGGER.info("Back-up written successfully");
+            } catch (IOException e) {
+                LOGGER.error("Exception thrown during writing back-up : {}", e.getMessage());
+            }
+        } finally {
+            lock.writeLock().unlock();
         }
     }
 
@@ -164,12 +175,6 @@ public class JMXConfig {
         channelPropertyMap.forEach((key, value) -> channels.addChannel(key, value));
     }
 
-    private String getStringFromMap(Map<String, ChannelProperty> data, ObjectWriter objectWriter)
-            throws JsonProcessingException {
-        LOGGER.debug("In getStringFromMap private method");
-
-        return objectWriter.writeValueAsString(data);
-    }
 
     private ConcurrentHashMap<String, ChannelProperty> readChannelsConfigsFromFile() {
         LOGGER.debug("Reading channel property from file.");
@@ -180,8 +185,19 @@ public class JMXConfig {
                     });
 
         } catch (IOException e) {
-            //log exception
+            LOGGER.error("Exception occurred during reading file {} with message : {}", channelsBackupUrl, e.getMessage());
         }
         return new ConcurrentHashMap<>();
+    }
+
+    private boolean checkChannelCompatibility(String channelPrefix) {
+        List<String> allowedPublishers = publishers.getPublishersList();
+
+        for (String publisher : allowedPublishers) {
+            if (channelPrefix.contains(publisher)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
