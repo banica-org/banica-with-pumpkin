@@ -3,6 +3,7 @@ syntax = "proto3";
 package orderbook;
 
 import "market.proto";
+import "aurora.proto";
 
 option java_package = "com.orderbook";
 option java_multiple_files = true;
@@ -40,7 +41,7 @@ message CancelSubscriptionRequest {
 message CancelSubscriptionResponse {
 }
 
-service OrderBookService {
+  service OrderBookService {
   rpc getOrderBookItemLayers(ItemOrderBookRequest) returns (ItemOrderBookResponse);
   rpc announceItemInterest(InterestsRequest) returns (InterestsResponse);
   rpc cancelItemSubscription(CancelSubscriptionRequest) returns (CancelSubscriptionResponse);
