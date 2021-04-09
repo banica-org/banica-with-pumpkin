@@ -5,8 +5,9 @@ import com.aurora.AuroraServiceGrpc;
 import com.google.protobuf.Any;
 import com.market.Origin;
 import com.market.TickResponse;
+import com.market.banica.common.exceptions.TrackingException;
 import com.market.banica.order.book.OrderBookApplication;
-import com.market.banica.order.book.exception.TrackingException;
+
 import com.market.banica.order.book.service.grpc.AuroraClient;
 import com.market.banica.order.book.service.grpc.OrderBookService;
 import com.market.banica.order.book.service.grpc.componentTests.configuration.TestConfiguration;

@@ -4,7 +4,7 @@ import com.aurora.Aurora;
 import com.google.protobuf.Any;
 import com.market.Origin;
 import com.market.TickResponse;
-import com.market.banica.order.book.exception.IncorrectResponseException;
+import com.market.banica.common.exceptions.IncorrectResponseException;
 import com.orderbook.ItemOrderBookResponse;
 import com.orderbook.OrderBookLayer;
 import org.junit.Before;

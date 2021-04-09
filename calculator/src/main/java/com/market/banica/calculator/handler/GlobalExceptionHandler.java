@@ -1,8 +1,8 @@
-package com.market.banica.calculator.exception;
+package com.market.banica.calculator.handler;
 
-import com.market.banica.calculator.exception.exceptions.IncorrectResponseException;
-import com.market.banica.order.book.exception.StoppedStreamException;
-import com.market.banica.order.book.exception.TrackingException;
+import com.market.banica.common.exceptions.IncorrectResponseException;
+import com.market.banica.common.exceptions.StoppedStreamException;
+import com.market.banica.common.exceptions.TrackingException;
 import org.modelmapper.spi.ErrorMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,11 +20,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler({IncorrectResponseException.class, StoppedStreamException.class, TrackingException.class})
     public ResponseEntity<ErrorMessage> customExceptionsHandler(Exception exception) {
+        LOGGER.error("Exception from type {} with {} message was thrown.",exception.getClass().toString(),exception.getMessage());
         return new ResponseEntity<>(new ErrorMessage(exception.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(Exception.class)
     protected ResponseEntity<ErrorMessage> globalExceptionsHandler(Exception exception) {
+        LOGGER.error("Exception from type {} with {} message was thrown.",exception.getClass().toString(),exception.getMessage());
         return new ResponseEntity<>(new ErrorMessage(exception.getMessage()), HttpStatus.BAD_REQUEST);
     }
 }

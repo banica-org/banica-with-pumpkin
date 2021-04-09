@@ -81,8 +81,7 @@ public class BackUpServiceImpl implements BackUpService {
     private void createEmptyBackUpFile() {
         LOGGER.debug("In createEmptyBackUpFile private method");
 
-        try (Writer ignored = new OutputStreamWriter(
-                new FileOutputStream(databaseBackUpUrl, true), UTF_8)) {
+        try (Writer ignored = new OutputStreamWriter(new FileOutputStream(databaseBackUpUrl, true), UTF_8)) {
 
         } catch (IOException e) {
             LOGGER.error("Exception thrown during creating empty file for database back-up", e);

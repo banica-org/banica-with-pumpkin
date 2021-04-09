@@ -1,6 +1,7 @@
 package com.market.banica.order.book.service.grpc;
 
-import com.market.banica.order.book.exception.TrackingException;
+import com.market.banica.common.validator.DataValidator;
+import com.market.banica.common.exceptions.TrackingException;
 import com.market.banica.order.book.model.ItemMarket;
 import com.orderbook.CancelSubscriptionRequest;
 import com.orderbook.CancelSubscriptionResponse;
@@ -27,15 +28,14 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
 
     private final AuroraClient auroraClient;
     private final ItemMarket itemMarket;
+    private final DataValidator validator;
 
     @Override
     public void getOrderBookItemLayers(ItemOrderBookRequest request, StreamObserver<ItemOrderBookResponse> responseObserver) {
         final String itemName = request.getItemName();
         final long itemQuantity = request.getQuantity();
 
-        checkForValidData(itemName);
-
-
+        validator.checkForValidData(itemName);
 
         List<OrderBookLayer> requestedItem = itemMarket.getRequestedItem(itemName, itemQuantity);
 
@@ -55,8 +55,8 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
         final String itemName = request.getItemName();
         final String clientId = request.getClientId();
 
-        checkForValidData(itemName);
-        checkForValidData(clientId);
+        validator.checkForValidData(itemName);
+        validator.checkForValidData(clientId);
 
         try {
 
@@ -77,13 +77,11 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
     @Override
     public void cancelItemSubscription(CancelSubscriptionRequest request, StreamObserver<CancelSubscriptionResponse> responseObserver) {
 
-
         final String itemName = request.getItemName();
         final String clientId = request.getClientId();
 
-        checkForValidData(itemName);
-        checkForValidData(clientId);
-
+        validator.checkForValidData(itemName);
+        validator.checkForValidData(clientId);
 
         try {
 
@@ -96,12 +94,6 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
 
             LOGGER.error("Cancel item subscription by client id: {} has failed with item: {}", request.getClientId(), itemName);
             responseObserver.onError(Status.INVALID_ARGUMENT.withDescription("Invalid item name").asException());
-        }
-    }
-
-    private void checkForValidData(String parameter) {
-        if (parameter == null || parameter.isEmpty()) {
-            throw new IllegalArgumentException("The incoming data is invalid!");
         }
     }
 }
