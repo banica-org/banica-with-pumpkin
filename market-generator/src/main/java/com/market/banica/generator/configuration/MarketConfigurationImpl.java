@@ -141,6 +141,7 @@ public class MarketConfigurationImpl implements MarketConfiguration {
         }
     }
 
+    @Override
     @ManagedOperation
     public void setPersistenceFrequencyInSeconds(int frequency) {
         persistScheduler.setFrequency(frequency);
@@ -168,8 +169,8 @@ public class MarketConfigurationImpl implements MarketConfiguration {
                 goodSpecification.getPriceHigh() <= 0 || goodSpecification.getPriceStep() < 0 ||
                 goodSpecification.getPeriodLow() <= 0 || goodSpecification.getPeriodHigh() <= 0 ||
                 goodSpecification.getPeriodStep() < 0) {
-            LOGGER.warn("Low and high parameters can only be positive, steps cannot be negative");
-            throw new IllegalArgumentException("Low and high parameters can only be positive, steps cannot be negative");
+            LOGGER.warn("Low and high parameters can only be positive, steps cannot be negative.");
+            throw new IllegalArgumentException("Low and high parameters can only be positive, steps cannot be negative.");
         } else if (goodSpecification.getQuantityHigh() < goodSpecification.getQuantityLow() ||
                 goodSpecification.getPriceHigh() < goodSpecification.getPriceLow() ||
                 goodSpecification.getPeriodHigh() < goodSpecification.getPeriodLow()) {

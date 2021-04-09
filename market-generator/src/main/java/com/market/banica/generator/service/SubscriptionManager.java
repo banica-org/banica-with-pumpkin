@@ -10,4 +10,8 @@ public interface SubscriptionManager {
 
     void notifySubscribers(TickResponse response);
 
+    String getGoodNameFromRequest(Aurora.AuroraRequest request);
+
+    Aurora.AuroraResponse convertTickResponseToAuroraResponse(TickResponse tickResponse);
+
 }

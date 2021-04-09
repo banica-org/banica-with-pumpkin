@@ -36,10 +36,7 @@ public class MarketSubscriptionManager implements SubscriptionManager {
         }
     }
 
-    public Set<StreamObserver<Aurora.AuroraResponse>> getSubscribers(String itemName) {
-        return subscriptions.get(itemName);
-    }
-
+    @Override
     public String getGoodNameFromRequest(Aurora.AuroraRequest request) {
         String[] topic = request.getTopic().split("/");
         if (topic.length == 2 && topic[1] != null && topic[1].length() > 0) {
@@ -50,6 +47,7 @@ public class MarketSubscriptionManager implements SubscriptionManager {
         throw new IllegalArgumentException("Illegal good value!");
     }
 
+    @Override
     public Aurora.AuroraResponse convertTickResponseToAuroraResponse(TickResponse tickResponse) {
         return Aurora.AuroraResponse.newBuilder()
                 .setMessage(Any.pack(tickResponse))
@@ -64,9 +62,9 @@ public class MarketSubscriptionManager implements SubscriptionManager {
     private void sendNotification(TickResponse response, Set<StreamObserver<Aurora.AuroraResponse>> subscribers) {
         for (StreamObserver<Aurora.AuroraResponse> currentSubscriber : subscribers) {
             ServerCallStreamObserver<Aurora.AuroraResponse> cancellableSubscriber = (ServerCallStreamObserver<Aurora.AuroraResponse>) currentSubscriber;
-            if (cancellableSubscriber.isCancelled()){
+            if (cancellableSubscriber.isCancelled()) {
                 currentSubscriber.onError(Status.CANCELLED
-                        .withDescription(currentSubscriber.toString() + " has stopped requesting product " + response.getGoodName())
+                        .withDescription(currentSubscriber + " has stopped requesting product " + response.getGoodName())
                         .asException());
                 subscribers.remove(currentSubscriber);
                 LOGGER.debug("Subscriber {} unsubscribed.", currentSubscriber);

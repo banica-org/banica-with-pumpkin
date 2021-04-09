@@ -2,7 +2,7 @@ package com.market.banica.generator.service;
 
 import com.market.banica.generator.model.GoodSpecification;
 import com.market.banica.generator.model.MarketTick;
-import com.market.banica.generator.service.task.TickTask;
+import com.market.banica.generator.task.TickTask;
 
 public interface TickGenerator {
 
