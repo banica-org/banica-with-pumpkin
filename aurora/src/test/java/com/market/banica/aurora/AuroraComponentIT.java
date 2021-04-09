@@ -97,17 +97,15 @@ class AuroraComponentIT {
     private static String channelsBackupUrl;
     private static String publishersBackupUrl;
 
-    private static Set<String> channelNames = new HashSet<>();
+    private static final Set<String> channelNames = new HashSet<>();
 
 
     @BeforeAll
-    public static void getFilePath(@Value("${aurora.channels.file.name}") String channels,@Value("${aurora.channels.publishers}") String publishersFileName){
+    public static void getFilePath(@Value("${aurora.channels.file.name}") String channels, @Value("${aurora.channels.publishers}") String publishersFileName) {
         channelsBackupUrl = channels;
         publishersBackupUrl = publishersFileName;
 
     }
-
-
 
 
     @AfterAll
@@ -119,7 +117,7 @@ class AuroraComponentIT {
 
 
     @BeforeEach
-    public void setup() throws IOException, InterruptedException {
+    public void setup() {
         senderName = InProcessServerBuilder.generateName();
         senderChannel = InProcessChannelBuilder
                 .forName(senderName)
@@ -136,7 +134,7 @@ class AuroraComponentIT {
     }
 
     @AfterEach
-    public void tearDown(){
+    public void tearDown() {
         publishers.deletePublisher("aurora");
     }
 
@@ -191,6 +189,31 @@ class AuroraComponentIT {
     }
 
     @Test
+    void request_Should_ForwardToReceiverError_When_NoSupportedMapping() throws IOException {
+        //Arrange
+        publishers.addPublisher("market");
+        createFakeMarketServer();
+        createFakeSender();
+
+        grpcCleanup.register(senderChannel);
+        grpcCleanup.register(receiverChannel);
+
+        receiverChannel.getState(true);
+        channelManager.addChannel("market", receiverChannel);
+
+        Aurora.AuroraRequest request = Aurora.AuroraRequest.newBuilder().setTopic("market/something").build();
+
+        //Act & Assert
+        assertThrows(StatusRuntimeException.class, () -> AuroraServiceGrpc
+                .newBlockingStub(senderChannel)
+                .request(request));
+
+        channelManager.removeChannel("market");
+        publishers.deletePublisher("market");
+
+    }
+
+    @Test
     void request_Should_ForwardToReceiverError_NoExistingChannel() throws IOException {
         //Arrange
         createFakeErrorServer();
@@ -233,7 +256,7 @@ class AuroraComponentIT {
 
         //Assert
         assertTrue(response.getMessage().is(ItemOrderBookResponse.class));
-        assertEquals("eggs",response.getMessage().unpack(ItemOrderBookResponse.class).getItemName());
+        assertEquals("eggs", response.getMessage().unpack(ItemOrderBookResponse.class).getItemName());
 
         Aurora.AuroraRequest subscribeToItemRequest = Aurora.AuroraRequest.newBuilder()
                 .setClientId("fake calculator subscribe request")
@@ -266,7 +289,6 @@ class AuroraComponentIT {
 
         createFakeReplyingServer();
         createFakeSender();
-
 
 
         grpcCleanup.register(senderChannel);
@@ -320,9 +342,9 @@ class AuroraComponentIT {
     void subscribeToMarket_Should_ForwardToReceiverResponse() throws IOException, InterruptedException {
         //Arrange
         publishers.addPublisher("market");
-        createFakeMarketServer();;
-        createFakeSender();
+        createFakeMarketServer();
 
+        createFakeSender();
 
 
         grpcCleanup.register(senderChannel);
@@ -381,12 +403,125 @@ class AuroraComponentIT {
     }
 
     @Test
+    void subscribeToOrderbook_Should_ForwardToReceiverErrorDueNoMapping() throws IOException, InterruptedException {
+        //Arrange
+        publishers.addPublisher("orderbook");
+        createFakeOrderBookServer();
+        createFakeSender();
+
+        grpcCleanup.register(senderChannel);
+        grpcCleanup.register(receiverChannel);
+
+        receiverChannel.getState(true);
+        channelManager.addChannel("orderbook", receiverChannel);
+
+        Aurora.AuroraRequest request = Aurora.AuroraRequest.newBuilder().setTopic("orderbook/something").build();
+
+        final boolean[] inError = {false};
+
+        CountDownLatch latch = new CountDownLatch(1);
+
+
+        //Act
+        AuroraServiceGrpc
+                .newStub(senderChannel)
+                .subscribe(request, new StreamObserver<Aurora.AuroraResponse>() {
+                    @Override
+                    public void onNext(Aurora.AuroraResponse response) {
+
+                    }
+
+                    @Override
+                    public void onError(Throwable throwable) {
+                        inError[0] = true;
+                        latch.countDown();
+                    }
+
+                    @Override
+                    public void onCompleted() {
+                        latch.countDown();
+                    }
+                });
+
+
+        //Assert
+        latch.await();
+        assertTrue(inError[0]);
+        channelManager.removeChannel("orderbook");
+        publishers.deletePublisher("orderbook");
+    }
+
+
+    @Test
+    void subscribeToMarket_Should_ForwardToReceiverLessResponsesDueError() throws IOException, InterruptedException {
+        //Arrange
+        publishers.addPublisher("market");
+        createFakeMarketErrorServer();
+        createFakeSender();
+
+
+        grpcCleanup.register(senderChannel);
+        grpcCleanup.register(receiverChannel);
+
+        receiverChannel.getState(true);
+        channelManager.addChannel("market", receiverChannel);
+
+        Aurora.AuroraRequest request = Aurora.AuroraRequest.newBuilder().setTopic("market/eggs").build();
+
+        ArrayList<TickResponse> expectedResponses = new ArrayList<>();
+        for (int i = 0; i < 5; i++) {
+            TickResponse response = TickResponse.newBuilder().setGoodName("eggs").build();
+
+            expectedResponses.add(response);
+        }
+
+        ArrayList<Aurora.AuroraResponse> receivedResponses = new ArrayList<>();
+        CountDownLatch latch = new CountDownLatch(1);
+
+        //Act
+        AuroraServiceGrpc
+                .newStub(senderChannel)
+                .subscribe(request, new StreamObserver<Aurora.AuroraResponse>() {
+                    @Override
+                    public void onNext(Aurora.AuroraResponse response) {
+                        receivedResponses.add(response);
+                    }
+
+                    @Override
+                    public void onError(Throwable throwable) {
+                        latch.countDown();
+                    }
+
+                    @Override
+                    public void onCompleted() {
+                        latch.countDown();
+                    }
+                });
+
+        //Assert
+        latch.await();
+        List<TickResponse> unpackedResponses = receivedResponses.stream()
+                .map(response -> {
+                    try {
+                        return response.getMessage().unpack(TickResponse.class);
+                    } catch (InvalidProtocolBufferException e) {
+                        e.printStackTrace();
+                    }
+                    return null;
+                })
+                .collect(Collectors.toList());
+        assertNotEquals(expectedResponses, unpackedResponses);
+        assertEquals(3,unpackedResponses.size() );
+        channelManager.removeChannel("market");
+        publishers.deletePublisher("market");
+    }
+
+    @Test
     void subscribe_Should_ForwardToReceiverLessResponsesDueError() throws IOException, InterruptedException {
         //Arrange
         createFakeErrorServer();
         createFakeSender();
 
-        System.out.println("CHANNEL NAME: " + senderName);
 
         grpcCleanup.register(senderChannel);
         grpcCleanup.register(receiverChannel);
@@ -431,7 +566,7 @@ class AuroraComponentIT {
         //Assert
         latch.await();
         assertNotEquals(expectedResponses, receivedResponses);
-        assertEquals(3,receivedResponses.size());
+        assertEquals(3, receivedResponses.size());
         channelManager.removeChannel("aurora");
     }
 
@@ -483,40 +618,41 @@ class AuroraComponentIT {
         //Assert
         latch.await();
         assertNotEquals(expectedResponses, receivedResponses);
-        assertEquals(0,receivedResponses.size());
+        assertEquals(0, receivedResponses.size());
     }
 
     @Test
-    void jmx_ChannelManager_FlowTest(){
+    void jmx_ChannelManager_FlowTest() {
         Map<String, ChannelProperty> dummyChannels = getDummyChannels();
 
-        dummyChannels.entrySet()
-                .forEach(entry-> jmxConfig
-                        .createChannel(entry.getKey(),
-                                entry.getValue().getHost(),
-                                String.valueOf(entry.getValue().getPort())));
+        dummyChannels.forEach((key, value) -> jmxConfig
+                .createChannel(key,
+                        value.getHost(),
+                        String.valueOf(value.getPort())));
 
+
+        jmxConfig.editChannel("aurora3", "localhost", "2343");
         jmxConfig.deleteChannel("aurora3");
 
         String statusReport = jmxConfig.getChannelsStatus();
 
-        for (int i = 0; i < 3 ; i++) {
+        for (int i = 0; i < 3; i++) {
             //do assert.
-            assertTrue(statusReport.contains("aurora"+i+" : CONNECTING"));
+            assertTrue(statusReport.contains("aurora" + i + " : CONNECTING"));
         }
 
         assertFalse(statusReport.contains("aurora3"));
 
-        assertTrue(publishers.getPublishersList().get(0).equals("aurora"));
+        assertEquals("aurora",publishers.getPublishersList().get(0));
     }
 
-    private Map<String, ChannelProperty> getDummyChannels(){
+    private Map<String, ChannelProperty> getDummyChannels() {
         Map<String, ChannelProperty> channelPropertyMap = new HashMap<>();
-        for (int i = 0; i < 4 ; i++) {
+        for (int i = 0; i < 4; i++) {
             ChannelProperty property = new ChannelProperty();
             property.setHost("localhost");
             property.setPort(300 + i);
-            channelPropertyMap.put("aurora"+i,property);
+            channelPropertyMap.put("aurora" + i, property);
         }
 
         return channelPropertyMap;
@@ -553,7 +689,17 @@ class AuroraComponentIT {
 
     }
 
-    MarketServiceGrpc.MarketServiceImplBase fakeReplyingMarketService(){
+    private void createFakeMarketErrorServer() throws IOException {
+        grpcCleanup.register(InProcessServerBuilder
+                .forName(receiverChannelName)
+                .directExecutor()
+                .addService(this.fakeErrorReplyingMarketService())
+                .build()
+                .start());
+
+    }
+
+    private MarketServiceGrpc.MarketServiceImplBase fakeReplyingMarketService() {
         return new MarketServiceGrpc.MarketServiceImplBase() {
             @Override
             public void subscribeForItem(MarketDataRequest request, StreamObserver<TickResponse> responseObserver) {
@@ -568,8 +714,28 @@ class AuroraComponentIT {
         };
     }
 
+    MarketServiceGrpc.MarketServiceImplBase fakeErrorReplyingMarketService() {
+        return new MarketServiceGrpc.MarketServiceImplBase() {
+            @Override
+            public void subscribeForItem(MarketDataRequest request, StreamObserver<TickResponse> responseObserver) {
+                for (int i = 0; i < 5; i++) {
+                    if (i == 3) {
+                        responseObserver.onError(Status.ABORTED
+                                .withDescription("Aborting subscribe.")
+                                .asException());
+                        break;
+                    }
+                    TickResponse response = TickResponse.newBuilder()
+                            .setGoodName(request.getGoodName())
+                            .build();
+                    responseObserver.onNext(response);
+                }
+            }
+        };
+    }
 
-    OrderBookServiceGrpc.OrderBookServiceImplBase fakeReplyingOrderBookService(){
+
+    OrderBookServiceGrpc.OrderBookServiceImplBase fakeReplyingOrderBookService() {
         return new OrderBookServiceGrpc.OrderBookServiceImplBase() {
             @Override
             public void getOrderBookItemLayers(ItemOrderBookRequest request, StreamObserver<ItemOrderBookResponse> responseObserver) {
@@ -583,8 +749,8 @@ class AuroraComponentIT {
 
             @Override
             public void announceItemInterest(InterestsRequest request, StreamObserver<InterestsResponse> responseObserver) {
-               responseObserver.onNext(InterestsResponse.newBuilder().build());
-               responseObserver.onCompleted();
+                responseObserver.onNext(InterestsResponse.newBuilder().build());
+                responseObserver.onCompleted();
             }
 
             @Override
@@ -594,7 +760,6 @@ class AuroraComponentIT {
             }
         };
     }
-
 
 
     AuroraServiceGrpc.AuroraServiceImplBase fakeReplyingServiceForReceiver() {
@@ -680,10 +845,9 @@ class AuroraComponentIT {
     }
 
     private Aurora.AuroraRequest getAuroraRequest() {
-        Aurora.AuroraRequest request = Aurora.AuroraRequest.newBuilder()
+        return Aurora.AuroraRequest.newBuilder()
                 .setTopic("aurora" + "/test")
                 .setClientId("integration test for requests")
                 .build();
-        return request;
     }
 }
