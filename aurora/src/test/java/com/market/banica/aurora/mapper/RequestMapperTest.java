@@ -37,6 +37,8 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -80,9 +82,8 @@ class RequestMapperTest {
 
     List<OrderBookLayer> orderBookLayers = new ArrayList<>();
     private OrderBookServiceGrpc.OrderBookServiceBlockingStub blockingStub;
-
-    @Rule
-    public final GrpcCleanupRule grpcCleanup = new GrpcCleanupRule();
+    // @Rule
+//    public final GrpcCleanupRule grpcCleanup = new GrpcCleanupRule();
 
     @Mock
     private  ChannelManager channelManager;
@@ -101,13 +102,13 @@ class RequestMapperTest {
     @SneakyThrows
     @Before
     public void setUp() {
-        String serverName = InProcessServerBuilder.generateName();
+      /*  String serverName = InProcessServerBuilder.generateName();
 
         grpcCleanup.register(InProcessServerBuilder
                 .forName(serverName).directExecutor().addService(auroraService).build().start());
 
         blockingStub = OrderBookServiceGrpc.newBlockingStub(
-                grpcCleanup.register(InProcessChannelBuilder.forName(serverName).directExecutor().build()));
+                grpcCleanup.register(InProcessChannelBuilder.forName(serverName).directExecutor().build()));*/
     }
 
 
@@ -120,17 +121,17 @@ class RequestMapperTest {
     @Test
     void renderRequestWithRequestForOrderBookRendersMapping() throws NoSuchObjectException, ServiceNotFoundException {
         when(channelManager.getChannelByKey(any())).thenReturn(Optional.ofNullable(managedChannel));
-        OrderBookServiceGrpc.OrderBookServiceBlockingStub orderbookStub = OrderBookServiceGrpc.newBlockingStub(managedChannel);
-        when(stubManager.getOrderbookBlockingStub(any())).thenReturn(orderbookStub);
+        OrderBookServiceGrpc.OrderBookServiceBlockingStub orderBookStub = OrderBookServiceGrpc.newBlockingStub(managedChannel);
+        when(stubManager.getOrderbookBlockingStub(any())).thenReturn(orderBookStub);
 
-        ItemOrderBookResponse orderBookResponse = ItemOrderBookResponse.newBuilder().setItemName("asd").build();
+        //ItemOrderBookResponse orderBookResponse = ItemOrderBookResponse.newBuilder().setItemName("asd").build();
 
 
-        when(orderbookStub.getOrderBookItemLayers(any())).thenReturn(orderBookResponse);
+        requestMapper.renderRequest(ORDERBOOK_REQUEST);
 
-        Aurora.AuroraResponse actual =  requestMapper.renderRequest(ORDERBOOK_REQUEST);
+        verify(stubManager,times(1)).getOrderbookBlockingStub(any());
 
-        ItemOrderBookResponse bookItemLayers = blockingStub.getOrderBookItemLayers(ITEM_ORDER_BOOK_REQUEST);
+       // ItemOrderBookResponse bookItemLayers = blockingStub.getOrderBookItemLayers(ITEM_ORDER_BOOK_REQUEST);
        // assertEquals(3, bookItemLayers.getOrderbookLayersList().size());
     }
 
