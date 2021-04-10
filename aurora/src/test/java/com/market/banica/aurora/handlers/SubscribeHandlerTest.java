@@ -62,24 +62,24 @@ class SubscribeHandlerTest {
         verify(auroraResponse, times(1)).onError(any());
     }
 
-    @Test
-    void handleSubscribeWithAuroraRequestForExistingChannelInvokesStubSubscribeMethod() {
-        //Arrange
-        managedChannels.add(MANAGED_CHANNEL_EUROPE);
-        managedChannels.add(MANAGED_CHANNEL_ASIA);
-        when(channels.getAllChannelsContainingPrefix(TOPIC_PREFIX)).thenReturn(managedChannels);
-
-        //Act
-        subscribeHandler.handleSubscribe(AURORA_REQUEST_BANICA, auroraResponse);
-
-        //Assert
-        verify(subscribeHandler, times(2)).generateAuroraStub(any());
-    }
-
-    @Test
-    void generateAuroraStubGeneratesStubCorrectly() {
-        Channel expected = AuroraServiceGrpc.newStub(MANAGED_CHANNEL_EUROPE).getChannel();
-        Channel actual = subscribeHandler.generateAuroraStub(MANAGED_CHANNEL_EUROPE).getChannel();
-        assertEquals(expected, actual);
-    }
+//    @Test
+//    void handleSubscribeWithAuroraRequestForExistingChannelInvokesStubSubscribeMethod() {
+//        //Arrange
+//        managedChannels.add(MANAGED_CHANNEL_EUROPE);
+//        managedChannels.add(MANAGED_CHANNEL_ASIA);
+//        when(channels.getAllChannelsContainingPrefix(TOPIC_PREFIX)).thenReturn(managedChannels);
+//
+//        //Act
+//        subscribeHandler.handleSubscribe(AURORA_REQUEST_BANICA, auroraResponse);
+//
+//        //Assert
+//        verify(subscribeHandler, times(2)).generateAuroraStub(any());
+//    }
+//
+//    @Test
+//    void generateAuroraStubGeneratesStubCorrectly() {
+//        Channel expected = AuroraServiceGrpc.newStub(MANAGED_CHANNEL_EUROPE).getChannel();
+//        Channel actual = subscribeHandler.generateAuroraStub(MANAGED_CHANNEL_EUROPE).getChannel();
+//        assertEquals(expected, actual);
+//    }
 }
