@@ -20,13 +20,19 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler({IncorrectResponseException.class, StoppedStreamException.class, TrackingException.class})
     public ResponseEntity<ErrorMessage> customExceptionsHandler(Exception exception) {
-        LOGGER.error("Exception from type {} with {} message was thrown.",exception.getClass().toString(),exception.getMessage());
+        LOGGER.error("Exception from type {} with {} message was thrown.", exception.getClass().toString(), exception.getMessage());
         return new ResponseEntity<>(new ErrorMessage(exception.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(Exception.class)
     protected ResponseEntity<ErrorMessage> globalExceptionsHandler(Exception exception) {
-        LOGGER.error("Exception from type {} with {} message was thrown.",exception.getClass().toString(),exception.getMessage());
+        LOGGER.error("Exception from type {} with {} message was thrown.", exception.getClass().toString(), exception.getMessage());
+        return new ResponseEntity<>(new ErrorMessage(exception.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    protected ResponseEntity<ErrorMessage> globalExceptionsHandler(IllegalArgumentException exception) {
+        LOGGER.error("Exception from type {} with {} message was thrown.", exception.getClass().toString(), exception.getMessage());
         return new ResponseEntity<>(new ErrorMessage(exception.getMessage()), HttpStatus.BAD_REQUEST);
     }
 }

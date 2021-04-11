@@ -12,7 +12,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import javax.validation.constraints.NotEmpty;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Queue;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,7 +34,6 @@ public class ProductServiceImpl implements ProductService {
     private final BackUpService backUpService;
     private final ProductBase productBase;
     private final AuroraClientSideService auroraClientSideService;
-    private final DataValidator validator;
 
     @Override
     public Product createProduct(List<Product> products) {
@@ -48,9 +55,9 @@ public class ProductServiceImpl implements ProductService {
     public void createProduct(String newProductName, String unitOfMeasure,
                               String ingredientsMap) {
 
-        validator.checkForValidData(newProductName);
-        validator.checkForValidData(unitOfMeasure);
-        validator.checkForValidData(ingredientsMap);
+        DataValidator.checkForValidData(newProductName);
+        DataValidator.checkForValidData(unitOfMeasure);
+        DataValidator.checkForValidData(ingredientsMap);
 
         LOGGER.debug("In createProduct method with parameters: newProductName {}, unitOfMeasure {} and ingredientsMap {}"
                 , newProductName, unitOfMeasure, ingredientsMap);
@@ -83,8 +90,8 @@ public class ProductServiceImpl implements ProductService {
         LOGGER.debug("In addIngredient method with parameters: parentProductName {},productName {} and quantity {}" +
                 parentProductName, productName, quantity);
 
-        validator.checkForValidData(parentProductName);
-        validator.checkForValidData(productName);
+        DataValidator.checkForValidData(parentProductName);
+        DataValidator.checkForValidData(productName);
 
         validateProductExists(productName);
 
@@ -100,8 +107,8 @@ public class ProductServiceImpl implements ProductService {
         LOGGER.debug("In setProductQuantity method with parameters: parentProductName {},productName {}" +
                 " and newQuantity {}", parentProductName, productName, newQuantity);
 
-        validator.checkForValidData(parentProductName);
-        validator.checkForValidData(productName);
+        DataValidator.checkForValidData(parentProductName);
+        DataValidator.checkForValidData(productName);
 
         Product parentProduct = getProductFromDatabase(parentProductName);
 
@@ -113,12 +120,12 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public int getProductQuantity(String parentProductName, String productName) {
+    public int getProductQuantity(@NotEmpty String parentProductName, String productName) {
         LOGGER.debug("In getProductQuantity method with parameters: parentProductName {} and productName {}"
                 , parentProductName, productName);
 
-        validator.checkForValidData(parentProductName);
-        validator.checkForValidData(productName);
+        DataValidator.checkForValidData(parentProductName);
+        DataValidator.checkForValidData(productName);
 
         Product parentProduct = getProductFromDatabase(parentProductName);
 
@@ -130,7 +137,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public String getUnitOfMeasure(String productName) {
         LOGGER.debug("In getUnitOfMeasure method with parameters: productName {}", productName);
-        validator.checkForValidData(productName);
+        DataValidator.checkForValidData(productName);
 
         Product product = getProductFromDatabase(productName);
 
@@ -141,8 +148,8 @@ public class ProductServiceImpl implements ProductService {
     public void setUnitOfMeasure(String productName, String unitOfMeasure) {
         LOGGER.debug("In setUnitOfMeasure method with parameters: productName {} and unitOfMeasure {}", productName, unitOfMeasure);
 
-        validator.checkForValidData(productName);
-        validator.checkForValidData(unitOfMeasure);
+        DataValidator.checkForValidData(productName);
+        DataValidator.checkForValidData(unitOfMeasure);
 
         Product product = getProductFromDatabase(productName);
 
@@ -155,7 +162,7 @@ public class ProductServiceImpl implements ProductService {
     public void deleteProductFromDatabase(String productName) {
         LOGGER.debug("In deleteProductFromDatabase method with parameters: productName {}", productName);
 
-        validator.checkForValidData(productName);
+        DataValidator.checkForValidData(productName);
         validateProductExists(productName);
 
         productBase.getDatabase().remove(productName);
@@ -171,8 +178,8 @@ public class ProductServiceImpl implements ProductService {
     public void deleteProductFromParentIngredients(String parentProductName, String productName) {
         LOGGER.debug("In deleteIngredient method with parameters: parentProductName {} and productName {}", parentProductName, productName);
 
-        validator.checkForValidData(parentProductName);
-        validator.checkForValidData(productName);
+        DataValidator.checkForValidData(parentProductName);
+        DataValidator.checkForValidData(productName);
 
         Product parentProduct = getProductFromDatabase(parentProductName);
 
@@ -188,7 +195,7 @@ public class ProductServiceImpl implements ProductService {
         LOGGER.debug("In getProductAsListProduct method with parameters:productName {}"
                 , productName);
 
-        validator.checkForValidData(productName);
+        DataValidator.checkForValidData(productName);
 
         Product product = getProductFromDatabase(productName);
 

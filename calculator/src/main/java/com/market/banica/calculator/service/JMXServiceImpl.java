@@ -25,7 +25,6 @@ public class JMXServiceImpl implements JMXServiceMBean {
 
     private final ProductService productService;
     private final ProductBase productBase;
-    private final DataValidator validator;
 
     @Override
     @ManagedOperation
@@ -43,8 +42,8 @@ public class JMXServiceImpl implements JMXServiceMBean {
                 ingredientsList);
         LOGGER.info("CreateProduct called from JMX server");
 
-        validator.checkForValidData(newProductName);
-        validator.checkForValidData(unitOfMeasure);
+        DataValidator.checkForValidData(newProductName);
+        DataValidator.checkForValidData(unitOfMeasure);
 
         productService.createProduct(newProductName, unitOfMeasure, ingredientsList);
 
@@ -59,8 +58,8 @@ public class JMXServiceImpl implements JMXServiceMBean {
                 parentProductName, productName, quantity);
         LOGGER.info("AddIngredient called from JMX server");
 
-        validator.checkForValidData(parentProductName);
-        validator.checkForValidData(productName);
+        DataValidator.checkForValidData(parentProductName);
+        DataValidator.checkForValidData(productName);
 
         productService.addIngredient(parentProductName, productName, quantity);
 
@@ -75,8 +74,8 @@ public class JMXServiceImpl implements JMXServiceMBean {
                 " and newQuantity {}", parentProductName, productName, newQuantity);
         LOGGER.info("SetProductQuantity called from JMX server");
 
-        validator.checkForValidData(parentProductName);
-        validator.checkForValidData(productName);
+       DataValidator.checkForValidData(parentProductName);
+       DataValidator.checkForValidData(productName);
 
         productService.setProductQuantity(parentProductName, productName, newQuantity);
 
@@ -91,8 +90,8 @@ public class JMXServiceImpl implements JMXServiceMBean {
                 , parentProductName, productName);
         LOGGER.info("GetProductQuantity called from JMX server");
 
-        validator.checkForValidData(parentProductName);
-        validator.checkForValidData(productName);
+       DataValidator.checkForValidData(parentProductName);
+       DataValidator.checkForValidData(productName);
 
         int result = productService.getProductQuantity(parentProductName, productName);
 
@@ -106,7 +105,7 @@ public class JMXServiceImpl implements JMXServiceMBean {
         LOGGER.debug("In getUnitOfMeasure method with parameters: productName {}", productName);
         LOGGER.info("GetUnitOfMeasure called from JMX server");
 
-        validator.checkForValidData(productName);
+       DataValidator.checkForValidData(productName);
 
         String result = productService.getUnitOfMeasure(productName);
 
@@ -120,8 +119,8 @@ public class JMXServiceImpl implements JMXServiceMBean {
         LOGGER.debug("In setUnitOfMeasure method with parameters: productName {} and unitOfMeasure {}", productName, unitOfMeasure);
         LOGGER.info("SetUnitOfMeasure called from JMX server");
 
-        validator.checkForValidData(productName);
-        validator.checkForValidData(unitOfMeasure);
+        DataValidator.checkForValidData(productName);
+        DataValidator.checkForValidData(unitOfMeasure);
 
         productService.setUnitOfMeasure(productName, unitOfMeasure);
 
@@ -134,7 +133,7 @@ public class JMXServiceImpl implements JMXServiceMBean {
     public void deleteProductFromDatabase(String productName) {
         LOGGER.debug("In deleteProductFromDatabase method with parameters: productName {}", productName);
         LOGGER.info("DeleteProductFromDatabase called from JMX server");
-        validator.checkForValidData(productName);
+        DataValidator.checkForValidData(productName);
         productService.deleteProductFromDatabase(productName);
 
         LOGGER.debug("Product {} deleted from JMX server", productName);
@@ -145,8 +144,8 @@ public class JMXServiceImpl implements JMXServiceMBean {
     public void deleteProductFromParentIngredients(String parentProductName, String productName) {
         LOGGER.debug("In deleteIngredient method with parameters: parentProductName {} and productName {}", parentProductName, productName);
         LOGGER.info("DeleteIngredient called from JMX server");
-        validator.checkForValidData(parentProductName);
-        validator.checkForValidData(productName);
+        DataValidator.checkForValidData(parentProductName);
+        DataValidator.checkForValidData(productName);
         productService.deleteProductFromParentIngredients(parentProductName, productName);
 
         LOGGER.debug("Product deleted from JMX server for parent product {} and product {}"

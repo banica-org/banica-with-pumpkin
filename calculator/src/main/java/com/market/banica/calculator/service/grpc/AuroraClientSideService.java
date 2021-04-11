@@ -21,17 +21,16 @@ public class AuroraClientSideService {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuroraClientSideService.class);
 
     private final AuroraServiceGrpc.AuroraServiceBlockingStub blockingStub;
-    private final DataValidator dataValidator;
 
     @Autowired
-    public AuroraClientSideService(AuroraServiceGrpc.AuroraServiceBlockingStub blockingStub, DataValidator dataValidator) {
+    public AuroraClientSideService(AuroraServiceGrpc.AuroraServiceBlockingStub blockingStub) {
         this.blockingStub = blockingStub;
-        this.dataValidator = dataValidator;
     }
 
     public void announceInterests(String productName) {
         LOGGER.debug("Inside announceInterests method with parameter product name: {}", productName);
-        dataValidator.checkForValidData(productName);
+        DataValidator.checkForValidData(productName);
+
         Aurora.AuroraResponse auroraResponse = getAuroraResponse(productName);
 
         if (!auroraResponse.getMessage().is(InterestsResponse.class)) {
@@ -41,7 +40,9 @@ public class AuroraClientSideService {
 
     public void cancelSubscription(String productName) {
         LOGGER.debug("Inside cancelSubscription method with parameter product name: {}", productName);
-        dataValidator.checkForValidData(productName);
+
+        DataValidator.checkForValidData(productName);
+
         Aurora.AuroraResponse auroraResponse = getAuroraResponse(productName);
 
         if (!auroraResponse.getMessage().is(CancelSubscriptionResponse.class)) {
@@ -53,8 +54,8 @@ public class AuroraClientSideService {
     public ItemOrderBookResponse getIngredient(String productName, String clientId) {
         LOGGER.debug("Inside getIngredient method with parameter product name - {} and client id - {}"
                 , productName, clientId);
-        dataValidator.checkForValidData(productName);
-        dataValidator.checkForValidData(clientId);
+        DataValidator.checkForValidData(productName);
+        DataValidator.checkForValidData(clientId);
         Aurora.AuroraResponse auroraResponse = getAuroraResponse(productName);
 
         if (!auroraResponse.getMessage().is(ItemOrderBookResponse.class)) {

@@ -28,14 +28,14 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
 
     private final AuroraClient auroraClient;
     private final ItemMarket itemMarket;
-    private final DataValidator validator;
+
 
     @Override
     public void getOrderBookItemLayers(ItemOrderBookRequest request, StreamObserver<ItemOrderBookResponse> responseObserver) {
         final String itemName = request.getItemName();
         final long itemQuantity = request.getQuantity();
 
-        validator.checkForValidData(itemName);
+        DataValidator.checkForValidData(itemName);
 
         List<OrderBookLayer> requestedItem = itemMarket.getRequestedItem(itemName, itemQuantity);
 
@@ -55,8 +55,8 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
         final String itemName = request.getItemName();
         final String clientId = request.getClientId();
 
-        validator.checkForValidData(itemName);
-        validator.checkForValidData(clientId);
+        DataValidator.checkForValidData(itemName);
+        DataValidator.checkForValidData(clientId);
 
         try {
 
@@ -80,8 +80,8 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
         final String itemName = request.getItemName();
         final String clientId = request.getClientId();
 
-        validator.checkForValidData(itemName);
-        validator.checkForValidData(clientId);
+        DataValidator.checkForValidData(itemName);
+        DataValidator.checkForValidData(clientId);
 
         try {
 
