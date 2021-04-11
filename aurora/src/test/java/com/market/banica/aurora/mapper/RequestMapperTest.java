@@ -1,15 +1,16 @@
 package com.market.banica.aurora.mapper;
 
 import com.aurora.Aurora;
+import com.aurora.AuroraServiceGrpc;
+import com.google.protobuf.Any;
 import com.market.banica.aurora.config.ChannelManager;
 import com.market.banica.aurora.config.StubManager;
-import com.market.banica.aurora.service.AuroraServiceImpl;
-import com.market.banica.common.channel.ChannelRPCConfig;
 import com.orderbook.CancelSubscriptionRequest;
+import com.orderbook.CancelSubscriptionResponse;
 import com.orderbook.InterestsRequest;
+import com.orderbook.InterestsResponse;
 import com.orderbook.ItemOrderBookRequest;
 import com.orderbook.ItemOrderBookResponse;
-import com.orderbook.OrderBookLayer;
 import com.orderbook.OrderBookServiceGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -17,9 +18,8 @@ import io.grpc.inprocess.InProcessChannelBuilder;
 import io.grpc.inprocess.InProcessServerBuilder;
 import io.grpc.stub.StreamObserver;
 import io.grpc.testing.GrpcCleanupRule;
-import lombok.SneakyThrows;
-import org.junit.Before;
 import org.junit.Rule;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -28,87 +28,69 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import javax.management.ServiceNotFoundException;
+import java.io.IOException;
 import java.rmi.NoSuchObjectException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
-import java.util.Set;
+import java.util.concurrent.Executors;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class RequestMapperTest {
 
-    private static final String HOST = "localhost";
-    private static final int PORT = 1010;
-
-    private ManagedChannel managedChannel = ManagedChannelBuilder
-            .forAddress(HOST, PORT)
+    private final ManagedChannel dummyManagedChannel = ManagedChannelBuilder
+            .forAddress("localhost", 1010)
             .usePlaintext()
             .build();
 
-    public static final String ORDERBOOK_TOPIC = "orderbook/eggs/10";
-    public static final String AURORA_TOPIC = "aurora/eggs/10";
-    public static final String MARKET_TOPIC = "market/eggs/10";
-
-
+    private static final Aurora.AuroraRequest MARKET_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("market/eggs/10").build();
+    private static final Aurora.AuroraRequest AURORA_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("aurora/eggs/10").build();
+    private static final Aurora.AuroraRequest ORDERBOOK_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("orderbook/eggs/10").build();
+    private static final Aurora.AuroraRequest ORDERBOOK_SUBSCRIBE_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("orderbook/eggs=subscribe").build();
+    private static final Aurora.AuroraRequest ORDERBOOK_UNSUBSCRIBE_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("orderbook/eggs=unsubscribe").build();
     private static final Aurora.AuroraRequest INVALID_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("market/banica").build();
-    private static final Aurora.AuroraRequest ORDERBOOK_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic(ORDERBOOK_TOPIC).build();
-    private static final Aurora.AuroraRequest AURORA_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic(AURORA_TOPIC).build();
-    private static final Aurora.AuroraRequest MARKET_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic(MARKET_TOPIC).build();
-    private final StreamObserver<Aurora.AuroraResponse> auroraResponse = mock(StreamObserver.class);
 
-    public static final String MARKET = "market";
+    private String auroraReceiverName;
+    private ManagedChannel auroraReceiverChannel;
 
-    private static final String EGGS_ITEM_NAME = "eggs";
+    private String orderBookReceiverName;
+    private ManagedChannel orderBookReceiverChannel;
 
-    private static final String CLIENT = "europe";
+    private OrderBookServiceGrpc.OrderBookServiceBlockingStub orderBookBlockingStub;
+    private AuroraServiceGrpc.AuroraServiceBlockingStub auroraBlockingStub;
 
-    public static final String SUBSCRIBE = "subscribe";
-
-    private static final ItemOrderBookRequest ITEM_ORDER_BOOK_REQUEST =
-            ItemOrderBookRequest.newBuilder().setClientId("calculator").setItemName("eggs").setQuantity(3).build();
-
-    private static final InterestsRequest AURORA_ANNOUNCE_REQUEST =
-            InterestsRequest.newBuilder().setItemName(MARKET + "/" + EGGS_ITEM_NAME).setClientId(CLIENT).build();
-
-    private static final CancelSubscriptionRequest CANCEL_SUBSCRIPTION_REQUEST =
-            CancelSubscriptionRequest.newBuilder().setItemName(MARKET + "/" + EGGS_ITEM_NAME).setClientId(CLIENT).build();
-
-    List<OrderBookLayer> orderBookLayers = new ArrayList<>();
-    private OrderBookServiceGrpc.OrderBookServiceBlockingStub blockingStub;
-    // @Rule
-//    public final GrpcCleanupRule grpcCleanup = new GrpcCleanupRule();
+    @Rule
+    public final GrpcCleanupRule grpcCleanup = new GrpcCleanupRule();
 
     @Mock
-    private  ChannelManager channelManager;
+    private ChannelManager channelManager;
 
     @Mock
-    private  StubManager stubManager;
-
-
-    @Mock
-    private AuroraServiceImpl auroraService;
+    private StubManager stubManager;
 
     @InjectMocks
     @Spy
     private RequestMapper requestMapper;
 
-    @SneakyThrows
-    @Before
+    @BeforeEach
     public void setUp() {
-      /*  String serverName = InProcessServerBuilder.generateName();
+        auroraReceiverName = InProcessServerBuilder.generateName();
+        auroraReceiverChannel = InProcessChannelBuilder
+                .forName(auroraReceiverName)
+                .executor(Executors.newSingleThreadExecutor()).build();
 
-        grpcCleanup.register(InProcessServerBuilder
-                .forName(serverName).directExecutor().addService(auroraService).build().start());
+        auroraBlockingStub = AuroraServiceGrpc.newBlockingStub(auroraReceiverChannel);
 
-        blockingStub = OrderBookServiceGrpc.newBlockingStub(
-                grpcCleanup.register(InProcessChannelBuilder.forName(serverName).directExecutor().build()));*/
+        orderBookReceiverName = InProcessServerBuilder.generateName();
+        orderBookReceiverChannel = InProcessChannelBuilder
+                .forName(orderBookReceiverName)
+                .executor(Executors.newSingleThreadExecutor()).build();
+
+        orderBookBlockingStub = OrderBookServiceGrpc.newBlockingStub(orderBookReceiverChannel);
     }
 
 
@@ -119,35 +101,155 @@ class RequestMapperTest {
     }
 
     @Test
-    void renderRequestWithRequestForOrderBookRendersMapping() throws NoSuchObjectException, ServiceNotFoundException {
-        when(channelManager.getChannelByKey(any())).thenReturn(Optional.ofNullable(managedChannel));
-        OrderBookServiceGrpc.OrderBookServiceBlockingStub orderBookStub = OrderBookServiceGrpc.newBlockingStub(managedChannel);
-        when(stubManager.getOrderbookBlockingStub(any())).thenReturn(orderBookStub);
+    void renderRequestWithRequestForDestinationMarketThrowsException() {
+        when(channelManager.getChannelByKey(any())).thenReturn(Optional.ofNullable(dummyManagedChannel));
+        assertThrows(ServiceNotFoundException.class, () -> requestMapper.renderRequest(MARKET_REQUEST));
+    }
 
-        //ItemOrderBookResponse orderBookResponse = ItemOrderBookResponse.newBuilder().setItemName("asd").build();
+    @Test
+    void renderRequestWithRequestForOrderBookWithTopicSplitLengthOfThreeProcessesItemOrderBookRequest() throws IOException, ServiceNotFoundException {
+        when(channelManager.getChannelByKey(any())).thenReturn(Optional.ofNullable(dummyManagedChannel));
+        when(stubManager.getOrderbookBlockingStub(any())).thenReturn(orderBookBlockingStub);
 
+        createFakeOrderBookReplyingServer();
 
-        requestMapper.renderRequest(ORDERBOOK_REQUEST);
+        grpcCleanup.register(orderBookReceiverChannel);
 
-        verify(stubManager,times(1)).getOrderbookBlockingStub(any());
+        orderBookReceiverChannel.getState(true);
 
-       // ItemOrderBookResponse bookItemLayers = blockingStub.getOrderBookItemLayers(ITEM_ORDER_BOOK_REQUEST);
-       // assertEquals(3, bookItemLayers.getOrderbookLayersList().size());
+        ItemOrderBookResponse expectedOrderBookResponse = ItemOrderBookResponse.newBuilder().setItemName("eggs").build();
+
+        Aurora.AuroraResponse actual = requestMapper.renderRequest(ORDERBOOK_REQUEST);
+
+        assertEquals(expectedOrderBookResponse, actual.getMessage().unpack(ItemOrderBookResponse.class));
+    }
+
+    @Test
+    void renderRequestWithSubscribeRequestForOrderBookProcessesSubscribeForItem() throws IOException, ServiceNotFoundException {
+        when(channelManager.getChannelByKey(any())).thenReturn(Optional.ofNullable(dummyManagedChannel));
+        when(stubManager.getOrderbookBlockingStub(any())).thenReturn(orderBookBlockingStub);
+
+        createFakeOrderBookReplyingServer();
+
+        grpcCleanup.register(orderBookReceiverChannel);
+
+        orderBookReceiverChannel.getState(true);
+
+        InterestsResponse expectedOrderBookResponse = InterestsResponse.newBuilder().build();
+
+        Aurora.AuroraResponse actual = requestMapper.renderRequest(ORDERBOOK_SUBSCRIBE_REQUEST);
+
+        assertEquals(expectedOrderBookResponse, actual.getMessage().unpack(InterestsResponse.class));
+    }
+
+    @Test
+    void renderRequestWithUnsubscribeRequestForOrderBookProcessesCancelSubscription() throws IOException, ServiceNotFoundException {
+        when(channelManager.getChannelByKey(any())).thenReturn(Optional.ofNullable(dummyManagedChannel));
+        when(stubManager.getOrderbookBlockingStub(any())).thenReturn(orderBookBlockingStub);
+
+        createFakeOrderBookReplyingServer();
+
+        grpcCleanup.register(orderBookReceiverChannel);
+
+        orderBookReceiverChannel.getState(true);
+
+        CancelSubscriptionResponse expectedOrderBookResponse = CancelSubscriptionResponse.newBuilder().build();
+
+        Aurora.AuroraResponse actual = requestMapper.renderRequest(ORDERBOOK_UNSUBSCRIBE_REQUEST);
+
+        assertEquals(expectedOrderBookResponse, actual.getMessage().unpack(CancelSubscriptionResponse.class));
+    }
+
+    @Test
+    void renderRequestWithDestinationAuroraSendsRequestAndReceivesResponseFromFakeAuroraService() throws IOException, ServiceNotFoundException {
+        when(channelManager.getChannelByKey(any())).thenReturn(Optional.ofNullable(dummyManagedChannel));
+        when(stubManager.getAuroraBlockingStub(any())).thenReturn(auroraBlockingStub);
+
+        createFakeAuroraReplyingServer();
+
+        grpcCleanup.register(auroraReceiverChannel);
+
+        auroraReceiverChannel.getState(true);
+
+        Aurora.AuroraResponse actual = requestMapper.renderRequest(AURORA_REQUEST);
+
+        assertEquals(AURORA_REQUEST, actual.getMessage().unpack(Aurora.AuroraRequest.class));
     }
 
 
+    private void createFakeOrderBookReplyingServer() throws IOException {
+        grpcCleanup.register(InProcessServerBuilder
+                .forName(orderBookReceiverName)
+                .directExecutor()
+                .addService(this.fakeReceivingOrderBookService())
+                .build()
+                .start());
+    }
+
+    private void createFakeAuroraReplyingServer() throws IOException {
+        grpcCleanup.register(InProcessServerBuilder
+                .forName(auroraReceiverName)
+                .directExecutor()
+                .addService(this.fakeReceivingAuroraService())
+                .build()
+                .start());
+    }
 
 
+    private OrderBookServiceGrpc.OrderBookServiceImplBase fakeReceivingOrderBookService() {
+        return new OrderBookServiceGrpc.OrderBookServiceImplBase() {
+            @Override
+            public void getOrderBookItemLayers(ItemOrderBookRequest request, StreamObserver<ItemOrderBookResponse> responseObserver) {
+                responseObserver.onNext(ItemOrderBookResponse.newBuilder()
+                        .setItemName(request.getItemName())
+                        .build());
 
+                responseObserver.onCompleted();
+            }
 
+            @Override
+            public void announceItemInterest(InterestsRequest request, StreamObserver<InterestsResponse> responseObserver) {
+                responseObserver.onNext(InterestsResponse.newBuilder()
+                        .build());
 
+                responseObserver.onCompleted();
+            }
 
+            @Override
+            public void cancelItemSubscription(CancelSubscriptionRequest request, StreamObserver<CancelSubscriptionResponse> responseObserver) {
+                responseObserver.onNext(CancelSubscriptionResponse.newBuilder()
+                        .build());
 
+                responseObserver.onCompleted();
+            }
+        };
+    }
 
+    private AuroraServiceGrpc.AuroraServiceImplBase fakeReceivingAuroraService() {
+        return new AuroraServiceGrpc.AuroraServiceImplBase() {
+            @Override
+            public void request(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
+                Aurora.AuroraResponse response = Aurora.AuroraResponse
+                        .newBuilder()
+                        .setMessage(Any.pack(request))
+                        .build();
 
+                responseObserver.onNext(response);
+                responseObserver.onCompleted();
+            }
 
+            @Override
+            public void subscribe(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
+                for (int i = 0; i < 5; i++) {
+                    Aurora.AuroraResponse response = Aurora.AuroraResponse
+                            .newBuilder()
+                            .setMessage(Any.pack(request))
+                            .build();
 
-
-
-
+                    responseObserver.onNext(response);
+                }
+                responseObserver.onCompleted();
+            }
+        };
+    }
 }
