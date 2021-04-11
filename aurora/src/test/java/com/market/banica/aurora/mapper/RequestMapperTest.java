@@ -237,19 +237,6 @@ class RequestMapperTest {
                 responseObserver.onNext(response);
                 responseObserver.onCompleted();
             }
-
-            @Override
-            public void subscribe(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
-                for (int i = 0; i < 5; i++) {
-                    Aurora.AuroraResponse response = Aurora.AuroraResponse
-                            .newBuilder()
-                            .setMessage(Any.pack(request))
-                            .build();
-
-                    responseObserver.onNext(response);
-                }
-                responseObserver.onCompleted();
-            }
         };
     }
 }
