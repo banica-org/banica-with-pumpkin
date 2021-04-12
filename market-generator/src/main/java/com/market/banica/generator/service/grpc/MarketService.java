@@ -1,7 +1,5 @@
 package com.market.banica.generator.service.grpc;
 
-import com.aurora.Aurora;
-import com.aurora.AuroraServiceGrpc;
 import com.market.CatalogueRequest;
 import com.market.CatalogueResponse;
 import com.market.MarketDataRequest;
