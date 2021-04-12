@@ -22,6 +22,7 @@ public class GrpcChannel {
                 .usePlaintext()
                 .defaultServiceConfig(ChannelRPCConfig.getInstance().getServiceConfig())
                 .enableRetry()
+                .maxRetryAttempts(1000)
                 .build();
         log.info("Grpc channel with {} host and {} port was build.", host, port);
     }

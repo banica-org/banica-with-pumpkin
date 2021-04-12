@@ -41,6 +41,7 @@ public class AuroraClient {
                 .usePlaintext()
                 .defaultServiceConfig(ChannelRPCConfig.getInstance().getServiceConfig())
                 .enableRetry()
+                .maxRetryAttempts(1000)
                 .build();
 
         this.itemMarket = itemMarket;
