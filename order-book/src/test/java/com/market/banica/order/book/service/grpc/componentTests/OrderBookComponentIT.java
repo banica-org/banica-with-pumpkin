@@ -135,6 +135,7 @@ class OrderBookComponentIT {
         blockingStub = OrderBookServiceGrpc.newBlockingStub(grpcCleanup.register(channel));
     }
 
+
     @Test
     public void auroraServiceToOrderBookRequestsRetryExecutesWithSuccess() {
         //Arrange
