@@ -1,7 +1,5 @@
 package com.market.banica.generator.service;
 
-import com.aurora.Aurora;
-import com.google.protobuf.Any;
 import com.market.MarketDataRequest;
 import com.market.TickResponse;
 import io.grpc.Status;
