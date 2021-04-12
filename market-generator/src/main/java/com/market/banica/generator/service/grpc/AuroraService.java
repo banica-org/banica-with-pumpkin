@@ -4,7 +4,7 @@ import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
 import com.market.TickResponse;
 import com.market.banica.generator.service.MarketState;
-import com.market.banica.generator.service.MarketSubscriptionManager;
+import com.market.banica.generator.service.SubscriptionManager;
 import io.grpc.Status;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
@@ -14,13 +14,13 @@ import org.springframework.stereotype.Service;
 @Service
 public class AuroraService extends AuroraServiceGrpc.AuroraServiceImplBase {
 
-    private final MarketSubscriptionManager marketSubscriptionManager;
+    private final SubscriptionManager subscriptionManager;
 
     private final MarketState marketState;
 
     @Autowired
-    public AuroraService(MarketSubscriptionManager marketSubscriptionManager, MarketState marketState) {
-        this.marketSubscriptionManager = marketSubscriptionManager;
+    public AuroraService(SubscriptionManager subscriptionManager, MarketState marketState) {
+        this.subscriptionManager = subscriptionManager;
         this.marketState = marketState;
     }
 
@@ -28,7 +28,7 @@ public class AuroraService extends AuroraServiceGrpc.AuroraServiceImplBase {
     public void subscribe(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
         boolean hasSuccessfulBootstrap = bootstrapGeneratedTicks(request, responseObserver);
         if (hasSuccessfulBootstrap) {
-            marketSubscriptionManager.subscribe(request, responseObserver);
+            subscriptionManager.subscribe(request, responseObserver);
         }
     }
 
@@ -39,16 +39,16 @@ public class AuroraService extends AuroraServiceGrpc.AuroraServiceImplBase {
 
     private boolean bootstrapGeneratedTicks(Aurora.AuroraRequest request,
                                             StreamObserver<Aurora.AuroraResponse> responseStreamObserver) {
-        String goodName = marketSubscriptionManager.getGoodNameFromRequest(request);
+        String goodName = subscriptionManager.getGoodNameFromRequest(request);
         ServerCallStreamObserver<Aurora.AuroraResponse> cancellableSubscriber = (ServerCallStreamObserver<Aurora.AuroraResponse>) responseStreamObserver;
         for (TickResponse tick : marketState.generateMarketTicks(goodName)) {
             if (cancellableSubscriber.isCancelled()) {
                 responseStreamObserver.onError(Status.CANCELLED
-                        .withDescription(responseStreamObserver.toString() + " has stopped requesting product " + goodName)
+                        .withDescription(responseStreamObserver + " has stopped requesting product " + goodName)
                         .asException());
                 return false;
             }
-            responseStreamObserver.onNext(marketSubscriptionManager.convertTickResponseToAuroraResponse(tick));
+            responseStreamObserver.onNext(subscriptionManager.convertTickResponseToAuroraResponse(tick));
         }
         return true;
     }

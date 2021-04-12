@@ -9,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Map;
@@ -22,16 +21,16 @@ public class SnapshotPersistence {
 
     private final String databaseFileName;
 
-    private static final Kryo kryoHandle = new Kryo();
+    private final Kryo kryoHandle = new Kryo();
 
     public SnapshotPersistence(String fileName) {
         initKryo();
         this.databaseFileName = fileName;
     }
 
-    public void persistTicks(Map<String, Set<MarketTick>> newTicks) throws FileNotFoundException {
+    public void persistTicks(Map<String, Set<MarketTick>> newTicks) throws IOException {
 
-        Output output = new Output(new FileOutputStream(databaseFileName));
+        Output output = new Output(new FileOutputStream(ApplicationDirectoryUtil.getConfigFile(databaseFileName)));
         kryoHandle.writeClassAndObject(output, newTicks);
         output.close();
         LOGGER.info("Persisting snapshot database!");
@@ -54,7 +53,7 @@ public class SnapshotPersistence {
 
         } else {
 
-            Input input = new Input(new FileInputStream(databaseFileName));
+            Input input = new Input(new FileInputStream(ApplicationDirectoryUtil.getConfigFile(databaseFileName)));
             loadedMarketTicks = (Map<String, Set<MarketTick>>) kryoHandle.readClassAndObject(input);
             input.close();
             LOGGER.info("Loaded snapshot database!");
@@ -64,7 +63,7 @@ public class SnapshotPersistence {
 
     }
 
-    private static void initKryo() {
+    private void initKryo() {
 
         kryoHandle.register(java.util.concurrent.ConcurrentHashMap.class);
         kryoHandle.register(java.util.TreeSet.class);
