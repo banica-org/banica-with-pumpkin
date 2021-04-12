@@ -28,7 +28,7 @@ public class GrpcServer {
     private GrpcServer(
             @Value("${application.executor.pool.size}") final int applicationExecutorPoolSize,
             @Value("${market.server.port}") final int port,
-            final AuroraService auroraService) {
+            final MarketService marketService) {
 
         applicationExecutor = Executors.newFixedThreadPool(applicationExecutorPoolSize);
 
@@ -36,7 +36,7 @@ public class GrpcServer {
                 .executor(applicationExecutor)
                 .keepAliveTime(1, TimeUnit.MINUTES)
                 .permitKeepAliveTime(1, TimeUnit.MINUTES)
-                .addService(auroraService)
+                .addService(marketService)
                 .build();
 
     }

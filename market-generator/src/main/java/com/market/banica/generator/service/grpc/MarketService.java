@@ -2,6 +2,10 @@ package com.market.banica.generator.service.grpc;
 
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
+import com.market.CatalogueRequest;
+import com.market.CatalogueResponse;
+import com.market.MarketDataRequest;
+import com.market.MarketServiceGrpc;
 import com.market.TickResponse;
 import com.market.banica.generator.service.MarketState;
 import com.market.banica.generator.service.SubscriptionManager;
@@ -12,20 +16,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-public class AuroraService extends AuroraServiceGrpc.AuroraServiceImplBase {
+public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
 
     private final SubscriptionManager subscriptionManager;
 
     private final MarketState marketState;
 
     @Autowired
-    public AuroraService(SubscriptionManager subscriptionManager, MarketState marketState) {
+    public MarketService(SubscriptionManager subscriptionManager, MarketState marketState) {
         this.subscriptionManager = subscriptionManager;
         this.marketState = marketState;
     }
 
     @Override
-    public void subscribe(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
+    public void subscribeForItem(MarketDataRequest request, StreamObserver<TickResponse> responseObserver) {
         boolean hasSuccessfulBootstrap = bootstrapGeneratedTicks(request, responseObserver);
         if (hasSuccessfulBootstrap) {
             subscriptionManager.subscribe(request, responseObserver);
@@ -33,14 +37,14 @@ public class AuroraService extends AuroraServiceGrpc.AuroraServiceImplBase {
     }
 
     @Override
-    public void request(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
-        super.request(request, responseObserver);
+    public void requestCatalogue(CatalogueRequest request, StreamObserver<CatalogueResponse> responseObserver) {
+        super.requestCatalogue(request, responseObserver);
     }
 
-    private boolean bootstrapGeneratedTicks(Aurora.AuroraRequest request,
-                                            StreamObserver<Aurora.AuroraResponse> responseStreamObserver) {
-        String goodName = subscriptionManager.getGoodNameFromRequest(request);
-        ServerCallStreamObserver<Aurora.AuroraResponse> cancellableSubscriber = (ServerCallStreamObserver<Aurora.AuroraResponse>) responseStreamObserver;
+    private boolean bootstrapGeneratedTicks(MarketDataRequest request,
+                                            StreamObserver<TickResponse> responseStreamObserver) {
+        String goodName = request.getGoodName();
+        ServerCallStreamObserver<TickResponse> cancellableSubscriber = (ServerCallStreamObserver<TickResponse>) responseStreamObserver;
         for (TickResponse tick : marketState.generateMarketTicks(goodName)) {
             if (cancellableSubscriber.isCancelled()) {
                 responseStreamObserver.onError(Status.CANCELLED
@@ -48,7 +52,7 @@ public class AuroraService extends AuroraServiceGrpc.AuroraServiceImplBase {
                         .asException());
                 return false;
             }
-            responseStreamObserver.onNext(subscriptionManager.convertTickResponseToAuroraResponse(tick));
+            responseStreamObserver.onNext(tick);
         }
         return true;
     }

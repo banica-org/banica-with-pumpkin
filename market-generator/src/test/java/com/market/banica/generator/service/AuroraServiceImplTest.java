@@ -3,7 +3,7 @@ package com.market.banica.generator.service;
 import com.aurora.Aurora;
 import com.google.protobuf.Any;
 import com.market.TickResponse;
-import com.market.banica.generator.service.grpc.AuroraService;
+import com.market.banica.generator.service.grpc.MarketService;
 import io.grpc.Status;
 import io.grpc.stub.ServerCallStreamObserver;
 import org.junit.jupiter.api.Test;
@@ -31,7 +31,7 @@ class AuroraServiceImplTest {
     private MarketState marketState;
 
     @InjectMocks
-    private AuroraService auroraService;
+    private MarketService marketService;
 
     private final String TOPIC_BANICA = "market/banica";
 
@@ -59,14 +59,13 @@ class AuroraServiceImplTest {
         Aurora.AuroraResponse response1 = Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(tick1)).build();
         Aurora.AuroraResponse response2 = Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(tick2)).build();
 
-        when(marketSubscriptionServiceImpl.getGoodNameFromRequest(AURORA_REQUEST_BANICA)).thenReturn(topic[1]);
         when(marketState.generateMarketTicks(topic[1])).thenReturn(ticks);
         when(marketState.generateMarketTicks(topic[1])).thenReturn(ticks);
         when(marketSubscriptionServiceImpl.convertTickResponseToAuroraResponse(tick1)).thenReturn(response1);
         when(marketSubscriptionServiceImpl.convertTickResponseToAuroraResponse(tick2)).thenReturn(response2);
 
 
-        auroraService.subscribe(AURORA_REQUEST_BANICA, subscriber);
+        marketService.subscribe(AURORA_REQUEST_BANICA, subscriber);
 
 
         verify(marketSubscriptionServiceImpl, times(1))
@@ -105,7 +104,7 @@ class AuroraServiceImplTest {
         when(subscriber.isCancelled()).thenReturn(true);
 
 
-        auroraService.subscribe(AURORA_REQUEST_BANICA, subscriber);
+        marketService.subscribe(AURORA_REQUEST_BANICA, subscriber);
 
 
         verify(marketSubscriptionServiceImpl, times(0))
@@ -123,7 +122,7 @@ class AuroraServiceImplTest {
     @Test
     void request_ReturnSuperRequest() {
 
-        auroraService.request(AURORA_REQUEST_BANICA, subscriber);
+        marketService.request(AURORA_REQUEST_BANICA, subscriber);
 
         verify(subscriber).onError(any(Status.UNIMPLEMENTED
                 .withDescription("Method aurora.AuroraService/request is unimplemented")
