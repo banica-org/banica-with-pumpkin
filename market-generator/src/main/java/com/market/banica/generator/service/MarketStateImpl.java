@@ -13,7 +13,6 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -89,18 +88,6 @@ public class MarketStateImpl implements MarketState {
         }
     }
 
-    @Override
-    public Map<String, Set<MarketTick>> getMarketState() {
-        try {
-            marketStateLock.readLock().lock();
-            Map<String, Set<MarketTick>> currentMarketState = new HashMap<>();
-            marketState.forEach((good, ticks) -> currentMarketState.put(good, new TreeSet<>(ticks)));
-            return currentMarketState;
-        } finally {
-            marketStateLock.readLock().unlock();
-        }
-    }
-
     public PersistScheduler getPersistScheduler() {
         return persistScheduler;
     }
@@ -117,11 +104,13 @@ public class MarketStateImpl implements MarketState {
 
     @PreDestroy
     private void onDestroy() {
+        executorService.shutdown();
         try {
-            executorService.shutdown();
-            executorService.awaitTermination(1, TimeUnit.SECONDS);
-            executorService.shutdownNow();
+            if (!executorService.awaitTermination(5, TimeUnit.SECONDS)) {
+                executorService.shutdownNow();
+            }
         } catch (InterruptedException e) {
+            executorService.shutdownNow();
             Thread.currentThread().interrupt();
         }
     }

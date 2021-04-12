@@ -1,14 +1,16 @@
-package com.market.banica.generator.service.task;
+package com.market.banica.generator.task;
 
 import com.market.banica.generator.model.GoodSpecification;
 import com.market.banica.generator.model.MarketTick;
 import com.market.banica.generator.service.TickGenerator;
+import lombok.EqualsAndHashCode;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Date;
 import java.util.Random;
 
+@EqualsAndHashCode
 public class TickTask implements Runnable {
 
     private static final Random RANDOM = new Random();
