@@ -42,7 +42,6 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class SubscribeMapperTest {
 
-
     private final ManagedChannel dummyManagedChannel = ManagedChannelBuilder
             .forAddress("localhost", 1010)
             .usePlaintext()
@@ -51,9 +50,7 @@ class SubscribeMapperTest {
     private static final Aurora.AuroraRequest MARKET_REQUEST = Aurora.AuroraRequest.newBuilder().setClientId("1").setTopic("market/eggs/10").build();
     private static final Aurora.AuroraRequest AURORA_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("aurora/eggs/10").build();
     private static final Aurora.AuroraRequest ORDERBOOK_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("orderbook/eggs/10").build();
-    private static final Aurora.AuroraRequest ORDERBOOK_SUBSCRIBE_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("orderbook/eggs=subscribe").build();
-    private static final Aurora.AuroraRequest ORDERBOOK_UNSUBSCRIBE_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("orderbook/eggs=unsubscribe").build();
-    private static final Aurora.AuroraRequest INVALID_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("market/banica").build();
+    private static final Aurora.AuroraRequest INVALID_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("invalid/request").build();
 
     private String auroraReceiverName;
     private ManagedChannel auroraReceiverChannel;
@@ -62,11 +59,9 @@ class SubscribeMapperTest {
     private ManagedChannel marketReceiverChannel;
 
     private MarketServiceGrpc.MarketServiceStub marketStub;
-    private AuroraServiceGrpc.AuroraServiceBlockingStub auroraBlockingStub;
-
+    private AuroraServiceGrpc.AuroraServiceStub auroraStub;
 
     private final StreamObserver<Aurora.AuroraResponse> responseObserver = mock(StreamObserver.class);
-
 
     @Rule
     public final GrpcCleanupRule grpcCleanup = new GrpcCleanupRule();
@@ -88,7 +83,7 @@ class SubscribeMapperTest {
                 .forName(auroraReceiverName)
                 .executor(Executors.newSingleThreadExecutor()).build();
 
-        auroraBlockingStub = AuroraServiceGrpc.newBlockingStub(auroraReceiverChannel);
+        auroraStub = AuroraServiceGrpc.newStub(auroraReceiverChannel);
 
         marketReceiverName = InProcessServerBuilder.generateName();
         marketReceiverChannel = InProcessChannelBuilder
@@ -106,14 +101,55 @@ class SubscribeMapperTest {
     }
 
     @Test
-    void renderSubscribeWithRequestForMarketService() throws IOException {
+    void renderSubscribeWithRequestForOrderBookInvokesOnError() {
+        when(channelManager.getAllChannelsContainingPrefix(any())).thenReturn(Collections.singletonList(dummyManagedChannel));
+        subscribeMapper.renderSubscribe(ORDERBOOK_REQUEST, responseObserver);
+        verify(responseObserver, times(1)).onError(any());
+    }
+
+    @Test
+    void renderSubscribeWithRequestForUnsupportedServiceInvokesOnError() {
+        when(channelManager.getAllChannelsContainingPrefix(any())).thenReturn(Collections.singletonList(dummyManagedChannel));
+        subscribeMapper.renderSubscribe(INVALID_REQUEST, responseObserver);
+        verify(responseObserver, times(1)).onError(any());
+    }
+
+    @Test
+    void renderSubscribeWithRequestForMarketServiceSubscribesResponseObserverAndCallsOnNextAndOnCompleted() throws IOException, InterruptedException {
         when(channelManager.getAllChannelsContainingPrefix(any())).thenReturn(Collections.singletonList(dummyManagedChannel));
         when(stubManager.getMarketStub(any())).thenReturn(marketStub);
 
+        createFakeMarketReplyingServer();
+
+        grpcCleanup.register(marketReceiverChannel);
+
+        marketReceiverChannel.getState(true);
+
         subscribeMapper.renderSubscribe(MARKET_REQUEST, responseObserver);
 
-        verify(stubManager,times(1)).getMarketStub(any());
-        verify(responseObserver, atLeastOnce()).onCompleted();
+        Thread.sleep(1000);
+        verify(stubManager, times(1)).getMarketStub(any());
+        verify(responseObserver, times(1)).onNext(any());
+        verify(responseObserver, times(1)).onCompleted();
+    }
+
+    @Test
+    void renderSubscribeWithRequestForAuroraServiceSubscribesResponseObserverAndCallsOnNextAndOnCompleted() throws IOException, InterruptedException {
+        when(channelManager.getAllChannelsContainingPrefix(any())).thenReturn(Collections.singletonList(dummyManagedChannel));
+        when(stubManager.getAuroraStub(any())).thenReturn(auroraStub);
+
+        createFakeAuroraReplyingServer();
+
+        grpcCleanup.register(auroraReceiverChannel);
+
+        auroraReceiverChannel.getState(true);
+
+        subscribeMapper.renderSubscribe(AURORA_REQUEST, responseObserver);
+
+        Thread.sleep(1000);
+        verify(stubManager, times(1)).getAuroraStub(any());
+        verify(responseObserver, times(3)).onNext(any());
+        verify(responseObserver, times(1)).onCompleted();
     }
 
     private void createFakeMarketReplyingServer() throws IOException {
@@ -138,25 +174,17 @@ class SubscribeMapperTest {
         return new MarketServiceGrpc.MarketServiceImplBase() {
             @Override
             public void subscribeForItem(MarketDataRequest request, StreamObserver<TickResponse> responseObserver) {
-
-                TickResponse response = TickResponse
-                        .newBuilder()
-                        .setGoodName("eggs")
-                        .build();
-
-                responseObserver.onNext(response);
-
+                responseObserver.onNext(TickResponse.newBuilder().build());
                 responseObserver.onCompleted();
             }
         };
     }
 
-
     private AuroraServiceGrpc.AuroraServiceImplBase fakeReceivingAuroraService() {
         return new AuroraServiceGrpc.AuroraServiceImplBase() {
             @Override
             public void subscribe(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
-                for (int i = 0; i < 5; i++) {
+                for (int i = 0; i < 3; i++) {
                     Aurora.AuroraResponse response = Aurora.AuroraResponse
                             .newBuilder()
                             .setMessage(Any.pack(request))
@@ -164,6 +192,7 @@ class SubscribeMapperTest {
 
                     responseObserver.onNext(response);
                 }
+
                 responseObserver.onCompleted();
             }
         };
