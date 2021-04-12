@@ -1,4 +1,4 @@
-package src;
+package com.market.banica.aurora;
 
 import io.grpc.Server;
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import src.service.AuroraServiceImpl;
+import com.market.banica.aurora.service.AuroraServiceImpl;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
