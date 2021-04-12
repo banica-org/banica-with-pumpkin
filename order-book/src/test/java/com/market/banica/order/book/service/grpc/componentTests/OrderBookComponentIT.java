@@ -3,6 +3,7 @@ package com.market.banica.order.book.service.grpc.componentTests;
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
 import com.google.protobuf.Any;
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.market.Origin;
 import com.market.TickResponse;
 import com.market.banica.order.book.OrderBookApplication;
@@ -106,6 +107,34 @@ class OrderBookComponentIT {
 
         asynchronousStub = AuroraServiceGrpc.newStub(channelTwo);
         blockingStub = OrderBookServiceGrpc.newBlockingStub(grpcCleanup.register(channel));
+    }
+
+    @Test
+    public void auroraServiceToOrderBookRequestsRetryExecutesWithSuccess() throws InvalidProtocolBufferException {
+        //Arrange
+        ItemOrderBookResponse response = generateItemOrderBookExpectedResponse();
+
+        new Thread(() -> {
+            try {
+                Thread.sleep(1000);
+                grpcCleanup.register(InProcessServerBuilder
+                        .forName(serverName).directExecutor().addService(testConfiguration.getGrpcOrderBookServiceItemLayers(response))
+                        .build().start());
+            } catch (InterruptedException | IOException e) {
+                e.printStackTrace();
+            }
+        }).start();
+
+        ItemOrderBookRequest auroraRequest = ItemOrderBookRequest.newBuilder()
+                .setItemName(productName).setClientId(clientId).setQuantity(1).build();
+
+        //Act
+        ItemOrderBookResponse auroraResponse = blockingStub.getOrderBookItemLayers(auroraRequest);
+
+        ItemOrderBookResponse expected = generateItemOrderBookExpectedResponse();
+
+        //Assert
+        assertEquals(expected, auroraResponse);
     }
 
     @Test
