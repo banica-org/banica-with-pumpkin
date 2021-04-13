@@ -57,7 +57,6 @@ public class ProductServiceImpl implements ProductService {
 
         DataValidator.checkForValidData(newProductName);
         DataValidator.checkForValidData(unitOfMeasure);
-        DataValidator.checkForValidData(ingredientsMap);
 
         LOGGER.debug("In createProduct method with parameters: newProductName {}, unitOfMeasure {} and ingredientsMap {}"
                 , newProductName, unitOfMeasure, ingredientsMap);
@@ -77,7 +76,9 @@ public class ProductServiceImpl implements ProductService {
         Map<String, Integer> ingredients = new HashMap<>();
 
         if (!ingredientsMap.isEmpty()) {
+
             ingredients = setCompositeProductIngredients(ingredientsMap);
+
         }
 
         newProduct.setIngredients(ingredients);
@@ -280,6 +281,7 @@ public class ProductServiceImpl implements ProductService {
 
         Map<String, Integer> ingredients = convertStringOfIngredientsToMap(ingredientsMap);
 
+
         validateProductsOfListExists(ingredients.keySet());
 
         return ingredients;
@@ -294,6 +296,11 @@ public class ProductServiceImpl implements ProductService {
         for (String s : ingredientsAsArray) {
 
             String[] mapEntry = s.split(REGEX_DELIMITER_NEW_PRODUCT_ENTRY_PAIRS);
+
+            if (mapEntry.length != 2) {
+                throw new IllegalArgumentException("Invalid composite product pattern! The ingredient must looks like (product:quantity)");
+            }
+
             int quantity = getValueAsInt(mapEntry[1]);
             ingredients.put(mapEntry[0], quantity);
         }

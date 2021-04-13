@@ -36,7 +36,7 @@ public class JMXServiceImpl implements JMXServiceMBean {
 
     @Override
     @ManagedOperation
-    public void createProduct(String newProductName, String unitOfMeasure, String ingredientsList) {
+    public void createProduct(String newProductName, String unitOfMeasure, String ingredientsList){
         LOGGER.debug("in createProduct method with parameters: newProductName {},unitOfMeasure {}," +
                         " ingredientsList {}", newProductName, unitOfMeasure,
                 ingredientsList);
