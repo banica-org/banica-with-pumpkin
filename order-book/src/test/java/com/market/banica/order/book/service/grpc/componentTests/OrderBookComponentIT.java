@@ -3,11 +3,14 @@ package com.market.banica.order.book.service.grpc.componentTests;
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
 import com.google.protobuf.Any;
+import com.market.MarketDataRequest;
+import com.market.MarketServiceGrpc;
 import com.market.Origin;
 import com.market.TickResponse;
 import com.market.banica.common.channel.ChannelRPCConfig;
 import com.market.banica.order.book.OrderBookApplication;
 import com.market.banica.order.book.exception.TrackingException;
+import com.market.banica.order.book.model.Item;
 import com.market.banica.order.book.model.ItemMarket;
 import com.market.banica.order.book.service.grpc.AuroraClient;
 import com.market.banica.order.book.service.grpc.OrderBookService;
@@ -22,9 +25,11 @@ import com.orderbook.OrderBookLayer;
 import com.orderbook.OrderBookServiceGrpc;
 import io.grpc.Context;
 import io.grpc.ManagedChannel;
+import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.inprocess.InProcessChannelBuilder;
 import io.grpc.inprocess.InProcessServerBuilder;
+import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import io.grpc.testing.GrpcCleanupRule;
 import org.junit.Rule;
@@ -45,13 +50,21 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.UUID;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -71,6 +84,9 @@ class OrderBookComponentIT {
 
     @InjectMocks
     private OrderBookService orderBookService;
+
+    @Autowired
+    private OrderBookService orderBookServiceReal;
 
     @Autowired
     private TestConfiguration testConfiguration;
@@ -108,6 +124,7 @@ class OrderBookComponentIT {
     private String serverNameTwo;
     private String serverNameThree;
     private OrderBookServiceGrpc.OrderBookServiceBlockingStub blockingStub;
+    private OrderBookServiceGrpc.OrderBookServiceStub normalStub;
     private AuroraServiceGrpc.AuroraServiceStub asynchronousStub;
     private AuroraServiceGrpc.AuroraServiceBlockingStub auroraBlockingStub;
 
@@ -133,8 +150,103 @@ class OrderBookComponentIT {
         asynchronousStub = AuroraServiceGrpc.newStub(channelTwo);
         auroraBlockingStub = AuroraServiceGrpc.newBlockingStub(channelThree);
         blockingStub = OrderBookServiceGrpc.newBlockingStub(grpcCleanup.register(channel));
+//        normalStub = OrderBookServiceGrpc.newStub(grpcCleanup.register(channel));
     }
 
+    @Test
+    public void startMarket() throws IOException {
+        //Arrange
+
+        String serverNameFour = InProcessServerBuilder.generateName();
+
+        ManagedChannel marketChannel = InProcessChannelBuilder.forName(serverNameFour)
+                .defaultServiceConfig(ChannelRPCConfig.getInstance().getServiceConfig())
+                .enableRetry().maxRetryAttempts(MAX_RETRY_ATTEMPTS).directExecutor().build();
+
+
+        // Start OrderBook
+        grpcCleanup.register(InProcessServerBuilder
+                .forName(serverName).directExecutor().addService(orderBookServiceReal)
+                .build().start());
+
+
+       grpcCleanup.register(InProcessServerBuilder
+                .forName(serverNameFour).directExecutor().addService(new MarketServiceGrpc.MarketServiceImplBase() {
+                    @Override
+                    public void subscribeForItem(MarketDataRequest request, StreamObserver<TickResponse> responseObserver) {
+
+                        System.out.println("IN MARKET");
+                        for (int i = 0; i < 10; i++) {
+                            TickResponse tickResponse = TickResponse.newBuilder()
+                                    .setGoodName(UUID.randomUUID().toString())
+                                    .setQuantity(i + 1)
+                                    .setPrice(i + 1.5)
+                                    .setTimestamp(System.currentTimeMillis())
+                                    .setOrigin(Origin.forNumber((i % 4))).build();
+                            responseObserver.onNext(tickResponse);
+                        }
+                    }
+
+                }).build().start());
+
+        // Start Aurora
+        grpcCleanup.register(InProcessServerBuilder
+                .forName(serverNameThree).directExecutor().addService(new AuroraServiceGrpc.AuroraServiceImplBase() {
+                    @Override
+                    public void subscribe(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
+                        String itemForSubscribing = request.getTopic().split("/")[1]; // market/eggs
+                        System.out.println("TEST IN SUBSCRIBE METHOD");
+                        MarketDataRequest marketDataRequest = MarketDataRequest.newBuilder()
+                                .setClientId(request.getClientId())
+                                .setGoodName(itemForSubscribing)
+                                .build();
+
+                        MarketServiceGrpc.newStub(marketChannel)
+                                .subscribeForItem(marketDataRequest, new StreamObserver<TickResponse>() {
+                                    @Override
+                                    public void onNext(TickResponse tickResponse) {
+                                        System.out.println("IN AURORA");
+                                        System.out.println(tickResponse.toString());
+                                        Aurora.AuroraResponse wrap = Aurora.AuroraResponse.newBuilder()
+                                                .setMessage(Any.pack(tickResponse))
+                                                .build();
+                                        responseObserver.onNext(wrap);
+                                    }
+
+                                    @Override
+                                    public void onError(Throwable throwable) {
+
+                                    }
+
+                                    @Override
+                                    public void onCompleted() {
+                                        responseObserver.onCompleted();
+                                    }
+                                });
+                    }
+                })
+                .build().start());
+
+
+        InterestsRequest interestsRequest = InterestsRequest.newBuilder().setClientId("aurora").setItemName("cheese").build();
+
+
+        /*InterestsResponse interestsResponse = blockingStub.announceItemInterest(interestsRequest);
+
+        System.out.println(interestsResponse.toString());
+
+
+        System.out.println();*/
+    }
+
+    @Test
+    public void test() {
+        InterestsRequest interestsRequest = InterestsRequest.newBuilder().setClientId("aurora").setItemName("cheese").build();
+
+        InterestsResponse interestsResponse = blockingStub.announceItemInterest(interestsRequest);
+
+        System.out.println(interestsResponse.toString());
+    }
 
     @Test
     public void auroraServiceToOrderBookRequestsRetryExecutesWithSuccess() {
