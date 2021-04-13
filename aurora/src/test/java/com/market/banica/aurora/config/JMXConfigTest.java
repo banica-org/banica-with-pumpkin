@@ -19,6 +19,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -31,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith(MockitoExtension.class)
 class JMXConfigTest {
+    private static final String NON_EXISTENT_PUBLISHER = "some-publisher";
 
     private static final String CHANNEL_PREFIX = "testing-prefix";
 
@@ -46,6 +49,9 @@ class JMXConfigTest {
 
     @Mock
     private ChannelManager channels;
+
+    @Mock
+    Publishers publishers;
 
     @Spy
     private final Map<String, ChannelProperty> channelPropertyMap = new HashMap<>();
@@ -67,15 +73,22 @@ class JMXConfigTest {
     }
 
     @Test
+    void createChannelWithInputOfNotSupportedChannelPrefixThrowsException() {
+        Mockito.when(publishers.getPublishersList()).thenReturn(Collections.singletonList(NON_EXISTENT_PUBLISHER));
+        assertThrows(IllegalArgumentException.class, () -> jmxConfig.createChannel(CHANNEL_PREFIX, HOST, PORT));
+    }
+
+    @Test
     void createChannelWithInputOfAlreadySavedChannelPrefixThrowsException() {
+        Mockito.when(publishers.getPublishersList()).thenReturn(Collections.singletonList(CHANNEL_PREFIX));
         jmxConfig.createChannel(CHANNEL_PREFIX, HOST, PORT);
         assertThrows(IllegalArgumentException.class, () -> jmxConfig.createChannel(CHANNEL_PREFIX, HOST, PORT));
-        jmxConfig.deleteChannel(CHANNEL_PREFIX);
     }
 
     @Test
     void createChannelWithInputOfNewChannelPrefixCreatesChannel() {
         //Arrange
+        Mockito.when(publishers.getPublishersList()).thenReturn(Collections.singletonList(CHANNEL_PREFIX));
         ChannelProperty channelProperty = new ChannelProperty();
         channelProperty.setHost(HOST);
         channelProperty.setPort(Integer.parseInt(PORT));
@@ -98,6 +111,7 @@ class JMXConfigTest {
     @Test
     void deleteChannelWithInputOfExistingChannelPrefixDeletesChannel() {
         //Arrange, Act
+        Mockito.when(publishers.getPublishersList()).thenReturn(Collections.singletonList(CHANNEL_PREFIX));
         jmxConfig.createChannel(CHANNEL_PREFIX, HOST, PORT);
         assertTrue(channelPropertyMap.containsKey(CHANNEL_PREFIX));
 
@@ -119,6 +133,7 @@ class JMXConfigTest {
     @Test
     void editChannelWithInputOfExistingChannelPrefixEditsChannel() {
         //Arrange
+        Mockito.when(publishers.getPublishersList()).thenReturn(Collections.singletonList(CHANNEL_PREFIX));
         jmxConfig.createChannel(CHANNEL_PREFIX, HOST, PORT);
         String channelHostBeforeEdit = channelPropertyMap.get(CHANNEL_PREFIX).getHost();
 
