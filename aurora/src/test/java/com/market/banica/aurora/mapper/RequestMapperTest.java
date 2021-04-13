@@ -2,9 +2,9 @@ package com.market.banica.aurora.mapper;
 
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
-import com.google.protobuf.Any;
 import com.market.banica.aurora.config.ChannelManager;
 import com.market.banica.aurora.config.StubManager;
+import com.market.banica.aurora.util.FakeStubsGenerator;
 import com.orderbook.CancelSubscriptionRequest;
 import com.orderbook.CancelSubscriptionResponse;
 import com.orderbook.InterestsRequest;
@@ -71,6 +71,9 @@ class RequestMapperTest {
     @Mock
     private StubManager stubManager;
 
+    @Spy
+    private FakeStubsGenerator fakeStubsGenerator;
+
     @InjectMocks
     @Spy
     private RequestMapper requestMapper;
@@ -91,7 +94,6 @@ class RequestMapperTest {
 
         orderBookBlockingStub = OrderBookServiceGrpc.newBlockingStub(orderBookReceiverChannel);
     }
-
 
     @Test
     void renderRequestWithRequestForNonExistentDestinationThrowsException() {
@@ -168,9 +170,7 @@ class RequestMapperTest {
         when(channelManager.getChannelByKey(any())).thenReturn(Optional.ofNullable(dummyManagedChannel));
         when(stubManager.getAuroraBlockingStub(any())).thenReturn(auroraBlockingStub);
 
-        createFakeAuroraReplyingServer();
-        grpcCleanup.register(auroraReceiverChannel);
-        auroraReceiverChannel.getState(true);
+        fakeStubsGenerator.createFakeAuroraReplyingServer(auroraReceiverName, grpcCleanup, auroraReceiverChannel);
 
         //Act
         Aurora.AuroraResponse actual = requestMapper.renderRequest(AURORA_REQUEST);
@@ -178,7 +178,6 @@ class RequestMapperTest {
         //Assert
         assertEquals(AURORA_REQUEST, actual.getMessage().unpack(Aurora.AuroraRequest.class));
     }
-
 
     private void createFakeOrderBookReplyingServer() throws IOException {
         grpcCleanup.register(InProcessServerBuilder
@@ -188,16 +187,6 @@ class RequestMapperTest {
                 .build()
                 .start());
     }
-
-    private void createFakeAuroraReplyingServer() throws IOException {
-        grpcCleanup.register(InProcessServerBuilder
-                .forName(auroraReceiverName)
-                .directExecutor()
-                .addService(this.fakeReceivingAuroraService())
-                .build()
-                .start());
-    }
-
 
     private OrderBookServiceGrpc.OrderBookServiceImplBase fakeReceivingOrderBookService() {
         return new OrderBookServiceGrpc.OrderBookServiceImplBase() {
@@ -223,21 +212,6 @@ class RequestMapperTest {
                 responseObserver.onNext(CancelSubscriptionResponse.newBuilder()
                         .build());
 
-                responseObserver.onCompleted();
-            }
-        };
-    }
-
-    private AuroraServiceGrpc.AuroraServiceImplBase fakeReceivingAuroraService() {
-        return new AuroraServiceGrpc.AuroraServiceImplBase() {
-            @Override
-            public void request(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
-                Aurora.AuroraResponse response = Aurora.AuroraResponse
-                        .newBuilder()
-                        .setMessage(Any.pack(request))
-                        .build();
-
-                responseObserver.onNext(response);
                 responseObserver.onCompleted();
             }
         };

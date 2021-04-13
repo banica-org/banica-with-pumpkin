@@ -2,12 +2,12 @@ package com.market.banica.aurora.mapper;
 
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
-import com.google.protobuf.Any;
 import com.market.MarketDataRequest;
 import com.market.MarketServiceGrpc;
 import com.market.TickResponse;
 import com.market.banica.aurora.config.ChannelManager;
 import com.market.banica.aurora.config.StubManager;
+import com.market.banica.aurora.util.FakeStubsGenerator;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.inprocess.InProcessChannelBuilder;
@@ -65,6 +65,9 @@ class SubscribeMapperTest {
 
     @Mock
     private StubManager stubManager;
+
+    @Spy
+    private FakeStubsGenerator fakeStubsGenerator;
 
     @InjectMocks
     @Spy
@@ -134,9 +137,7 @@ class SubscribeMapperTest {
         when(channelManager.getAllChannelsContainingPrefix(any())).thenReturn(Collections.singletonList(dummyManagedChannel));
         when(stubManager.getAuroraStub(any())).thenReturn(auroraStub);
 
-        createFakeAuroraReplyingServer();
-        grpcCleanup.register(auroraReceiverChannel);
-        auroraReceiverChannel.getState(true);
+        fakeStubsGenerator.createFakeAuroraReplyingServer(auroraReceiverName, grpcCleanup, auroraReceiverChannel);
 
         //Act
         subscribeMapper.renderSubscribe(AURORA_REQUEST, responseObserver);
@@ -157,38 +158,11 @@ class SubscribeMapperTest {
                 .start());
     }
 
-    private void createFakeAuroraReplyingServer() throws IOException {
-        grpcCleanup.register(InProcessServerBuilder
-                .forName(auroraReceiverName)
-                .directExecutor()
-                .addService(this.fakeReceivingAuroraService())
-                .build()
-                .start());
-    }
-
     private MarketServiceGrpc.MarketServiceImplBase fakeReceivingMarketService() {
         return new MarketServiceGrpc.MarketServiceImplBase() {
             @Override
             public void subscribeForItem(MarketDataRequest request, StreamObserver<TickResponse> responseObserver) {
                 responseObserver.onNext(TickResponse.newBuilder().build());
-                responseObserver.onCompleted();
-            }
-        };
-    }
-
-    private AuroraServiceGrpc.AuroraServiceImplBase fakeReceivingAuroraService() {
-        return new AuroraServiceGrpc.AuroraServiceImplBase() {
-            @Override
-            public void subscribe(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
-                for (int i = 0; i < 3; i++) {
-                    Aurora.AuroraResponse response = Aurora.AuroraResponse
-                            .newBuilder()
-                            .setMessage(Any.pack(request))
-                            .build();
-
-                    responseObserver.onNext(response);
-                }
-
                 responseObserver.onCompleted();
             }
         };

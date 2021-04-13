@@ -156,7 +156,7 @@ class JMXConfigTest {
     }
 
     @Test
-    void writeBackUp() {
+    void writeBackUpSavesTheChannelPropertyMapToABackUpFile() {
         //Arrange
         ChannelProperty actualChannelProperty = new ChannelProperty();
         actualChannelProperty.setHost(HOST);

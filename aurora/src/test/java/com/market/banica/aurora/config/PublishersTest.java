@@ -91,7 +91,7 @@ class PublishersTest {
     }
 
     @Test
-    void writeBackUpSavesPublisherInBackUp() {
+    void writeBackUpSavesPublisherInBackUpFile() {
         //Arrange, Act
         publishers.addPublisher(PUBLISHER);
 
