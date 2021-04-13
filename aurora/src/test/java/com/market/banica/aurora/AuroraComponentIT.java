@@ -43,6 +43,7 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -99,6 +100,8 @@ class AuroraComponentIT {
 
     private static final Set<String> channelNames = new HashSet<>();
 
+    private static String currentPublisher;
+
 
     @BeforeAll
     public static void getFilePath(@Value("${aurora.channels.file.name}") String channels, @Value("${aurora.channels.publishers}") String publishersFileName) {
@@ -130,12 +133,13 @@ class AuroraComponentIT {
                 .executor(Executors.newSingleThreadExecutor()).build();
 
         channelNames.add(receiverChannelName);
-        publishers.addPublisher("aurora");
+
     }
 
     @AfterEach
     public void tearDown() {
-        publishers.deletePublisher("aurora");
+        publishers.deletePublisher(currentPublisher);
+        channelManager.removeChannel(currentPublisher);
     }
 
 
@@ -148,8 +152,11 @@ class AuroraComponentIT {
         grpcCleanup.register(senderChannel);
         grpcCleanup.register(receiverChannel);
 
+        currentPublisher = "aurora";
+
+        publishers.addPublisher(currentPublisher);
         receiverChannel.getState(true);
-        channelManager.addChannel("aurora", receiverChannel);
+        channelManager.addChannel(currentPublisher, receiverChannel);
 
         Aurora.AuroraRequest request = getAuroraRequest();
 
@@ -160,7 +167,6 @@ class AuroraComponentIT {
 
         //Assert
         assertEquals(request, response.getMessage().unpack(Aurora.AuroraRequest.class));
-        channelManager.removeChannel("aurora");
 
     }
 
@@ -174,8 +180,11 @@ class AuroraComponentIT {
         grpcCleanup.register(senderChannel);
         grpcCleanup.register(receiverChannel);
 
+        currentPublisher = "aurora";
+
+        publishers.addPublisher(currentPublisher);
         receiverChannel.getState(true);
-        channelManager.addChannel("aurora", receiverChannel);
+        channelManager.addChannel(currentPublisher, receiverChannel);
 
         Aurora.AuroraRequest request = getAuroraRequest();
 
@@ -184,14 +193,14 @@ class AuroraComponentIT {
                 .newBlockingStub(senderChannel)
                 .request(request));
 
-        channelManager.removeChannel("aurora");
-
     }
 
     @Test
     void request_Should_ForwardToReceiverError_When_NoSupportedMapping() throws IOException {
         //Arrange
-        publishers.addPublisher("market");
+        currentPublisher = "market";
+        publishers.addPublisher(currentPublisher);
+
         createFakeMarketServer();
         createFakeSender();
 
@@ -199,7 +208,7 @@ class AuroraComponentIT {
         grpcCleanup.register(receiverChannel);
 
         receiverChannel.getState(true);
-        channelManager.addChannel("market", receiverChannel);
+        channelManager.addChannel(currentPublisher, receiverChannel);
 
         Aurora.AuroraRequest request = Aurora.AuroraRequest.newBuilder().setTopic("market/something").build();
 
@@ -207,9 +216,6 @@ class AuroraComponentIT {
         assertThrows(StatusRuntimeException.class, () -> AuroraServiceGrpc
                 .newBlockingStub(senderChannel)
                 .request(request));
-
-        channelManager.removeChannel("market");
-        publishers.deletePublisher("market");
 
     }
 
@@ -230,12 +236,16 @@ class AuroraComponentIT {
         assertThrows(StatusRuntimeException.class, () -> AuroraServiceGrpc
                 .newBlockingStub(senderChannel)
                 .request(request));
+
+        channelManager.addChannel(currentPublisher, receiverChannel);
+        publishers.addPublisher(currentPublisher);
     }
 
     @Test
     void ItemOrderBookRequest_Should_ForwardToOrderbookResponse() throws IOException {
         //Arrange
-        publishers.addPublisher("orderbook");
+        currentPublisher = "orderbook";
+        publishers.addPublisher(currentPublisher);
         createFakeOrderBookServer();
         createFakeSender();
 
@@ -243,7 +253,7 @@ class AuroraComponentIT {
         grpcCleanup.register(receiverChannel);
 
         receiverChannel.getState(true);
-        channelManager.addChannel("orderbook", receiverChannel);
+        channelManager.addChannel(currentPublisher, receiverChannel);
 
         Aurora.AuroraRequest itemOrderBookRequest = Aurora.AuroraRequest.newBuilder()
                 .setClientId("fake calculator item orderbook request")
@@ -278,14 +288,13 @@ class AuroraComponentIT {
 
         assertTrue(unsubscribeResponse.getMessage().is(CancelSubscriptionResponse.class));
 
-        channelManager.removeChannel("orderbook");
-        publishers.deletePublisher("orderbook");
-
     }
 
     @Test
     void subscribe_Should_ForwardToReceiverResponse() throws IOException, InterruptedException {
         //Arrange
+        currentPublisher = "aurora";
+        publishers.addPublisher(currentPublisher);
 
         createFakeReplyingServer();
         createFakeSender();
@@ -295,7 +304,7 @@ class AuroraComponentIT {
         grpcCleanup.register(receiverChannel);
 
         receiverChannel.getState(true);
-        channelManager.addChannel("aurora", receiverChannel);
+        channelManager.addChannel(currentPublisher, receiverChannel);
 
         Aurora.AuroraRequest request = getAuroraRequest();
 
@@ -335,13 +344,13 @@ class AuroraComponentIT {
         //Assert
         latch.await();
         assertEquals(expectedResponses, receivedResponses);
-        channelManager.removeChannel("aurora");
     }
 
     @Test
     void subscribeToMarket_Should_ForwardToReceiverResponse() throws IOException, InterruptedException {
         //Arrange
-        publishers.addPublisher("market");
+        currentPublisher = "market";
+        publishers.addPublisher(currentPublisher);
         createFakeMarketServer();
 
         createFakeSender();
@@ -351,7 +360,7 @@ class AuroraComponentIT {
         grpcCleanup.register(receiverChannel);
 
         receiverChannel.getState(true);
-        channelManager.addChannel("market", receiverChannel);
+        channelManager.addChannel(currentPublisher, receiverChannel);
 
         Aurora.AuroraRequest request = Aurora.AuroraRequest.newBuilder().setTopic("market/eggs").build();
 
@@ -398,14 +407,13 @@ class AuroraComponentIT {
                 })
                 .collect(Collectors.toList());
         assertEquals(expectedResponses, unpackedResponses);
-        channelManager.removeChannel("market");
-        publishers.deletePublisher("market");
     }
 
     @Test
     void subscribeToOrderbook_Should_ForwardToReceiverErrorDueNoMapping() throws IOException, InterruptedException {
         //Arrange
-        publishers.addPublisher("orderbook");
+        currentPublisher = "orderbook";
+        publishers.addPublisher(currentPublisher);
         createFakeOrderBookServer();
         createFakeSender();
 
@@ -413,7 +421,7 @@ class AuroraComponentIT {
         grpcCleanup.register(receiverChannel);
 
         receiverChannel.getState(true);
-        channelManager.addChannel("orderbook", receiverChannel);
+        channelManager.addChannel(currentPublisher, receiverChannel);
 
         Aurora.AuroraRequest request = Aurora.AuroraRequest.newBuilder().setTopic("orderbook/something").build();
 
@@ -447,15 +455,14 @@ class AuroraComponentIT {
         //Assert
         latch.await();
         assertTrue(inError[0]);
-        channelManager.removeChannel("orderbook");
-        publishers.deletePublisher("orderbook");
     }
 
 
     @Test
     void subscribeToMarket_Should_ForwardToReceiverLessResponsesDueError() throws IOException, InterruptedException {
         //Arrange
-        publishers.addPublisher("market");
+        currentPublisher = "market";
+        publishers.addPublisher(currentPublisher);
         createFakeMarketErrorServer();
         createFakeSender();
 
@@ -464,7 +471,7 @@ class AuroraComponentIT {
         grpcCleanup.register(receiverChannel);
 
         receiverChannel.getState(true);
-        channelManager.addChannel("market", receiverChannel);
+        channelManager.addChannel(currentPublisher, receiverChannel);
 
         Aurora.AuroraRequest request = Aurora.AuroraRequest.newBuilder().setTopic("market/eggs").build();
 
@@ -512,13 +519,14 @@ class AuroraComponentIT {
                 .collect(Collectors.toList());
         assertNotEquals(expectedResponses, unpackedResponses);
         assertEquals(3,unpackedResponses.size() );
-        channelManager.removeChannel("market");
-        publishers.deletePublisher("market");
     }
 
     @Test
     void subscribe_Should_ForwardToReceiverLessResponsesDueError() throws IOException, InterruptedException {
         //Arrange
+        currentPublisher = "aurora";
+        publishers.addPublisher(currentPublisher);
+
         createFakeErrorServer();
         createFakeSender();
 
@@ -527,7 +535,7 @@ class AuroraComponentIT {
         grpcCleanup.register(receiverChannel);
 
         receiverChannel.getState(true);
-        channelManager.addChannel("aurora", receiverChannel);
+        channelManager.addChannel(currentPublisher, receiverChannel);
 
         Aurora.AuroraRequest request = getAuroraRequest();
 
@@ -567,7 +575,6 @@ class AuroraComponentIT {
         latch.await();
         assertNotEquals(expectedResponses, receivedResponses);
         assertEquals(3, receivedResponses.size());
-        channelManager.removeChannel("aurora");
     }
 
     @Test
@@ -619,10 +626,15 @@ class AuroraComponentIT {
         latch.await();
         assertNotEquals(expectedResponses, receivedResponses);
         assertEquals(0, receivedResponses.size());
+
+        publishers.addPublisher(currentPublisher);
+        channelManager.addChannel(currentPublisher, receiverChannel);
     }
 
     @Test
     void jmx_ChannelManager_FlowTest() {
+        currentPublisher = "aurora";
+        publishers.addPublisher(currentPublisher);
         Map<String, ChannelProperty> dummyChannels = getDummyChannels();
 
         dummyChannels.forEach((key, value) -> jmxConfig
