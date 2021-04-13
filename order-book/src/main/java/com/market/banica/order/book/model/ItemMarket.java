@@ -4,7 +4,8 @@ import com.aurora.Aurora;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.market.Origin;
 import com.market.TickResponse;
-import com.market.banica.order.book.exception.IncorrectResponseException;
+
+import com.market.banica.common.exception.IncorrectResponseException;
 import com.orderbook.OrderBookLayer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

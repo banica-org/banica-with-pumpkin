@@ -1,6 +1,7 @@
 package com.market.banica.order.book.service.grpc;
 
-import com.market.banica.order.book.exception.TrackingException;
+
+import com.market.banica.common.exception.TrackingException;
 import com.market.banica.order.book.model.ItemMarket;
 import com.orderbook.CancelSubscriptionRequest;
 import com.orderbook.CancelSubscriptionResponse;

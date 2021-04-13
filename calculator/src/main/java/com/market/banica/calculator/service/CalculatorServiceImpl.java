@@ -14,12 +14,6 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Date: 3/10/2021 Time: 5:28 PM
- * <p>
- *
- * @author Vladislav_Zlatanov
- */
 @Service
 @AllArgsConstructor(onConstructor = @__(@Autowired))
 public class CalculatorServiceImpl implements CalculatorService {

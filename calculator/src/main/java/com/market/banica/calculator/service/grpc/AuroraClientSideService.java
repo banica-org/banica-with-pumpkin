@@ -4,7 +4,7 @@ package com.market.banica.calculator.service.grpc;
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.market.banica.calculator.exception.exceptions.BadResponseException;
+import com.market.banica.common.exception.IncorrectResponseException;
 import com.orderbook.CancelSubscriptionResponse;
 import com.orderbook.InterestsResponse;
 import com.orderbook.ItemOrderBookResponse;
@@ -36,7 +36,7 @@ public class AuroraClientSideService {
         Aurora.AuroraResponse auroraResponse = getAuroraResponse(productName);
 
         if (!auroraResponse.getMessage().is(InterestsResponse.class)) {
-            throw new BadResponseException(AURORA_BAD_RESPONSE_MESSAGE);
+            throw new IncorrectResponseException(AURORA_BAD_RESPONSE_MESSAGE);
         }
     }
 
@@ -46,7 +46,7 @@ public class AuroraClientSideService {
         Aurora.AuroraResponse auroraResponse = getAuroraResponse(productName);
 
         if (!auroraResponse.getMessage().is(CancelSubscriptionResponse.class)) {
-            throw new BadResponseException(AURORA_BAD_RESPONSE_MESSAGE);
+            throw new IncorrectResponseException(AURORA_BAD_RESPONSE_MESSAGE);
         }
     }
 
@@ -57,7 +57,7 @@ public class AuroraClientSideService {
         Aurora.AuroraResponse auroraResponse = getAuroraResponse(productName);
 
         if (!auroraResponse.getMessage().is(ItemOrderBookResponse.class)) {
-            throw new BadResponseException(AURORA_BAD_RESPONSE_MESSAGE);
+            throw new IncorrectResponseException(AURORA_BAD_RESPONSE_MESSAGE);
         }
 
         ItemOrderBookResponse response;
@@ -66,7 +66,7 @@ public class AuroraClientSideService {
             response = auroraResponse.getMessage().unpack(ItemOrderBookResponse.class);
         } catch (InvalidProtocolBufferException e) {
             LOGGER.error("Unable to parse Any to desired class: {}", e.getMessage());
-            throw new BadResponseException(AURORA_BAD_RESPONSE_MESSAGE);
+            throw new IncorrectResponseException(AURORA_BAD_RESPONSE_MESSAGE);
         }
 
         return response;
