@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.Timer;
 import java.util.concurrent.TimeUnit;
@@ -20,16 +21,19 @@ public class PersistScheduler {
     private int frequencySchedule = 60;
     private SnapshotPersistenceTask currentSnapshotPersistenceTask;
 
-    private final ReadWriteLock marketStateLock;
+    private final ReadWriteLock marketDataLock;
     private final SnapshotPersistence snapshotPersistence;
-    private final Map<String, Set<MarketTick>> newTicks;
+    private final Map<String, Set<MarketTick>> marketState;
+    private final Queue<MarketTick> marketSnapshot;
 
-    public PersistScheduler(ReadWriteLock marketStateLock,
+    public PersistScheduler(ReadWriteLock marketDataLock,
                             SnapshotPersistence snapshotPersistence,
-                            Map<String, Set<MarketTick>> newTicks) {
-        this.marketStateLock = marketStateLock;
+                            Map<String, Set<MarketTick>> marketState,
+                            Queue<MarketTick> marketSnapshot) {
+        this.marketDataLock = marketDataLock;
         this.snapshotPersistence = snapshotPersistence;
-        this.newTicks = newTicks;
+        this.marketState = marketState;
+        this.marketSnapshot = marketSnapshot;
     }
 
     public void setFrequency(int frequency) {
@@ -54,8 +58,8 @@ public class PersistScheduler {
 
     public synchronized void scheduleSnapshot() {
 
-        this.currentSnapshotPersistenceTask = new SnapshotPersistenceTask(marketStateLock,
-                snapshotPersistence, newTicks);
+        this.currentSnapshotPersistenceTask = new SnapshotPersistenceTask(marketDataLock,
+                snapshotPersistence, marketState, marketSnapshot);
 
         persistTimer.scheduleAtFixedRate(currentSnapshotPersistenceTask,
                 TimeUnit.SECONDS.toMillis(frequencySchedule),

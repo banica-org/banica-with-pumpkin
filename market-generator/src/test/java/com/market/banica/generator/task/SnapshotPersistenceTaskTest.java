@@ -7,9 +7,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -23,17 +23,20 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class SnapshotPersistenceTaskTest {
 
-    private static final ReadWriteLock marketStateLock = mock(ReadWriteLock.class);
+    private static final ReadWriteLock marketDataLock = mock(ReadWriteLock.class);
     private static final SnapshotPersistence snapshotPersistence = mock(SnapshotPersistence.class);
     @SuppressWarnings("unchecked")
-    private static final Map<String, Set<MarketTick>> newTicks = mock(Map.class);
+    private static final Map<String, Set<MarketTick>> marketState = mock(Map.class);
+    @SuppressWarnings("unchecked")
+    private static final Queue<MarketTick> marketSnapshot = mock(Queue.class);
 
     private static SnapshotPersistenceTask snapshotPersistenceTask;
 
     @BeforeAll
     static void beforeAll() {
 
-        snapshotPersistenceTask = new SnapshotPersistenceTask(marketStateLock, snapshotPersistence, newTicks);
+        snapshotPersistenceTask = new SnapshotPersistenceTask(marketDataLock,
+                snapshotPersistence, marketState, marketSnapshot);
 
     }
 
@@ -41,12 +44,12 @@ class SnapshotPersistenceTaskTest {
     void run() throws IOException {
 
         Lock newTicksReadLock = mock(ReentrantReadWriteLock.ReadLock.class);
-        when(marketStateLock.readLock()).thenReturn(newTicksReadLock);
+        when(marketDataLock.readLock()).thenReturn(newTicksReadLock);
 
         snapshotPersistenceTask.run();
 
         verify(newTicksReadLock, times(1)).lock();
-        verify(snapshotPersistence, times(1)).persistTicks(newTicks);
+        verify(snapshotPersistence, times(1)).persistMarketState(marketState, marketSnapshot);
         verify(newTicksReadLock, times(1)).unlock();
 
     }
