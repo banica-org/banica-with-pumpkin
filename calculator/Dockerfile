@@ -14,5 +14,5 @@ CMD java  -Dcom.sun.management.jmxremote \
 -Dcom.sun.management.jmxremote.ssl=false \
 -Dcom.sun.management.jmxremote.authenticate=false \
 -Dcom.sun.management.jmxremote.local.only=false \
--Djava.rmi.server.hostname=localhost \
+-Djava.rmi.server.hostname=10.253.221.136 \
 -jar calculator-1.0-SNAPSHOT.jar

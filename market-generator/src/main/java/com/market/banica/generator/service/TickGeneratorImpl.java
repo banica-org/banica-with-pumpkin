@@ -2,7 +2,7 @@ package com.market.banica.generator.service;
 
 import com.market.banica.generator.model.GoodSpecification;
 import com.market.banica.generator.model.MarketTick;
-import com.market.banica.generator.service.task.TickTask;
+import com.market.banica.generator.task.TickTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,9 +21,9 @@ public class TickGeneratorImpl implements TickGenerator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TickGeneratorImpl.class);
 
-    private static final ScheduledExecutorService TICK_SCHEDULER = Executors.newScheduledThreadPool(5);
+    private final ScheduledExecutorService tickScheduler = Executors.newScheduledThreadPool(5);
 
-    private static final Map<String, ScheduledFuture<?>> TICK_TASKS = new ConcurrentHashMap<>();
+    private final Map<String, ScheduledFuture<?>> tickTasks = new ConcurrentHashMap<>();
 
     private final MarketState marketState;
 
@@ -35,44 +35,52 @@ public class TickGeneratorImpl implements TickGenerator {
 
     @Override
     public void startTickGeneration(GoodSpecification goodSpecification) {
-        if (!TICK_TASKS.containsKey(goodSpecification.getName())) {
-            TickTask startedTask = new TickTask(this, goodSpecification);
-            ScheduledFuture<?> taskScheduledFuture = TICK_SCHEDULER.schedule(startedTask,
-                    startedTask.generateRandomPeriod(), TimeUnit.SECONDS);
-            TICK_TASKS.put(goodSpecification.getName(), taskScheduledFuture);
 
-            LOGGER.info("Started new tick generation for {}!", goodSpecification.getName());
+        String nameGood = goodSpecification.getName();
+
+        if (!tickTasks.containsKey(nameGood)) {
+            TickTask startedTask = new TickTask(this, goodSpecification);
+            ScheduledFuture<?> taskScheduledFuture = tickScheduler.schedule(startedTask,
+                    startedTask.generateRandomPeriod(), TimeUnit.SECONDS);
+            tickTasks.put(nameGood, taskScheduledFuture);
+
+            LOGGER.info("Started new tick generation for {}!", nameGood);
         } else {
-            LOGGER.warn("Could not start new tick generation for {} as it already exists!",
-                    goodSpecification.getName());
+            LOGGER.warn("Could not start new tick generation for {} as it already exists!", nameGood);
         }
+
     }
 
     @Override
     public void stopTickGeneration(String nameGood) {
-        if (TICK_TASKS.containsKey(nameGood)) {
-            TICK_TASKS.remove(nameGood).cancel(true);
+
+        if (tickTasks.containsKey(nameGood)) {
+            tickTasks.remove(nameGood).cancel(true);
             LOGGER.info("Stopped tick generation for {}!", nameGood);
         } else {
             LOGGER.warn("Could not stop tick generation for {} as it does not exist!", nameGood);
         }
+
     }
 
     @Override
     public void updateTickGeneration(GoodSpecification goodSpecification) {
-        if (TICK_TASKS.containsKey(goodSpecification.getName())) {
-            TICK_TASKS.remove(goodSpecification.getName()).cancel(true);
+
+        String nameGood = goodSpecification.getName();
+
+        if (tickTasks.containsKey(nameGood)) {
+            tickTasks.remove(nameGood).cancel(true);
 
             TickTask startedTask = new TickTask(this, goodSpecification);
-            ScheduledFuture<?> taskScheduledFuture = TICK_SCHEDULER.schedule(startedTask,
+            ScheduledFuture<?> taskScheduledFuture = tickScheduler.schedule(startedTask,
                     startedTask.generateRandomPeriod(), TimeUnit.SECONDS);
-            TICK_TASKS.put(goodSpecification.getName(), taskScheduledFuture);
+            tickTasks.put(nameGood, taskScheduledFuture);
 
-            LOGGER.info("Updated tick generation for {}!", goodSpecification.getName());
+            LOGGER.info("Updated tick generation for {}!", nameGood);
         } else {
-            LOGGER.warn("Could not update tick generation for {} as it does not exist!",
-                    goodSpecification.getName());
+            LOGGER.warn("Could not update tick generation for {} as it does not exist!", nameGood);
         }
+
     }
 
     @Override
@@ -80,9 +88,9 @@ public class TickGeneratorImpl implements TickGenerator {
 
         marketState.addTickToMarketState(marketTick);
 
-        ScheduledFuture<?> taskScheduledFuture = TICK_SCHEDULER.schedule(nextTick, delay, TimeUnit.SECONDS);
+        ScheduledFuture<?> taskScheduledFuture = tickScheduler.schedule(nextTick, delay, TimeUnit.SECONDS);
 
-        TICK_TASKS.put(marketTick.getGood(), taskScheduledFuture);
+        tickTasks.put(marketTick.getGood(), taskScheduledFuture);
 
     }
 

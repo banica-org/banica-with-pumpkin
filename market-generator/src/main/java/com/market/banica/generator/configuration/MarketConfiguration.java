@@ -12,4 +12,6 @@ public interface MarketConfiguration {
                                  double priceLow, double priceHigh, double priceStep,
                                  int periodLow, int periodHigh, int periodStep);
 
+    void setPersistenceFrequencyInSeconds(int frequency);
+
 }
