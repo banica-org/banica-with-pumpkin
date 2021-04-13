@@ -27,20 +27,20 @@ class AuroraObserverTest {
 
     private final AtomicInteger activeStreamsCounter = new AtomicInteger(1);
 
-    private final StreamObserver<Aurora.AuroraResponse> responseObserver = mock(StreamObserver.class);
+    private final StreamObserver<Aurora.AuroraResponse> forwardResponse = mock(StreamObserver.class);
 
     @InjectMocks
     private AuroraObserver auroraObserver;
 
     @BeforeEach
     public void setUp() {
-        auroraObserver = new AuroraObserver(AURORA_REQUEST_BANICA, responseObserver, activeStreamsCounter);
+        auroraObserver = new AuroraObserver(AURORA_REQUEST_BANICA, forwardResponse, activeStreamsCounter);
     }
 
     @Test
     void onNextForwardsResponseToResponseObserver() {
         auroraObserver.onNext(AURORA_RESPONSE_TO_FORWARD);
-        verify(responseObserver, times(1)).onNext(AURORA_RESPONSE_TO_FORWARD);
+        verify(forwardResponse, times(1)).onNext(AURORA_RESPONSE_TO_FORWARD);
     }
 
     @Test
@@ -57,7 +57,7 @@ class AuroraObserverTest {
         auroraObserver.onError(THROWABLE);
 
         assertEquals(0, activeStreamsCounter.get());
-        verify(responseObserver, times(1)).onCompleted();
+        verify(forwardResponse, times(1)).onCompleted();
     }
 
     @Test
@@ -74,6 +74,6 @@ class AuroraObserverTest {
         auroraObserver.onCompleted();
 
         assertEquals(0, activeStreamsCounter.get());
-        verify(responseObserver, times(1)).onCompleted();
+        verify(forwardResponse, times(1)).onCompleted();
     }
 }
