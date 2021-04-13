@@ -33,10 +33,9 @@ import java.rmi.NoSuchObjectException;
 import java.util.Optional;
 import java.util.concurrent.Executors;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -108,71 +107,75 @@ class RequestMapperTest {
 
     @Test
     void renderRequestWithRequestForOrderBookWithTopicSplitLengthOfThreeProcessesItemOrderBookRequest() throws IOException, ServiceNotFoundException {
+        //Arrange
         when(channelManager.getChannelByKey(any())).thenReturn(Optional.ofNullable(dummyManagedChannel));
         when(stubManager.getOrderbookBlockingStub(any())).thenReturn(orderBookBlockingStub);
 
         createFakeOrderBookReplyingServer();
-
         grpcCleanup.register(orderBookReceiverChannel);
-
         orderBookReceiverChannel.getState(true);
 
         ItemOrderBookResponse expectedOrderBookResponse = ItemOrderBookResponse.newBuilder().setItemName("eggs").build();
 
+        //Act
         Aurora.AuroraResponse actual = requestMapper.renderRequest(ORDERBOOK_REQUEST);
 
+        //Assert
         assertEquals(expectedOrderBookResponse, actual.getMessage().unpack(ItemOrderBookResponse.class));
     }
 
     @Test
     void renderRequestWithSubscribeRequestForOrderBookProcessesSubscribeForItem() throws IOException, ServiceNotFoundException {
+        //Arrange
         when(channelManager.getChannelByKey(any())).thenReturn(Optional.ofNullable(dummyManagedChannel));
         when(stubManager.getOrderbookBlockingStub(any())).thenReturn(orderBookBlockingStub);
 
         createFakeOrderBookReplyingServer();
-
         grpcCleanup.register(orderBookReceiverChannel);
-
         orderBookReceiverChannel.getState(true);
 
         InterestsResponse expectedOrderBookResponse = InterestsResponse.newBuilder().build();
 
+        //Act
         Aurora.AuroraResponse actual = requestMapper.renderRequest(ORDERBOOK_SUBSCRIBE_REQUEST);
 
+        //Assert
         assertEquals(expectedOrderBookResponse, actual.getMessage().unpack(InterestsResponse.class));
     }
 
     @Test
     void renderRequestWithUnsubscribeRequestForOrderBookProcessesCancelSubscription() throws IOException, ServiceNotFoundException {
+        //Arrange
         when(channelManager.getChannelByKey(any())).thenReturn(Optional.ofNullable(dummyManagedChannel));
         when(stubManager.getOrderbookBlockingStub(any())).thenReturn(orderBookBlockingStub);
 
         createFakeOrderBookReplyingServer();
-
         grpcCleanup.register(orderBookReceiverChannel);
-
         orderBookReceiverChannel.getState(true);
 
         CancelSubscriptionResponse expectedOrderBookResponse = CancelSubscriptionResponse.newBuilder().build();
 
+        //Act
         Aurora.AuroraResponse actual = requestMapper.renderRequest(ORDERBOOK_UNSUBSCRIBE_REQUEST);
 
+        //Assert
         assertEquals(expectedOrderBookResponse, actual.getMessage().unpack(CancelSubscriptionResponse.class));
     }
 
     @Test
     void renderRequestWithDestinationAuroraSendsRequestAndReceivesResponseFromFakeAuroraService() throws IOException, ServiceNotFoundException {
+        //Arrange
         when(channelManager.getChannelByKey(any())).thenReturn(Optional.ofNullable(dummyManagedChannel));
         when(stubManager.getAuroraBlockingStub(any())).thenReturn(auroraBlockingStub);
 
         createFakeAuroraReplyingServer();
-
         grpcCleanup.register(auroraReceiverChannel);
-
         auroraReceiverChannel.getState(true);
 
+        //Act
         Aurora.AuroraResponse actual = requestMapper.renderRequest(AURORA_REQUEST);
 
+        //Assert
         assertEquals(AURORA_REQUEST, actual.getMessage().unpack(Aurora.AuroraRequest.class));
     }
 

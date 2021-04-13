@@ -32,12 +32,8 @@ class ChannelManagerTest {
     private static final int EDITED_PORT = 1011;
     private static ChannelProperty channelProperty;
 
-
     @Mock
-    private ManagedChannel managedChannel = ManagedChannelBuilder
-            .forAddress(HOST, PORT)
-            .usePlaintext()
-            .build();
+    private  ManagedChannel managedChannel;
 
     @Spy
     private ChannelManager channelManager;
@@ -66,7 +62,7 @@ class ChannelManagerTest {
     }
 
     @Test
-    void addChannelAddsChannelInMap() {
+    void addChannelWithValidInputCreatesAndAddsNewChannelInMap() {
         //Arrange
         assertEquals(new HashMap<>(), channelManager.getChannels());
 
@@ -78,7 +74,7 @@ class ChannelManagerTest {
     }
 
     @Test
-    void deleteChannelDeletesChannelInMap() {
+    void deleteChannelWithInputOfExistingChannelDeletesChannelFromMap() {
         //Arrange
         assertEquals(new HashMap<>(), channelManager.getChannels());
 
@@ -92,7 +88,7 @@ class ChannelManagerTest {
     }
 
     @Test
-    void deleteChannelShutDownsChannel() {
+    void deleteChannelWithInputOfExistingChannelShutDownsAndDeletesChannel() {
         //Arrange
         assertEquals(new HashMap<>(), channelManager.getChannels());
 
@@ -110,7 +106,7 @@ class ChannelManagerTest {
     }
 
     @Test
-    void editChannelEditsChannelInMap() {
+    void editChannelWithInputOfExistingChannelShutDownsAndRemovesTheExistingChannelAndCreatesNewChannelWithProvidedChannelPropertyAndKey() {
         //Arrange
         assertEquals(new HashMap<>(), channelManager.getChannels());
 

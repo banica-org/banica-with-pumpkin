@@ -8,8 +8,6 @@ import com.market.MarketServiceGrpc;
 import com.market.TickResponse;
 import com.market.banica.aurora.config.ChannelManager;
 import com.market.banica.aurora.config.StubManager;
-import com.market.banica.aurora.observer.MarketTickObserver;
-import com.orderbook.OrderBookServiceGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.inprocess.InProcessChannelBuilder;
@@ -26,14 +24,10 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
-import java.rmi.NoSuchObjectException;
 import java.util.Collections;
-import java.util.Optional;
 import java.util.concurrent.Executors;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -116,18 +110,19 @@ class SubscribeMapperTest {
 
     @Test
     void renderSubscribeWithRequestForMarketServiceSubscribesResponseObserverAndCallsOnNextAndOnCompleted() throws IOException, InterruptedException {
+        //Arrange
         when(channelManager.getAllChannelsContainingPrefix(any())).thenReturn(Collections.singletonList(dummyManagedChannel));
         when(stubManager.getMarketStub(any())).thenReturn(marketStub);
 
         createFakeMarketReplyingServer();
-
         grpcCleanup.register(marketReceiverChannel);
-
         marketReceiverChannel.getState(true);
 
+        //Act
         subscribeMapper.renderSubscribe(MARKET_REQUEST, responseObserver);
-
         Thread.sleep(1000);
+
+        //Assert
         verify(stubManager, times(1)).getMarketStub(any());
         verify(responseObserver, times(1)).onNext(any());
         verify(responseObserver, times(1)).onCompleted();
@@ -135,18 +130,19 @@ class SubscribeMapperTest {
 
     @Test
     void renderSubscribeWithRequestForAuroraServiceSubscribesResponseObserverAndCallsOnNextAndOnCompleted() throws IOException, InterruptedException {
+        //Arrange
         when(channelManager.getAllChannelsContainingPrefix(any())).thenReturn(Collections.singletonList(dummyManagedChannel));
         when(stubManager.getAuroraStub(any())).thenReturn(auroraStub);
 
         createFakeAuroraReplyingServer();
-
         grpcCleanup.register(auroraReceiverChannel);
-
         auroraReceiverChannel.getState(true);
 
+        //Act
         subscribeMapper.renderSubscribe(AURORA_REQUEST, responseObserver);
-
         Thread.sleep(1000);
+
+        //Assert
         verify(stubManager, times(1)).getAuroraStub(any());
         verify(responseObserver, times(3)).onNext(any());
         verify(responseObserver, times(1)).onCompleted();

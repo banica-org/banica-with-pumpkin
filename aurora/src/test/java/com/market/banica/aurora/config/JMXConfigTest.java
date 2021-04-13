@@ -19,7 +19,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -51,9 +50,8 @@ class JMXConfigTest {
     private ChannelManager channels;
 
     @Mock
-    Publishers publishers;
+    private Publishers publishers;
 
-    @Spy
     private final Map<String, ChannelProperty> channelPropertyMap = new HashMap<>();
 
     @InjectMocks
@@ -119,7 +117,6 @@ class JMXConfigTest {
         assertFalse(channelPropertyMap.containsKey(CHANNEL_PREFIX));
 
         //Assert
-        Mockito.verify(channelPropertyMap, Mockito.times(1)).remove(CHANNEL_PREFIX);
         Mockito.verify(channels, Mockito.times(1)).deleteChannel(CHANNEL_PREFIX);
         Mockito.verify(jmxConfig, Mockito.times(2)).writeBackUp();
     }
@@ -147,8 +144,6 @@ class JMXConfigTest {
 
         //Assert
         assertNotEquals(channelHostBeforeEdit, channelHostAfterEdit);
-        Mockito.verify(channelPropertyMap, Mockito.times(1)).remove(CHANNEL_PREFIX);
-        Mockito.verify(channelPropertyMap, Mockito.times(2)).put(CHANNEL_PREFIX, channelProperty);
         Mockito.verify(channels, Mockito.times(1)).editChannel(CHANNEL_PREFIX, channelProperty);
         Mockito.verify(jmxConfig, Mockito.times(2)).writeBackUp();
         jmxConfig.deleteChannel(CHANNEL_PREFIX);
