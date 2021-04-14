@@ -26,15 +26,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 
-/**
- * Date: 3/10/2021 Time: 9:10 AM
- * <p>
- * <p>
- * Tests for CalculatorController
- *
- * @author Vladislav_Zlatanov
- */
-
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(CalculatorController.class)
 public class CalculatorControllerTest {

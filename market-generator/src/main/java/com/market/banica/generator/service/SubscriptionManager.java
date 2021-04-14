@@ -1,16 +1,13 @@
 package com.market.banica.generator.service;
 
+import com.market.MarketDataRequest;
+import com.market.TickResponse;
 import io.grpc.stub.StreamObserver;
 
-public interface SubscriptionManager<T, S> {
+public interface SubscriptionManager {
 
-    void subscribe(T request, StreamObserver<S> responseObserver);
+    void subscribe(MarketDataRequest request, StreamObserver<TickResponse> responseObserver);
 
-    void unsubscribe(T request, StreamObserver<S> responseObserver);
+    void notifySubscribers(TickResponse response);
 
-    void notifySubscribers(S response);
-
-    String getRequestGoodName(T request);
-
-    String getTickResponseGoodName(S response);
 }

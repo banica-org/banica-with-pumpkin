@@ -1,6 +1,7 @@
 package com.market.banica.generator.model;
 
 import com.market.Origin;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -11,7 +12,8 @@ import java.util.Locale;
 @Getter
 @ToString
 @NoArgsConstructor
-public class MarketTick {
+@EqualsAndHashCode
+public class MarketTick implements Comparable<MarketTick> {
 
     private static Origin origin;
     private String good;
@@ -38,6 +40,11 @@ public class MarketTick {
                 break;
             }
         }
+    }
+
+    @Override
+    public int compareTo(MarketTick other) {
+        return Long.compare(this.timestamp, other.timestamp);
     }
 
 }

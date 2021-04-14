@@ -17,18 +17,18 @@ import static org.mockito.Mockito.mock;
 public class TestConfiguration {
 
 
-public AuroraServiceGrpc.AuroraServiceImplBase getMockGrpcService(Aurora.AuroraResponse auroraResponse) {
+    public AuroraServiceGrpc.AuroraServiceImplBase getMockGrpcService(Aurora.AuroraResponse auroraResponse) {
 
-    return mock(AuroraServiceGrpc.AuroraServiceImplBase.class, delegatesTo(new AuroraServiceGrpc.AuroraServiceImplBase() {
-        @Override
-        public void subscribe(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
+        return mock(AuroraServiceGrpc.AuroraServiceImplBase.class, delegatesTo(new AuroraServiceGrpc.AuroraServiceImplBase() {
+            @Override
+            public void subscribe(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
 
-            responseObserver.onNext(auroraResponse);
+                responseObserver.onNext(auroraResponse);
 
-            responseObserver.onCompleted();
-        }
-    }));
-}
+                responseObserver.onCompleted();
+            }
+        }));
+    }
 
     public OrderBookServiceGrpc.OrderBookServiceImplBase getGrpcOrderBookServiceItemLayers(ItemOrderBookResponse response) {
 

@@ -3,7 +3,9 @@ package com.market.banica.generator.configuration;
 import com.market.banica.common.util.ApplicationDirectoryUtil;
 import com.market.banica.generator.exception.NotFoundException;
 import com.market.banica.generator.model.GoodSpecification;
+import com.market.banica.generator.service.MarketState;
 import com.market.banica.generator.service.TickGenerator;
+import com.market.banica.generator.util.PersistScheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,12 +45,14 @@ public class MarketConfigurationImpl implements MarketConfiguration {
     private final Properties properties = new Properties();
     private final Map<String, GoodSpecification> goods = new HashMap<>();
     private final TickGenerator tickGenerator;
+    private final PersistScheduler persistScheduler;
 
     @Autowired
     public MarketConfigurationImpl(@Value("${market.properties.file.name}") String fileName,
-                                   TickGenerator tickGenerator) throws IOException {
+                                   TickGenerator tickGenerator, MarketState marketState) throws IOException {
         this.configurationFile = ApplicationDirectoryUtil.getConfigFile(fileName);
         this.tickGenerator = tickGenerator;
+        this.persistScheduler = marketState.getPersistScheduler();
         loadProperties();
     }
 
@@ -72,9 +76,7 @@ public class MarketConfigurationImpl implements MarketConfiguration {
                     periodLow, periodHigh, periodStep);
 
             this.modifyProperty(addedGoodSpecification);
-
             tickGenerator.startTickGeneration(addedGoodSpecification);
-
             LOGGER.info("Creating and adding a new goodSpecification.");
         } finally {
             propertiesWriteLock.writeLock().unlock();
@@ -139,6 +141,12 @@ public class MarketConfigurationImpl implements MarketConfiguration {
         }
     }
 
+    @Override
+    @ManagedOperation
+    public void setPersistenceFrequencyInSeconds(int frequency) {
+        persistScheduler.setFrequency(frequency);
+    }
+
     private void modifyProperty(GoodSpecification modifiedGoodSpecification) {
 
         validateGoodSpecification(modifiedGoodSpecification);
@@ -161,8 +169,8 @@ public class MarketConfigurationImpl implements MarketConfiguration {
                 goodSpecification.getPriceHigh() <= 0 || goodSpecification.getPriceStep() < 0 ||
                 goodSpecification.getPeriodLow() <= 0 || goodSpecification.getPeriodHigh() <= 0 ||
                 goodSpecification.getPeriodStep() < 0) {
-            LOGGER.warn("Low and high parameters can only be positive, steps cannot be negative");
-            throw new IllegalArgumentException("Low and high parameters can only be positive, steps cannot be negative");
+            LOGGER.warn("Low and high parameters can only be positive, steps cannot be negative.");
+            throw new IllegalArgumentException("Low and high parameters can only be positive, steps cannot be negative.");
         } else if (goodSpecification.getQuantityHigh() < goodSpecification.getQuantityLow() ||
                 goodSpecification.getPriceHigh() < goodSpecification.getPriceLow() ||
                 goodSpecification.getPeriodHigh() < goodSpecification.getPeriodLow()) {

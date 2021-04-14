@@ -9,64 +9,114 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class SnapshotPersistence {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SnapshotPersistence.class);
 
-    private static final String DATABASE_FILE_NAME = "tickDatabase.dat";
+    private final String stateFileName;
+    private final String snapshotFileName;
 
-    private static final Kryo kryoHandle = new Kryo();
+    private final Kryo kryoHandle = new Kryo();
 
-    public SnapshotPersistence() {
+    public SnapshotPersistence(String stateFileName, String snapshotFileName) {
         initKryo();
+        this.stateFileName = stateFileName;
+        this.snapshotFileName = snapshotFileName;
     }
 
-    public void persistTicks(Map<String, Set<MarketTick>> newTicks) throws FileNotFoundException {
+    public void persistMarketState(Map<String, Set<MarketTick>> marketState, Queue<MarketTick> marketSnapshot) throws IOException {
 
-        Output output = new Output(new FileOutputStream(DATABASE_FILE_NAME));
-        kryoHandle.writeClassAndObject(output, newTicks);
+        while (!marketSnapshot.isEmpty()) {
+            MarketTick currentTick = marketSnapshot.poll();
+            String good = currentTick.getGood();
+            marketState.putIfAbsent(good, new TreeSet<>());
+            marketState.get(good).add(currentTick);
+        }
+
+        Output output = new Output(new FileOutputStream(ApplicationDirectoryUtil.getConfigFile(stateFileName)));
+        kryoHandle.writeClassAndObject(output, marketState);
         output.close();
-        LOGGER.info("Persisting snapshot database!");
+        LOGGER.info("Persisting market state!");
+
+        persistMarketSnapshot(marketSnapshot);
+
+    }
+
+    public void persistMarketSnapshot(Queue<MarketTick> marketSnapshot) throws IOException {
+
+        Output output = new Output(new FileOutputStream(ApplicationDirectoryUtil.getConfigFile(snapshotFileName)));
+        kryoHandle.writeClassAndObject(output, marketSnapshot);
+        output.close();
+        LOGGER.debug("Persisting market snapshot!");
 
     }
 
     @SuppressWarnings({"unchecked"})
-    public Map<String, Set<MarketTick>> loadPersistedSnapshot() throws IOException {
+    public Map<String, Set<MarketTick>> loadMarketState() throws IOException {
 
-        Map<String, Set<MarketTick>> loadedMarketTicks = new ConcurrentHashMap<>();
+        Map<String, Set<MarketTick>> loadedMarketStateTicks = new ConcurrentHashMap<>();
 
-        if (!ApplicationDirectoryUtil.doesFileExist(DATABASE_FILE_NAME)) {
+        if (!ApplicationDirectoryUtil.doesFileExist(stateFileName)) {
 
-            LOGGER.info("Creating \"{}\" file!", DATABASE_FILE_NAME);
-            ApplicationDirectoryUtil.getConfigFile(DATABASE_FILE_NAME);
+            LOGGER.info("Creating \"{}\" file!", stateFileName);
+            ApplicationDirectoryUtil.getConfigFile(stateFileName);
 
-        } else if (ApplicationDirectoryUtil.getConfigFile(DATABASE_FILE_NAME).length() == 0) {
+        } else if (ApplicationDirectoryUtil.getConfigFile(stateFileName).length() == 0) {
 
-            LOGGER.info("File \"{}\" is empty, no ticks were loaded!", DATABASE_FILE_NAME);
+            LOGGER.info("File \"{}\" is empty, no ticks were loaded!", stateFileName);
 
         } else {
 
-            Input input = new Input(new FileInputStream(DATABASE_FILE_NAME));
-            loadedMarketTicks = (Map<String, Set<MarketTick>>) kryoHandle.readClassAndObject(input);
+            Input input = new Input(new FileInputStream(ApplicationDirectoryUtil.getConfigFile(stateFileName)));
+            loadedMarketStateTicks = (Map<String, Set<MarketTick>>) kryoHandle.readClassAndObject(input);
+            input.close();
+            LOGGER.info("Loaded market state ticks!");
+
+        }
+        return loadedMarketStateTicks;
+
+    }
+
+    @SuppressWarnings({"unchecked"})
+    public Queue<MarketTick> loadMarketSnapshot() throws IOException {
+
+        Queue<MarketTick> loadedSnapshotTicks = new LinkedBlockingQueue<>();
+
+        if (!ApplicationDirectoryUtil.doesFileExist(snapshotFileName)) {
+
+            LOGGER.info("Creating \"{}\" file!", snapshotFileName);
+            ApplicationDirectoryUtil.getConfigFile(snapshotFileName);
+
+        } else if (ApplicationDirectoryUtil.getConfigFile(snapshotFileName).length() == 0) {
+
+            LOGGER.info("File \"{}\" is empty, no ticks were loaded!", snapshotFileName);
+
+        } else {
+
+            Input input = new Input(new FileInputStream(ApplicationDirectoryUtil.getConfigFile(snapshotFileName)));
+            loadedSnapshotTicks = (Queue<MarketTick>) kryoHandle.readClassAndObject(input);
             input.close();
             LOGGER.info("Loaded snapshot database!");
 
         }
-        return loadedMarketTicks;
+        return loadedSnapshotTicks;
 
     }
 
-    private static void initKryo() {
+    private void initKryo() {
 
         kryoHandle.register(java.util.concurrent.ConcurrentHashMap.class);
-        kryoHandle.register(java.util.HashSet.class);
+        kryoHandle.register(java.util.TreeSet.class);
+        kryoHandle.register(java.util.concurrent.LinkedBlockingQueue.class);
         kryoHandle.register(MarketTick.class);
 
     }

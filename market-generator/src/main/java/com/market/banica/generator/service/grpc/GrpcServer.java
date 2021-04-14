@@ -1,6 +1,5 @@
 package com.market.banica.generator.service.grpc;
 
-import com.market.banica.generator.service.MarketService;
 import io.grpc.Server;
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
 import org.slf4j.Logger;

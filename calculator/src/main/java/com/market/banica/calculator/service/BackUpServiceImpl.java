@@ -31,10 +31,9 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class BackUpServiceImpl implements BackUpService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BackUpServiceImpl.class);
-
+    private final ProductBase productBase;
     @Value("${database.backup.url}")
     private String databaseBackUpUrl;
-    private final ProductBase productBase;
 
     @Override
     @PostConstruct

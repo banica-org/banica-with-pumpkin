@@ -10,7 +10,7 @@ public interface ProductService {
     Product createProduct(List<Product> products);
 
     void createProduct(String newProductName, String unitOfMeasure,
-                          String ingredientsMap);
+                       String ingredientsMap);
 
     void addIngredient(String parentProductName, String productName, long quantity);
 
