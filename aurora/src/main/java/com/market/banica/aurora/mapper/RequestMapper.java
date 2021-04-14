@@ -14,6 +14,7 @@ import com.orderbook.ItemOrderBookRequest;
 import com.orderbook.ItemOrderBookResponse;
 import com.orderbook.OrderBookServiceGrpc;
 import io.grpc.ManagedChannel;
+import lombok.NoArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,13 +26,14 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
+@NoArgsConstructor
 @Service
 public class RequestMapper {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RequestMapper.class);
 
-    private final ChannelManager channelManager;
-    private final StubManager stubManager;
+    private  ChannelManager channelManager;
+    private  StubManager stubManager;
 
     public static final String SPLIT_SLASH_REGEX = "/+";
     public static final String SPLIT_EQUALS_REGEX = "=";
