@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class GrpcChannel {
     public static final Logger log = LoggerFactory.getLogger(GrpcChannel.class);
+    private static final int MAX_RETRY_ATTEMPTS = 1000;
 
     private final ManagedChannel managedChannel;
 
@@ -22,7 +23,7 @@ public class GrpcChannel {
                 .usePlaintext()
                 .defaultServiceConfig(ChannelRPCConfig.getInstance().getServiceConfig())
                 .enableRetry()
-                .maxRetryAttempts(1000)
+                .maxRetryAttempts(MAX_RETRY_ATTEMPTS)
                 .build();
         log.info("Grpc channel with {} host and {} port was build.", host, port);
     }

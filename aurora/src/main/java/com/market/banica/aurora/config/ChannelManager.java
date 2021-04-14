@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 public class ChannelManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ChannelManager.class);
+    private static final int MAX_RETRY_ATTEMPTS = 1000;
 
     private final Map<String, ManagedChannel> channels = new ConcurrentHashMap<>();
 
@@ -122,7 +123,7 @@ public class ChannelManager {
                 .usePlaintext()
                 .enableRetry()
                 .defaultServiceConfig(ChannelRPCConfig.getInstance().getServiceConfig())
-                .maxRetryAttempts(1000)
+                .maxRetryAttempts(MAX_RETRY_ATTEMPTS)
                 .build();
     }
 
