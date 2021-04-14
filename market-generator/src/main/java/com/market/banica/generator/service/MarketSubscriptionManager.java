@@ -1,7 +1,6 @@
 package com.market.banica.generator.service;
 
-import com.aurora.Aurora;
-import com.google.protobuf.Any;
+import com.market.MarketDataRequest;
 import com.market.TickResponse;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
@@ -20,11 +19,11 @@ public class MarketSubscriptionManager implements SubscriptionManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MarketSubscriptionManager.class);
 
-    private final Map<String, Set<StreamObserver<Aurora.AuroraResponse>>> subscriptions = new ConcurrentHashMap<>();
+    private final Map<String, Set<StreamObserver<TickResponse>>> subscriptions = new ConcurrentHashMap<>();
 
     @Override
-    public void subscribe(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
-        String goodName = getGoodNameFromRequest(request);
+    public void subscribe(MarketDataRequest request, StreamObserver<TickResponse> responseObserver) {
+        String goodName = request.getGoodName();
         LOGGER.debug("{} Requested for subscription for good: {}.", responseObserver, goodName);
         addSubscriber(responseObserver, goodName);
     }
@@ -36,32 +35,14 @@ public class MarketSubscriptionManager implements SubscriptionManager {
         }
     }
 
-    @Override
-    public String getGoodNameFromRequest(Aurora.AuroraRequest request) {
-        String[] topic = request.getTopic().split("/");
-        if (topic.length == 2 && topic[1] != null && topic[1].length() > 0) {
-            return topic[1];
-        }
-
-        LOGGER.warn("Illegal topic {} for good by request: {}.", request.getTopic(), request);
-        throw new IllegalArgumentException("Illegal good value!");
-    }
-
-    @Override
-    public Aurora.AuroraResponse convertTickResponseToAuroraResponse(TickResponse tickResponse) {
-        return Aurora.AuroraResponse.newBuilder()
-                .setMessage(Any.pack(tickResponse))
-                .build();
-    }
-
-    private void addSubscriber(StreamObserver<Aurora.AuroraResponse> responseObserver, String goodName) {
+    private void addSubscriber(StreamObserver<TickResponse> responseObserver, String goodName) {
         subscriptions.putIfAbsent(goodName, ConcurrentHashMap.newKeySet());
         subscriptions.get(goodName).add(responseObserver);
     }
 
-    private void sendNotification(TickResponse response, Set<StreamObserver<Aurora.AuroraResponse>> subscribers) {
-        for (StreamObserver<Aurora.AuroraResponse> currentSubscriber : subscribers) {
-            ServerCallStreamObserver<Aurora.AuroraResponse> cancellableSubscriber = (ServerCallStreamObserver<Aurora.AuroraResponse>) currentSubscriber;
+    private void sendNotification(TickResponse response, Set<StreamObserver<TickResponse>> subscribers) {
+        for (StreamObserver<TickResponse> currentSubscriber : subscribers) {
+            ServerCallStreamObserver<TickResponse> cancellableSubscriber = (ServerCallStreamObserver<TickResponse>) currentSubscriber;
             if (cancellableSubscriber.isCancelled()) {
                 currentSubscriber.onError(Status.CANCELLED
                         .withDescription(currentSubscriber + " has stopped requesting product " + response.getGoodName())
@@ -72,7 +53,7 @@ public class MarketSubscriptionManager implements SubscriptionManager {
             }
 
             try {
-                currentSubscriber.onNext(convertTickResponseToAuroraResponse(response));
+                currentSubscriber.onNext(response);
             } catch (StatusRuntimeException e) {
                 subscribers.remove(currentSubscriber);
                 LOGGER.debug("Subscriber {} unsubscribed.", currentSubscriber);
