@@ -18,7 +18,7 @@ public class ProductDto {
 
     private List<ProductSpecification> productSpecifications = new ArrayList<>();
 
-    private Map<String,Long> ingredients = new HashMap<>();
+    private Map<String, Long> ingredients = new HashMap<>();
 
     @Override
     public boolean equals(Object o) {
