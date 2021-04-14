@@ -201,7 +201,7 @@ public class ProductServiceImpl implements ProductService {
     private void writeProductToDatabase(String newProductName, Product newProduct) {
         LOGGER.debug("In writeProductToDatabase private method");
 
-//        announceInterestToOrderBookProductBase(newProductName);
+        announceInterestToOrderBookProductBase(newProductName);
 
         productBase.getDatabase().put(newProductName, newProduct);
 

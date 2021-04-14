@@ -377,18 +377,22 @@ public class CalculatorServiceImpl implements CalculatorService {
                 productDtoMap, productSpecificationMap, orderedProduct,
                 orderedProduct, productPriceComponentsSetByProductIdMap);
 
-        List<List<ProductPriceComponentsSet>> compositeProductPriceVariantSets = result.get(orderedProduct.getItemName());
+        List<ProductPriceComponentsSet> compositeIngredientPriceVariants = new ArrayList<>();
 
-        List<ProductPriceComponentsSet> compositeIngredientPriceVariants = compositeProductPriceVariantSets
-                .stream()
-                .flatMap(Collection::stream)
-                .filter(l -> l.getProductName().equals(orderedProduct.getItemName()))
-                .collect(Collectors.toList());
+        if (result.containsKey(orderedProduct.getItemName())) {
+            List<List<ProductPriceComponentsSet>> compositeProductPriceVariantSets = result.get(orderedProduct.getItemName());
 
-        compositeIngredientPriceVariants.forEach(m -> {
-            BigDecimal newPrice = m.getPrice().multiply(BigDecimal.valueOf(quantity));
-            m.setPrice(newPrice);
-        });
+            compositeIngredientPriceVariants = compositeProductPriceVariantSets
+                    .stream()
+                    .flatMap(Collection::stream)
+                    .filter(l -> l.getProductName().equals(orderedProduct.getItemName()))
+                    .collect(Collectors.toList());
+
+            compositeIngredientPriceVariants.forEach(m -> {
+                BigDecimal newPrice = m.getPrice().multiply(BigDecimal.valueOf(quantity));
+                m.setPrice(newPrice);
+            });
+        }
         compositeIngredientPriceVariants.addAll(simpleProductPriceVariantsSet);
 
         return compositeIngredientPriceVariants;
@@ -794,8 +798,8 @@ public class CalculatorServiceImpl implements CalculatorService {
     private void getProductsMarketDataFromOrderBook(String clientId, Product product, long quantity,
                                                     Map<String, List<ProductSpecification>> productSpecificationMap) {
 
-        ItemOrderBookResponse orderBookResponse = testData.getTestData1().get(product.getProductName());
-//        ItemOrderBookResponse orderBookResponse = auroraService.getIngredient(product.getProductName(),clientId,quantity);
+//        ItemOrderBookResponse orderBookResponse = testData.getTestData1().get(product.getProductName());
+        ItemOrderBookResponse orderBookResponse = auroraService.getIngredient(product.getProductName(), clientId, quantity);
 
         String productName = orderBookResponse.getItemName();
 
