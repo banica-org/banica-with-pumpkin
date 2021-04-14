@@ -169,13 +169,13 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Map<Product, List<Long>> getProductIngredientsWithQuantity(String productName) {
+    public Map<Product, Map<String,Long>> getProductIngredientsWithQuantity(String productName) {
         LOGGER.debug("In getProductIngredientsWithQuantity method with parameters:productName {}"
                 , productName);
 
         Product product = getProductFromDatabase(productName);
 
-        Map<Product, List<Long>> result = new HashMap<>();
+        Map<Product, Map<String,Long>> result = new HashMap<>();
 
         if (!product.getIngredients().isEmpty()) {
             addAllIngredientsFromProductToMapOfProductAndQuantity(result, product);
@@ -308,7 +308,7 @@ public class ProductServiceImpl implements ProductService {
         return products.get(0).getProductName();
     }
 
-    private void addAllIngredientsFromProductToMapOfProductAndQuantity(Map<Product, List<Long>> productQuantitiesMap,
+    private void addAllIngredientsFromProductToMapOfProductAndQuantity(Map<Product, Map<String,Long>> productQuantitiesMap,
                                                                        Product parentProduct) {
         LOGGER.debug("In addAllIngredientsFromProductToMapOfProductAndQuantity private method");
 
@@ -329,10 +329,13 @@ public class ProductServiceImpl implements ProductService {
                 tempIngredients.forEach(ingredient -> {
                     if (productQuantitiesMap.containsKey(ingredient)) {
                         productQuantitiesMap
-                                .get(ingredient).add(tempParentProduct.getIngredients().get(ingredient.getProductName()));
+                                .get(ingredient).put(tempParentProduct.getProductName()
+                                ,tempParentProduct.getIngredients().get(ingredient.getProductName()));
                     } else {
-                        productQuantitiesMap.put(ingredient, new ArrayList<>(Arrays.asList(
-                                tempParentProduct.getIngredients().get(ingredient.getProductName()))));
+                        productQuantitiesMap.put(ingredient, new HashMap<String,Long>(){{
+                            put(tempParentProduct.getProductName()
+                                    ,tempParentProduct.getIngredients().get(ingredient.getProductName()));
+                        }});
                     }
                 });
             }

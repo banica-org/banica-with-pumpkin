@@ -26,7 +26,7 @@ public interface ProductService {
 
     void deleteProductFromParentIngredients(String parentProductName, String productName);
 
-    Map<Product, List<Long>> getProductIngredientsWithQuantity(String productName);
+    Map<Product, Map<String,Long>> getProductIngredientsWithQuantity(String productName);
 
     Product getProductFromDatabase(String productName);
 }

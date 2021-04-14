@@ -31,19 +31,19 @@ public class TestData {
 
     public Map<String, ItemOrderBookResponse> getTestData1() {
         Map<String, ItemOrderBookResponse> data = new LinkedHashMap<>();
-        addProductToDatabase(data, "banica", 1000000, 2);//pumpkin:450,milk:400,crusts:700,sauce:997725=998775*2=1997550
+        addProductToDatabase(data, "banica", 100000, 2);//pumpkin:450,milk:350,crusts:620,sauce:1009162,5=1010582,5*2=2021165
         addProductToDatabase(data, "pumpkin", 1.5, 300);
         addProductToDatabase(data, "milk", 1.5, 100);
         addProductToDatabase(data, "milk", 2, 100);
-        addProductToDatabase(data, "crusts", 3.9, 200);//water:0,5,eggs:3=3.5 * 200 = 700
-        addProductToDatabase(data, "water", 0.01, 100);
-        addProductToDatabase(data, "water", 0.02, 150);
-        addProductToDatabase(data, "water", 0.03, 50);
+        addProductToDatabase(data, "crusts", 3.9, 200);//water:0,5,eggs:2.6=3.1 * 200 = 620
+        addProductToDatabase(data, "water", 0.01, 75);
+        addProductToDatabase(data, "water", 0.02, 125);
+        addProductToDatabase(data, "water", 0.03, 100);
         addProductToDatabase(data, "eggs", 0.15, 4);
         addProductToDatabase(data, "eggs", 0.25, 8);
-        addProductToDatabase(data, "sauce", 7000, 150);//ketchup:6550,water:1.5,sugar:100 =6651,5 * 150=997725
+        addProductToDatabase(data, "sauce", 7000, 150);//ketchup:6625,water:2.75,sugar:100 =6727.75 * 150=1009162,5
         addProductToDatabase(data, "sugar", 2, 50);
-        addProductToDatabase(data, "ketchup", 130, 50);//tomatoes:130,water:1 = 131 * 50 = 6550
+        addProductToDatabase(data, "ketchup", 132, 50);//tomatoes:129.5,water:3 = 132.5 * 50 = 6625
         addProductToDatabase(data, "tomatoes", 1.5, 1);
         addProductToDatabase(data, "tomatoes", 2, 64);
         return data;

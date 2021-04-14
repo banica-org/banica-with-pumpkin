@@ -2,7 +2,6 @@ package com.market.banica.calculator.dto;
 
 import lombok.Data;
 
-import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,11 +10,11 @@ import java.util.Map;
 import java.util.Objects;
 
 @Data
-public class ProductDto implements Serializable {
+public class ProductDto {
 
     private String itemName;
 
-    private BigDecimal totalPrice;
+    private BigDecimal totalPrice = BigDecimal.ZERO;
 
     private List<ProductSpecification> productSpecifications = new ArrayList<>();
 
