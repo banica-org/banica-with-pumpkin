@@ -144,7 +144,7 @@ class AuroraComponentIT {
 
 
     @Test
-    void request_Should_ForwardToReceiverResponse() throws IOException {
+    void request_Should_ForwardToReceiverResponse_When_ReceiverIsRegistered() throws IOException {
         //Arrange
         createFakeReplyingServer();
         createFakeSender();
@@ -171,7 +171,7 @@ class AuroraComponentIT {
     }
 
     @Test
-    void request_Should_ForwardToReceiverError() throws IOException {
+    void request_Should_ForwardToReceiverError_When_ReceiverIsNotRegistered() throws IOException {
         //Arrange
 
         createFakeErrorServer();
@@ -242,7 +242,7 @@ class AuroraComponentIT {
     }
 
     @Test
-    void ItemOrderBookRequest_Should_ForwardToOrderbookResponse() throws IOException {
+    void ItemOrderBookRequest_Should_ForwardToOrderbookResponse_When_OrderbookIsRegistered() throws IOException {
         //Arrange
         currentPublisher = "orderbook";
         publishers.addPublisher(currentPublisher);
@@ -291,7 +291,7 @@ class AuroraComponentIT {
     }
 
     @Test
-    void subscribe_Should_ForwardToReceiverResponse() throws IOException, InterruptedException {
+    void subscribe_Should_ForwardToReceiverResponses_When_ReceiverIsRegistered() throws IOException, InterruptedException {
         //Arrange
         currentPublisher = "aurora";
         publishers.addPublisher(currentPublisher);
@@ -347,7 +347,7 @@ class AuroraComponentIT {
     }
 
     @Test
-    void subscribeToMarket_Should_ForwardToReceiverResponse() throws IOException, InterruptedException {
+    void subscribeToMarket_Should_ForwardToReceiverResponse_When_MarketIsRegistered() throws IOException, InterruptedException {
         //Arrange
         currentPublisher = "market";
         publishers.addPublisher(currentPublisher);
@@ -410,7 +410,7 @@ class AuroraComponentIT {
     }
 
     @Test
-    void subscribeToOrderbook_Should_ForwardToReceiverErrorDueNoMapping() throws IOException, InterruptedException {
+    void subscribeToOrderbook_Should_ForwardToReceiverError_When_NoSupportedMapping() throws IOException, InterruptedException {
         //Arrange
         currentPublisher = "orderbook";
         publishers.addPublisher(currentPublisher);
@@ -459,7 +459,7 @@ class AuroraComponentIT {
 
 
     @Test
-    void subscribeToMarket_Should_ForwardToReceiverLessResponsesDueError() throws IOException, InterruptedException {
+    void subscribeToMarket_Should_ForwardToReceiverLessResponses_When_MarketSendsErrorDuringStream() throws IOException, InterruptedException {
         //Arrange
         currentPublisher = "market";
         publishers.addPublisher(currentPublisher);
@@ -522,7 +522,7 @@ class AuroraComponentIT {
     }
 
     @Test
-    void subscribe_Should_ForwardToReceiverLessResponsesDueError() throws IOException, InterruptedException {
+    void subscribe_Should_ForwardToReceiverLessResponses_When_ReceiverSendsErrorDuringStream() throws IOException, InterruptedException {
         //Arrange
         currentPublisher = "aurora";
         publishers.addPublisher(currentPublisher);
@@ -578,7 +578,7 @@ class AuroraComponentIT {
     }
 
     @Test
-    void subscribe_Should_ForwardToReceiverNoResponses_NoExistingChannel() throws IOException, InterruptedException {
+    void subscribe_Should_ForwardToReceiverNoResponses_When_NoExistingChannel() throws IOException, InterruptedException {
         //Arrange
         createFakeErrorServer();
         createFakeSender();
@@ -632,7 +632,7 @@ class AuroraComponentIT {
     }
 
     @Test
-    void jmx_ChannelManager_FlowTest() {
+    void jmx_ChannelManager_Publishers_FlowTest() {
         currentPublisher = "aurora";
         publishers.addPublisher(currentPublisher);
         Map<String, ChannelProperty> dummyChannels = getDummyChannels();
