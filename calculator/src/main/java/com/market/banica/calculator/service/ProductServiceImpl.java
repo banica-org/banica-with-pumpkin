@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Queue;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,6 +31,7 @@ public class ProductServiceImpl implements ProductService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProductServiceImpl.class);
     private static final String REGEX_DELIMITER_NEW_PRODUCT_INGREDIENTS = ",";
     private static final String REGEX_DELIMITER_NEW_PRODUCT_ENTRY_PAIRS = ":";
+    private static final String REGEX_INGREDIENTS_PATTERN = "(.+[a-z])(:)(.+\\d)";
 
     private final BackUpService backUpService;
     private final ProductBase productBase;
@@ -285,17 +288,23 @@ public class ProductServiceImpl implements ProductService {
         LOGGER.debug("In convertStringOfIngredientsToMap private method");
 
         Map<String, Integer> ingredients = new HashMap<>();
+
+        DataValidator.validateIngredientsMap(ingredientsMap);
+
         String[] ingredientsAsArray = ingredientsMap.split(REGEX_DELIMITER_NEW_PRODUCT_INGREDIENTS);
 
         for (String s : ingredientsAsArray) {
 
             String[] mapEntry = s.split(REGEX_DELIMITER_NEW_PRODUCT_ENTRY_PAIRS);
+
             int quantity = getValueAsInt(mapEntry[1]);
             ingredients.put(mapEntry[0], quantity);
         }
 
         return ingredients;
     }
+
+
 
     private int getValueAsInt(String quantity) {
         LOGGER.debug("In getValueAsInt private method");

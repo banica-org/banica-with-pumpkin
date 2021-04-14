@@ -16,12 +16,15 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @ControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-
-    @ExceptionHandler({IncorrectResponseException.class, StoppedStreamException.class, TrackingException.class})
+    @ExceptionHandler(IncorrectResponseException.class)
     public ResponseEntity<ErrorMessage> customExceptionHandler(Exception exception) {
         return new ResponseEntity<>(new ErrorMessage(exception.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorMessage> illegalArgumentExceptionExceptionHandler(IllegalArgumentException exception) {
+        return new ResponseEntity<>(new ErrorMessage(exception.getMessage()), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(Exception.class)
