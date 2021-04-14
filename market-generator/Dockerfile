@@ -1,6 +1,6 @@
 FROM java:openjdk-8-jre-alpine
 
-ENV MARKET="asia"
+ENV MARKET="europe"
 ENV JMX_PORT=7001
 ENV SPRING_PORT=8001
 ENV GRPC_PORT=9001
