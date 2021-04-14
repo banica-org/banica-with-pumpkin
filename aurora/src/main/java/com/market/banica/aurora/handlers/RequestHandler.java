@@ -33,7 +33,7 @@ public class RequestHandler {
         } catch (NoSuchObjectException | IllegalArgumentException e) {
             LOGGER.warn("Unsupported message have reached aurora.");
             responseObserver.onError(Status.INVALID_ARGUMENT
-                    .withDescription("Request from client is invalid : "+e.getMessage())
+                    .withDescription("Request from client is invalid : " + e.getMessage())
                     .withCause(e.getCause())
                     .asException());
             return;
@@ -57,5 +57,4 @@ public class RequestHandler {
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
-
 }

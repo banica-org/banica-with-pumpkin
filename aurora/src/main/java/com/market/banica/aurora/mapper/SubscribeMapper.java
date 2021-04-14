@@ -55,7 +55,7 @@ public class SubscribeMapper {
 
         } else if (destinationOfMessage.contains(AURORA)) {
             renderAuroraMapping(incomingRequest, responseObserver, channelsWithPrefix);
-        }else if(destinationOfMessage.contains(ORDERBOOK)){
+        } else if (destinationOfMessage.contains(ORDERBOOK)) {
             LOGGER.warn("Unsupported mapping have reached aurora.");
             responseObserver.onError(Status.NOT_FOUND
                     .withDescription("No provided mapping for odrerbook streaming messages. " + incomingRequest.getTopic())

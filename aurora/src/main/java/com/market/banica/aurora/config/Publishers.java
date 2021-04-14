@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.market.banica.common.util.ApplicationDirectoryUtil;
+import lombok.NoArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +26,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-
+@NoArgsConstructor
 @EnableMBeanExport
 @ManagedResource
 @Configuration
@@ -34,7 +35,7 @@ public class Publishers {
 
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
-    private final String publishersFileName;
+    private String publishersFileName;
 
     CopyOnWriteArrayList<String> publishersList;
 
