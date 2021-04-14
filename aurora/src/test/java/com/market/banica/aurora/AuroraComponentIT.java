@@ -64,7 +64,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @SpringJUnitConfig
 @SpringBootTest(classes = AuroraApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("testAuroraIT")
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class AuroraComponentIT {
 
 
@@ -647,6 +646,7 @@ class AuroraComponentIT {
         jmxConfig.deleteChannel("aurora3");
 
         String statusReport = jmxConfig.getChannelsStatus();
+        System.out.println(statusReport);
 
         for (int i = 0; i < 3; i++) {
             //do assert.
