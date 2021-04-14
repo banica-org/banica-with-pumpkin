@@ -1,4 +1,4 @@
-package src.model;
+package com.market.banica.aurora.model;
 
 import lombok.Data;
 

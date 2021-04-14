@@ -1,5 +1,6 @@
-package src.config;
+package com.market.banica.aurora.config;
 
+import com.market.banica.aurora.model.ChannelProperty;
 import com.market.banica.common.channel.ChannelRPCConfig;
 import io.grpc.ConnectivityState;
 import io.grpc.ManagedChannel;
@@ -8,7 +9,6 @@ import lombok.NoArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import src.model.ChannelProperty;
 
 import javax.annotation.PreDestroy;
 import java.util.AbstractMap;
@@ -55,7 +55,17 @@ public class ChannelManager {
         LOGGER.info("Adding new channel {} to map", key);
         Map.Entry<String, ManagedChannel> entry = this.convertPropertyToChannel(new AbstractMap.SimpleEntry<>(key, value));
 
+        entry.getValue().getState(true);
+
         this.channels.put(entry.getKey(), entry.getValue());
+    }
+
+    public void addChannel(String key, ManagedChannel value) {
+        this.channels.put(key, value);
+    }
+
+    public ManagedChannel removeChannel(String key) {
+        return this.channels.remove(key);
     }
 
     protected void deleteChannel(String key) {
