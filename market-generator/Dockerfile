@@ -9,9 +9,9 @@ RUN mkdir App
 WORKDIR App
 COPY ./target/market-generator-1.0-SNAPSHOT.jar .
 
-EXPOSE JMX_PORT
-EXPOSE SPRING_PORT
-EXPOSE GRPC_PORT
+EXPOSE $JMX_PORT
+EXPOSE $SPRING_PORT
+EXPOSE $GRPC_PORT
 
 CMD java \
 -Dcom.sun.management.jmxremote.local.only=false \
