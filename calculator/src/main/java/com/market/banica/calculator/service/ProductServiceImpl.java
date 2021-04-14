@@ -12,8 +12,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -169,7 +167,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Map<Product, Map<String,Long>> getProductIngredientsWithQuantity(String productName) {
+    public Map<Product, Map<String,Long>> getProductIngredientsWithQuantityPerParent(String productName) {
         LOGGER.debug("In getProductIngredientsWithQuantity method with parameters:productName {}"
                 , productName);
 

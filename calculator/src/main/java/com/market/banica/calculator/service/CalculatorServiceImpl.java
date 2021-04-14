@@ -46,7 +46,7 @@ public class CalculatorServiceImpl implements CalculatorService {
     @Override
     public List<ProductDto> getRecipe(String clientId, String itemName, long quantity) {
 
-        Map<Product, Map<String, Long>> products = productService.getProductIngredientsWithQuantity(itemName);
+        Map<Product, Map<String, Long>> products = productService.getProductIngredientsWithQuantityPerParent(itemName);
 
         Map<ProductDto, Map<String, Long>> productDtoMap = new HashMap<>();
 
