@@ -24,7 +24,7 @@ public class ProductPriceComponentsSet implements Comparable<ProductPriceCompone
 
     private BigDecimal price;
 
-    private Pair<Long,Long> reservedQuantityRange_Start_End = new Pair<>(0L,0L);
+    private Pair<Long,Long> reservedQuantityRangeStartEnd = new Pair<>(0L,0L);
 
     private Map<String,List<Integer>> componentIngredients = new HashMap<>();
 
@@ -39,7 +39,7 @@ public class ProductPriceComponentsSet implements Comparable<ProductPriceCompone
 
             if (result == 0) {
 
-                result = (o.getReservedQuantityRange_Start_End().hashCode() - getReservedQuantityRange_Start_End().hashCode());
+                result = (o.getReservedQuantityRangeStartEnd().hashCode() - getReservedQuantityRangeStartEnd().hashCode());
             }
         }
 

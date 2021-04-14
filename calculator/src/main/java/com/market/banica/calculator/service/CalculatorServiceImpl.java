@@ -182,9 +182,9 @@ public class CalculatorServiceImpl implements CalculatorService {
                                                              ProductPriceComponentsSet productPriceComponentsSet,
                                                              ProductDto newProductDto) {
 
-        long start = productPriceComponentsSet.getReservedQuantityRange_Start_End().getFst();
-        long range = productPriceComponentsSet.getReservedQuantityRange_Start_End().getSnd() -
-                productPriceComponentsSet.getReservedQuantityRange_Start_End().getFst();
+        long start = productPriceComponentsSet.getReservedQuantityRangeStartEnd().getFst();
+        long range = productPriceComponentsSet.getReservedQuantityRangeStartEnd().getSnd() -
+                productPriceComponentsSet.getReservedQuantityRangeStartEnd().getFst();
 
         for (ProductSpecification productSpecification : productSpecificationMap.get(tempProductName)) {
 
@@ -556,8 +556,8 @@ public class CalculatorServiceImpl implements CalculatorService {
         ProductPriceComponentsSet ingredientPriceVariant = new ProductPriceComponentsSet();
 
         ingredientPriceVariant.setPrice(productPrice);
-        ingredientPriceVariant.getReservedQuantityRange_Start_End().setFst(predecessorsQuantitySum);
-        ingredientPriceVariant.getReservedQuantityRange_Start_End().setSnd(predecessorsQuantitySum + permutationsOfQuantity.getSnd());
+        ingredientPriceVariant.getReservedQuantityRangeStartEnd().setFst(predecessorsQuantitySum);
+        ingredientPriceVariant.getReservedQuantityRangeStartEnd().setSnd(predecessorsQuantitySum + permutationsOfQuantity.getSnd());
         ingredientPriceVariant.setProductName(ingredientName);
 
         productPriceComponentsSetByProductIdMap.put(ingredientPriceVariant.getProductId(), ingredientPriceVariant);
@@ -585,10 +585,10 @@ public class CalculatorServiceImpl implements CalculatorService {
                                                    ProductPriceComponentsSet ingredient) {
 
 
-        long existingIngredientRangeStart = ingredient.getReservedQuantityRange_Start_End().getFst();
-        long existingIngredientRangeEnd = ingredient.getReservedQuantityRange_Start_End().getSnd();
-        long candidateIngredientRangeStart = ingredientPriceVariant.getReservedQuantityRange_Start_End().getFst();
-        long candidateIngredientRangeEnd = ingredientPriceVariant.getReservedQuantityRange_Start_End().getSnd();
+        long existingIngredientRangeStart = ingredient.getReservedQuantityRangeStartEnd().getFst();
+        long existingIngredientRangeEnd = ingredient.getReservedQuantityRangeStartEnd().getSnd();
+        long candidateIngredientRangeStart = ingredientPriceVariant.getReservedQuantityRangeStartEnd().getFst();
+        long candidateIngredientRangeEnd = ingredientPriceVariant.getReservedQuantityRangeStartEnd().getSnd();
 
         return (existingIngredientRangeStart >= candidateIngredientRangeStart &&
                 existingIngredientRangeStart < candidateIngredientRangeEnd) ||
