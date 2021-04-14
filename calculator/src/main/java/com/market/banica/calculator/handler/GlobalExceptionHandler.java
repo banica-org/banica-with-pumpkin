@@ -1,11 +1,7 @@
 package com.market.banica.calculator.handler;
 
 import com.market.banica.common.exception.IncorrectResponseException;
-import com.market.banica.common.exception.StoppedStreamException;
-import com.market.banica.common.exception.TrackingException;
 import org.modelmapper.spi.ErrorMessage;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
