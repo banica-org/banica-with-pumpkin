@@ -25,31 +25,36 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
-public class FakeStubsGenerator {
+public final class FakeServerGenerator {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(FakeStubsGenerator.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(FakeServerGenerator.class);
     private static final Map<String, ManagedChannel> channels = new ConcurrentHashMap<>();
+
+
+    private static final String AURORA_SERVER_CHANNEL_NAME = "auroraServerChannel";
+    private static final String ORDER_BOOK_SERVER_CHANNEL_NAME = "orderBookServerChannel";
+    private static final String MARKET_SERVER_CHANNEL_NAME = "marketServerChannel";
 
     private static final String AURORA_SERVER_NAME = "auroraServer";
     private static final String ORDER_BOOK_SERVER_NAME = "orderBookServer";
     private static final String MARKET_SERVER_NAME = "marketServer";
 
     public static void createFakeServer(String serverName, GrpcCleanupRule grpcCleanup, ManagedChannel serverChannel) throws IOException {
-        if (serverName.equalsIgnoreCase(AURORA_SERVER_NAME)) {
+        if (serverName.equalsIgnoreCase(AURORA_SERVER_NAME) && !channels.containsKey(AURORA_SERVER_CHANNEL_NAME)) {
             grpcCleanup.register(InProcessServerBuilder
                     .forName(serverName)
                     .directExecutor()
                     .addService(fakeReceivingAuroraService())
                     .build()
                     .start());
-        } else if (serverName.equalsIgnoreCase(ORDER_BOOK_SERVER_NAME)) {
+        } else if (serverName.equalsIgnoreCase(ORDER_BOOK_SERVER_NAME) && !channels.containsKey(ORDER_BOOK_SERVER_CHANNEL_NAME)) {
             grpcCleanup.register(InProcessServerBuilder
                     .forName(serverName)
                     .directExecutor()
                     .addService(fakeReceivingOrderBookService())
                     .build()
                     .start());
-        } else if (serverName.equalsIgnoreCase(MARKET_SERVER_NAME)) {
+        } else if (serverName.equalsIgnoreCase(MARKET_SERVER_NAME) && !channels.containsKey(MARKET_SERVER_CHANNEL_NAME)) {
             grpcCleanup.register(InProcessServerBuilder
                     .forName(serverName)
                     .directExecutor()
@@ -58,6 +63,7 @@ public class FakeStubsGenerator {
                     .start());
         } else {
             LOGGER.debug("Server with such name does not exist!");
+            return;
         }
 
         grpcCleanup.register(serverChannel);
@@ -69,7 +75,7 @@ public class FakeStubsGenerator {
     }
 
     public static void shutDownAllChannels() {
-        channels.values().forEach(FakeStubsGenerator::shutDownChannel);
+        channels.values().forEach(FakeServerGenerator::shutDownChannel);
     }
 
     private static void shutDownChannel(ManagedChannel channel) {

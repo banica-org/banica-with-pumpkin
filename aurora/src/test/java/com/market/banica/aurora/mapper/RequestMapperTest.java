@@ -4,7 +4,7 @@ import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
 import com.market.banica.aurora.config.ChannelManager;
 import com.market.banica.aurora.config.StubManager;
-import com.market.banica.aurora.util.FakeStubsGenerator;
+import com.market.banica.aurora.util.FakeServerGenerator;
 import com.orderbook.CancelSubscriptionResponse;
 import com.orderbook.InterestsResponse;
 import com.orderbook.ItemOrderBookResponse;
@@ -77,17 +77,17 @@ class RequestMapperTest {
 
     @BeforeAll
     public static void setUp() throws IOException {
-        FakeStubsGenerator.addChannel("aurora", AURORA_SERVER_CHANNEL);
-        FakeStubsGenerator.addChannel("orderBook", ORDER_BOOK_SERVER_CHANNEL);
-        FakeStubsGenerator.addChannel("dummy", DUMMY_MANAGED_CHANNEL);
+        FakeServerGenerator.createFakeServer(AURORA_SERVER_NAME, grpcCleanup, AURORA_SERVER_CHANNEL);
+        FakeServerGenerator.createFakeServer(ORDER_BOOK_SERVER_NAME, grpcCleanup, ORDER_BOOK_SERVER_CHANNEL);
 
-        FakeStubsGenerator.createFakeServer(AURORA_SERVER_NAME, grpcCleanup, AURORA_SERVER_CHANNEL);
-        FakeStubsGenerator.createFakeServer(ORDER_BOOK_SERVER_NAME, grpcCleanup, ORDER_BOOK_SERVER_CHANNEL);
+        FakeServerGenerator.addChannel("auroraServerChannel", AURORA_SERVER_CHANNEL);
+        FakeServerGenerator.addChannel("orderBookServerChannel", ORDER_BOOK_SERVER_CHANNEL);
+        FakeServerGenerator.addChannel("dummyChannel", DUMMY_MANAGED_CHANNEL);
     }
 
     @AfterAll
     public static void shutDownChannels() {
-        FakeStubsGenerator.shutDownAllChannels();
+        FakeServerGenerator.shutDownAllChannels();
     }
 
     @Test
