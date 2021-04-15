@@ -10,6 +10,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.Timer;
 import java.util.concurrent.TimeUnit;
@@ -30,7 +31,9 @@ class PersistSchedulerTest {
     private static final ReadWriteLock marketStateLock = mock(ReadWriteLock.class);
     private static final SnapshotPersistence snapshotPersistence = mock(SnapshotPersistence.class);
     @SuppressWarnings("unchecked")
-    private static final Map<String, Set<MarketTick>> newTicks = mock(Map.class);
+    private static final Map<String, Set<MarketTick>> marketState = mock(Map.class);
+    @SuppressWarnings("unchecked")
+    private static final Queue<MarketTick> marketSnapshot = mock(Queue.class);
     private static final SnapshotPersistenceTask currentSnapshotPersistenceTask = mock(SnapshotPersistenceTask.class);
 
     private static PersistScheduler persistScheduler;
@@ -38,7 +41,7 @@ class PersistSchedulerTest {
     @BeforeAll
     static void beforeAll() {
 
-        persistScheduler = new PersistScheduler(marketStateLock, snapshotPersistence, newTicks);
+        persistScheduler = new PersistScheduler(marketStateLock, snapshotPersistence, marketState, marketSnapshot);
         ReflectionTestUtils.setField(persistScheduler, "persistTimer", persistTimer);
         ReflectionTestUtils.setField(persistScheduler, "currentSnapshotPersistenceTask",
                 currentSnapshotPersistenceTask);
@@ -52,7 +55,8 @@ class PersistSchedulerTest {
         reset(persistTimer);
         reset(marketStateLock);
         reset(snapshotPersistence);
-        reset(newTicks);
+        reset(marketState);
+        reset(marketSnapshot);
         reset(currentSnapshotPersistenceTask);
 
     }
@@ -117,7 +121,7 @@ class PersistSchedulerTest {
         SnapshotPersistenceTask newPersistenceTask = (SnapshotPersistenceTask) ReflectionTestUtils
                 .getField(persistScheduler, "currentSnapshotPersistenceTask");
 
-        assertEquals(new SnapshotPersistenceTask(marketStateLock, snapshotPersistence, newTicks)
+        assertEquals(new SnapshotPersistenceTask(marketStateLock, snapshotPersistence, marketState, marketSnapshot)
                 , newPersistenceTask);
 
         verify(persistTimer).scheduleAtFixedRate(newPersistenceTask,
