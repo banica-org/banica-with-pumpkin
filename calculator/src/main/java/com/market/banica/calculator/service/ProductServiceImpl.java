@@ -6,8 +6,7 @@ import com.market.banica.calculator.model.Product;
 import com.market.banica.calculator.service.contract.BackUpService;
 import com.market.banica.calculator.service.contract.ProductService;
 import com.market.banica.calculator.service.grpc.AuroraClientSideService;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -22,17 +21,16 @@ import java.util.Queue;
 import java.util.stream.Collectors;
 
 @Service
-@AllArgsConstructor
-@NoArgsConstructor
+@RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProductServiceImpl.class);
     private static final String REGEX_DELIMITER_NEW_PRODUCT_INGREDIENTS = ",";
     private static final String REGEX_DELIMITER_NEW_PRODUCT_ENTRY_PAIRS = ":";
 
-    private BackUpService backUpService;
-    private ProductBase productBase;
-    private AuroraClientSideService auroraClientSideService;
+    private final BackUpService backUpService;
+    private final ProductBase productBase;
+    private final AuroraClientSideService auroraClientSideService;
 
     @Override
     public Product createProduct(List<Product> products) {

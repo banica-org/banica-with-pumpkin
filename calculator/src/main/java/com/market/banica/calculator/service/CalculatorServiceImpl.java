@@ -14,8 +14,7 @@ import com.market.banica.calculator.service.contract.ProductService;
 import com.market.banica.calculator.service.grpc.AuroraClientSideService;
 import com.orderbook.ItemOrderBookResponse;
 import com.orderbook.OrderBookLayer;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.lang.reflect.Type;
@@ -37,12 +36,11 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
-@AllArgsConstructor
-@NoArgsConstructor
+@RequiredArgsConstructor
 public class CalculatorServiceImpl implements CalculatorService {
 
-    private AuroraClientSideService auroraService;
-    private ProductService productService;
+    private final AuroraClientSideService auroraService;
+    private final ProductService productService;
 
     @Override
     public List<ProductDto> getProduct(String clientId, String itemName, long quantity) {
