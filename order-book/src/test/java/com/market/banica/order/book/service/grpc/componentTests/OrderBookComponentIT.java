@@ -161,19 +161,15 @@ class OrderBookComponentIT {
                 .defaultServiceConfig(ChannelRPCConfig.getInstance().getServiceConfig())
                 .enableRetry().maxRetryAttempts(MAX_RETRY_ATTEMPTS).directExecutor().build();
 
-        // Start Market
-        startMarketService(numberOfTickResponses, serverNameMarket, THREAD_SLEEP_TIME_MARKET);
+        startMarketServiceWithSubscribeForItemOverridden(numberOfTickResponses, serverNameMarket, THREAD_SLEEP_TIME_MARKET);
 
-        // Start OrderBook
         startOrderBookService(orderBookService, THREAD_SLEEP_TIME_DEFAULT);
 
         List<TickResponse> tickResponses = new ArrayList<>();
 
-        // Start Aurora
-        startAuroraService(marketChannel, tickResponses);
+        startAuroraServiceWithSubscribeOverridden(marketChannel, tickResponses);
 
         InterestsRequest interestsRequest = InterestsRequest.newBuilder().setClientId(clientId).setItemName(EGGS_GOOD).build();
-
 
         //Act
         InterestsResponse interestsResponse = blockingStub.announceItemInterest(interestsRequest);
@@ -188,24 +184,15 @@ class OrderBookComponentIT {
         //Arrange
         ItemOrderBookResponse response = generateItemOrderBookExpectedResponse();
 
-        new Thread(() -> {
-            try {
-                Thread.sleep(THREAD_SLEEP_TIME_DEFAULT);
-                grpcCleanup.register(InProcessServerBuilder
-                        .forName(serverName).directExecutor().addService(testConfiguration.getGrpcOrderBookServiceItemLayers(response))
-                        .build().start());
-            } catch (InterruptedException | IOException e) {
-                e.printStackTrace();
-            }
-        }).start();
+        ItemOrderBookResponse expected = generateItemOrderBookExpectedResponse();
+
+        startOrderBookServiceWithGetOrderBookItemLayersMethodOverridden(response);
 
         ItemOrderBookRequest auroraRequest = ItemOrderBookRequest.newBuilder()
                 .setItemName(productName).setClientId(clientId).setQuantity(productQuantity).build();
 
         //Act
         ItemOrderBookResponse auroraResponse = blockingStub.getOrderBookItemLayers(auroraRequest);
-
-        ItemOrderBookResponse expected = generateItemOrderBookExpectedResponse();
 
         //Assert
         assertEquals(expected, auroraResponse);
@@ -214,58 +201,24 @@ class OrderBookComponentIT {
     @Test
     public void calculatorToAuroraToOrderBookRequestsRetryExecutesWithSuccess() {
         //Arrange
+
         List<OrderBookLayer> layers = new ArrayList<>();
+
         layers.add(OrderBookLayer.newBuilder().setPrice(productPrice).setQuantity(productQuantity).setOrigin(Origin.AMERICA).build());
+
+        Aurora.AuroraResponse expected = Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(generateItemOrderBookExpectedResponse())).build();
 
         when(itemMarket.getRequestedItem(productName, productQuantity)).thenReturn(layers);
 
         // Start OrderBook
-        new Thread(() -> {
-            try {
-                Thread.sleep(THREAD_SLEEP_TIME_DEFAULT);
-                grpcCleanup.register(InProcessServerBuilder
-                        .forName(serverName).directExecutor().addService(orderBookService)
-                        .build().start());
-            } catch (InterruptedException | IOException e) {
-                e.printStackTrace();
-            }
-        }).start();
+        startOrderBookService(orderBookService,THREAD_SLEEP_TIME_DEFAULT);
 
-
-        // Start Aurora
-        new Thread(() -> {
-            try {
-                Thread.sleep(THREAD_SLEEP_TIME_DEFAULT);
-                grpcCleanup.register(InProcessServerBuilder
-                        .forName(serverNameThree).directExecutor().addService(new AuroraServiceGrpc.AuroraServiceImplBase() {
-                            @Override
-                            public void request(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
-                                String[] topicSplit = request.getTopic().split(DELIMITER);
-
-                                ItemOrderBookRequest build = populateItemOrderBookRequest(request.getClientId(), topicSplit[1], Long.parseLong(topicSplit[2]));
-
-                                ItemOrderBookResponse orderBookItemLayers = blockingStub.getOrderBookItemLayers(build);
-
-                                responseObserver.onNext(Aurora.AuroraResponse
-                                        .newBuilder()
-                                        .setMessage(Any.pack(orderBookItemLayers))
-                                        .build());
-                                responseObserver.onCompleted();
-                            }
-                        })
-                        .build().start());
-            } catch (InterruptedException | IOException e) {
-                e.printStackTrace();
-            }
-        }).start();
-
+        startAuroraServiceWithRequestMethodOverridden();
 
         Aurora.AuroraRequest auroraRequest = Aurora.AuroraRequest.newBuilder().setTopic(orderBookTopicPrefix + productName + DELIMITER + productQuantity).build();
 
         //Act
         Aurora.AuroraResponse auroraResponse = auroraBlockingStub.request(auroraRequest);
-
-        Aurora.AuroraResponse expected = Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(generateItemOrderBookExpectedResponse())).build();
 
         //Assert
         assertEquals(expected, auroraResponse);
@@ -363,7 +316,48 @@ class OrderBookComponentIT {
         assertNull(auroraClient.getCancellableStubs().get(productName));
     }
 
-    private void startAuroraService(ManagedChannel marketChannel, List<TickResponse> tickResponses) throws IOException {
+    private void startOrderBookServiceWithGetOrderBookItemLayersMethodOverridden(ItemOrderBookResponse response) {
+        new Thread(() -> {
+            try {
+                Thread.sleep(THREAD_SLEEP_TIME_DEFAULT);
+                grpcCleanup.register(InProcessServerBuilder
+                        .forName(serverName).directExecutor().addService(testConfiguration.getGrpcOrderBookServiceItemLayers(response))
+                        .build().start());
+            } catch (InterruptedException | IOException e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
+    private void startAuroraServiceWithRequestMethodOverridden() {
+        new Thread(() -> {
+            try {
+                Thread.sleep(THREAD_SLEEP_TIME_DEFAULT);
+                grpcCleanup.register(InProcessServerBuilder
+                        .forName(serverNameThree).directExecutor().addService(new AuroraServiceGrpc.AuroraServiceImplBase() {
+                            @Override
+                            public void request(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
+                                String[] topicSplit = request.getTopic().split(DELIMITER);
+
+                                ItemOrderBookRequest build = populateItemOrderBookRequest(request.getClientId(), topicSplit[1], Long.parseLong(topicSplit[2]));
+
+                                ItemOrderBookResponse orderBookItemLayers = blockingStub.getOrderBookItemLayers(build);
+
+                                responseObserver.onNext(Aurora.AuroraResponse
+                                        .newBuilder()
+                                        .setMessage(Any.pack(orderBookItemLayers))
+                                        .build());
+                                responseObserver.onCompleted();
+                            }
+                        })
+                        .build().start());
+            } catch (InterruptedException | IOException e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
+    private void startAuroraServiceWithSubscribeOverridden(ManagedChannel marketChannel, List<TickResponse> tickResponses) throws IOException {
         grpcCleanup.register(InProcessServerBuilder
                 .forName(serverNameTwo).directExecutor().addService(new AuroraServiceGrpc.AuroraServiceImplBase() {
                     @Override
@@ -409,7 +403,7 @@ class OrderBookComponentIT {
         }).start();
     }
 
-    private void startMarketService(int numberOfTickResponses, String serverNameMarket, long sleepTime) {
+    private void startMarketServiceWithSubscribeForItemOverridden(int numberOfTickResponses, String serverNameMarket, long sleepTime) {
         new Thread(() -> {
             try {
                 Thread.sleep(sleepTime);
