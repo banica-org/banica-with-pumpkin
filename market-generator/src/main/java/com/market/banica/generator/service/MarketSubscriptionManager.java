@@ -3,7 +3,6 @@ package com.market.banica.generator.service;
 import com.aurora.Aurora;
 import com.google.protobuf.Any;
 import com.market.TickResponse;
-import com.market.banica.generator.model.MarketTick;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.ServerCallStreamObserver;
@@ -19,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class MarketSubscriptionManager implements SubscriptionManager {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(MarketTick.getOrigin() + "." + MarketSubscriptionManager.class.getSimpleName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(System.getenv("MARKET") + "." + MarketSubscriptionManager.class.getSimpleName());
 
     private final Map<String, Set<StreamObserver<Aurora.AuroraResponse>>> subscriptions = new ConcurrentHashMap<>();
 
