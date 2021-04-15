@@ -20,7 +20,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class SnapshotPersistence {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SnapshotPersistence.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(MarketTick.getOrigin() + "." + SnapshotPersistence.class.getSimpleName());
 
     private final String stateFileName;
     private final String snapshotFileName;

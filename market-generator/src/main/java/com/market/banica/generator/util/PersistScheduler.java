@@ -14,7 +14,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 
 public class PersistScheduler {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(PersistScheduler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(MarketTick.getOrigin() + "." + PersistScheduler.class.getSimpleName());
 
     private final Timer persistTimer = new Timer();
 

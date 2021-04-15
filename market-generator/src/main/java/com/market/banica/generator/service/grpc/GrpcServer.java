@@ -1,5 +1,6 @@
 package com.market.banica.generator.service.grpc;
 
+import com.market.banica.generator.model.MarketTick;
 import io.grpc.Server;
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
 import org.slf4j.Logger;
@@ -18,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class GrpcServer {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(GrpcServer.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(MarketTick.getOrigin() + "." + GrpcServer.class.getSimpleName());
 
     private final ExecutorService applicationExecutor;
 

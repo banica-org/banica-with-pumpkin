@@ -3,6 +3,7 @@ package com.market.banica.generator.configuration;
 import com.market.banica.common.util.ApplicationDirectoryUtil;
 import com.market.banica.generator.exception.NotFoundException;
 import com.market.banica.generator.model.GoodSpecification;
+import com.market.banica.generator.model.MarketTick;
 import com.market.banica.generator.service.MarketState;
 import com.market.banica.generator.service.TickGenerator;
 import com.market.banica.generator.util.PersistScheduler;
@@ -37,7 +38,7 @@ public class MarketConfigurationImpl implements MarketConfiguration {
 
     private static final String PROPERTY_REGEX = "([a-z])+\\.([a-z])+\\.([a-z])+";
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(MarketConfigurationImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(MarketTick.getOrigin() + "." + MarketConfigurationImpl.class.getSimpleName());
 
     private final ReadWriteLock propertiesWriteLock = new ReentrantReadWriteLock();
 
