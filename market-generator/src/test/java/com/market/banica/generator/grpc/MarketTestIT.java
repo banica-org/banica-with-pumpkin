@@ -107,23 +107,7 @@ public class MarketTestIT {
         CountDownLatch latch = new CountDownLatch(5);
 
         //Act
-        MarketServiceGrpc.newStub(marketChannel).subscribeForItem(request, new StreamObserver<TickResponse>() {
-            @Override
-            public void onNext(TickResponse tickResponse) {
-                receivedResponses.add(tickResponse);
-                latch.countDown();
-            }
-
-            @Override
-            public void onError(Throwable throwable) {
-                latch.countDown();
-            }
-
-            @Override
-            public void onCompleted() {
-                latch.countDown();
-            }
-        });
+        createStub(request, receivedResponses, latch);
 
         latch.await();
 
@@ -149,24 +133,7 @@ public class MarketTestIT {
         CountDownLatch latch = new CountDownLatch(3);
 
         //Act
-        MarketServiceGrpc.newStub(marketChannel)
-                .subscribeForItem(request, new StreamObserver<TickResponse>() {
-                    @Override
-                    public void onNext(TickResponse tickResponse) {
-                        receivedResponses.add(tickResponse);
-                        latch.countDown();
-                    }
-
-                    @Override
-                    public void onError(Throwable throwable) {
-                        latch.countDown();
-                    }
-
-                    @Override
-                    public void onCompleted() {
-                        latch.countDown();
-                    }
-                });
+        createStub(request, receivedResponses, latch);
 
         latch.await();
 
@@ -242,6 +209,26 @@ public class MarketTestIT {
 
             expectedResponses.add(response);
         }
+    }
+
+    private void createStub(MarketDataRequest request, ArrayList<TickResponse> receivedResponses, CountDownLatch latch){
+        MarketServiceGrpc.newStub(marketChannel).subscribeForItem(request, new StreamObserver<TickResponse>() {
+            @Override
+            public void onNext(TickResponse tickResponse) {
+                receivedResponses.add(tickResponse);
+                latch.countDown();
+            }
+
+            @Override
+            public void onError(Throwable throwable) {
+                latch.countDown();
+            }
+
+            @Override
+            public void onCompleted() {
+                latch.countDown();
+            }
+        });
     }
 
 
