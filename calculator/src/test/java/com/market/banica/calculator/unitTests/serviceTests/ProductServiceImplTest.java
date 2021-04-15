@@ -1,8 +1,9 @@
-package com.market.banica.calculator.service;
+package com.market.banica.calculator.unitTests.serviceTests;
 
 import com.market.banica.calculator.data.contract.ProductBase;
 import com.market.banica.calculator.enums.UnitOfMeasure;
 import com.market.banica.calculator.model.Product;
+import com.market.banica.calculator.service.ProductServiceImpl;
 import com.market.banica.calculator.service.contract.BackUpService;
 import com.market.banica.calculator.service.grpc.AuroraClientSideService;
 import org.junit.jupiter.api.BeforeEach;
@@ -292,7 +293,7 @@ class ProductServiceImplTest {
         when(productBase.getDatabase()).thenReturn(demoDataBase);
 
         //Act
-        Map<Product,Map<String,Long>> products = productService.getProductIngredientsWithQuantityPerParent(BANICA);
+        Map<Product, Map<String, Long>> products = productService.getProductIngredientsWithQuantityPerParent(BANICA);
 
         //Assert
         assertTrue(products.containsKey(pumpkin));
@@ -306,7 +307,7 @@ class ProductServiceImplTest {
         when(productBase.getDatabase()).thenReturn(demoDataBase);
 
         //Act
-        Map<Product,Map<String,Long>> products = productService.getProductIngredientsWithQuantityPerParent(BANICA);
+        Map<Product, Map<String, Long>> products = productService.getProductIngredientsWithQuantityPerParent(BANICA);
 
         //Assert
         assertFalse(products.containsKey(banica));

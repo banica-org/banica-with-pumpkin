@@ -1,8 +1,9 @@
-package com.market.banica.calculator.service;
+package com.market.banica.calculator.unitTests.serviceTests;
 
 import com.market.banica.calculator.data.contract.ProductBase;
 import com.market.banica.calculator.enums.UnitOfMeasure;
 import com.market.banica.calculator.model.Product;
+import com.market.banica.calculator.service.JMXServiceImpl;
 import com.market.banica.calculator.service.contract.ProductService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

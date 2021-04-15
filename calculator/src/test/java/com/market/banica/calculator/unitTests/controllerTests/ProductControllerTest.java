@@ -1,4 +1,4 @@
-package com.market.banica.calculator.controllerTests;
+package com.market.banica.calculator.unitTests.controllerTests;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.market.banica.calculator.controller.ProductController;

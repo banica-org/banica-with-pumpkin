@@ -24,9 +24,9 @@ public class ProductPriceComponentsSet implements Comparable<ProductPriceCompone
 
     private BigDecimal price;
 
-    private Pair<Long,Long> reservedQuantityRangeStartEnd = new Pair<>(0L,0L);
+    private Pair<Long, Long> reservedQuantityRangeStartEnd = new Pair<>(0L, 0L);
 
-    private Map<String,List<Integer>> componentIngredients = new HashMap<>();
+    private Map<String, List<Integer>> componentIngredients = new HashMap<>();
 
     @Override
     public int compareTo(ProductPriceComponentsSet o) {

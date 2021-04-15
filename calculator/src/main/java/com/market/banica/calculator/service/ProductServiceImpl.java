@@ -6,7 +6,8 @@ import com.market.banica.calculator.model.Product;
 import com.market.banica.calculator.service.contract.BackUpService;
 import com.market.banica.calculator.service.contract.ProductService;
 import com.market.banica.calculator.service.grpc.AuroraClientSideService;
-import lombok.RequiredArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -21,16 +22,17 @@ import java.util.Queue;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
+@AllArgsConstructor
+@NoArgsConstructor
 public class ProductServiceImpl implements ProductService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProductServiceImpl.class);
     private static final String REGEX_DELIMITER_NEW_PRODUCT_INGREDIENTS = ",";
     private static final String REGEX_DELIMITER_NEW_PRODUCT_ENTRY_PAIRS = ":";
 
-    private final BackUpService backUpService;
-    private final ProductBase productBase;
-    private final AuroraClientSideService auroraClientSideService;
+    private BackUpService backUpService;
+    private ProductBase productBase;
+    private AuroraClientSideService auroraClientSideService;
 
     @Override
     public Product createProduct(List<Product> products) {
@@ -167,13 +169,13 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Map<Product, Map<String,Long>> getProductIngredientsWithQuantityPerParent(String productName) {
+    public Map<Product, Map<String, Long>> getProductIngredientsWithQuantityPerParent(String productName) {
         LOGGER.debug("In getProductIngredientsWithQuantity method with parameters:productName {}"
                 , productName);
 
         Product product = getProductFromDatabase(productName);
 
-        Map<Product, Map<String,Long>> result = new HashMap<>();
+        Map<Product, Map<String, Long>> result = new HashMap<>();
 
         if (!product.getIngredients().isEmpty()) {
             addAllIngredientsFromProductToMapOfProductAndQuantity(result, product);
@@ -306,7 +308,7 @@ public class ProductServiceImpl implements ProductService {
         return products.get(0).getProductName();
     }
 
-    private void addAllIngredientsFromProductToMapOfProductAndQuantity(Map<Product, Map<String,Long>> productQuantitiesMap,
+    private void addAllIngredientsFromProductToMapOfProductAndQuantity(Map<Product, Map<String, Long>> productQuantitiesMap,
                                                                        Product parentProduct) {
         LOGGER.debug("In addAllIngredientsFromProductToMapOfProductAndQuantity private method");
 
@@ -328,11 +330,11 @@ public class ProductServiceImpl implements ProductService {
                     if (productQuantitiesMap.containsKey(ingredient)) {
                         productQuantitiesMap
                                 .get(ingredient).put(tempParentProduct.getProductName()
-                                ,tempParentProduct.getIngredients().get(ingredient.getProductName()));
+                                , tempParentProduct.getIngredients().get(ingredient.getProductName()));
                     } else {
-                        productQuantitiesMap.put(ingredient, new HashMap<String,Long>(){{
+                        productQuantitiesMap.put(ingredient, new HashMap<String, Long>() {{
                             put(tempParentProduct.getProductName()
-                                    ,tempParentProduct.getIngredients().get(ingredient.getProductName()));
+                                    , tempParentProduct.getIngredients().get(ingredient.getProductName()));
                         }});
                     }
                 });

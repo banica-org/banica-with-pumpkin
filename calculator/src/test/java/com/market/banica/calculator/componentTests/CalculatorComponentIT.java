@@ -115,7 +115,7 @@ public class CalculatorComponentIT {
     private String productControllerCreateProductUrl;
 
     @BeforeEach
-    public void SetUp() {
+    public void setUp() {
         JacksonTester.initFields(this, new ObjectMapper());
         RestAssured.port = port;
 
@@ -282,13 +282,10 @@ public class CalculatorComponentIT {
     @NotNull
     private ProductDto createProductDTO() {
         ProductDto response = new ProductDto();
-        ProductSpecification productSpecification = new ProductSpecification();
 
-        productSpecification.setLocation("AMERICA");
-        productSpecification.setPrice(BigDecimal.valueOf(price));
-        productSpecification.setQuantity(productQuantity);
+        ProductSpecification productSpecification = createProductSpecification();
 
-        BigDecimal totalPrice = BigDecimal.valueOf(price*productQuantity);
+        BigDecimal totalPrice = BigDecimal.valueOf(price * productQuantity);
 
         response.setItemName(productName);
         response.setTotalPrice(totalPrice);
@@ -297,8 +294,22 @@ public class CalculatorComponentIT {
         return response;
     }
 
+    @NotNull
+    private ProductSpecification createProductSpecification() {
+
+        ProductSpecification productSpecification = new ProductSpecification();
+
+        productSpecification.setLocation("AMERICA");
+        productSpecification.setPrice(BigDecimal.valueOf(price));
+        productSpecification.setQuantity(productQuantity);
+
+        return productSpecification;
+    }
+
     private void createProduct() {
+
         product = new Product();
+
         product.setProductName(productName);
         product.setUnitOfMeasure(UnitOfMeasure.GRAM);
         product.setIngredients(new HashMap<>());

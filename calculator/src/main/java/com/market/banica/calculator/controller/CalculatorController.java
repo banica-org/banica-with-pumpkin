@@ -2,7 +2,8 @@ package com.market.banica.calculator.controller;
 
 import com.market.banica.calculator.dto.ProductDto;
 import com.market.banica.calculator.service.contract.CalculatorService;
-import lombok.RequiredArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,19 +24,21 @@ import java.util.List;
 
 @RestController
 @RequestMapping(value = "calculator")
-@RequiredArgsConstructor
+@AllArgsConstructor
+@NoArgsConstructor
 public class CalculatorController {
 
-   private final CalculatorService service;
+
+    private CalculatorService service;
     private static final Logger LOGGER = LoggerFactory.getLogger(CalculatorController.class);
 
     @GetMapping("/{clientId}/{itemName}/{quantity}")
-    public List<ProductDto> getRecipe(@PathVariable("clientId") @NotBlank String clientId,
-                                                @PathVariable("itemName") @NotBlank String itemName,
-                                                @PathVariable("quantity") @Min(1) long quantity) {
+    public List<ProductDto> getProduct(@PathVariable("clientId") @NotBlank String clientId,
+                                       @PathVariable("itemName") @NotBlank String itemName,
+                                       @PathVariable("quantity") @Min(1) long quantity) {
         LOGGER.info("GET /calculator called");
 
 
-        return service.getRecipe(clientId,itemName, quantity);
+        return service.getProduct(clientId, itemName, quantity);
     }
 }
