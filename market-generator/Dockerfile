@@ -20,5 +20,4 @@ CMD java \
 -Dcom.sun.management.jmxremote.port=${JMX_PORT} \
 -Dcom.sun.management.jmxremote.rmi.port=${JMX_PORT} \
 -Djava.rmi.server.hostname=${VM_IP} \
--Dsun.rmi.transport.tcp.responseTimeout=60000 \
 -jar market-generator-1.0-SNAPSHOT.jar --market=${MARKET} --port=${SPRING_PORT} --grpc=${GRPC_PORT}
