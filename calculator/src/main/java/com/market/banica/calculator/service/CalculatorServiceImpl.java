@@ -323,7 +323,9 @@ public class CalculatorServiceImpl implements CalculatorService {
 
                         componentIngredientsNamesMap.merge(ingredientName,
                                 ingredientPriceVariant.getComponentIngredients().get(ingredientName),
-                                (v1, v2) -> Stream.concat(v1.stream(), v2.stream()).collect(Collectors.toList()));
+                                (productId1, productId2) ->
+                                        Stream.concat(productId1.stream(), productId2.stream())
+                                                .collect(Collectors.toList()));
                     }
 
                 }
@@ -393,12 +395,12 @@ public class CalculatorServiceImpl implements CalculatorService {
             compositeIngredientPriceVariants = compositeProductPriceVariantSets
                     .stream()
                     .flatMap(Collection::stream)
-                    .filter(l -> l.getProductName().equals(orderedProduct.getItemName()))
+                    .filter(priceComponentsSet -> priceComponentsSet.getProductName().equals(orderedProduct.getItemName()))
                     .collect(Collectors.toList());
 
-            compositeIngredientPriceVariants.forEach(m -> {
-                BigDecimal newPrice = m.getPrice().multiply(BigDecimal.valueOf(quantity));
-                m.setPrice(newPrice);
+            compositeIngredientPriceVariants.forEach(priceComponentsSet -> {
+                BigDecimal newPrice = priceComponentsSet.getPrice().multiply(BigDecimal.valueOf(quantity));
+                priceComponentsSet.setPrice(newPrice);
             });
         }
         compositeIngredientPriceVariants.addAll(simpleProductPriceVariantsSet);
@@ -416,11 +418,11 @@ public class CalculatorServiceImpl implements CalculatorService {
                 productDtoMap, productSpecificationMap, tempProduct,
                 ingredient, productPriceComponentsSetByProductIdMap);
 
-        simpleProductPriceVariantsSet.forEach(m -> {
-            BigDecimal newPrice = m.getPrice()
+        simpleProductPriceVariantsSet.forEach(priceComponentsSet -> {
+            BigDecimal newPrice = priceComponentsSet.getPrice()
                     .divide(BigDecimal.valueOf(tempProduct.getIngredients().get(ingredient.getItemName())),
                             RoundingMode.HALF_UP);
-            m.setPrice(newPrice);
+            priceComponentsSet.setPrice(newPrice);
         });
 
         List<List<ProductPriceComponentsSet>> compositeProductPriceVariantSets = result.get(ingredient.getItemName());
@@ -430,12 +432,12 @@ public class CalculatorServiceImpl implements CalculatorService {
         List<ProductPriceComponentsSet> compositeIngredientPriceVariants = compositeProductPriceVariantSets
                 .stream()
                 .flatMap(Collection::stream)
-                .filter(l -> l.getProductName().equals(ingredient.getItemName()))
+                .filter(priceComponentsSet -> priceComponentsSet.getProductName().equals(ingredient.getItemName()))
                 .collect(Collectors.toList());
 
-        compositeIngredientPriceVariants.forEach(m -> {
-            BigDecimal newPrice = m.getPrice().multiply(BigDecimal.valueOf(tempProduct.getIngredients().get(ingredient.getItemName())));
-            m.setPrice(newPrice);
+        compositeIngredientPriceVariants.forEach(priceComponentsSet -> {
+            BigDecimal newPrice = priceComponentsSet.getPrice().multiply(BigDecimal.valueOf(tempProduct.getIngredients().get(ingredient.getItemName())));
+            priceComponentsSet.setPrice(newPrice);
         });
         return compositeIngredientPriceVariants;
     }
@@ -637,8 +639,8 @@ public class CalculatorServiceImpl implements CalculatorService {
                                                                                                                              ProductPriceComponentsSet ingredientPriceVariant,
                                                                                                                              Map<Integer, ProductPriceComponentsSet> productPriceComponentsSetByProductIdMap) {
         return compositeProductPriceVariant.stream()
-                .filter(k -> k.getComponentIngredients().containsKey(ingredientPriceVariant.getProductName()))
-                .flatMap(l -> l.getComponentIngredients().get(ingredientPriceVariant.getProductName()).stream())
+                .filter(priceComponentsSet -> priceComponentsSet.getComponentIngredients().containsKey(ingredientPriceVariant.getProductName()))
+                .flatMap(priceComponentsSet -> priceComponentsSet.getComponentIngredients().get(ingredientPriceVariant.getProductName()).stream())
                 .map(productPriceComponentsSetByProductIdMap::get)
                 .collect(Collectors.toMap(k -> ingredientPriceVariant, v -> v));
     }
@@ -695,8 +697,8 @@ public class CalculatorServiceImpl implements CalculatorService {
                                                                                       List<ProductDto> productDtoList) {
 
         return productDtoList.stream()
-                .filter(m -> isLeafIngredient(productDtoNamesMap, m) ^
-                        m.getTotalPrice().equals(BigDecimal.valueOf(-1)))
+                .filter(productDto -> isLeafIngredient(productDtoNamesMap, productDto) ^
+                        productDto.getTotalPrice().equals(BigDecimal.valueOf(-1)))
                 .findFirst();
     }
 
