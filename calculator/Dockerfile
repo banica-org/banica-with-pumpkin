@@ -4,7 +4,7 @@ ENV VM_IP="0.0.0.0"
 
 RUN mkdir App
 WORKDIR App
-COPY ./target/aurora-1.0-SNAPSHOT.jar .
+COPY ./target/calculator-1.0-SNAPSHOT.jar .
 
 EXPOSE 7301
 EXPOSE 8301
