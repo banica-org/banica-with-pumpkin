@@ -2,6 +2,7 @@ package com.market.banica.order.book.service.grpc;
 
 
 import com.market.banica.common.exception.TrackingException;
+import com.market.banica.common.validator.DataValidator;
 import com.market.banica.order.book.model.ItemMarket;
 import com.orderbook.CancelSubscriptionRequest;
 import com.orderbook.CancelSubscriptionResponse;
@@ -32,6 +33,8 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
     @Override
     public void getOrderBookItemLayers(ItemOrderBookRequest request, StreamObserver<ItemOrderBookResponse> responseObserver) {
         final String itemName = request.getItemName();
+        DataValidator.validateIncomingData(itemName);
+
         final long itemQuantity = request.getQuantity();
 
         List<OrderBookLayer> requestedItem = itemMarket.getRequestedItem(itemName, itemQuantity);
@@ -50,6 +53,9 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
     public void announceItemInterest(InterestsRequest request, StreamObserver<InterestsResponse> responseObserver) {
         final String itemName = request.getItemName();
         final String clientId = request.getClientId();
+
+        DataValidator.validateIncomingData(itemName);
+        DataValidator.validateIncomingData(clientId);
 
         try {
 
@@ -71,6 +77,9 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
     public void cancelItemSubscription(CancelSubscriptionRequest request, StreamObserver<CancelSubscriptionResponse> responseObserver) {
         final String itemName = request.getItemName();
         final String clientId = request.getClientId();
+
+        DataValidator.validateIncomingData(itemName);
+        DataValidator.validateIncomingData(clientId);
 
         try {
 

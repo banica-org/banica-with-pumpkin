@@ -5,6 +5,7 @@ import com.aurora.AuroraServiceGrpc;
 import com.market.banica.common.channel.ChannelRPCConfig;
 import com.market.banica.common.exception.TrackingException;
 import com.market.banica.common.exception.StoppedStreamException;
+import com.market.banica.common.validator.DataValidator;
 import com.market.banica.order.book.model.ItemMarket;
 import com.market.banica.order.book.observer.AuroraStreamObserver;
 import io.grpc.Context;
@@ -49,6 +50,9 @@ public class AuroraClient {
     }
 
     public void startSubscription(String requestedItem, String clientId) throws TrackingException {
+
+        DataValidator.validateIncomingData(requestedItem);
+        DataValidator.validateIncomingData(clientId);
 
         if (cancellableStubs.containsKey(requestedItem)) {
             throw new TrackingException("Item is already being tracked!");

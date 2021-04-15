@@ -19,7 +19,7 @@ public class AuroraClientSideService {
 
     private static final String ORDERBOOK_TOPIC_PREFIX = "orderbook/";
 
-    private static final String AURORA_BAD_RESPONSE_MESSAGE = "Bad message from aurora service";
+
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AuroraClientSideService.class);
 
@@ -36,7 +36,7 @@ public class AuroraClientSideService {
         Aurora.AuroraResponse auroraResponse = getAuroraResponse(productName);
 
         if (!auroraResponse.getMessage().is(InterestsResponse.class)) {
-            throw new IncorrectResponseException(AURORA_BAD_RESPONSE_MESSAGE);
+            throw new IncorrectResponseException("Incorrect response! Response must be from InterestsResponse type.");
         }
     }
 
@@ -46,7 +46,7 @@ public class AuroraClientSideService {
         Aurora.AuroraResponse auroraResponse = getAuroraResponse(productName);
 
         if (!auroraResponse.getMessage().is(CancelSubscriptionResponse.class)) {
-            throw new IncorrectResponseException(AURORA_BAD_RESPONSE_MESSAGE);
+            throw new IncorrectResponseException("Incorrect response! Response must be from CancelSubscriptionResponse type.");
         }
     }
 
@@ -57,7 +57,7 @@ public class AuroraClientSideService {
         Aurora.AuroraResponse auroraResponse = getAuroraResponse(productName);
 
         if (!auroraResponse.getMessage().is(ItemOrderBookResponse.class)) {
-            throw new IncorrectResponseException(AURORA_BAD_RESPONSE_MESSAGE);
+            throw new IncorrectResponseException("Incorrect response! Response must be from ItemOrderBookResponse type.");
         }
 
         ItemOrderBookResponse response;
@@ -66,7 +66,7 @@ public class AuroraClientSideService {
             response = auroraResponse.getMessage().unpack(ItemOrderBookResponse.class);
         } catch (InvalidProtocolBufferException e) {
             LOGGER.error("Unable to parse Any to desired class: {}", e.getMessage());
-            throw new IncorrectResponseException(AURORA_BAD_RESPONSE_MESSAGE);
+            throw new IncorrectResponseException("Incorrect response! Response must be from ItemOrderBookResponse type.");
         }
 
         return response;

@@ -20,8 +20,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Queue;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,7 +29,6 @@ public class ProductServiceImpl implements ProductService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProductServiceImpl.class);
     private static final String REGEX_DELIMITER_NEW_PRODUCT_INGREDIENTS = ",";
     private static final String REGEX_DELIMITER_NEW_PRODUCT_ENTRY_PAIRS = ":";
-    private static final String REGEX_INGREDIENTS_PATTERN = "(.+[a-z])(:)(.+\\d)";
 
     private final BackUpService backUpService;
     private final ProductBase productBase;
