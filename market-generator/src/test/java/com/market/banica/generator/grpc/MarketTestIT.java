@@ -91,7 +91,7 @@ public class MarketTestIT {
     }
 
     @Test
-    public void subscribeForItem_Should_Work() throws InterruptedException, IOException {
+    public void subscribeForItem_Should_SendResponses() throws InterruptedException, IOException {
 
         //Arrange
         createFakeServerMarket();
