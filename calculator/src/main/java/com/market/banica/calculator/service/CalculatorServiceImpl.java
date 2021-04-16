@@ -818,6 +818,14 @@ public class CalculatorServiceImpl implements CalculatorService {
                             product.getProductName()));
         }
 
+        if (orderBookResponse.getOrderbookLayersList().stream()
+                .mapToLong(OrderBookLayer::getQuantity).count() < quantity) {
+
+            throw new BadResponseException(String
+                    .format("Market does not have enough resource of %s t create requested product",
+                            product.getProductName()));
+        }
+
         String productName = orderBookResponse.getItemName();
 
         List<ProductSpecification> productSpecifications = new ArrayList<>();
