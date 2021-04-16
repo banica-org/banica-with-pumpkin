@@ -9,7 +9,6 @@ import com.market.Origin;
 import com.market.TickResponse;
 import com.market.banica.common.channel.ChannelRPCConfig;
 import com.market.banica.order.book.OrderBookApplication;
-import com.market.banica.order.book.exception.TrackingException;
 import com.market.banica.order.book.model.ItemMarket;
 import com.market.banica.order.book.service.grpc.AuroraClient;
 import com.market.banica.order.book.service.grpc.OrderBookService;
@@ -29,6 +28,7 @@ import io.grpc.inprocess.InProcessChannelBuilder;
 import io.grpc.inprocess.InProcessServerBuilder;
 import io.grpc.stub.StreamObserver;
 import io.grpc.testing.GrpcCleanupRule;
+import lombok.SneakyThrows;
 import org.junit.Rule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -210,8 +210,7 @@ class OrderBookComponentIT {
 
         when(itemMarket.getRequestedItem(productName, productQuantity)).thenReturn(layers);
 
-        // Start OrderBook
-        startOrderBookService(orderBookService,THREAD_SLEEP_TIME_DEFAULT);
+        startOrderBookService(orderBookService, THREAD_SLEEP_TIME_DEFAULT);
 
         startAuroraServiceWithRequestMethodOverridden();
 
@@ -258,13 +257,10 @@ class OrderBookComponentIT {
         grpcCleanup.register(InProcessServerBuilder
                 .forName(serverName).directExecutor()
                 .addService(new OrderBookServiceGrpc.OrderBookServiceImplBase() {
+                    @SneakyThrows
                     @Override
                     public void announceItemInterest(InterestsRequest request, StreamObserver<InterestsResponse> responseObserver) {
-                        try {
-                            auroraClient.startSubscription(request.getItemName(), request.getClientId());
-                        } catch (TrackingException e) {
-                            e.printStackTrace();
-                        }
+                        auroraClient.startSubscription(request.getItemName(), request.getClientId());
                         responseObserver.onNext(InterestsResponse.newBuilder().build());
                         responseObserver.onCompleted();
                     }
@@ -294,13 +290,10 @@ class OrderBookComponentIT {
         grpcCleanup.register(channel);
         grpcCleanup.register(InProcessServerBuilder
                 .forName(serverName).directExecutor().addService(new OrderBookServiceGrpc.OrderBookServiceImplBase() {
+                    @SneakyThrows
                     @Override
                     public void cancelItemSubscription(CancelSubscriptionRequest request, StreamObserver<CancelSubscriptionResponse> responseObserver) {
-                        try {
-                            auroraClient.stopSubscription(request.getItemName(), request.getClientId());
-                        } catch (TrackingException e) {
-                            e.printStackTrace();
-                        }
+                        auroraClient.stopSubscription(request.getItemName(), request.getClientId());
                         responseObserver.onNext(CancelSubscriptionResponse.newBuilder().build());
                         responseObserver.onCompleted();
                     }

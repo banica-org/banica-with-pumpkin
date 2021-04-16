@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 public class ChannelManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ChannelManager.class);
-    private static final int MAX_RETRY_ATTEMPTS = 1000;
+    private static final int MAX_RETRY_ATTEMPTS = 720;
 
     private final Map<String, ManagedChannel> channels = new ConcurrentHashMap<>();
 
@@ -33,8 +33,7 @@ public class ChannelManager {
     public Optional<ManagedChannel> getChannelByKey(String key) {
         LOGGER.debug("Getting channel with key {}", key);
         Optional<ManagedChannel> managedChannel = Optional.ofNullable(channels.get(key));
-        if (managedChannel.isPresent() && !managedChannel.get()
-                .getState(true).equals(ConnectivityState.READY)) {
+        if (!managedChannel.isPresent()) {
             managedChannel = Optional.ofNullable(null);
         }
         return managedChannel;
@@ -48,7 +47,6 @@ public class ChannelManager {
         return this.channels.entrySet().stream()
                 .filter(entry -> entry.getKey().startsWith(loweredPrefix))
                 .map(Map.Entry::getValue)
-                .filter(channel -> channel.getState(true).equals(ConnectivityState.READY))
                 .collect(Collectors.toList());
     }
 

@@ -1,0 +1,67 @@
+{
+  "crusts" : {
+    "productName" : "crusts",
+    "unitOfMeasure" : "GRAM",
+    "ingredients" : {
+      "water" : 50,
+      "eggs" : 12
+    }
+  },
+  "eggs" : {
+    "productName" : "eggs",
+    "unitOfMeasure" : "PIECE",
+    "ingredients" : { }
+  },
+  "tomatoes" : {
+    "productName" : "tomatoes",
+    "unitOfMeasure" : "GRAM",
+    "ingredients" : { }
+  },
+  "milk" : {
+    "productName" : "milk",
+    "unitOfMeasure" : "MILLILITER",
+    "ingredients" : { }
+  },
+  "sauce" : {
+    "productName" : "sauce",
+    "unitOfMeasure" : "GRAM",
+    "ingredients" : {
+      "water" : 150,
+      "sugar" : 50,
+      "ketchup" : 50
+    }
+  },
+  "banica" : {
+    "productName" : "banica",
+    "unitOfMeasure" : "GRAM",
+    "ingredients" : {
+      "pumpkin" : 300,
+      "milk" : 2,
+      "crusts" : 200,
+      "sauce" : 150
+    }
+  },
+  "pumpkin" : {
+    "productName" : "pumpkin",
+    "unitOfMeasure" : "GRAM",
+    "ingredients" : { }
+  },
+  "water" : {
+    "productName" : "water",
+    "unitOfMeasure" : "MILLILITER",
+    "ingredients" : { }
+  },
+  "sugar" : {
+    "productName" : "sugar",
+    "unitOfMeasure" : "GRAM",
+    "ingredients" : { }
+  },
+  "ketchup" : {
+    "productName" : "ketchup",
+    "unitOfMeasure" : "MILLILITER",
+    "ingredients" : {
+      "water" : 100,
+      "tomatoes" : 65
+    }
+  }
+}
