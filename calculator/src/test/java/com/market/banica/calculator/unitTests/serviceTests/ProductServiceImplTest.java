@@ -1,8 +1,9 @@
-package com.market.banica.calculator.service;
+package com.market.banica.calculator.unitTests.serviceTests;
 
 import com.market.banica.calculator.data.contract.ProductBase;
 import com.market.banica.calculator.enums.UnitOfMeasure;
 import com.market.banica.calculator.model.Product;
+import com.market.banica.calculator.service.ProductServiceImpl;
 import com.market.banica.calculator.service.contract.BackUpService;
 import com.market.banica.calculator.service.grpc.AuroraClientSideService;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,6 +16,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
@@ -285,30 +287,30 @@ class ProductServiceImplTest {
     }
 
     @Test
-    void getProductAsListProductShouldReturnProductAndHisIngredients() {
+    void getProductIngredientsWithQuantitiesPerParentShouldReturnProductIngredientsAndQuantitiesPerParent() {
         //Arrange
         setBanicaIngredients();
         when(productBase.getDatabase()).thenReturn(demoDataBase);
 
         //Act
-        Map<Product,List<Long>> products = productService.getProductIngredientsWithQuantity(BANICA);
+        Map<Product, Map<String, Long>> products = productService.getProductIngredientsWithQuantityPerParent(BANICA);
 
         //Assert
-        assertTrue(products.containsKey(banica));
         assertTrue(products.containsKey(pumpkin));
+        assertTrue(products.get(pumpkin).containsKey(BANICA));
 
     }
 
     @Test
-    void getProductAsListProductShouldReturnSingleProductAndWithoutIngredients() {
+    void getProductAsListProductShouldReturnEmptyMapAndWithoutIngredients() {
         //Arrange
         when(productBase.getDatabase()).thenReturn(demoDataBase);
 
         //Act
-        Map<Product,List<Long>> products = productService.getProductIngredientsWithQuantity(BANICA);
+        Map<Product, Map<String, Long>> products = productService.getProductIngredientsWithQuantityPerParent(BANICA);
 
         //Assert
-        assertTrue(products.containsKey(banica));
+        assertFalse(products.containsKey(banica));
 
     }
 

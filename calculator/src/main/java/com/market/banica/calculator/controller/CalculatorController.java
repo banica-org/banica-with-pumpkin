@@ -26,16 +26,17 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CalculatorController {
 
-   private final CalculatorService service;
+
+    private final CalculatorService service;
     private static final Logger LOGGER = LoggerFactory.getLogger(CalculatorController.class);
 
     @GetMapping("/{clientId}/{itemName}/{quantity}")
-    public List<ProductDto> getRecipe(@PathVariable("clientId") @NotBlank String clientId,
-                                                @PathVariable("itemName") @NotBlank String itemName,
-                                                @PathVariable("quantity") @Min(1) long quantity) {
+    public List<ProductDto> getProduct(@PathVariable("clientId") @NotBlank String clientId,
+                                       @PathVariable("itemName") @NotBlank String itemName,
+                                       @PathVariable("quantity") @Min(1) long quantity) {
         LOGGER.info("GET /calculator called");
 
 
-        return service.getRecipe(clientId,itemName, quantity);
+        return service.getProduct(clientId, itemName, quantity);
     }
 }

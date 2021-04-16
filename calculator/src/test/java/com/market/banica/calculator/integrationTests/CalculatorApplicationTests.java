@@ -1,4 +1,4 @@
-package com.market.banica.calculator;
+package com.market.banica.calculator.integrationTests;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

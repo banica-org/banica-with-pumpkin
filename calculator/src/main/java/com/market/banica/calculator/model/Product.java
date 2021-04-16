@@ -10,19 +10,27 @@ import java.util.Objects;
 
 @Data
 @Component
-public class Product  {
+public class Product {
 
     private String productName;
 
     private UnitOfMeasure unitOfMeasure;
 
-    private Map<String,Long> ingredients = new HashMap<>();
+    private Map<String, Long> ingredients = new HashMap<>();
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Product)) return false;
+
+        if (this == o) {
+            return true;
+        }
+
+        if (!(o instanceof Product)) {
+            return false;
+        }
+
         Product product = (Product) o;
+
         return Objects.equals(getProductName(), product.getProductName());
     }
 

@@ -1,9 +1,10 @@
-package com.market.banica.calculator.controllerTests;
+package com.market.banica.calculator.unitTests.controllerTests;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.market.banica.calculator.controller.CalculatorController;
 import com.market.banica.calculator.dto.ProductDto;
 import com.market.banica.calculator.service.contract.CalculatorService;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,32 +30,39 @@ import static org.mockito.BDDMockito.given;
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(CalculatorController.class)
 public class CalculatorControllerTest {
+
     @MockBean
     CalculatorService service;
+
     @Autowired
     private MockMvc mockMvc;
+
+    private String clientId;
+    private String product;
+    private int quantity;
+    private int totalPrice;
+
     private JacksonTester<List<ProductDto>> jacksonResponseProductDtoList;
 
     @BeforeEach
     private void setUp() {
         JacksonTester.initFields(this, new ObjectMapper());
+
+        clientId = "dummyClient";
+        product = "baklava";
+        quantity = 100;
+        totalPrice = 10;
     }
 
     @Test
     void getRecipe() throws Exception {
-        String clientId = "dummyClient";
-        String product = "baklava";
-        int quantity = 100;
 
         List<ProductDto> productDtoList = new ArrayList<>();
-        ProductDto dummyRecipe = new ProductDto();
-        dummyRecipe.setIngredients(new HashMap<>());
-        dummyRecipe.setItemName("baklava");
-        dummyRecipe.setTotalPrice(BigDecimal.valueOf(10));
+        ProductDto dummyRecipe = getProductDto();
         productDtoList.add(dummyRecipe);
 
 
-        given(service.getRecipe(clientId, product, 100)).willReturn(productDtoList);
+        given(service.getProduct(clientId, product, quantity)).willReturn(productDtoList);
 
 
         MockHttpServletResponse response = mockMvc.perform(MockMvcRequestBuilders.get
@@ -65,5 +73,14 @@ public class CalculatorControllerTest {
 
         assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
         assertThat(response.getContentAsString()).isEqualTo(jacksonResponseProductDtoList.write(productDtoList).getJson());
+    }
+
+    @NotNull
+    private ProductDto getProductDto() {
+        ProductDto dummyRecipe = new ProductDto();
+        dummyRecipe.setIngredients(new HashMap<>());
+        dummyRecipe.setItemName(product);
+        dummyRecipe.setTotalPrice(BigDecimal.valueOf(totalPrice));
+        return dummyRecipe;
     }
 }
