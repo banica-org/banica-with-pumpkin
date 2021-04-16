@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import com.market.banica.calculator.data.contract.ProductBase;
 import com.market.banica.calculator.model.Product;
 import com.market.banica.calculator.service.contract.BackUpService;
+import com.market.banica.common.util.ApplicationDirectoryUtil;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,7 +15,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -37,12 +37,12 @@ public class BackUpServiceImpl implements BackUpService {
 
     @Override
     @PostConstruct
-    public void readBackUp() {
+    public void readBackUp() throws IOException {
         LOGGER.debug("In readBackUp method");
 
         if (doesBackUpFileExists()) {
 
-            try (InputStream input = new FileInputStream(databaseBackUpUrl)) {
+            try (InputStream input = new FileInputStream(ApplicationDirectoryUtil.getConfigFile(databaseBackUpUrl))) {
 
                 ConcurrentHashMap<String, Product> data = getDataFromBackUpFile(input);
 
@@ -65,7 +65,7 @@ public class BackUpServiceImpl implements BackUpService {
         Map<String, Product> data = getDataFromDatabase();
         ObjectWriter objectWriter = new ObjectMapper().writerWithDefaultPrettyPrinter();
 
-        try (Writer output = new OutputStreamWriter(new FileOutputStream(databaseBackUpUrl), UTF_8)) {
+        try (Writer output = new OutputStreamWriter(new FileOutputStream(ApplicationDirectoryUtil.getConfigFile(databaseBackUpUrl)), UTF_8)) {
 
             String jsonData = getStringFromMap(data, objectWriter);
 
@@ -81,18 +81,17 @@ public class BackUpServiceImpl implements BackUpService {
     private void createEmptyBackUpFile() {
         LOGGER.debug("In createEmptyBackUpFile private method");
 
-        try (Writer ignored = new OutputStreamWriter(
-                new FileOutputStream(databaseBackUpUrl, true), UTF_8)) {
-
+        try {
+            ApplicationDirectoryUtil.getConfigFile(databaseBackUpUrl);
         } catch (IOException e) {
             LOGGER.error("Exception thrown during creating empty file for database back-up", e);
         }
     }
 
-    private boolean doesBackUpFileExists() {
+    private boolean doesBackUpFileExists() throws IOException {
         LOGGER.debug("In doesBackUpFileExists private method");
 
-        return new File(databaseBackUpUrl).length() != 0;
+        return ApplicationDirectoryUtil.getConfigFile(databaseBackUpUrl).length() != 0;
     }
 
     private ConcurrentHashMap<String, Product> getDataFromBackUpFile(InputStream input) throws IOException {
@@ -121,4 +120,5 @@ public class BackUpServiceImpl implements BackUpService {
 
         productBase.getDatabase().putAll(data);
     }
+
 }

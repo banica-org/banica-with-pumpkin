@@ -3,6 +3,7 @@ package com.market.banica.calculator.service;
 import com.market.banica.calculator.data.contract.ProductBase;
 import com.market.banica.calculator.enums.UnitOfMeasure;
 import com.market.banica.calculator.model.Product;
+import com.market.banica.common.util.ApplicationDirectoryUtil;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,9 +12,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -27,7 +31,7 @@ class BackUpServiceImplTest {
     public static final String PRODUCT_NAME = "crusts";
     public static final String BACK_UP_SERVICE_DATABASE_BACKUP_URL_FIELD = "databaseBackUpUrl";
     public static final String PRODUCT_DATABASE_BACKUP_URL_FIELD = "productBase";
-    private final String DATABASE_BACKUP_URL = "backUpRecipeBase.json";
+    private final String DATABASE_BACKUP_URL = "test-backUpRecipeBase.json";
     private File testFile;
     private ConcurrentHashMap<String, Product> base;
 
@@ -45,17 +49,17 @@ class BackUpServiceImplTest {
     }
 
     @AfterEach
-    void tearDown() {
-        Paths.get(DATABASE_BACKUP_URL).toFile().delete();
+    void tearDown() throws IOException {
+        ApplicationDirectoryUtil.getConfigFile(DATABASE_BACKUP_URL).delete();
     }
 
     @Test
-    void readBackUpShouldCreateNewFileIfBackUpFileDoesNotExists() {
+    void readBackUpShouldCreateNewFileIfBackUpFileDoesNotExists() throws IOException {
         //Act
         backUpService.readBackUp();
 
         //Assert
-        File jsonFile = Paths.get(DATABASE_BACKUP_URL).toFile();
+        File jsonFile = ApplicationDirectoryUtil.getConfigFile(DATABASE_BACKUP_URL);
         assertEquals(jsonFile.length(), 0);
     }
 
@@ -95,19 +99,17 @@ class BackUpServiceImplTest {
         backUpService.writeBackUp();
 
         //Assert
-        File file = Paths.get(DATABASE_BACKUP_URL).toFile();
+        File file = ApplicationDirectoryUtil.getConfigFile(DATABASE_BACKUP_URL);
         assertTrue(file.length() != 0);
     }
 
     private void createFileWithoutData() throws IOException {
-        testFile = new File(DATABASE_BACKUP_URL);
-        try (OutputStreamWriter outputStreamWriter = new OutputStreamWriter(new FileOutputStream(testFile), StandardCharsets.UTF_8)) {
-        }
+        testFile = ApplicationDirectoryUtil.getConfigFile(DATABASE_BACKUP_URL);
 
     }
 
     private void createFileWithValidData() throws IOException {
-        testFile = new File(DATABASE_BACKUP_URL);
+        testFile = ApplicationDirectoryUtil.getConfigFile(DATABASE_BACKUP_URL);
 
         String text = "{\n" +
                 "  \"crusts\": {\n" +
@@ -123,4 +125,5 @@ class BackUpServiceImplTest {
             bufferedWriter.write(text);
         }
     }
+
 }
