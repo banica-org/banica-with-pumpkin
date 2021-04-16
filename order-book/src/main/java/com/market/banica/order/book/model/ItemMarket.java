@@ -35,7 +35,6 @@ public class ItemMarket {
     public ItemMarket() {
         this.allItems = new ConcurrentHashMap<>();
         this.productsQuantity = new ConcurrentHashMap<>();
-        addDummyData();
     }
 
     public Optional<Set<Item>> getItemSetByName(String itemName) {
@@ -151,28 +150,5 @@ public class ItemMarket {
         item.setOrigin(tickResponse.getOrigin());
 
         return item;
-    }
-
-    private void addDummyData() {
-
-        TreeSet<Item> cheeseItems = new TreeSet<>();
-        cheeseItems.add(new Item(2.6, 2, Origin.AMERICA));
-        cheeseItems.add(new Item(2.6, 2, Origin.AMERICA));
-        cheeseItems.add(new Item(4.0, 5, Origin.EUROPE));
-        cheeseItems.add(new Item(4.1, 2, Origin.ASIA));
-        this.allItems.put("cheese", cheeseItems);
-        for (Item cheeseItem : cheeseItems) {
-            this.productsQuantity.merge("cheese", cheeseItem.getQuantity(), Long::sum);
-        }
-
-        TreeSet<Item> cocoaItems = new TreeSet<>();
-
-        cocoaItems.add(new Item(1.6, 3, Origin.ASIA));
-        cocoaItems.add(new Item(1.5, 4, Origin.AMERICA));
-        cocoaItems.add(new Item(1.7, 1, Origin.EUROPE));
-        this.allItems.put("cocoa", cocoaItems);
-        for (Item cocoaItem : cocoaItems) {
-            this.productsQuantity.merge("cocoa", cocoaItem.getQuantity(), Long::sum);
-        }
     }
 }
