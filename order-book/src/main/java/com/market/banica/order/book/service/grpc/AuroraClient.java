@@ -50,7 +50,7 @@ public class AuroraClient {
 
     }
 
-    public void startSubscription(String requestedItem, String clientId) throws TrackingException {
+    public void startSubscription(String requestedItem, String clientId) {
 
         if (cancellableStubs.containsKey(requestedItem)) {
             throw new TrackingException("Item is already being tracked!");
@@ -73,7 +73,7 @@ public class AuroraClient {
         }
     }
 
-    public void stopSubscription(String requestedItem, String clientId) throws TrackingException {
+    public void stopSubscription(String requestedItem, String clientId) {
 
         if (!cancellableStubs.containsKey(requestedItem)) {
             throw new TrackingException("Item is not being tracked!");

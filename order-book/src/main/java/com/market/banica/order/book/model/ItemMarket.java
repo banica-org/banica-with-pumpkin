@@ -2,7 +2,6 @@ package com.market.banica.order.book.model;
 
 import com.aurora.Aurora;
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.market.Origin;
 import com.market.TickResponse;
 import com.market.banica.order.book.exception.IncorrectResponseException;
 import com.orderbook.OrderBookLayer;
@@ -47,6 +46,7 @@ public class ItemMarket {
 
     public void addTrackedItem(String itemName) {
         this.allItems.put(itemName, new TreeSet<>());
+        this.productsQuantity.putIfAbsent(itemName, 0L);
     }
 
     public void removeUntrackedItem(String itemName) {
@@ -151,4 +151,5 @@ public class ItemMarket {
 
         return item;
     }
+
 }
