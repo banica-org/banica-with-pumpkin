@@ -1,6 +1,8 @@
 package com.market.banica.calculator.service.contract;
 
-import com.market.banica.calculator.dto.RecipeDTO;
+import com.market.banica.calculator.dto.ProductDto;
+
+import java.util.List;
 
 /**
  * Date: 3/10/2021 Time: 5:29 PM
@@ -15,5 +17,5 @@ public interface CalculatorService {
      * @param quantity quantity of the item
      * @return recipe for item
      */
-    RecipeDTO getRecipe(String clientId, String itemName, int quantity);
+   List<ProductDto> getRecipe(String clientId, String itemName, long quantity);
 }

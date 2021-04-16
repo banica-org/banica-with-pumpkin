@@ -75,9 +75,9 @@ class JMXServiceImplTest {
     @Test
     void getProductQuantityShouldInvokeProductServiceGetProductQuantityAndReturnProductQuantity() {
         //Arrange
-        when(productService.getProductQuantity(PRODUCT_NAME, INGREDIENT_NAME)).thenReturn(1);
+        when(productService.getProductQuantity(PRODUCT_NAME, INGREDIENT_NAME)).thenReturn(1L);
         //Act
-        int expected = jmxService.getProductQuantity(PRODUCT_NAME, INGREDIENT_NAME);
+        long expected = jmxService.getProductQuantity(PRODUCT_NAME, INGREDIENT_NAME);
         // Assert
         assertEquals(expected, 1);
     }

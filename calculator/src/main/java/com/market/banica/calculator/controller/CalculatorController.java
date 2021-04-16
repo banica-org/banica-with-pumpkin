@@ -1,9 +1,10 @@
 package com.market.banica.calculator.controller;
 
-import com.market.banica.calculator.dto.RecipeDTO;
+import com.market.banica.calculator.dto.ProductDto;
 import com.market.banica.calculator.service.contract.CalculatorService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
+import java.util.List;
 
 /**
  * Date: 3/10/2021 Time: 7:44 AM
@@ -24,19 +26,16 @@ import javax.validation.constraints.NotBlank;
 @RequiredArgsConstructor
 public class CalculatorController {
 
-    private final CalculatorService service;
-
+   private final CalculatorService service;
+    private static final Logger LOGGER = LoggerFactory.getLogger(CalculatorController.class);
 
     @GetMapping("/{clientId}/{itemName}/{quantity}")
-    public ResponseEntity<RecipeDTO> getRecipe(@PathVariable("clientId") @NotBlank String clientId,
-                                               @PathVariable("itemName") @NotBlank String itemName,
-                                               @PathVariable("quantity") @Min(1) int quantity) {
-
-        //Here service should be called
-        //replace new RecipeDTO with service call when service is completed
-        RecipeDTO recipeDTO = service.getRecipe(clientId, itemName, quantity);
+    public List<ProductDto> getRecipe(@PathVariable("clientId") @NotBlank String clientId,
+                                                @PathVariable("itemName") @NotBlank String itemName,
+                                                @PathVariable("quantity") @Min(1) long quantity) {
+        LOGGER.info("GET /calculator called");
 
 
-        return ResponseEntity.ok().body(recipeDTO);
+        return service.getRecipe(clientId,itemName, quantity);
     }
 }

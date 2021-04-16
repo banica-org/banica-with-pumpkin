@@ -16,12 +16,13 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ProductServiceImplTest {
     public static final String INGREDIENTS_MAP = "pumpkin:2";
-    public static final Integer QUANTITY = 2;
+    public static final long QUANTITY = 2;
     private static final String BANICA = "banica";
     private static final String PUMPKIN = "pumpkin";
     private Product banica;
@@ -192,7 +193,7 @@ class ProductServiceImplTest {
         when(productBase.getDatabase()).thenReturn(demoDataBase);
 
         //Act
-        int ingredientQuantity = productService.getProductQuantity(BANICA, PUMPKIN);
+        long ingredientQuantity = productService.getProductQuantity(BANICA, PUMPKIN);
 
         assertEquals(ingredientQuantity, QUANTITY);
     }
@@ -290,11 +291,11 @@ class ProductServiceImplTest {
         when(productBase.getDatabase()).thenReturn(demoDataBase);
 
         //Act
-        List<Product> products = productService.getProductAsListProduct(BANICA);
+        Map<Product,List<Long>> products = productService.getProductIngredientsWithQuantity(BANICA);
 
         //Assert
-        assertEquals(products.get(0), banica);
-        assertEquals(products.get(1), pumpkin);
+        assertTrue(products.containsKey(banica));
+        assertTrue(products.containsKey(pumpkin));
 
     }
 
@@ -304,16 +305,16 @@ class ProductServiceImplTest {
         when(productBase.getDatabase()).thenReturn(demoDataBase);
 
         //Act
-        List<Product> products = productService.getProductAsListProduct(BANICA);
+        Map<Product,List<Long>> products = productService.getProductIngredientsWithQuantity(BANICA);
 
         //Assert
-        assertEquals(products.get(0), banica);
+        assertTrue(products.containsKey(banica));
 
     }
 
     private void setBanicaIngredients() {
         demoDataBase.put(PUMPKIN, pumpkin);
-        Map<String, Integer> ingredients = new ConcurrentHashMap<>();
+        Map<String, Long> ingredients = new ConcurrentHashMap<>();
         ingredients.put(PUMPKIN, QUANTITY);
         banica.setIngredients(ingredients);
     }

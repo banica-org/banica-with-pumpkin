@@ -3,6 +3,7 @@ package com.market.banica.calculator.service.contract;
 import com.market.banica.calculator.model.Product;
 
 import java.util.List;
+import java.util.Map;
 
 public interface ProductService {
 
@@ -11,11 +12,11 @@ public interface ProductService {
     void createProduct(String newProductName, String unitOfMeasure,
                        String ingredientsMap);
 
-    void addIngredient(String parentProductName, String productName, int quantity);
+    void addIngredient(String parentProductName, String productName, long quantity);
 
-    void setProductQuantity(String parentProductName, String productName, int newQuantity);
+    void setProductQuantity(String parentProductName, String productName, long newQuantity);
 
-    int getProductQuantity(String parentProductName, String productName);
+    long getProductQuantity(String parentProductName, String productName);
 
     String getUnitOfMeasure(String productName);
 
@@ -25,7 +26,7 @@ public interface ProductService {
 
     void deleteProductFromParentIngredients(String parentProductName, String productName);
 
-    List<Product> getProductAsListProduct(String productName);
+    Map<Product, List<Long>> getProductIngredientsWithQuantity(String productName);
 
-    void getAllProductsAsListProduct();
+    Product getProductFromDatabase(String productName);
 }

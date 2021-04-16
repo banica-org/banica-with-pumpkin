@@ -14,7 +14,7 @@ public interface JMXServiceMBean {
 
     void setProductQuantity(String recipeName, String ingredientName, int newQuantity);
 
-    int getProductQuantity(String recipeName, String ingredientName);
+    long getProductQuantity(String recipeName, String ingredientName);
 
     String getUnitOfMeasure(String productName);
 
