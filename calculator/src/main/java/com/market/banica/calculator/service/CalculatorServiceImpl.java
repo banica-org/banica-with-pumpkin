@@ -7,6 +7,7 @@ import com.google.gson.Gson;
 import com.market.banica.calculator.dto.ProductDto;
 import com.market.banica.calculator.dto.ProductPriceComponentsSet;
 import com.market.banica.calculator.dto.ProductSpecification;
+import com.market.banica.calculator.exception.exceptions.BadResponseException;
 import com.market.banica.calculator.model.Pair;
 import com.market.banica.calculator.model.Product;
 import com.market.banica.calculator.service.contract.CalculatorService;
@@ -810,6 +811,10 @@ public class CalculatorServiceImpl implements CalculatorService {
                                                     Map<String, List<ProductSpecification>> productSpecificationMap) {
 
         ItemOrderBookResponse orderBookResponse = auroraService.getIngredient(product.getProductName(), clientId, quantity);
+
+        if(orderBookResponse.getOrderbookLayersList().isEmpty()){
+            throw new BadResponseException(String.format("Market does not have enough resource of %s t create requested product",product.getProductName()));
+        }
 
         String productName = orderBookResponse.getItemName();
 

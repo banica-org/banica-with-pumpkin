@@ -79,6 +79,9 @@ public class CalculatorComponentIT {
     @Autowired
     private AuroraClientSideService auroraClientSideService;
 
+    @Value(value = "${product.location}")
+    private String location;
+
     @Value(value = "${client.id}")
     private String clientId;
 
@@ -283,13 +286,11 @@ public class CalculatorComponentIT {
     private ProductDto createProductDTO() {
         ProductDto response = new ProductDto();
 
-        ProductSpecification productSpecification = createProductSpecification();
-
         BigDecimal totalPrice = BigDecimal.valueOf(price * productQuantity);
 
         response.setItemName(productName);
         response.setTotalPrice(totalPrice);
-        response.setProductSpecifications(Collections.singletonList(productSpecification));
+        response.setProductSpecifications(Collections.singletonList(createProductSpecification()));
 
         return response;
     }
@@ -299,7 +300,7 @@ public class CalculatorComponentIT {
 
         ProductSpecification productSpecification = new ProductSpecification();
 
-        productSpecification.setLocation("AMERICA");
+        productSpecification.setLocation(location);
         productSpecification.setPrice(BigDecimal.valueOf(price));
         productSpecification.setQuantity(productQuantity);
 

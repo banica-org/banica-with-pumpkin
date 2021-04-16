@@ -317,7 +317,7 @@ public class ProductServiceImpl implements ProductService {
 
             Product tempParentProduct = tempContainer.remove();
 
-            if (!tempParentProduct.getIngredients().isEmpty()) {
+            if (tempParentProduct.getIngredients() != null && !tempParentProduct.getIngredients().isEmpty()) {
 
                 Collection<Product> tempIngredients =
                         convertProductIngredientsNamesToCollectionOfProducts(tempParentProduct);
@@ -327,12 +327,12 @@ public class ProductServiceImpl implements ProductService {
                 tempIngredients.forEach(ingredient -> {
                     if (productQuantitiesMap.containsKey(ingredient)) {
                         productQuantitiesMap
-                                .get(ingredient).put(tempParentProduct.getProductName()
-                                , tempParentProduct.getIngredients().get(ingredient.getProductName()));
+                                .get(ingredient).put(tempParentProduct.getProductName(),
+                                tempParentProduct.getIngredients().get(ingredient.getProductName()));
                     } else {
                         productQuantitiesMap.put(ingredient, new HashMap<String, Long>() {{
-                            put(tempParentProduct.getProductName()
-                                    , tempParentProduct.getIngredients().get(ingredient.getProductName()));
+                            put(tempParentProduct.getProductName(),
+                                    tempParentProduct.getIngredients().get(ingredient.getProductName()));
                         }});
                     }
                 });
@@ -340,10 +340,10 @@ public class ProductServiceImpl implements ProductService {
         }
     }
 
-    private Collection<Product> convertProductIngredientsNamesToCollectionOfProducts(Product parent) {
+    private Collection<Product> convertProductIngredientsNamesToCollectionOfProducts(Product parentProduct) {
         LOGGER.debug("In convertProductIngredientsNamesToCollectionOfProducts private method");
 
-        return parent.getIngredients().keySet().stream()
+        return parentProduct.getIngredients().keySet().stream()
                 .map(this::getProductFromDatabase)
                 .collect(Collectors.toCollection(ArrayDeque::new));
 
