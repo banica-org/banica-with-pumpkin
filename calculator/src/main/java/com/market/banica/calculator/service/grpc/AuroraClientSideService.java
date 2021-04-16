@@ -34,8 +34,8 @@ public class AuroraClientSideService {
 
     public void announceInterests(String productName) {
         LOGGER.debug("Inside announceInterests method with parameter product name: {}", productName);
-        Aurora.AuroraResponse auroraResponse = getAuroraResponse(CLIENT_ID, productName);
-
+        String message = String.format("%s=subscribe", productName);
+        Aurora.AuroraResponse auroraResponse = getAuroraResponse(CLIENT_ID, message);
         if (!auroraResponse.getMessage().is(InterestsResponse.class)) {
             throw new BadResponseException(AURORA_BAD_RESPONSE_MESSAGE);
         }
@@ -43,8 +43,8 @@ public class AuroraClientSideService {
 
     public void cancelSubscription(String productName) {
         LOGGER.debug("Inside cancelSubscription method with parameter product name: {}", productName);
-
-        Aurora.AuroraResponse auroraResponse = getAuroraResponse(CLIENT_ID, productName);
+        String message = String.format("%s=unsubscribe", productName);
+        Aurora.AuroraResponse auroraResponse = getAuroraResponse(CLIENT_ID, message);
 
         if (!auroraResponse.getMessage().is(CancelSubscriptionResponse.class)) {
             throw new BadResponseException(AURORA_BAD_RESPONSE_MESSAGE);
@@ -55,7 +55,7 @@ public class AuroraClientSideService {
         LOGGER.debug("Inside getIngredient method with parameter product name - {} and client id - {}"
                 , productName, clientId);
 
-        String message = String.format("%s/%s", productName, quantity);
+        String message = String.format("%s/%d", productName, quantity);
         Aurora.AuroraResponse auroraResponse = getAuroraResponse(clientId, message);
 
         if (!auroraResponse.getMessage().is(ItemOrderBookResponse.class)) {
