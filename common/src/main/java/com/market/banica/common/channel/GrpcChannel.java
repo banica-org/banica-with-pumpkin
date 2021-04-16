@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class GrpcChannel {
     public static final Logger log = LoggerFactory.getLogger(GrpcChannel.class);
-    private static final int MAX_RETRY_ATTEMPTS = 720;
+    private static final int MAX_RETRY_ATTEMPTS = 1000;
 
     private final ManagedChannel managedChannel;
 

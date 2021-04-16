@@ -88,7 +88,7 @@ public class AuroraClientSideService {
     private Aurora.AuroraRequest buildAuroraRequest(String message) {
         LOGGER.debug("In buildAuroraRequest private method");
 
-        LOGGER.debug("Building request with parameter {}.", message+"/2");
+        LOGGER.debug("Building request with parameter {}.", message);
         return Aurora.AuroraRequest
                 .newBuilder()
                 .setTopic(ORDERBOOK_TOPIC_PREFIX + message)
