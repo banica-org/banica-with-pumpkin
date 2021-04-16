@@ -51,7 +51,7 @@ class BackUpServiceImplTest {
     }
 
     @Test
-    void readBackUpShouldCreateNewFileIfBackUpFileDoesNotExists() {
+    void readBackUpShouldCreateNewFileIfBackUpFileDoesNotExists() throws IOException {
         //Act
         backUpService.readBackUp();
 
