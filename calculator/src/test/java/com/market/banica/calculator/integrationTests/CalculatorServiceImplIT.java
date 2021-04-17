@@ -1,5 +1,8 @@
 package com.market.banica.calculator.integrationTests;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.market.Origin;
@@ -111,41 +114,43 @@ public class CalculatorServiceImplIT {
     }
 
     @Test
-    public void getProductShouldReturnSingletonListProductDtoWhenProductHasNoIngredients() {
+    public void getProductShouldReturnSingletonListProductDtoWhenProductHasNoIngredients() throws JsonProcessingException {
         //given
-        String expectedResult = "[{" +
-                "\"itemName\":\"water\"," +
-                "\"totalPrice\":0.05," +
-                "\"productSpecifications\":[{" +
-                "      \"price\":0.01," +
-                "      \"location\":\"AMERICA\"," +
-                "      \"quantity\":5}]," +
-                "\"ingredients\":{}" +
-                "}]";
+        String expectedResult = "[ {\n" +
+                "  \"itemName\" : \"water\",\n" +
+                "  \"totalPrice\" : 0.05,\n" +
+                "  \"productSpecifications\" : [ {\n" +
+                "    \"price\" : 0.01,\n" +
+                "    \"location\" : \"AMERICA\",\n" +
+                "    \"quantity\" : 5\n" +
+                "  } ],\n" +
+                "  \"ingredients\" : { }\n" +
+                "} ]";
         doReturn(getTestData1().get(water)).when(auroraClientSideService)
                 .getIngredient(water, clientId, onlyWaterQuantity);
 
         //when
         List<ProductDto> actualResult = calculatorService.getProduct(clientId, water, onlyWaterQuantity);
 
-        System.out.println(actualResult.toString());
-        System.out.println(convertStringToListOfProductDto(expectedResult));
+        ObjectWriter objectWriter = new ObjectMapper().writerWithDefaultPrettyPrinter();
+        System.out.println(objectWriter.writeValueAsString(actualResult));
         //then
-        assertEquals(convertStringToListOfProductDto(expectedResult), actualResult);
+        assertEquals(convertStringToListOfProductDto(expectedResult).toString(), actualResult.toString());
     }
 
     @Test
     public void getProductShouldReturnSingletonListProductDtoWhenProductHasIngredientsButBetterSinglePrice() {
         //given
-        String expectedResult = "[{" +
-                "\"itemName\":\"banica\"," +
-                "\"totalPrice\":200000.0," +
-                "\"productSpecifications\":[{" +
-                "      \"price\":100000.0," +
-                "      \"location\":\"AMERICA\"," +
-                "      \"quantity\":2}]," +
-                "\"ingredients\":{}" +
-                "}]";
+        String expectedResult = "[ {\n" +
+                "  \"itemName\" : \"banica\",\n" +
+                "  \"totalPrice\" : 200000.0,\n" +
+                "  \"productSpecifications\" : [ {\n" +
+                "    \"price\" : 100000.0,\n" +
+                "    \"location\" : \"AMERICA\",\n" +
+                "    \"quantity\" : 2\n" +
+                "  } ],\n" +
+                "  \"ingredients\" : { }\n" +
+                "} ]\n";
         doReturn(getTestData1().get(ketchup)).when(auroraClientSideService)
                 .getIngredient(ketchup, clientId, ketchupQuantity);
         doReturn(getTestData1().get(water)).when(auroraClientSideService)
@@ -171,7 +176,7 @@ public class CalculatorServiceImplIT {
         List<ProductDto> actualResult = calculatorService.getProduct(clientId, banica, banicaQuantity);
 
         //then
-        assertEquals(convertStringToListOfProductDto(expectedResult), actualResult);
+        assertEquals(convertStringToListOfProductDto(expectedResult).toString(), actualResult.toString());
     }
 
     @Test
@@ -224,148 +229,119 @@ public class CalculatorServiceImplIT {
                 onlyKetchupQuantity);
 
         //then
-        assertEquals(convertStringToListOfProductDto(expectedResult), actualResult);
+        assertEquals(convertStringToListOfProductDto(expectedResult).toString(), actualResult.toString());
     }
 
     @Test
     public void getProductWithThreeLevelsInheritanceShouldReturnListOfProductDtoWhenProductHasIngredientsWithBetterPrice() {
         //given
-        String expectedResult = "[\n" +
-                "    {\n" +
-                "        \"itemName\": \"banica\",\n" +
-                "        \"totalPrice\": 1995460.00,\n" +
-                "        \"productSpecifications\": [],\n" +
-                "        \"ingredients\": {\n" +
-                "            \"pumpkin\": 300,\n" +
-                "            \"milk\": 200,\n" +
-                "            \"crusts\": 200,\n" +
-                "            \"sauce\": 150\n" +
-                "        }\n" +
-                "    },\n" +
-                "    {\n" +
-                "        \"itemName\": \"tomatoes\",\n" +
-                "        \"totalPrice\": 129.5,\n" +
-                "        \"productSpecifications\": [\n" +
-                "            {\n" +
-                "                \"price\": 1.5,\n" +
-                "                \"location\": \"EUROPE\",\n" +
-                "                \"quantity\": 1\n" +
-                "            },\n" +
-                "            {\n" +
-                "                \"price\": 2.0,\n" +
-                "                \"location\": \"EUROPE\",\n" +
-                "                \"quantity\": 64\n" +
-                "            }\n" +
-                "        ],\n" +
-                "        \"ingredients\": {}\n" +
-                "    },\n" +
-                "    {\n" +
-                "        \"itemName\": \"crusts\",\n" +
-                "        \"totalPrice\": 780.0,\n" +
-                "        \"productSpecifications\": [\n" +
-                "            {\n" +
-                "                \"price\": 3.9,\n" +
-                "                \"location\": \"EUROPE\",\n" +
-                "                \"quantity\": 200\n" +
-                "            }\n" +
-                "        ],\n" +
-                "        \"ingredients\": {}\n" +
-                "    },\n" +
-                "    {\n" +
-                "        \"itemName\": \"milk\",\n" +
-                "        \"totalPrice\": 350.0,\n" +
-                "        \"productSpecifications\": [\n" +
-                "            {\n" +
-                "                \"price\": 1.5,\n" +
-                "                \"location\": \"ASIA\",\n" +
-                "                \"quantity\": 100\n" +
-                "            },\n" +
-                "            {\n" +
-                "                \"price\": 2.0,\n" +
-                "                \"location\": \"AMERICA\",\n" +
-                "                \"quantity\": 100\n" +
-                "            }\n" +
-                "        ],\n" +
-                "        \"ingredients\": {}\n" +
-                "    },\n" +
-                "    {\n" +
-                "        \"itemName\": \"sauce\",\n" +
-                "        \"totalPrice\": 996150.00,\n" +
-                "        \"productSpecifications\": [],\n" +
-                "        \"ingredients\": {\n" +
-                "            \"water\": 150,\n" +
-                "            \"sugar\": 50,\n" +
-                "            \"ketchup\": 50\n" +
-                "        }\n" +
-                "    },\n" +
-                "    {\n" +
-                "        \"itemName\": \"sugar\",\n" +
-                "        \"totalPrice\": 100.0,\n" +
-                "        \"productSpecifications\": [\n" +
-                "            {\n" +
-                "                \"price\": 2.0,\n" +
-                "                \"location\": \"ASIA\",\n" +
-                "                \"quantity\": 50\n" +
-                "            }\n" +
-                "        ],\n" +
-                "        \"ingredients\": {}\n" +
-                "    },\n" +
-                "    {\n" +
-                "        \"itemName\": \"water\",\n" +
-                "        \"totalPrice\": 3.50,\n" +
-                "        \"productSpecifications\": [\n" +
-                "            {\n" +
-                "                \"price\": 0.02,\n" +
-                "                \"location\": \"EUROPE\",\n" +
-                "                \"quantity\": 100\n" +
-                "            },\n" +
-                "            {\n" +
-                "                \"price\": 0.03,\n" +
-                "                \"location\": \"UNSPECIFIED\",\n" +
-                "                \"quantity\": 50\n" +
-                "            }\n" +
-                "        ],\n" +
-                "        \"ingredients\": {}\n" +
-                "    },\n" +
-                "    {\n" +
-                "        \"itemName\": \"water\",\n" +
-                "        \"totalPrice\": 1.25,\n" +
-                "        \"productSpecifications\": [\n" +
-                "            {\n" +
-                "                \"price\": 0.01,\n" +
-                "                \"location\": \"EUROPE\",\n" +
-                "                \"quantity\": 75\n" +
-                "            },\n" +
-                "            {\n" +
-                "                \"price\": 0.02,\n" +
-                "                \"location\": \"EUROPE\",\n" +
-                "                \"quantity\": 25\n" +
-                "            }\n" +
-                "        ],\n" +
-                "        \"ingredients\": {}\n" +
-                "    },\n" +
-                "    {\n" +
-                "        \"itemName\": \"pumpkin\",\n" +
-                "        \"totalPrice\": 450.0,\n" +
-                "        \"productSpecifications\": [\n" +
-                "            {\n" +
-                "                \"price\": 1.5,\n" +
-                "                \"location\": \"UNSPECIFIED\",\n" +
-                "                \"quantity\": 300\n" +
-                "            }\n" +
-                "        ],\n" +
-                "        \"ingredients\": {}\n" +
-                "    },\n" +
-                "    {\n" +
-                "        \"itemName\": \"ketchup\",\n" +
-                "        \"totalPrice\": 6537.50,\n" +
-                "        \"productSpecifications\": [],\n" +
-                "        \"ingredients\": {\n" +
-                "            \"water\": 100,\n" +
-                "            \"tomatoes\": 65\n" +
-                "        }\n" +
-                "    }\n" +
-                "]\n";
+        String expectedResult = "[ {\n" +
+                "  \"itemName\" : \"banica\",\n" +
+                "  \"totalPrice\" : 1995460.00,\n" +
+                "  \"productSpecifications\" : [ ],\n" +
+                "  \"ingredients\" : {\n" +
+                "    \"pumpkin\" : 300,\n" +
+                "    \"milk\" : 200,\n" +
+                "    \"crusts\" : 200,\n" +
+                "    \"sauce\" : 150\n" +
+                "  }\n" +
+                "}, {\n" +
+                "  \"itemName\" : \"tomatoes\",\n" +
+                "  \"totalPrice\" : 129.5,\n" +
+                "  \"productSpecifications\" : [ {\n" +
+                "    \"price\" : 1.5,\n" +
+                "    \"location\" : \"AMERICA\",\n" +
+                "    \"quantity\" : 1\n" +
+                "  }, {\n" +
+                "    \"price\" : 2.0,\n" +
+                "    \"location\" : \"AMERICA\",\n" +
+                "    \"quantity\" : 64\n" +
+                "  } ],\n" +
+                "  \"ingredients\" : { }\n" +
+                "}, {\n" +
+                "  \"itemName\" : \"crusts\",\n" +
+                "  \"totalPrice\" : 780.0,\n" +
+                "  \"productSpecifications\" : [ {\n" +
+                "    \"price\" : 3.9,\n" +
+                "    \"location\" : \"AMERICA\",\n" +
+                "    \"quantity\" : 200\n" +
+                "  } ],\n" +
+                "  \"ingredients\" : { }\n" +
+                "}, {\n" +
+                "  \"itemName\" : \"milk\",\n" +
+                "  \"totalPrice\" : 350.0,\n" +
+                "  \"productSpecifications\" : [ {\n" +
+                "    \"price\" : 1.5,\n" +
+                "    \"location\" : \"AMERICA\",\n" +
+                "    \"quantity\" : 100\n" +
+                "  }, {\n" +
+                "    \"price\" : 2.0,\n" +
+                "    \"location\" : \"AMERICA\",\n" +
+                "    \"quantity\" : 100\n" +
+                "  } ],\n" +
+                "  \"ingredients\" : { }\n" +
+                "}, {\n" +
+                "  \"itemName\" : \"sauce\",\n" +
+                "  \"totalPrice\" : 996150.00,\n" +
+                "  \"productSpecifications\" : [ ],\n" +
+                "  \"ingredients\" : {\n" +
+                "    \"water\" : 150,\n" +
+                "    \"sugar\" : 50,\n" +
+                "    \"ketchup\" : 50\n" +
+                "  }\n" +
+                "}, {\n" +
+                "  \"itemName\" : \"sugar\",\n" +
+                "  \"totalPrice\" : 100.0,\n" +
+                "  \"productSpecifications\" : [ {\n" +
+                "    \"price\" : 2.0,\n" +
+                "    \"location\" : \"AMERICA\",\n" +
+                "    \"quantity\" : 50\n" +
+                "  } ],\n" +
+                "  \"ingredients\" : { }\n" +
+                "}, {\n" +
+                "  \"itemName\" : \"water\",\n" +
+                "  \"totalPrice\" : 3.50,\n" +
+                "  \"productSpecifications\" : [ {\n" +
+                "    \"price\" : 0.02,\n" +
+                "    \"location\" : \"AMERICA\",\n" +
+                "    \"quantity\" : 100\n" +
+                "  }, {\n" +
+                "    \"price\" : 0.03,\n" +
+                "    \"location\" : \"AMERICA\",\n" +
+                "    \"quantity\" : 50\n" +
+                "  } ],\n" +
+                "  \"ingredients\" : { }\n" +
+                "}, {\n" +
+                "  \"itemName\" : \"water\",\n" +
+                "  \"totalPrice\" : 1.25,\n" +
+                "  \"productSpecifications\" : [ {\n" +
+                "    \"price\" : 0.01,\n" +
+                "    \"location\" : \"AMERICA\",\n" +
+                "    \"quantity\" : 75\n" +
+                "  }, {\n" +
+                "    \"price\" : 0.02,\n" +
+                "    \"location\" : \"AMERICA\",\n" +
+                "    \"quantity\" : 25\n" +
+                "  } ],\n" +
+                "  \"ingredients\" : { }\n" +
+                "}, {\n" +
+                "  \"itemName\" : \"pumpkin\",\n" +
+                "  \"totalPrice\" : 450.0,\n" +
+                "  \"productSpecifications\" : [ {\n" +
+                "    \"price\" : 1.5,\n" +
+                "    \"location\" : \"AMERICA\",\n" +
+                "    \"quantity\" : 300\n" +
+                "  } ],\n" +
+                "  \"ingredients\" : { }\n" +
+                "}, {\n" +
+                "  \"itemName\" : \"ketchup\",\n" +
+                "  \"totalPrice\" : 6537.50,\n" +
+                "  \"productSpecifications\" : [ ],\n" +
+                "  \"ingredients\" : {\n" +
+                "    \"water\" : 100,\n" +
+                "    \"tomatoes\" : 65\n" +
+                "  }\n" +
+                "} ]";
         doReturn(getTestData2().get(ketchup)).when(auroraClientSideService)
                 .getIngredient(ketchup, clientId, ketchupQuantity);
         doReturn(getTestData2().get(water)).when(auroraClientSideService)
@@ -391,148 +367,115 @@ public class CalculatorServiceImplIT {
         List<ProductDto> actualResult = calculatorService.getProduct(clientId, banica, banicaQuantity);
 
         //then
-        assertEquals(convertStringToListOfProductDto(expectedResult), actualResult);
+        assertEquals(convertStringToListOfProductDto(expectedResult).toString(), actualResult.toString());
     }
 
     @Test
     public void getProductWithThreeLevelsInheritanceShouldReturnBetterPriceWhenIngredientInCorrectPosition() {
         //given
-        String expectedResult = "[\n" +
-                "    {\n" +
-                "        \"itemName\": \"banica\",\n" +
-                "        \"totalPrice\": 1995460.00,\n" +
-                "        \"productSpecifications\": [],\n" +
-                "        \"ingredients\": {\n" +
-                "            \"pumpkin\": 300,\n" +
-                "            \"milk\": 200,\n" +
-                "            \"crusts\": 200,\n" +
-                "            \"sauce\": 150\n" +
-                "        }\n" +
-                "    },\n" +
-                "    {\n" +
-                "        \"itemName\": \"tomatoes\",\n" +
-                "        \"totalPrice\": 129.5,\n" +
-                "        \"productSpecifications\": [\n" +
-                "            {\n" +
-                "                \"price\": 1.5,\n" +
-                "                \"location\": \"EUROPE\",\n" +
-                "                \"quantity\": 1\n" +
-                "            },\n" +
-                "            {\n" +
-                "                \"price\": 2.0,\n" +
-                "                \"location\": \"EUROPE\",\n" +
-                "                \"quantity\": 64\n" +
-                "            }\n" +
-                "        ],\n" +
-                "        \"ingredients\": {}\n" +
-                "    },\n" +
-                "    {\n" +
-                "        \"itemName\": \"crusts\",\n" +
-                "        \"totalPrice\": 780.0,\n" +
-                "        \"productSpecifications\": [\n" +
-                "            {\n" +
-                "                \"price\": 3.9,\n" +
-                "                \"location\": \"EUROPE\",\n" +
-                "                \"quantity\": 200\n" +
-                "            }\n" +
-                "        ],\n" +
-                "        \"ingredients\": {}\n" +
-                "    },\n" +
-                "    {\n" +
-                "        \"itemName\": \"milk\",\n" +
-                "        \"totalPrice\": 350.0,\n" +
-                "        \"productSpecifications\": [\n" +
-                "            {\n" +
-                "                \"price\": 1.5,\n" +
-                "                \"location\": \"ASIA\",\n" +
-                "                \"quantity\": 100\n" +
-                "            },\n" +
-                "            {\n" +
-                "                \"price\": 2.0,\n" +
-                "                \"location\": \"AMERICA\",\n" +
-                "                \"quantity\": 100\n" +
-                "            }\n" +
-                "        ],\n" +
-                "        \"ingredients\": {}\n" +
-                "    },\n" +
-                "    {\n" +
-                "        \"itemName\": \"sauce\",\n" +
-                "        \"totalPrice\": 996150.00,\n" +
-                "        \"productSpecifications\": [],\n" +
-                "        \"ingredients\": {\n" +
-                "            \"water\": 150,\n" +
-                "            \"sugar\": 50,\n" +
-                "            \"ketchup\": 50\n" +
-                "        }\n" +
-                "    },\n" +
-                "    {\n" +
-                "        \"itemName\": \"sugar\",\n" +
-                "        \"totalPrice\": 100.0,\n" +
-                "        \"productSpecifications\": [\n" +
-                "            {\n" +
-                "                \"price\": 2.0,\n" +
-                "                \"location\": \"ASIA\",\n" +
-                "                \"quantity\": 50\n" +
-                "            }\n" +
-                "        ],\n" +
-                "        \"ingredients\": {}\n" +
-                "    },\n" +
-                "    {\n" +
-                "        \"itemName\": \"water\",\n" +
-                "        \"totalPrice\": 3.50,\n" +
-                "        \"productSpecifications\": [\n" +
-                "            {\n" +
-                "                \"price\": 0.02,\n" +
-                "                \"location\": \"EUROPE\",\n" +
-                "                \"quantity\": 100\n" +
-                "            },\n" +
-                "            {\n" +
-                "                \"price\": 0.03,\n" +
-                "                \"location\": \"UNSPECIFIED\",\n" +
-                "                \"quantity\": 50\n" +
-                "            }\n" +
-                "        ],\n" +
-                "        \"ingredients\": {}\n" +
-                "    },\n" +
-                "    {\n" +
-                "        \"itemName\": \"water\",\n" +
-                "        \"totalPrice\": 1.25,\n" +
-                "        \"productSpecifications\": [\n" +
-                "            {\n" +
-                "                \"price\": 0.01,\n" +
-                "                \"location\": \"EUROPE\",\n" +
-                "                \"quantity\": 75\n" +
-                "            },\n" +
-                "            {\n" +
-                "                \"price\": 0.02,\n" +
-                "                \"location\": \"EUROPE\",\n" +
-                "                \"quantity\": 25\n" +
-                "            }\n" +
-                "        ],\n" +
-                "        \"ingredients\": {}\n" +
-                "    },\n" +
-                "    {\n" +
-                "        \"itemName\": \"pumpkin\",\n" +
-                "        \"totalPrice\": 450.0,\n" +
-                "        \"productSpecifications\": [\n" +
-                "            {\n" +
-                "                \"price\": 1.5,\n" +
-                "                \"location\": \"UNSPECIFIED\",\n" +
-                "                \"quantity\": 300\n" +
-                "            }\n" +
-                "        ],\n" +
-                "        \"ingredients\": {}\n" +
-                "    },\n" +
-                "    {\n" +
-                "        \"itemName\": \"ketchup\",\n" +
-                "        \"totalPrice\": 6537.50,\n" +
-                "        \"productSpecifications\": [],\n" +
-                "        \"ingredients\": {\n" +
-                "            \"water\": 100,\n" +
-                "            \"tomatoes\": 65\n" +
-                "        }\n" +
-                "    }\n" +
-                "]\n";
+        String expectedResult = "[ {\n" +
+                "  \"itemName\" : \"banica\",\n" +
+                "  \"totalPrice\" : 1983665.00,\n" +
+                "  \"productSpecifications\" : [ ],\n" +
+                "  \"ingredients\" : {\n" +
+                "    \"pumpkin\" : 300,\n" +
+                "    \"milk\" : 200,\n" +
+                "    \"crusts\" : 200,\n" +
+                "    \"sauce\" : 150\n" +
+                "  }\n" +
+                "}, {\n" +
+                "  \"itemName\" : \"eggs\",\n" +
+                "  \"totalPrice\" : 2.60,\n" +
+                "  \"productSpecifications\" : [ {\n" +
+                "    \"price\" : 0.15,\n" +
+                "    \"location\" : \"AMERICA\",\n" +
+                "    \"quantity\" : 4\n" +
+                "  }, {\n" +
+                "    \"price\" : 0.25,\n" +
+                "    \"location\" : \"AMERICA\",\n" +
+                "    \"quantity\" : 8\n" +
+                "  } ],\n" +
+                "  \"ingredients\" : { }\n" +
+                "}, {\n" +
+                "  \"itemName\" : \"crusts\",\n" +
+                "  \"totalPrice\" : 620.00,\n" +
+                "  \"productSpecifications\" : [ ],\n" +
+                "  \"ingredients\" : {\n" +
+                "    \"water\" : 50,\n" +//best price of water here due to most units hold in final product -200*50
+                "    \"eggs\" : 12\n" +
+                "  }\n" +
+                "}, {\n" +
+                "  \"itemName\" : \"milk\",\n" +
+                "  \"totalPrice\" : 350.0,\n" +
+                "  \"productSpecifications\" : [ {\n" +
+                "    \"price\" : 1.5,\n" +
+                "    \"location\" : \"AMERICA\",\n" +
+                "    \"quantity\" : 100\n" +
+                "  }, {\n" +
+                "    \"price\" : 2.0,\n" +
+                "    \"location\" : \"AMERICA\",\n" +
+                "    \"quantity\" : 100\n" +
+                "  } ],\n" +
+                "  \"ingredients\" : { }\n" +
+                "}, {\n" +
+                "  \"itemName\" : \"sauce\",\n" +
+                "  \"totalPrice\" : 990412.50,\n" +
+                "  \"productSpecifications\" : [ ],\n" +
+                "  \"ingredients\" : {\n" +
+                "    \"water\" : 150,\n" +
+                "    \"sugar\" : 50,\n" +
+                "    \"ketchup\" : 50\n" +
+                "  }\n" +
+                "}, {\n" +
+                "  \"itemName\" : \"sugar\",\n" +
+                "  \"totalPrice\" : 100.0,\n" +
+                "  \"productSpecifications\" : [ {\n" +
+                "    \"price\" : 2.0,\n" +
+                "    \"location\" : \"AMERICA\",\n" +
+                "    \"quantity\" : 50\n" +
+                "  } ],\n" +
+                "  \"ingredients\" : { }\n" +
+                "}, {\n" +
+                "  \"itemName\" : \"water\",\n" +
+                "  \"totalPrice\" : 0.50,\n" +
+                "  \"productSpecifications\" : [ {\n" +
+                "    \"price\" : 0.01,\n" +
+                "    \"location\" : \"AMERICA\",\n" +
+                "    \"quantity\" : 50\n" +
+                "  } ],\n" +
+                "  \"ingredients\" : { }\n" +
+                "}, {\n" +
+                "  \"itemName\" : \"water\",\n" +
+                "  \"totalPrice\" : 2.75,\n" +
+                "  \"productSpecifications\" : [ {\n" +
+                "    \"price\" : 0.01,\n" +
+                "    \"location\" : \"AMERICA\",\n" +
+                "    \"quantity\" : 25\n" +
+                "  }, {\n" +
+                "    \"price\" : 0.02,\n" +
+                "    \"location\" : \"AMERICA\",\n" +
+                "    \"quantity\" : 125\n" +
+                "  } ],\n" +
+                "  \"ingredients\" : { }\n" +
+                "}, {\n" +
+                "  \"itemName\" : \"pumpkin\",\n" +
+                "  \"totalPrice\" : 450.0,\n" +
+                "  \"productSpecifications\" : [ {\n" +
+                "    \"price\" : 1.5,\n" +
+                "    \"location\" : \"AMERICA\",\n" +
+                "    \"quantity\" : 300\n" +
+                "  } ],\n" +
+                "  \"ingredients\" : { }\n" +
+                "}, {\n" +
+                "  \"itemName\" : \"ketchup\",\n" +
+                "  \"totalPrice\" : 6500.0,\n" +
+                "  \"productSpecifications\" : [ {\n" +
+                "    \"price\" : 130.0,\n" +
+                "    \"location\" : \"AMERICA\",\n" +
+                "    \"quantity\" : 50\n" +
+                "  } ],\n" +
+                "  \"ingredients\" : { }\n" +
+                "} ]\n";
         doReturn(getTestData3().get(ketchup)).when(auroraClientSideService)
                 .getIngredient(ketchup, clientId, ketchupQuantity);
         doReturn(getTestData3().get(water)).when(auroraClientSideService)
@@ -558,7 +501,7 @@ public class CalculatorServiceImplIT {
         List<ProductDto> actualResult = calculatorService.getProduct(clientId, banica, banicaQuantity);
 
         //then
-        assertEquals(convertStringToListOfProductDto(expectedResult), actualResult);
+        assertEquals(convertStringToListOfProductDto(expectedResult).toString(), actualResult.toString());
     }
 
     public Map<String, ItemOrderBookResponse> getTestData1() {
@@ -568,7 +511,7 @@ public class CalculatorServiceImplIT {
         addProductToDatabase(data, "milk", 1.5, 100);
         addProductToDatabase(data, "milk", 2, 100);
         addProductToDatabase(data, "crusts", 3.9, 200);//water:0,5,eggs:2.6=3.1 * 200 = 620
-        addProductToDatabase(data, "water", 0.01, 2);
+        addProductToDatabase(data, "water", 0.01, 75);
         addProductToDatabase(data, "water", 0.02, 125);
         addProductToDatabase(data, "water", 0.03, 100);
         addProductToDatabase(data, "eggs", 0.15, 4);
@@ -603,19 +546,19 @@ public class CalculatorServiceImplIT {
 
     public Map<String, ItemOrderBookResponse> getTestData3() {
         Map<String, ItemOrderBookResponse> data = new LinkedHashMap<>();
-        addProductToDatabase(data, "banica", 1000000, 2);//pumpkin:450,milk:350,crusts:620,sauce:1009162,5=1010582,5*2=2021165
+        addProductToDatabase(data, "banica", 1000000, 2);//pumpkin:450,milk:350,crusts:620,sauce:990412.5=991832.5//better composite price//991832.5*2=1983665
         addProductToDatabase(data, "pumpkin", 1.5, 300);
         addProductToDatabase(data, "milk", 1.5, 100);
         addProductToDatabase(data, "milk", 2, 100);
-        addProductToDatabase(data, "crusts", 3.9, 200);//water:0,5,eggs:2.6=3.1 * 200 = 620
+        addProductToDatabase(data, "crusts", 3.2, 200);//water:(50*0.01)0.5,eggs:2.6=3.1//better composite product price//3.1*200=620
         addProductToDatabase(data, "water", 0.01, 75);
         addProductToDatabase(data, "water", 0.02, 125);
         addProductToDatabase(data, "water", 0.03, 100);
         addProductToDatabase(data, "eggs", 0.15, 4);
         addProductToDatabase(data, "eggs", 0.25, 8);
-        addProductToDatabase(data, "sauce", 7000, 150);//ketchup:6625,water:2.75,sugar:100 =6727.75 * 150=1009162,5
+        addProductToDatabase(data, "sauce", 7000, 150);//ketchup:6500,water:(25*0.01 + 125*0.02)2.75,sugar:100 =6602.75//better composite price//6602.75*150=990412.5
         addProductToDatabase(data, "sugar", 2, 50);
-        addProductToDatabase(data, "ketchup", 132, 50);//tomatoes:129.5,water:3 = 132.5 * 50 = 6625
+        addProductToDatabase(data, "ketchup", 130, 50);//tomatoes:129.5,water:(75*0.01 + 25*0.02)1.25 = 130.75//better simple product price//130*50=6500
         addProductToDatabase(data, "tomatoes", 1.5, 1);
         addProductToDatabase(data, "tomatoes", 2, 64);
         return data;

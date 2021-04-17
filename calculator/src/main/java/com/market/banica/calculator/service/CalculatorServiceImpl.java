@@ -812,8 +812,14 @@ public class CalculatorServiceImpl implements CalculatorService {
 
         ItemOrderBookResponse orderBookResponse = auroraService.getIngredient(product.getProductName(), clientId, quantity);
 
-        if(orderBookResponse.getOrderbookLayersList().isEmpty()){
-            throw new BadResponseException(String.format("Market does not have enough resource of %s t create requested product",product.getProductName()));
+        if (orderBookResponse.getOrderbookLayersList().isEmpty()) {
+
+            throw new BadResponseException(String.format("Market does not have enough resource of %s t create requested product", product.getProductName()));
+        }
+
+        if (orderBookResponse.getOrderbookLayersList().stream().mapToLong(OrderBookLayer::getQuantity).sum() < quantity) {
+
+            throw new BadResponseException(String.format("Market does not have enough resource of %s t create requested product", product.getProductName()));
         }
 
         String productName = orderBookResponse.getItemName();
