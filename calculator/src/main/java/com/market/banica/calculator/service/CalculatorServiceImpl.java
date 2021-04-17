@@ -670,7 +670,11 @@ public class CalculatorServiceImpl implements CalculatorService {
         }
     }
 
-    private void populateResultWhenCandidateIsCompositeAndExistingProductIsSimple(List<ProductPriceComponentsSet> compositeProductPriceVariant, ProductPriceComponentsSet ingredientPriceVariant, Map<Integer, ProductPriceComponentsSet> productPriceComponentsSetByProductIdMap, Map<ProductPriceComponentsSet, ProductPriceComponentsSet> result) {
+    private void populateResultWhenCandidateIsCompositeAndExistingProductIsSimple(List<ProductPriceComponentsSet> compositeProductPriceVariant,
+                                                                                  ProductPriceComponentsSet ingredientPriceVariant,
+                                                                                  Map<Integer, ProductPriceComponentsSet> productPriceComponentsSetByProductIdMap,
+                                                                                  Map<ProductPriceComponentsSet, ProductPriceComponentsSet> result) {
+
         for (ProductPriceComponentsSet productPriceComponentsSet : compositeProductPriceVariant) {
             if (!ingredientPriceVariant.getComponentIngredients().containsKey(productPriceComponentsSet.getProductName())) {
                 continue;
@@ -810,16 +814,19 @@ public class CalculatorServiceImpl implements CalculatorService {
     private void getProductsMarketDataFromOrderBook(String clientId, Product product, long quantity,
                                                     Map<String, List<ProductSpecification>> productSpecificationMap) {
 
-        ItemOrderBookResponse orderBookResponse = auroraService.getIngredient(product.getProductName(), clientId, quantity);
+        ItemOrderBookResponse orderBookResponse = auroraService.getIngredient(product.getProductName(),
+                clientId, quantity);
 
         if (orderBookResponse.getOrderbookLayersList().isEmpty()) {
 
-            throw new BadResponseException(String.format("Market does not have enough resource of %s t create requested product", product.getProductName()));
+            throw new BadResponseException(String.format("Market does not have enough resource of %s" +
+                    " to create requested product", product.getProductName()));
         }
 
         if (orderBookResponse.getOrderbookLayersList().stream().mapToLong(OrderBookLayer::getQuantity).sum() < quantity) {
 
-            throw new BadResponseException(String.format("Market does not have enough resource of %s t create requested product", product.getProductName()));
+            throw new BadResponseException(String.format("Market does not have enough resource of %s" +
+                    " to create requested product", product.getProductName()));
         }
 
         String productName = orderBookResponse.getItemName();

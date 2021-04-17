@@ -143,9 +143,9 @@ public class CalculatorServiceImplIT {
         //given
         String expectedResult = "[ {\n" +
                 "  \"itemName\" : \"banica\",\n" +
-                "  \"totalPrice\" : 200000.0,\n" +
+                "  \"totalPrice\" : 1995000.0,\n" +
                 "  \"productSpecifications\" : [ {\n" +
-                "    \"price\" : 100000.0,\n" +
+                "    \"price\" : 997500.0,\n" +
                 "    \"location\" : \"AMERICA\",\n" +
                 "    \"quantity\" : 2\n" +
                 "  } ],\n" +
@@ -237,7 +237,7 @@ public class CalculatorServiceImplIT {
         //given
         String expectedResult = "[ {\n" +
                 "  \"itemName\" : \"banica\",\n" +
-                "  \"totalPrice\" : 1995460.00,\n" +
+                "  \"totalPrice\" : 1995180.00,\n" +
                 "  \"productSpecifications\" : [ ],\n" +
                 "  \"ingredients\" : {\n" +
                 "    \"pumpkin\" : 300,\n" +
@@ -260,9 +260,9 @@ public class CalculatorServiceImplIT {
                 "  \"ingredients\" : { }\n" +
                 "}, {\n" +
                 "  \"itemName\" : \"crusts\",\n" +
-                "  \"totalPrice\" : 780.0,\n" +
+                "  \"totalPrice\" : 640.0,\n" +
                 "  \"productSpecifications\" : [ {\n" +
-                "    \"price\" : 3.9,\n" +
+                "    \"price\" : 3.2,\n" +
                 "    \"location\" : \"AMERICA\",\n" +
                 "    \"quantity\" : 200\n" +
                 "  } ],\n" +
@@ -401,8 +401,10 @@ public class CalculatorServiceImplIT {
                 "  \"totalPrice\" : 620.00,\n" +
                 "  \"productSpecifications\" : [ ],\n" +
                 "  \"ingredients\" : {\n" +
-                "    \"water\" : 50,\n" +//best price of water here due to most units hold in final product -200*50
-                "    \"eggs\" : 12\n" +
+                "    \"water\" : 50,\n" +
+                //best price of water should be here due to biggest difference of best price and
+                // second best price of water(0.50) multiplied by crusts quantity:200*0.5 = 100
+                "    \"eggs\" : 12\n" +//
                 "  }\n" +
                 "}, {\n" +
                 "  \"itemName\" : \"milk\",\n" +
@@ -468,6 +470,9 @@ public class CalculatorServiceImplIT {
                 "  \"ingredients\" : { }\n" +
                 "}, {\n" +
                 "  \"itemName\" : \"ketchup\",\n" +
+                //ketchup deliberately set as simple product so best price of
+                // water is supposed to move to crust as sauce difference in best price and second best price of water
+                // is 0.5 and when multiplied by sauce quantity is 150*0.5=75, what is less than crusts difference -100
                 "  \"totalPrice\" : 6500.0,\n" +
                 "  \"productSpecifications\" : [ {\n" +
                 "    \"price\" : 130.0,\n" +
@@ -506,19 +511,23 @@ public class CalculatorServiceImplIT {
 
     public Map<String, ItemOrderBookResponse> getTestData1() {
         Map<String, ItemOrderBookResponse> data = new LinkedHashMap<>();
-        addProductToDatabase(data, "banica", 100000, 2);//pumpkin:450,milk:350,crusts:620,sauce:1009162,5=1010582,5*2=2021165
+        addProductToDatabase(data, "banica", 997500, 2);
+        //pumpkin:450,milk:350,crusts:780,sauce:996150=997730//better simple price//997500*2=1995000
         addProductToDatabase(data, "pumpkin", 1.5, 300);
         addProductToDatabase(data, "milk", 1.5, 100);
         addProductToDatabase(data, "milk", 2, 100);
-        addProductToDatabase(data, "crusts", 3.9, 200);//water:0,5,eggs:2.6=3.1 * 200 = 620
+        addProductToDatabase(data, "crusts", 3.9, 200);
+        //water:(50*0.03)1.5,eggs:2.6=4.1//better simple price//3.9 * 200 = 620
         addProductToDatabase(data, "water", 0.01, 75);
         addProductToDatabase(data, "water", 0.02, 125);
         addProductToDatabase(data, "water", 0.03, 100);
         addProductToDatabase(data, "eggs", 0.15, 4);
         addProductToDatabase(data, "eggs", 0.25, 8);
-        addProductToDatabase(data, "sauce", 7000, 150);//ketchup:6625,water:2.75,sugar:100 =6727.75 * 150=1009162,5
+        addProductToDatabase(data, "sauce", 6700, 150);
+        //ketchup:6537.5,water:(100*0.02 + 50*0.03)3.5,sugar:100 =6641//better composite price//6641 * 150=996150
         addProductToDatabase(data, "sugar", 2, 50);
-        addProductToDatabase(data, "ketchup", 132, 50);//tomatoes:129.5,water:3 = 132.5 * 50 = 6625
+        addProductToDatabase(data, "ketchup", 132, 50);
+        //tomatoes:129.5,water:(75*0.01 + 25*0.02)1.25 = 130.75//better composite price//130.75 * 50 = 6537.5
         addProductToDatabase(data, "tomatoes", 1.5, 1);
         addProductToDatabase(data, "tomatoes", 2, 64);
         return data;
@@ -526,19 +535,23 @@ public class CalculatorServiceImplIT {
 
     public Map<String, ItemOrderBookResponse> getTestData2() {
         Map<String, ItemOrderBookResponse> data = new LinkedHashMap<>();
-        addProductToDatabase(data, "banica", 1000000, 2);//pumpkin:450,milk:350,crusts:620,sauce:1009162,5=1010582,5*2=2021165
+        addProductToDatabase(data, "banica", 1000000, 2);
+        //pumpkin:450,milk:350,crusts:640,sauce:996150=997590//better composite price//997590*2=1995180
         addProductToDatabase(data, "pumpkin", 1.5, 300);
         addProductToDatabase(data, "milk", 1.5, 100);
         addProductToDatabase(data, "milk", 2, 100);
-        addProductToDatabase(data, "crusts", 3.9, 200);//water:0,5,eggs:2.6=3.1 * 200 = 620
+        addProductToDatabase(data, "crusts", 3.2, 200);
+        //water:(50*0.02)1.0,eggs:2.6=3.6//better simple price//3.2 * 200 = 640
         addProductToDatabase(data, "water", 0.01, 75);
         addProductToDatabase(data, "water", 0.02, 125);
         addProductToDatabase(data, "water", 0.03, 100);
         addProductToDatabase(data, "eggs", 0.15, 4);
         addProductToDatabase(data, "eggs", 0.25, 8);
-        addProductToDatabase(data, "sauce", 7000, 150);//ketchup:6625,water:2.75,sugar:100 =6727.75 * 150=1009162,5
+        addProductToDatabase(data, "sauce", 6700, 150);
+        //ketchup:6537.5,water:(100*0.02 + 50*0.03)3.5,sugar:100 =6641//better composite price//6641 * 150=996150
         addProductToDatabase(data, "sugar", 2, 50);
-        addProductToDatabase(data, "ketchup", 132, 50);//tomatoes:129.5,water:3 = 132.5 * 50 = 6625
+        addProductToDatabase(data, "ketchup", 132, 50);
+        //tomatoes:129.5,water:(75*0.01 + 25*0.02)1.25 = 130.75//better composite price//130.75 * 50 = 6537.5
         addProductToDatabase(data, "tomatoes", 1.5, 1);
         addProductToDatabase(data, "tomatoes", 2, 64);
         return data;
@@ -546,19 +559,23 @@ public class CalculatorServiceImplIT {
 
     public Map<String, ItemOrderBookResponse> getTestData3() {
         Map<String, ItemOrderBookResponse> data = new LinkedHashMap<>();
-        addProductToDatabase(data, "banica", 1000000, 2);//pumpkin:450,milk:350,crusts:620,sauce:990412.5=991832.5//better composite price//991832.5*2=1983665
+        addProductToDatabase(data, "banica", 1000000, 2);
+        //pumpkin:450,milk:350,crusts:620,sauce:990412.5=991832.5//better composite price//991832.5*2=1983665
         addProductToDatabase(data, "pumpkin", 1.5, 300);
         addProductToDatabase(data, "milk", 1.5, 100);
         addProductToDatabase(data, "milk", 2, 100);
-        addProductToDatabase(data, "crusts", 3.2, 200);//water:(50*0.01)0.5,eggs:2.6=3.1//better composite product price//3.1*200=620
+        addProductToDatabase(data, "crusts", 3.9, 200);
+        //water:(50*0.01)0.5,eggs:2.6=3.1//better composite product price//3.1*200=620
         addProductToDatabase(data, "water", 0.01, 75);
         addProductToDatabase(data, "water", 0.02, 125);
         addProductToDatabase(data, "water", 0.03, 100);
         addProductToDatabase(data, "eggs", 0.15, 4);
         addProductToDatabase(data, "eggs", 0.25, 8);
-        addProductToDatabase(data, "sauce", 7000, 150);//ketchup:6500,water:(25*0.01 + 125*0.02)2.75,sugar:100 =6602.75//better composite price//6602.75*150=990412.5
+        addProductToDatabase(data, "sauce", 6700, 150);
+        //ketchup:6500,water:(25*0.01 + 125*0.02)2.75,sugar:100 =6602.75//better composite price//6602.75*150=990412.5
         addProductToDatabase(data, "sugar", 2, 50);
-        addProductToDatabase(data, "ketchup", 130, 50);//tomatoes:129.5,water:(75*0.01 + 25*0.02)1.25 = 130.75//better simple product price//130*50=6500
+        addProductToDatabase(data, "ketchup", 130, 50);
+        //tomatoes:129.5,water:(75*0.01 + 25*0.02)1.25 = 130.75//better simple product price//130*50=6500
         addProductToDatabase(data, "tomatoes", 1.5, 1);
         addProductToDatabase(data, "tomatoes", 2, 64);
         return data;
