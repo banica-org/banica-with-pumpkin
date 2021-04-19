@@ -41,7 +41,7 @@ public class AuroraClientTest {
             .enableRetry()
             .build();
 
-    private final ItemMarket itemMarket = new ItemMarket();
+    private final ItemMarket itemMarket = new ItemMarket("backUpTest.json");
     private final AuroraClient auroraClient = new AuroraClient(itemMarket, DEFAULT_HOST, DEFAULT_PORT);
 
     private final Map<String, TreeSet<Item>> allItems = new ConcurrentHashMap<>();

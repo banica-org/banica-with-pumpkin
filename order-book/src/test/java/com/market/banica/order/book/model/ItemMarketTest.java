@@ -29,8 +29,9 @@ public class ItemMarketTest {
 
     private static final String ALL_ITEMS_FIELD = "allItems";
     private static final String PRODUCTS_QUANTITY_FIELD = "productsQuantity";
+   // private static final String FILE_PATH = "src/test/java/com/market/banica/order/book/subscribedProductsBackUp.json";
 
-    private final ItemMarket itemMarket = new ItemMarket();
+    private final ItemMarket itemMarket = new ItemMarket("testBackup.json");
     private final Map<String, TreeSet<Item>> allItems = new ConcurrentHashMap<>();
     private final Map<String, Long> productsQuantity = new ConcurrentHashMap<>();
 
@@ -43,6 +44,24 @@ public class ItemMarketTest {
 
         ReflectionTestUtils.setField(itemMarket, ALL_ITEMS_FIELD, allItems);
         ReflectionTestUtils.setField(itemMarket, PRODUCTS_QUANTITY_FIELD, productsQuantity);
+//        ReflectionTestUtils.setField(itemMarket, "FILE_PATH", FILE_PATH);
+    }
+
+        @Test
+    public void testPersistItem() {
+//        itemMarket.readBackUp();
+//        itemMarket.removeItemFromFileBackUp("newItem");
+//        itemMarket.removeItemFromFileBackUp("a");
+//        itemMarket.removeItemFromFileBackUp("b");
+//        itemMarket.removeItemFromFileBackUp("c");
+
+//        itemMarket.persistItemInFileBackUp("aurora");
+//        itemMarket.persistItemInFileBackUp("test");
+//        itemMarket.persistItemInFileBackUp("c");
+//        itemMarket.persistItemInFileBackUp("b");
+//        itemMarket.persistItemInFileBackUp("a");
+//        itemMarket.persistItemInFileBackUp("d");
+//        itemMarket.persistItemInFileBackUp("e");
     }
 
     @Test
