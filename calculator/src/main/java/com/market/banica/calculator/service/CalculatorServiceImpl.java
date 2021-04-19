@@ -7,7 +7,6 @@ import com.google.gson.Gson;
 import com.market.banica.calculator.dto.ProductDto;
 import com.market.banica.calculator.dto.ProductPriceComponentsSet;
 import com.market.banica.calculator.dto.ProductSpecification;
-import com.market.banica.calculator.exception.exceptions.BadResponseException;
 import com.market.banica.calculator.model.Pair;
 import com.market.banica.calculator.model.Product;
 import com.market.banica.calculator.service.contract.CalculatorService;
@@ -331,6 +330,10 @@ public class CalculatorServiceImpl implements CalculatorService {
                 compositeProductPriceVariant.add(ingredientPriceVariant);
             }
 
+            if (componentIngredientsNamesMap.isEmpty()) {
+                continue;
+            }
+
             ProductPriceComponentsSet product = createCompositeProductPriceComponentsSet(tempProduct,
                     subPrice, componentIngredientsNamesMap,
                     productPriceComponentsSetByProductIdMap);
@@ -370,6 +373,10 @@ public class CalculatorServiceImpl implements CalculatorService {
                     calculatePossiblePricesForProductFromProductSpecifications(productDtoMap,
                             productSpecificationMap, tempProduct, ingredient,
                             productPriceComponentsSetByProductIdMap);
+
+            if (ingredientPriceVariantsSet.isEmpty()) {
+                return new ArrayList<>();
+            }
 
             ingredientsPriceVariantsLists.add(new ArrayList<>(ingredientPriceVariantsSet));
         }
@@ -503,6 +510,10 @@ public class CalculatorServiceImpl implements CalculatorService {
                 BigDecimal productPrice = checkPriceForProduct(
                         permutationsOfQuantity.getSecond(),
                         deepCopyOfProductSpecification);
+
+                if (productPrice.equals(BigDecimal.valueOf(0.0))) {
+                    break;
+                }
 
                 long predecessorsQuantitySum = calculatePredecessorsQuantitySum(permutationsOfQuantities,
                         permutationsOfQuantity);
@@ -670,7 +681,11 @@ public class CalculatorServiceImpl implements CalculatorService {
         }
     }
 
-    private void populateResultWhenCandidateIsCompositeAndExistingProductIsSimple(List<ProductPriceComponentsSet> compositeProductPriceVariant, ProductPriceComponentsSet ingredientPriceVariant, Map<Integer, ProductPriceComponentsSet> productPriceComponentsSetByProductIdMap, Map<ProductPriceComponentsSet, ProductPriceComponentsSet> result) {
+    private void populateResultWhenCandidateIsCompositeAndExistingProductIsSimple(List<ProductPriceComponentsSet> compositeProductPriceVariant,
+                                                                                  ProductPriceComponentsSet ingredientPriceVariant,
+                                                                                  Map<Integer, ProductPriceComponentsSet> productPriceComponentsSetByProductIdMap,
+                                                                                  Map<ProductPriceComponentsSet, ProductPriceComponentsSet> result) {
+
         for (ProductPriceComponentsSet productPriceComponentsSet : compositeProductPriceVariant) {
             if (!ingredientPriceVariant.getComponentIngredients().containsKey(productPriceComponentsSet.getProductName())) {
                 continue;
@@ -789,6 +804,9 @@ public class CalculatorServiceImpl implements CalculatorService {
 
         for (ProductSpecification productSpecification : productQuantitiesPerSpecification) {
 
+            if (productSpecification.getPrice().equals(BigDecimal.valueOf(0.0))) {
+                continue;
+            }
             long productSpecificationQuantity = productSpecification.getQuantity();
             if (productSpecificationQuantity < orderedProductQuantity) {
 
@@ -801,8 +819,12 @@ public class CalculatorServiceImpl implements CalculatorService {
                 result = result.add(BigDecimal.valueOf(orderedProductQuantity)
                         .multiply(productSpecification.getPrice()));
 
+                orderedProductQuantity = 0;
                 break;
             }
+        }
+        if (orderedProductQuantity > 0) {
+            result = BigDecimal.valueOf(0.0);
         }
         return result;
     }
@@ -810,44 +832,41 @@ public class CalculatorServiceImpl implements CalculatorService {
     private void getProductsMarketDataFromOrderBook(String clientId, Product product, long quantity,
                                                     Map<String, List<ProductSpecification>> productSpecificationMap) {
 
-        ItemOrderBookResponse orderBookResponse = auroraService.getIngredient(product.getProductName(), clientId, quantity);
+        ItemOrderBookResponse orderBookResponse = auroraService.getIngredient(product.getProductName(),
+                clientId, quantity);
 
-        if (orderBookResponse.getOrderbookLayersList().isEmpty()) {
-            throw new BadResponseException(String
-                    .format("Market does not have enough resource of %s t create requested product",
-                            product.getProductName()));
-        }
+        List<ProductSpecification> productSpecifications = new ArrayList<>();
 
-        if (orderBookResponse.getOrderbookLayersList().stream()
-                .mapToLong(OrderBookLayer::getQuantity).count() < quantity) {
-
-            throw new BadResponseException(String
-                    .format("Market does not have enough resource of %s t create requested product",
-                            product.getProductName()));
+        if (orderBookResponse.getOrderbookLayersList().isEmpty()
+                && !orderBookResponse.getItemName().equals(product.getProductName())) {
+            return;
         }
 
         String productName = orderBookResponse.getItemName();
 
-        List<ProductSpecification> productSpecifications = new ArrayList<>();
-
+        long checkQuantity = quantity;
         for (OrderBookLayer layer : orderBookResponse.getOrderbookLayersList()) {
 
-            ProductSpecification productSpecification = createProductSpecification(layer);
+            ProductSpecification productSpecification = createProductSpecification(layer.getPrice(),
+                    layer.getQuantity(), layer.getOrigin().toString());
+            checkQuantity -= productSpecification.getQuantity();
             productSpecifications.add(productSpecification);
+        }
+
+        if (checkQuantity > 0) {
+            productSpecifications.add(createProductSpecification(0.0, checkQuantity, ""));
         }
 
         productSpecificationMap.put(productName, productSpecifications);
     }
 
-    private ProductSpecification createProductSpecification(OrderBookLayer layer) {
-
+    private ProductSpecification createProductSpecification(double price, long quantity, String origin) {
         ProductSpecification productSpecification = new ProductSpecification();
 
-        productSpecification.setPrice(BigDecimal.valueOf(layer.getPrice()));
-        productSpecification.setQuantity(layer.getQuantity());
-        productSpecification.setLocation(layer.getOrigin().toString());
+        productSpecification.setPrice(BigDecimal.valueOf(price));
+        productSpecification.setQuantity(quantity);
+        productSpecification.setLocation(origin);
 
         return productSpecification;
     }
-
 }
