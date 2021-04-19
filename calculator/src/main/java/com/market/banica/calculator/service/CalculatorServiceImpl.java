@@ -40,7 +40,7 @@ public class CalculatorServiceImpl implements CalculatorService {
 
         for (int i = 0; i < products.size(); i++) {
 
-            resultList.add(auroraService.getIngredient(itemName, clientId));
+            resultList.add(auroraService.getIngredient(itemName, clientId, quantity));
 
         }
 
@@ -53,4 +53,5 @@ public class CalculatorServiceImpl implements CalculatorService {
 
         return result;
     }
+
 }

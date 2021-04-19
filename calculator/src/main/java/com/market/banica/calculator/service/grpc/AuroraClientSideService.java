@@ -21,6 +21,8 @@ public class AuroraClientSideService {
 
     private static final String AURORA_BAD_RESPONSE_MESSAGE = "Bad message from aurora service";
 
+    private static final String CLIENT_ID = "calculator";
+
     private static final Logger LOGGER = LoggerFactory.getLogger(AuroraClientSideService.class);
 
     private final AuroraServiceGrpc.AuroraServiceBlockingStub blockingStub;
@@ -33,7 +35,8 @@ public class AuroraClientSideService {
     public void announceInterests(String productName) {
         LOGGER.debug("Inside announceInterests method with parameter product name: {}", productName);
 
-        Aurora.AuroraResponse auroraResponse = getAuroraResponse(productName);
+        String message = String.format("%s=subscribe", productName);
+        Aurora.AuroraResponse auroraResponse = getAuroraResponse(message);
 
         if (!auroraResponse.getMessage().is(InterestsResponse.class)) {
             throw new BadResponseException(AURORA_BAD_RESPONSE_MESSAGE);
@@ -43,18 +46,20 @@ public class AuroraClientSideService {
     public void cancelSubscription(String productName) {
         LOGGER.debug("Inside cancelSubscription method with parameter product name: {}", productName);
 
-        Aurora.AuroraResponse auroraResponse = getAuroraResponse(productName);
+        String message = String.format("%s=unsubscribe", productName);
+        Aurora.AuroraResponse auroraResponse = getAuroraResponse(message);
 
         if (!auroraResponse.getMessage().is(CancelSubscriptionResponse.class)) {
             throw new BadResponseException(AURORA_BAD_RESPONSE_MESSAGE);
         }
     }
 
-    public ItemOrderBookResponse getIngredient(String productName, String clientId) {
+    public ItemOrderBookResponse getIngredient(String productName, String clientId, int quantity) {
         LOGGER.debug("Inside getIngredient method with parameter product name - {} and client id - {}"
                 , productName, clientId);
 
-        Aurora.AuroraResponse auroraResponse = getAuroraResponse(productName);
+        String message = String.format("%s/%d", productName, quantity);
+        Aurora.AuroraResponse auroraResponse = getAuroraResponse(message);
 
         if (!auroraResponse.getMessage().is(ItemOrderBookResponse.class)) {
             throw new BadResponseException(AURORA_BAD_RESPONSE_MESSAGE);
@@ -92,6 +97,8 @@ public class AuroraClientSideService {
         return Aurora.AuroraRequest
                 .newBuilder()
                 .setTopic(ORDERBOOK_TOPIC_PREFIX + message)
+                .setClientId(CLIENT_ID)
                 .build();
     }
+
 }

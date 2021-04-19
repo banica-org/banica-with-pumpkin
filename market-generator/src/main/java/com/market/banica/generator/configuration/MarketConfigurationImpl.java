@@ -37,7 +37,7 @@ public class MarketConfigurationImpl implements MarketConfiguration {
 
     private static final String PROPERTY_REGEX = "([a-z])+\\.([a-z])+\\.([a-z])+";
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(MarketConfigurationImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(System.getenv("MARKET") + "." + MarketConfigurationImpl.class.getSimpleName());
 
     private final ReadWriteLock propertiesWriteLock = new ReentrantReadWriteLock();
 

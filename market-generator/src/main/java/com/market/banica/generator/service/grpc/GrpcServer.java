@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class GrpcServer {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(GrpcServer.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(System.getenv("MARKET") + "." + GrpcServer.class.getSimpleName());
 
     private final ExecutorService applicationExecutor;
 
