@@ -17,8 +17,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -56,10 +58,7 @@ public class AuroraClient {
             throw new TrackingException("Item is already being tracked!");
         }
 
-        final Aurora.AuroraRequest request = Aurora.AuroraRequest.newBuilder()
-                .setTopic(MARKET_PREFIX + requestedItem)
-                .setClientId(clientId)
-                .build();
+        final Aurora.AuroraRequest request = buildAuroraRequest(requestedItem, clientId);
 
         LOGGER.info("Start gathering product data.");
 
@@ -82,16 +81,24 @@ public class AuroraClient {
         Context.CancellableContext cancelledStub = cancellableStubs.remove(requestedItem);
         cancelledStub.cancel(new StoppedStreamException("Stopped tracking stream for: " + requestedItem));
         itemMarket.removeUntrackedItem(requestedItem);
-    }
-
-    private void startMarketStream(Aurora.AuroraRequest request) {
-        final AuroraServiceGrpc.AuroraServiceStub asynchronousStub = getAsynchronousStub();
-
-        asynchronousStub.subscribe(request, new AuroraStreamObserver(itemMarket));
+        itemMarket.removeItemFromFileBackUp(requestedItem);
     }
 
     public AuroraServiceGrpc.AuroraServiceStub getAsynchronousStub() {
         return AuroraServiceGrpc.newStub(managedChannel);
+    }
+
+    @PostConstruct
+    private void subscribeOnCreation() {
+        Set<String> subscribedItems = this.itemMarket.getSubscribedItems();
+        for (String itemName : subscribedItems) {
+            System.out.println("curr item name -> " + itemName);
+            try {
+                this.startSubscription(itemName, "calculator");
+            } catch (TrackingException e) {
+                LOGGER.error(e.getMessage());
+            }
+        }
     }
 
     @PreDestroy
@@ -100,4 +107,17 @@ public class AuroraClient {
         LOGGER.info("Server is terminated!");
     }
 
+    private void startMarketStream(Aurora.AuroraRequest request) {
+        final AuroraServiceGrpc.AuroraServiceStub asynchronousStub = getAsynchronousStub();
+
+        asynchronousStub.subscribe(request, new AuroraStreamObserver(itemMarket));
+        this.itemMarket.persistItemInFileBackUp(request.getTopic().split(MARKET_PREFIX)[1]);
+    }
+
+    private Aurora.AuroraRequest buildAuroraRequest(String requestedItem, String clientId) {
+        return Aurora.AuroraRequest.newBuilder()
+                .setTopic(MARKET_PREFIX + requestedItem)
+                .setClientId(clientId)
+                .build();
+    }
 }

@@ -1,6 +1,7 @@
 package com.market.banica.order.book.model;
 
 import com.aurora.Aurora;
+import com.google.gson.Gson;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.market.Origin;
 import com.market.TickResponse;
@@ -11,8 +12,13 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +27,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Consumer;
 
 @Component
 public class ItemMarket {
@@ -28,14 +35,19 @@ public class ItemMarket {
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private final Map<String, TreeSet<Item>> allItems;
     private final Map<String, Long> productsQuantity;
+    private Set<String> subscribedItems;
 
+    private static final String FILE_PATH = "C:\\Programs\\banica\\banica-with-pumpkin\\order-book\\src\\main\\java\\com\\market\\banica\\order\\book\\subscribedProductsBackUp.json";
     private static final Logger LOGGER = LogManager.getLogger(ItemMarket.class);
 
     @Autowired
     public ItemMarket() {
         this.allItems = new ConcurrentHashMap<>();
         this.productsQuantity = new ConcurrentHashMap<>();
+        this.subscribedItems = new HashSet<>();
         addDummyData();
+//        subscribedItems.add("test1");
+//        subscribedItems.add("test2");
     }
 
     public Optional<Set<Item>> getItemSetByName(String itemName) {
@@ -99,9 +111,9 @@ public class ItemMarket {
         }
 
         List<OrderBookLayer> layers;
-        try {
-            lock.writeLock().lock();
+        lock.writeLock().lock();
 
+        try {
             layers = new ArrayList<>();
 
             Iterator<Item> iterator = items.iterator();
@@ -124,6 +136,62 @@ public class ItemMarket {
             lock.writeLock().unlock();
         }
         return layers;
+    }
+
+    public void persistItemInFileBackUp(String itemName) {
+        this.lock.writeLock().lock();
+
+        try {
+            modifyFile(itemName, subscribedItems::add);
+        } finally {
+            this.lock.writeLock().unlock();
+        }
+    }
+
+    public void removeItemFromFileBackUp(String itemName) {
+        this.lock.writeLock().lock();
+
+        try {
+            modifyFile(itemName, subscribedItems::remove);
+        } finally {
+            this.lock.writeLock().unlock();
+        }
+    }
+
+    private void modifyFile(String itemName, Consumer<String> consumer) {
+        Gson gson = new Gson();
+        consumer.accept(itemName);
+
+        try (FileWriter writer = new FileWriter(FILE_PATH);) {
+            gson.toJson(subscribedItems, writer);
+            writer.flush();
+        } catch (IOException e) {
+            LOGGER.error("An error occurred while modifying data in backup file: {}", e.getMessage());
+        }
+    }
+
+    @PostConstruct
+    public void readBackUp() {
+        this.lock.readLock().lock();
+
+        try {
+            Gson gson = new Gson();
+            try (FileReader reader = new FileReader(FILE_PATH);) {
+                this.subscribedItems = gson.fromJson(reader, Set.class);
+                if (subscribedItems == null) {
+                    subscribedItems = new HashSet<>();
+                }
+
+            } catch (IOException e) {
+                LOGGER.error("An error occurred while reading data from backup file: {}", e.getMessage());
+            }
+        } finally {
+            this.lock.readLock().unlock();
+        }
+    }
+
+    public Set<String> getSubscribedItems() {
+        return this.subscribedItems;
     }
 
     private OrderBookLayer.Builder populateItemLayer(Iterator<Item> iterator, long itemLeft, Item currentItem) {

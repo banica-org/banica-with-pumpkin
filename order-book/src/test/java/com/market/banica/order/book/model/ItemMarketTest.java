@@ -46,6 +46,22 @@ public class ItemMarketTest {
     }
 
     @Test
+    public void testPersistItem() {
+//        itemMarket.readBackUp();
+//        itemMarket.removeItemFromFileBackUp("newItem");
+//        itemMarket.removeItemFromFileBackUp("a");
+//        itemMarket.removeItemFromFileBackUp("b");
+//        itemMarket.removeItemFromFileBackUp("c");
+
+        itemMarket.persistItemInFileBackUp("aurora");
+        itemMarket.persistItemInFileBackUp("test");
+        itemMarket.persistItemInFileBackUp("c");
+        itemMarket.persistItemInFileBackUp("b");
+        itemMarket.persistItemInFileBackUp("a");
+        System.out.println();
+    }
+
+    @Test
     public void updateItemUpdatesProductQuantityAndAllItemsMaps() {
         //Arrange
         itemMarket.addTrackedItem(CHEESE_ITEM_NAME);
