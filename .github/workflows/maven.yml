@@ -27,7 +27,7 @@ jobs:
       run: mvn -B package -s $GITHUB_WORKSPACE/settings.xml
       env:
         GITHUB_TOKEN: ${{ github.token }}
-
+        
     - name: Send mail
       uses: dawidd6/action-send-mail@v2
       if: ${{ failure() }}
@@ -39,10 +39,10 @@ jobs:
         username: ${{ secrets.BUILD_NOTIFICATIONS_EMAIL_USERNAME }}
         password: ${{ secrets.BUILD_NOTIFICATIONS_EMAIL_PASSWORD }}
         # email subject
-        subject: Results of build job ${{ github.repository }}.
+        subject: Github Results of build job in ${{ github.repository }} project.
         # email body as text
-        body: ${{ github.job }} job in workflow ${{ github.workflow }} of ${{ github.repository }} has finished with status ${{ job.status }}.
+        body: Branch with name ${{ github.head_ref }} has concluded the building phase with status ${{ job.status }} on the pull request to main.
         # comma-separated string, send email to
         to: SpecialEPM-BGJJJunX@epam.com
         # from email name
-        from: Github Actions
+        from: Github Project Notifications

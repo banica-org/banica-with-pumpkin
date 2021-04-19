@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 @Component
 public class MarketStateImpl implements MarketState {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(MarketStateImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(System.getenv("MARKET") + "." + MarketStateImpl.class.getSimpleName());
 
     private static final ReadWriteLock marketDataLock = new ReentrantReadWriteLock();
 
