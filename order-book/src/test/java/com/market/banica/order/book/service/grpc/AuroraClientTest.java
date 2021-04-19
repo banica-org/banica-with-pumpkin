@@ -8,10 +8,14 @@ import com.market.banica.order.book.model.ItemMarket;
 import io.grpc.Context;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import lombok.SneakyThrows;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Map;
@@ -47,6 +51,10 @@ public class AuroraClientTest {
     private final Map<String, TreeSet<Item>> allItems = new ConcurrentHashMap<>();
     private final Map<String, Context.CancellableContext> cancellableStubs = new ConcurrentHashMap<>();
 
+    @Rule
+    public TemporaryFolder folder = new TemporaryFolder();
+
+    @SneakyThrows
     @Before
     public void setUp() {
         TreeSet<Item> items = this.populateItems();
@@ -57,6 +65,8 @@ public class AuroraClientTest {
         ReflectionTestUtils.setField(itemMarket, ALL_ITEMS_FIELD, allItems);
         ReflectionTestUtils.setField(auroraClient, CANCELLABLE_STUBS_FIELD, cancellableStubs);
         ReflectionTestUtils.setField(auroraClient, MANAGED_CHANNEL_FIELD, managedChannel);
+        File createdFile = folder.newFile("subscribedProductsBackUp.json");
+        ReflectionTestUtils.setField(itemMarket, "file", createdFile);
     }
 
     @Test

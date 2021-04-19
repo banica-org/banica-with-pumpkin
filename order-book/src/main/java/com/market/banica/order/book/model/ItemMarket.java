@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -35,6 +36,7 @@ public class ItemMarket {
     private final Map<String, TreeSet<Item>> allItems;
     private final Map<String, Long> productsQuantity;
     private Set<String> subscribedItems;
+    private final File file;
 
     private static final String FILE_PATH = "src/main/java/com/market/banica/order/book/subscribedProductsBackUp.json";
     private static final Logger LOGGER = LogManager.getLogger(ItemMarket.class);
@@ -44,6 +46,7 @@ public class ItemMarket {
         this.allItems = new ConcurrentHashMap<>();
         this.productsQuantity = new ConcurrentHashMap<>();
         this.subscribedItems = new HashSet<>();
+        this.file = new File(FILE_PATH);
     }
 
     public Optional<Set<Item>> getItemSetByName(String itemName) {
@@ -159,7 +162,7 @@ public class ItemMarket {
         Gson gson = new Gson();
         consumer.accept(itemName);
 
-        try (FileWriter writer = new FileWriter(FILE_PATH);) {
+        try (FileWriter writer = new FileWriter(file);) {
             gson.toJson(subscribedItems, writer);
             writer.flush();
         } catch (IOException e) {
@@ -173,7 +176,7 @@ public class ItemMarket {
 
         try {
             Gson gson = new Gson();
-            try (FileReader reader = new FileReader(FILE_PATH);) {
+            try (FileReader reader = new FileReader(file);) {
                 this.subscribedItems = gson.fromJson(reader, Set.class);
                 if (subscribedItems == null) {
                     subscribedItems = new HashSet<>();
