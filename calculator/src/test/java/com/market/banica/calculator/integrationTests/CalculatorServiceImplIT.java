@@ -233,7 +233,7 @@ public class CalculatorServiceImplIT {
     }
 
     @Test
-    public void getProductWithThreeLevelsInheritanceShouldReturnListOfProductDtoWhenProductHasIngredientsWithBetterPrice() {
+    public void getProductWithThreeLevelsInheritanceShouldReturnListOfProductDtoWhenProductHasIngredientsWithBetterPrice() throws JsonProcessingException {
         //given
         String expectedResult = "[ {\n" +
                 "  \"itemName\" : \"banica\",\n" +
@@ -365,6 +365,8 @@ public class CalculatorServiceImplIT {
 
         //when
         List<ProductDto> actualResult = calculatorService.getProduct(clientId, banica, banicaQuantity);
+        ObjectWriter objectWriter = new ObjectMapper().writerWithDefaultPrettyPrinter();
+        System.out.println(objectWriter.writeValueAsString(actualResult));
 
         //then
         assertEquals(convertStringToListOfProductDto(expectedResult).toString(), actualResult.toString());
@@ -579,6 +581,14 @@ public class CalculatorServiceImplIT {
         addProductToDatabase(data, "tomatoes", 1.5, 1);
         addProductToDatabase(data, "tomatoes", 2, 64);
         return data;
+    }
+    private void addEmptyProductToDatabase(Map<String, ItemOrderBookResponse> data, String productName, double price, int quantity) {
+
+            data.put(productName, ItemOrderBookResponse.newBuilder()
+                    .setItemName(productName)
+                    .addAllOrderbookLayers(new ArrayList<>())
+                    .build());
+
     }
 
     private void addProductToDatabase(Map<String, ItemOrderBookResponse> data, String productName, double price, int quantity) {
