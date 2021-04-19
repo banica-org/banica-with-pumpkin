@@ -30,6 +30,18 @@ public class TestConfiguration {
         }));
     }
 
+    public AuroraServiceGrpc.AuroraServiceImplBase aurora(Aurora.AuroraResponse auroraResponse) {
+
+        return new AuroraServiceGrpc.AuroraServiceImplBase() {
+            @Override
+            public void request(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
+                responseObserver.onNext(auroraResponse);
+
+                responseObserver.onCompleted();
+            }
+        };
+    }
+
     public OrderBookServiceGrpc.OrderBookServiceImplBase getGrpcOrderBookServiceItemLayers(ItemOrderBookResponse response) {
 
         return new OrderBookServiceGrpc.OrderBookServiceImplBase() {
