@@ -17,8 +17,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -82,16 +84,30 @@ public class AuroraClient {
         Context.CancellableContext cancelledStub = cancellableStubs.remove(requestedItem);
         cancelledStub.cancel(new StoppedStreamException("Stopped tracking stream for: " + requestedItem));
         itemMarket.removeUntrackedItem(requestedItem);
+        itemMarket.removeItemFromFileBackUp(requestedItem);
     }
 
     private void startMarketStream(Aurora.AuroraRequest request) {
         final AuroraServiceGrpc.AuroraServiceStub asynchronousStub = getAsynchronousStub();
 
         asynchronousStub.subscribe(request, new AuroraStreamObserver(itemMarket));
+        this.itemMarket.persistItemInFileBackUp(request.getTopic().split(MARKET_PREFIX)[1]);
     }
 
     public AuroraServiceGrpc.AuroraServiceStub getAsynchronousStub() {
         return AuroraServiceGrpc.newStub(managedChannel);
+    }
+
+    @PostConstruct
+    private void subscribeOnCreation() {
+        Set<String> subscribedItems = this.itemMarket.getSubscribedItems();
+        for (String itemName : subscribedItems) {
+            try {
+                this.startSubscription(itemName, "calculator");
+            } catch (TrackingException e) {
+                LOGGER.error(e.getMessage());
+            }
+        }
     }
 
     @PreDestroy
