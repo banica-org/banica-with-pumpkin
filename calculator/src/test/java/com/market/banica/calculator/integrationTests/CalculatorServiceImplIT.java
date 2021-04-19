@@ -104,7 +104,7 @@ public class CalculatorServiceImplIT {
         flour = "flour";
         cheese = "cheese";
 
-        waterQuantity = 60;
+        waterQuantity = 300;
         onlyWaterQuantity = 5;
         waterKetchupQuantity = 100;
         tomatoesQuantity = 65;
@@ -112,11 +112,11 @@ public class CalculatorServiceImplIT {
         onlyKetchupQuantity = 2;
         sugarQuantity = 50;
         sauceQuantity = 150;
-        eggsQuantity = 30;
-        crustsQuantity = 30;
-        milkQuantity = 40;
+        eggsQuantity = 12;
+        crustsQuantity = 200;
+        milkQuantity = 200;
         pumpkinQuantity = 300;
-        banicaQuantity = 1;
+        banicaQuantity = 2;
         cheeseQuantity = 30;
         flourQuantity = 20;
     }
@@ -350,30 +350,26 @@ public class CalculatorServiceImplIT {
                 "    \"tomatoes\" : 65\n" +
                 "  }\n" +
                 "} ]";
-//        doReturn(getTestData4().get(ketchup)).when(auroraClientSideService)
-//                .getIngredient(ketchup, clientId, ketchupQuantity);
-        doReturn(getTestData4().get(water)).when(auroraClientSideService)
+        doReturn(getTestData2().get(ketchup)).when(auroraClientSideService)
+                .getIngredient(ketchup, clientId, ketchupQuantity);
+        doReturn(getTestData2().get(water)).when(auroraClientSideService)
                 .getIngredient(water, clientId, waterQuantity);
-//        doReturn(getTestData4().get(tomatoes)).when(auroraClientSideService)
-//                .getIngredient(tomatoes, clientId, tomatoesQuantity);
-        doReturn(getTestData4().get(crusts)).when(auroraClientSideService)
+        doReturn(getTestData2().get(tomatoes)).when(auroraClientSideService)
+                .getIngredient(tomatoes, clientId, tomatoesQuantity);
+        doReturn(getTestData2().get(crusts)).when(auroraClientSideService)
                 .getIngredient(crusts, clientId, crustsQuantity);
-        doReturn(getTestData4().get(eggs)).when(auroraClientSideService)
+        doReturn(getTestData2().get(eggs)).when(auroraClientSideService)
                 .getIngredient(eggs, clientId, eggsQuantity);
-        doReturn(getTestData4().get(milk)).when(auroraClientSideService)
+        doReturn(getTestData2().get(milk)).when(auroraClientSideService)
                 .getIngredient(milk, clientId, milkQuantity);
-//        doReturn(getTestData4().get(sauce)).when(auroraClientSideService)
-//                .getIngredient(sauce, clientId, sauceQuantity);
-        doReturn(getTestData4().get(banica)).when(auroraClientSideService)
+        doReturn(getTestData2().get(sauce)).when(auroraClientSideService)
+                .getIngredient(sauce, clientId, sauceQuantity);
+        doReturn(getTestData2().get(banica)).when(auroraClientSideService)
                 .getIngredient(banica, clientId, banicaQuantity);
-        doReturn(getTestData4().get(cheese)).when(auroraClientSideService)
-                .getIngredient(cheese, clientId, cheeseQuantity);
-        doReturn(getTestData4().get(flour)).when(auroraClientSideService)
-                .getIngredient(flour, clientId, flourQuantity);
-//        doReturn(getTestData4().get(pumpkin)).when(auroraClientSideService)
-//                .getIngredient(pumpkin, clientId, pumpkinQuantity);
-//        doReturn(getTestData4().get(sugar)).when(auroraClientSideService)
-//                .getIngredient(sugar, clientId, sugarQuantity);
+        doReturn(getTestData2().get(pumpkin)).when(auroraClientSideService)
+                .getIngredient(pumpkin, clientId, pumpkinQuantity);
+        doReturn(getTestData2().get(sugar)).when(auroraClientSideService)
+                .getIngredient(sugar, clientId, sugarQuantity);
 
         //when
         List<ProductDto> actualResult = calculatorService.getProduct(clientId, banica, banicaQuantity);
@@ -595,18 +591,7 @@ public class CalculatorServiceImplIT {
         return data;
     }
 
-    public Map<String, ItemOrderBookResponse> getTestData4() {
-        Map<String, ItemOrderBookResponse> data = new LinkedHashMap<>();
-        addEmptyProductToDatabase(data, "banica", 5000, 1);//milk 20,eggs 30, crusts 1800, cheese 2400 total = 4250
-        addEmptyProductToDatabase(data, "milk", 1, 40);
-        addEmptyProductToDatabase(data, "crusts", 62, 30);//water (20*1 + 10*2)=40,flour 20*1=20 total = 60 *30 = 1800
-        addEmptyProductToDatabase(data, "cheese", 82, 30);//water 30*2=60,milk 20*1=20 total = 80 *30 = 2400
-        addEmptyProductToDatabase(data, "water", 1, 20);
-        addEmptyProductToDatabase(data, "water", 2, 40);
-        addEmptyProductToDatabase(data, "eggs", 1, 30);
-        addEmptyProductToDatabase(data, "flour", 1, 20);
-        return data;
-    }
+
     private void addEmptyProductToDatabase(Map<String, ItemOrderBookResponse> data, String productName, double price, int quantity) {
 
             data.put(productName, ItemOrderBookResponse.newBuilder()
@@ -661,7 +646,7 @@ public class CalculatorServiceImplIT {
 
     private ConcurrentHashMap<String, Product> getProductDataAsMap() {
         Gson gson = new Gson();
-        String productSpecificationListAsJson = getProductDataAsString1();
+        String productSpecificationListAsJson = getProductDataAsString();
         Type productSpecificationListType = new TypeToken<ConcurrentHashMap<String, Product>>() {
         }.getType();
         ConcurrentHashMap<String, Product> data = gson.fromJson(productSpecificationListAsJson,
@@ -737,58 +722,5 @@ public class CalculatorServiceImplIT {
                 "    }\n" +
                 "  }\n" +
                 "}";
-    }
-
-    private String getProductDataAsString1() {
-        return
-                "{\n" +
-                        "  \"crusts\" : {\n" +
-                        "    \"productName\" : \"crusts\",\n" +
-                        "    \"unitOfMeasure\" : \"GRAM\",\n" +
-                        "    \"ingredients\" : {\n" +
-                        "      \"water\" : 30,\n" +
-                        "      \"flour\" : 20\n" +
-                        "    }\n" +
-                        "  },\n" +
-                        "  \"eggs\" : {\n" +
-                        "    \"productName\" : \"eggs\",\n" +
-                        "    \"unitOfMeasure\" : \"PIECE\",\n" +
-                        "    \"ingredients\" : { }\n" +
-                        "  },\n" +
-                        "  \"flour\" : {\n" +
-                        "    \"productName\" : \"flour\",\n" +
-                        "    \"unitOfMeasure\" : \"GRAM\",\n" +
-                        "    \"ingredients\" : { }\n" +
-                        "  },\n" +
-                        "  \"milk\" : {\n" +
-                        "    \"productName\" : \"milk\",\n" +
-                        "    \"unitOfMeasure\" : \"MILLILITER\",\n" +
-                        "    \"ingredients\" : { }\n" +
-                        "  },\n" +
-                        "  \"banica\" : {\n" +
-                        "    \"productName\" : \"banica\",\n" +
-                        "    \"unitOfMeasure\" : \"GRAM\",\n" +
-                        "    \"ingredients\" : {\n" +
-                        "      \"milk\" : 20,\n" +
-                        "      \"crusts\" : 30,\n" +
-                        "      \"cheese\" : 30,\n" +
-                        "      \"eggs\" : 30\n" +
-                        "    }\n" +
-                        "  },\n" +
-                        "  \"water\" : {\n" +
-                        "    \"productName\" : \"water\",\n" +
-                        "    \"unitOfMeasure\" : \"MILLILITER\",\n" +
-                        "    \"ingredients\" : { }\n" +
-                        "  },\n" +
-                        "  \"cheese\" : {\n" +
-                        "    \"productName\" : \"cheese\",\n" +
-                        "    \"unitOfMeasure\" : \"GRAM\",\n" +
-                        "    \"ingredients\" : {\n" +
-                        "      \"water\" : 30,\n" +
-                        "      \"milk\" : 20\n" +
-                        "    }\n" +
-                        "  }\n" +
-                        "}";
-
     }
 }
