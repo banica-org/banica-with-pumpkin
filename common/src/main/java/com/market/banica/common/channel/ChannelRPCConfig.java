@@ -16,7 +16,7 @@ public class ChannelRPCConfig {
     private ChannelRPCConfig() {
         serviceConfig = new Gson().fromJson(
                 new JsonReader(
-                        new InputStreasdasdamReader(
+                        new InputStreasdasddamReader(
                                 ChannelRPCConfig.class.getResourceAsStream(
                                         "/retrying_service_config.json"),
                                 UTF_8)),
