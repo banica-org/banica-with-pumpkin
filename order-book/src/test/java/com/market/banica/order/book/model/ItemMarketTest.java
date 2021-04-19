@@ -29,9 +29,9 @@ public class ItemMarketTest {
 
     private static final String ALL_ITEMS_FIELD = "allItems";
     private static final String PRODUCTS_QUANTITY_FIELD = "productsQuantity";
-    private static final String FILE_PATH = "src/test/java/com/market/banica/order/book/subscribedProductsBackUp.json";
+   // private static final String FILE_PATH = "src/test/java/com/market/banica/order/book/subscribedProductsBackUp.json";
 
-    private final ItemMarket itemMarket = new ItemMarket();
+    private final ItemMarket itemMarket = new ItemMarket("testBackup.json");
     private final Map<String, TreeSet<Item>> allItems = new ConcurrentHashMap<>();
     private final Map<String, Long> productsQuantity = new ConcurrentHashMap<>();
 

@@ -4,11 +4,13 @@ import com.aurora.Aurora;
 import com.google.gson.Gson;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.market.TickResponse;
+import com.market.banica.common.util.ApplicationDirectoryUtil;
 import com.market.banica.order.book.exception.IncorrectResponseException;
 import com.orderbook.OrderBookLayer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -36,14 +38,15 @@ public class ItemMarket {
     private final Map<String, Long> productsQuantity;
     private Set<String> subscribedItems;
 
-    private static final String FILE_PATH = "src/main/java/com/market/banica/order/book/subscribedProductsBackUp.json";
+    private final String FILE_PATH;
     private static final Logger LOGGER = LogManager.getLogger(ItemMarket.class);
 
     @Autowired
-    public ItemMarket() {
+    public ItemMarket(@Value("${backup.url}") String fileName) {
         this.allItems = new ConcurrentHashMap<>();
         this.productsQuantity = new ConcurrentHashMap<>();
         this.subscribedItems = new HashSet<>();
+        FILE_PATH = fileName;
     }
 
     public Optional<Set<Item>> getItemSetByName(String itemName) {
@@ -140,12 +143,14 @@ public class ItemMarket {
 
         try {
             modifyFile(itemName, subscribedItems::add);
+        } catch (IOException e) {
+            LOGGER.info("Problem occur while modifying cable");
         } finally {
             this.lock.writeLock().unlock();
         }
     }
 
-    public void removeItemFromFileBackUp(String itemName) {
+    public void removeItemFromFileBackUp(String itemName) throws IOException {
         this.lock.writeLock().lock();
 
         try {
@@ -155,11 +160,11 @@ public class ItemMarket {
         }
     }
 
-    private void modifyFile(String itemName, Consumer<String> consumer) {
+    private void modifyFile(String itemName, Consumer<String> consumer) throws IOException {
         Gson gson = new Gson();
         consumer.accept(itemName);
 
-        try (FileWriter writer = new FileWriter(FILE_PATH);) {
+        try (FileWriter writer = new FileWriter(ApplicationDirectoryUtil.getConfigFile(FILE_PATH));) {
             gson.toJson(subscribedItems, writer);
             writer.flush();
         } catch (IOException e) {
@@ -173,7 +178,7 @@ public class ItemMarket {
 
         try {
             Gson gson = new Gson();
-            try (FileReader reader = new FileReader(FILE_PATH);) {
+            try (FileReader reader = new FileReader(ApplicationDirectoryUtil.getConfigFile(FILE_PATH));) {
                 this.subscribedItems = gson.fromJson(reader, Set.class);
                 if (subscribedItems == null) {
                     subscribedItems = new HashSet<>();

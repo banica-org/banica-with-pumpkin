@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -84,7 +85,11 @@ public class AuroraClient {
         Context.CancellableContext cancelledStub = cancellableStubs.remove(requestedItem);
         cancelledStub.cancel(new StoppedStreamException("Stopped tracking stream for: " + requestedItem));
         itemMarket.removeUntrackedItem(requestedItem);
-        itemMarket.removeItemFromFileBackUp(requestedItem);
+        try {
+            itemMarket.removeItemFromFileBackUp(requestedItem);
+        } catch (IOException e){
+            LOGGER.warn("Error occur while trying to remove item from file.");
+        }
     }
 
     private void startMarketStream(Aurora.AuroraRequest request) {
