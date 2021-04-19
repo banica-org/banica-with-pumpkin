@@ -7,6 +7,7 @@ import com.google.gson.Gson;
 import com.market.banica.calculator.dto.ProductDto;
 import com.market.banica.calculator.dto.ProductPriceComponentsSet;
 import com.market.banica.calculator.dto.ProductSpecification;
+import com.market.banica.calculator.exception.exceptions.BadResponseException;
 import com.market.banica.calculator.model.Pair;
 import com.market.banica.calculator.model.Product;
 import com.market.banica.calculator.service.contract.CalculatorService;
@@ -246,6 +247,10 @@ public class CalculatorServiceImpl implements CalculatorService {
                         orderedProduct, orderedQuantity);
 
         Set<ProductPriceComponentsSet> resultSet = new TreeSet<>(orderedProductPriceVariantsSet);
+
+        if(resultSet.isEmpty()){
+            throw new BadResponseException("Out of resources for this product");
+        }
 
         return resultSet.iterator().next();
     }
