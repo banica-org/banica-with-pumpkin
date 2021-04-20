@@ -20,7 +20,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ProductServiceImplTest {
-    public static final String INGREDIENTS_MAP = "pumpkin:2";
+    public static final String INGREDIENTS_MAP = "pumpkin:2.5";
     public static final Integer QUANTITY = 2;
     private static final String BANICA = "banica";
     private static final String PUMPKIN = "pumpkin";

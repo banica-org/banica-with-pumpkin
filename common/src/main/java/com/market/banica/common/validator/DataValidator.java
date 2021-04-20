@@ -1,10 +1,9 @@
 package com.market.banica.common.validator;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class DataValidator {
-    public static final String REGEX_INGREDIENTS_PATTERN = "(.+[a-z])(:)(.+\\d)";
+    public static final String INGREDIENT_NAME_PATTERN = "^[a-zA-Z]*$";
+    public static final String INGREDIENT_QUANTITY_PATTERN = "^\\d*\\.?\\d*$";
 
     public static void validateIncomingData(String data) {
         if (data == null || data.isEmpty()) {
@@ -14,12 +13,28 @@ public class DataValidator {
 
     public static void validateIngredientsMap(String ingredientsMap) {
 
-        Pattern pattern = Pattern.compile(REGEX_INGREDIENTS_PATTERN);
-
-        Matcher matcher = pattern.matcher(ingredientsMap);
-        if (!matcher.find()) {
-            throw new IllegalArgumentException("Ingredients map must follow product:quantity pattern.");
+        for (String ingredientMap : ingredientsMap.split(",")) {
+            String[] ingredientProperties = ingredientMap.split(":");
+            if (ingredientProperties.length != 2) {
+                throw new IllegalArgumentException("Ingredients map must follow product:quantity pattern");
+            }
+            String ingredientName = ingredientProperties[0];
+            String ingredientQuantity = ingredientProperties[1];
+            checkIngredientName(ingredientName);
+            checkIngredientQuantity(ingredientQuantity);
         }
 
+    }
+
+    private static void checkIngredientName(String ingredientName) {
+        if (!ingredientName.matches(INGREDIENT_NAME_PATTERN)) {
+            throw new IllegalArgumentException("Ingredient name must contains only letters.");
+        }
+    }
+
+    private static void checkIngredientQuantity(String ingredientQuantity) {
+        if (!ingredientQuantity.matches(INGREDIENT_QUANTITY_PATTERN)) {
+            throw new IllegalArgumentException("Ingredient quantity must contains only digits.");
+        }
     }
 }

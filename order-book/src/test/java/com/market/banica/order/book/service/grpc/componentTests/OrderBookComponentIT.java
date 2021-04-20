@@ -3,9 +3,11 @@ package com.market.banica.order.book.service.grpc.componentTests;
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
 import com.google.protobuf.Any;
+import com.market.MarketDataRequest;
+import com.market.MarketServiceGrpc;
 import com.market.Origin;
 import com.market.TickResponse;
-import com.market.banica.common.exception.TrackingException;
+import com.market.banica.common.channel.ChannelRPCConfig;
 import com.market.banica.order.book.OrderBookApplication;
 import com.market.banica.order.book.model.ItemMarket;
 import com.market.banica.order.book.service.grpc.AuroraClient;
@@ -26,6 +28,7 @@ import io.grpc.inprocess.InProcessChannelBuilder;
 import io.grpc.inprocess.InProcessServerBuilder;
 import io.grpc.stub.StreamObserver;
 import io.grpc.testing.GrpcCleanupRule;
+import lombok.SneakyThrows;
 import org.junit.Rule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,8 +44,11 @@ import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -51,6 +57,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @SpringJUnitConfig
 @SpringBootTest(classes = OrderBookApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -250,13 +257,10 @@ class OrderBookComponentIT {
         grpcCleanup.register(InProcessServerBuilder
                 .forName(serverName).directExecutor()
                 .addService(new OrderBookServiceGrpc.OrderBookServiceImplBase() {
+                    @SneakyThrows
                     @Override
                     public void announceItemInterest(InterestsRequest request, StreamObserver<InterestsResponse> responseObserver) {
-                        try {
-                            auroraClient.startSubscription(request.getItemName(), request.getClientId());
-                        } catch (TrackingException e) {
-                            e.printStackTrace();
-                        }
+                        auroraClient.startSubscription(request.getItemName(), request.getClientId());
                         responseObserver.onNext(InterestsResponse.newBuilder().build());
                         responseObserver.onCompleted();
                     }
@@ -271,11 +275,11 @@ class OrderBookComponentIT {
         doReturn(asynchronousStub).when(auroraClient).getAsynchronousStub();
 
         // Act
-        InterestsResponse response = blockingStub.announceItemInterest(InterestsRequest.newBuilder().setItemName(productName).build());
+        InterestsResponse response = blockingStub.announceItemInterest(InterestsRequest.newBuilder().setClientId(AURORA_CLIENT).setItemName(productName).build());
 
         // Assert
         verify(server).subscribe(requestCaptor.capture(), ArgumentMatchers.any());
-        assertEquals(orderBookTopicPrefix + productName, requestCaptor.getValue().getTopic());
+        assertEquals(marketTopicPrefix + productName, requestCaptor.getValue().getTopic());
         assertTrue(response.isInitialized());
     }
 
@@ -286,13 +290,10 @@ class OrderBookComponentIT {
         grpcCleanup.register(channel);
         grpcCleanup.register(InProcessServerBuilder
                 .forName(serverName).directExecutor().addService(new OrderBookServiceGrpc.OrderBookServiceImplBase() {
+                    @SneakyThrows
                     @Override
                     public void cancelItemSubscription(CancelSubscriptionRequest request, StreamObserver<CancelSubscriptionResponse> responseObserver) {
-                        try {
-                            auroraClient.stopSubscription(request.getItemName(), request.getClientId());
-                        } catch (TrackingException e) {
-                            e.printStackTrace();
-                        }
+                        auroraClient.stopSubscription(request.getItemName(), request.getClientId());
                         responseObserver.onNext(CancelSubscriptionResponse.newBuilder().build());
                         responseObserver.onCompleted();
                     }
@@ -445,7 +446,7 @@ class OrderBookComponentIT {
     private ItemOrderBookResponse generateItemOrderBookResponseFromRequest() {
         ItemOrderBookResponse reply =
                 blockingStub.getOrderBookItemLayers(ItemOrderBookRequest.newBuilder()
-                        .setItemName(MARKET_PREFIX + productName)
+                        .setItemName(marketTopicPrefix + productName)
                         .setClientId(clientId)
                         .build());
         return reply;
@@ -461,6 +462,3 @@ class OrderBookComponentIT {
         return auroraResponse;
     }
 }
-
-
-
