@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class TickGeneratorImpl implements TickGenerator {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TickGeneratorImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(System.getenv("MARKET") + "." + TickGeneratorImpl.class.getSimpleName());
 
     private final ScheduledExecutorService tickScheduler = Executors.newScheduledThreadPool(5);
 

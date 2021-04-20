@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class MarketSubscriptionManager implements SubscriptionManager {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(MarketSubscriptionManager.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(System.getenv("MARKET") + "." + MarketSubscriptionManager.class.getSimpleName());
 
     private final Map<String, Set<StreamObserver<TickResponse>>> subscriptions = new ConcurrentHashMap<>();
 

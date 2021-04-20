@@ -20,12 +20,16 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Component
 @AllArgsConstructor
 public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplBase {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OrderBookService.class);
+
+    private final ExecutorService subscriptionExecutor = Executors.newSingleThreadExecutor();
 
     private final AuroraClient auroraClient;
     private final ItemMarket itemMarket;
@@ -57,20 +61,21 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
         DataValidator.validateIncomingData(itemName);
         DataValidator.validateIncomingData(clientId);
 
-        try {
+        subscriptionExecutor.execute(() -> {
+            try {
+                auroraClient.startSubscription(itemName, clientId);
+            } catch (TrackingException e) {
 
-            auroraClient.startSubscription(itemName, clientId);
-            responseObserver.onNext(InterestsResponse.newBuilder().build());
-            responseObserver.onCompleted();
-            LOGGER.info("Announce item interest by client id: {}", request.getClientId());
+                LOGGER.warn("Announce item interest by client id: {} has failed with item: {}",
+                        request.getClientId(), itemName);
+                responseObserver.onError(Status.INVALID_ARGUMENT.withDescription("Invalid item name").asException());
 
-        } catch (TrackingException e) {
+            }
+        });
+        responseObserver.onNext(InterestsResponse.newBuilder().build());
+        responseObserver.onCompleted();
+        LOGGER.info("Announce item interest by client id: {}", request.getClientId());
 
-            LOGGER.warn("Announce item interest by client id: {} has failed with item: {}",
-                    request.getClientId(), itemName);
-            responseObserver.onError(Status.INVALID_ARGUMENT.withDescription("Invalid item name").asException());
-
-        }
     }
 
     @Override
