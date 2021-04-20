@@ -2,12 +2,14 @@ package com.market.banica.order.book.service.grpc.componentTests;
 
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.Any;
 import com.market.MarketDataRequest;
 import com.market.MarketServiceGrpc;
 import com.market.Origin;
 import com.market.TickResponse;
 import com.market.banica.common.channel.ChannelRPCConfig;
+import com.market.banica.common.exception.TrackingException;
 import com.market.banica.order.book.OrderBookApplication;
 import com.market.banica.order.book.model.ItemMarket;
 import com.market.banica.order.book.service.grpc.AuroraClient;
@@ -28,7 +30,6 @@ import io.grpc.inprocess.InProcessChannelBuilder;
 import io.grpc.inprocess.InProcessServerBuilder;
 import io.grpc.stub.StreamObserver;
 import io.grpc.testing.GrpcCleanupRule;
-import lombok.SneakyThrows;
 import org.junit.Rule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -64,6 +65,8 @@ import static org.mockito.Mockito.when;
 @ActiveProfiles("testOrderBookIT")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class OrderBookComponentIT {
+    public static final String ITEM_NAME = "eggs";
+    public static final String CLIENT_ID = "clientId";
 
     @SpyBean
     @Autowired
@@ -152,7 +155,7 @@ class OrderBookComponentIT {
         //Arrange
         int numberOfTickResponses = 10;
         ReflectionTestUtils.setField(orderBookService, AURORA_CLIENT, auroraClient);
-
+        ReflectionTestUtils.setField(orderBookService, "subscriptionExecutor", MoreExecutors.newDirectExecutorService());
         String serverNameMarket = InProcessServerBuilder.generateName();
 
         when(auroraClient.getAsynchronousStub()).thenReturn(asynchronousStub);
@@ -210,7 +213,8 @@ class OrderBookComponentIT {
 
         when(itemMarket.getRequestedItem(productName, productQuantity)).thenReturn(layers);
 
-        startOrderBookService(orderBookService, THREAD_SLEEP_TIME_DEFAULT);
+        // Start OrderBook
+        startOrderBookService(orderBookService,THREAD_SLEEP_TIME_DEFAULT);
 
         startAuroraServiceWithRequestMethodOverridden();
 
@@ -257,10 +261,13 @@ class OrderBookComponentIT {
         grpcCleanup.register(InProcessServerBuilder
                 .forName(serverName).directExecutor()
                 .addService(new OrderBookServiceGrpc.OrderBookServiceImplBase() {
-                    @SneakyThrows
                     @Override
                     public void announceItemInterest(InterestsRequest request, StreamObserver<InterestsResponse> responseObserver) {
-                        auroraClient.startSubscription(request.getItemName(), request.getClientId());
+                        try {
+                            auroraClient.startSubscription(request.getItemName(), request.getClientId());
+                        } catch (TrackingException e) {
+                            e.printStackTrace();
+                        }
                         responseObserver.onNext(InterestsResponse.newBuilder().build());
                         responseObserver.onCompleted();
                     }
@@ -275,7 +282,7 @@ class OrderBookComponentIT {
         doReturn(asynchronousStub).when(auroraClient).getAsynchronousStub();
 
         // Act
-        InterestsResponse response = blockingStub.announceItemInterest(InterestsRequest.newBuilder().setClientId(AURORA_CLIENT).setItemName(productName).build());
+        InterestsResponse response = blockingStub.announceItemInterest(InterestsRequest.newBuilder().setItemName(productName).build());
 
         // Assert
         verify(server).subscribe(requestCaptor.capture(), ArgumentMatchers.any());
@@ -290,10 +297,13 @@ class OrderBookComponentIT {
         grpcCleanup.register(channel);
         grpcCleanup.register(InProcessServerBuilder
                 .forName(serverName).directExecutor().addService(new OrderBookServiceGrpc.OrderBookServiceImplBase() {
-                    @SneakyThrows
                     @Override
                     public void cancelItemSubscription(CancelSubscriptionRequest request, StreamObserver<CancelSubscriptionResponse> responseObserver) {
-                        auroraClient.stopSubscription(request.getItemName(), request.getClientId());
+                        try {
+                            auroraClient.stopSubscription(request.getItemName(), request.getClientId());
+                        } catch (TrackingException e) {
+                            e.printStackTrace();
+                        }
                         responseObserver.onNext(CancelSubscriptionResponse.newBuilder().build());
                         responseObserver.onCompleted();
                     }

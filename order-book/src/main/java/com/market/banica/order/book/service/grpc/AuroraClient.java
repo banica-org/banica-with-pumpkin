@@ -53,9 +53,6 @@ public class AuroraClient {
 
     public void startSubscription(String requestedItem, String clientId) throws TrackingException {
 
-        DataValidator.validateIncomingData(requestedItem);
-        DataValidator.validateIncomingData(clientId);
-
         if (cancellableStubs.containsKey(requestedItem)) {
             throw new TrackingException("Item is already being tracked!");
         }
