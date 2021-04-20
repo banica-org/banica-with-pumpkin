@@ -16,6 +16,8 @@ import com.market.banica.calculator.service.grpc.AuroraClientSideService;
 import com.orderbook.ItemOrderBookResponse;
 import com.orderbook.OrderBookLayer;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.lang.reflect.Type;
@@ -39,6 +41,8 @@ import java.util.stream.Stream;
 @Service
 @RequiredArgsConstructor
 public class CalculatorServiceImpl implements CalculatorService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(CalculatorServiceImpl.class);
 
     private final AuroraClientSideService auroraService;
     private final ProductService productService;
@@ -846,6 +850,7 @@ public class CalculatorServiceImpl implements CalculatorService {
                 && !orderBookResponse.getItemName().equals(product.getProductName())) {
             return;
         }
+        LOGGER.info("Response received for product {}",product.getProductName());
 
         String productName = orderBookResponse.getItemName();
 

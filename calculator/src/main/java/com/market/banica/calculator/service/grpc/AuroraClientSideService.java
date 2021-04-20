@@ -52,7 +52,7 @@ public class AuroraClientSideService {
     }
 
     public ItemOrderBookResponse getIngredient(String productName, String clientId, Long quantity) {
-        LOGGER.debug("Inside getIngredient method with parameter product name - {} and client id - {}"
+        LOGGER.info("Inside getIngredient method with parameter product name - {} and client id - {}"
                 , productName, clientId);
 
         String message = String.format("%s/%d", productName, quantity);
