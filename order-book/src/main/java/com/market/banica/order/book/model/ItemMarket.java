@@ -71,21 +71,31 @@ public class ItemMarket {
 
     private void addDummyData() {
         extracted("cheese", 2.6, 5, Origin.EUROPE);
-        extracted("eggs", 5.0, 20, Origin.EUROPE);
+//        extracted("banica", 3.33, 5, Origin.EUROPE);
+        extracted("crusts", 1.0, 500, Origin.EUROPE);
+        extracted("eggs", 5.0, 8, Origin.EUROPE);
+        extracted("eggs", 5.0, 8, Origin.AMERICA);
         extracted("water", 5.0, 400, Origin.EUROPE);
         extracted("tomatoes", 5.0, 70, Origin.EUROPE);
         extracted("milk", 5.0, 3, Origin.EUROPE);
         extracted("pumpkin", 5.0, 400, Origin.EUROPE);
         extracted("sugar", 5.0, 60, Origin.EUROPE);
+        System.out.println();
     }
 
     private void extracted(String product, double price, long quantity, Origin origin) {
-        TreeSet<Item> itemSet = new TreeSet<>();
-        itemSet.add(new Item(price, quantity, origin));
-        this.allItems.put(product, itemSet);
-        for (Item item : itemSet) {
-            this.productsQuantity.merge(product, item.getQuantity(), Long::sum);
+        this.allItems.putIfAbsent(product, new TreeSet<>());
+
+        Item item = new Item(price, quantity, origin);
+        Set<Item> newItemSet = this.allItems.get(product);
+
+        this.productsQuantity.merge(product, quantity, Long::sum);
+        if (newItemSet.contains(item)) {
+            Item presentItem = newItemSet.stream().filter(currentItem -> currentItem.compareTo(item) == 0).findFirst().get();
+            presentItem.setQuantity(presentItem.getQuantity() + item.getQuantity());
+            return;
         }
+        newItemSet.add(item);
     }
 
     public void updateItem(Aurora.AuroraResponse response) {
@@ -111,18 +121,13 @@ public class ItemMarket {
 
         this.productsQuantity.merge(tickResponse.getGoodName(), tickResponse.getQuantity(), Long::sum);
 
-//        LOGGER.info("Products data updated!");
-        System.out.println(item.toString());
-        System.out.println("-------------");
+        LOGGER.info("Products data updated!");
         if (itemSet.contains(item)) {
             Item presentItem = itemSet.stream().filter(currentItem -> currentItem.compareTo(item) == 0).findFirst().get();
-            System.out.println("vefore updare ->" + presentItem.toString());
             presentItem.setQuantity(presentItem.getQuantity() + item.getQuantity());
-            System.out.println("after updare ->" + presentItem.toString());
             return;
         }
         itemSet.add(item);
-        System.out.println();
     }
 
     public List<OrderBookLayer> getRequestedItem(String itemName, long quantity) {
@@ -147,9 +152,8 @@ public class ItemMarket {
             while (itemLeft > 0) {
                 Item currentItem = iterator.next();
 
-                OrderBookLayer.Builder currentLayer = populateItemLayer(iterator, itemLeft, currentItem);
+                OrderBookLayer.Builder currentLayer = populateItemLayer(itemLeft, currentItem);
 
-//                this.productsQuantity.put(itemName, this.productsQuantity.get(itemName) - currentLayer.getQuantity());
                 itemLeft -= currentLayer.getQuantity();
 
                 OrderBookLayer orderBookLayer = currentLayer
@@ -221,19 +225,16 @@ public class ItemMarket {
         return this.subscribedItems;
     }
 
-    private OrderBookLayer.Builder populateItemLayer(Iterator<Item> iterator, long itemLeft, Item currentItem) {
+    private OrderBookLayer.Builder populateItemLayer(long itemLeft, Item currentItem) {
         OrderBookLayer.Builder currentLayer = OrderBookLayer.newBuilder()
                 .setPrice(currentItem.getPrice());
 
         if (currentItem.getQuantity() > itemLeft) {
 
             currentLayer.setQuantity(itemLeft);
-//            currentItem.setQuantity(currentItem.getQuantity() - itemLeft);
-
         } else if (currentItem.getQuantity() <= itemLeft) {
 
             currentLayer.setQuantity(currentItem.getQuantity());
-//            iterator.remove();
         }
         return currentLayer;
     }

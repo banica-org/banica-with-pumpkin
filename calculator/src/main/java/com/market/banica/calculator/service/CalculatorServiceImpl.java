@@ -102,9 +102,6 @@ public class CalculatorServiceImpl implements CalculatorService {
                     resultProductPriceComponentsSet, productPriceComponentsSetByProductIdMap,
                     result);
         }
-        for (ProductDto productDto : result) {
-            auroraService.buyProduct(productDto);
-        }
 
         return result;
     }
@@ -255,7 +252,7 @@ public class CalculatorServiceImpl implements CalculatorService {
 
         Set<ProductPriceComponentsSet> resultSet = new TreeSet<>(orderedProductPriceVariantsSet);
 
-        if(resultSet.isEmpty()){
+        if (resultSet.isEmpty()) {
             throw new BadResponseException("Out of resources for this product");
         }
 
@@ -853,7 +850,7 @@ public class CalculatorServiceImpl implements CalculatorService {
                 && !orderBookResponse.getItemName().equals(product.getProductName())) {
             return;
         }
-        LOGGER.info("Response received for product {}",product.getProductName());
+        LOGGER.info("Response received for product {}", product.getProductName());
 
         String productName = orderBookResponse.getItemName();
 
@@ -864,6 +861,7 @@ public class CalculatorServiceImpl implements CalculatorService {
                     layer.getQuantity(), layer.getOrigin().toString());
             checkQuantity -= productSpecification.getQuantity();
             productSpecifications.add(productSpecification);
+//            auroraService.buyProduct(productName, layer);
         }
 
         if (checkQuantity > 0) {

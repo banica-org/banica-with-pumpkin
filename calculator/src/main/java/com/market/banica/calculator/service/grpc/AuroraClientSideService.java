@@ -4,18 +4,17 @@ package com.market.banica.calculator.service.grpc;
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.market.BuySellProductResponse;
 import com.market.ProductBuyRequest;
-import com.market.banica.calculator.dto.ProductDto;
 import com.market.banica.calculator.exception.exceptions.BadResponseException;
 import com.orderbook.CancelSubscriptionResponse;
 import com.orderbook.InterestsResponse;
 import com.orderbook.ItemOrderBookResponse;
+import com.orderbook.OrderBookLayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.util.Map;
 
 
 @Service
@@ -83,21 +82,15 @@ public class AuroraClientSideService {
         return blockingStub;
     }
 
-    public void buyProduct(ProductDto product) {
-//          string itemName = 1;
-//  int64 itemQuantity = 2;
-//  double itemPrice = 3;
-//  Origin origin = 4;
-//        Map<String, Long> ingredients = product.getIngredients();
-//        for (Map.Entry<String, Long> entry : ingredients.entrySet()) {
-//            ProductBuyRequest.newBuilder()
-//                    .setItemName(entry.getKey())
-//                    .setItemQuantity(entry.getValue())
-//
-//            getBlockingStub().buyProduct();
-//        }
-//
-        System.out.println();
+    public void buyProduct(String itemName, OrderBookLayer layer) {
+        ProductBuyRequest productBuyRequest = ProductBuyRequest.newBuilder()
+                .setItemName(itemName)
+                .setItemQuantity(layer.getQuantity())
+                .setItemPrice(layer.getPrice())
+                .setOrigin(layer.getOrigin())
+                .build();
+        BuySellProductResponse buySellProductResponse = getBlockingStub().buyProduct(productBuyRequest);
+        System.out.println(buySellProductResponse.getMessage());
     }
 
     private Aurora.AuroraResponse getAuroraResponse(String clientId, String message) {
