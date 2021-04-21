@@ -133,7 +133,7 @@ public class ItemMarket {
         if (currentItem.getQuantity() > itemLeft) {
 
             currentLayer.setQuantity(itemLeft);
-        } else if (currentItem.getQuantity() <= itemLeft) {
+        } else {
 
             currentLayer.setQuantity(currentItem.getQuantity());
         }
