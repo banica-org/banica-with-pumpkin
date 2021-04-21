@@ -46,6 +46,7 @@ public class ItemMarket {
 
     public void addTrackedItem(String itemName) {
         this.allItems.put(itemName, new TreeSet<>());
+        this.productsQuantity.putIfAbsent(itemName, 0L);
     }
 
     public void removeUntrackedItem(String itemName) {
