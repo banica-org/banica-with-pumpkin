@@ -1,12 +1,6 @@
 package com.market.banica.calculator.service.contract;
 
-import com.market.banica.calculator.model.Product;
-
-import java.util.Map;
-
 public interface JMXServiceMBean {
-
-    Map<String, Product> getDatabase();
 
     void createProduct(String newRecipeName, String unitOfMeasure, String ingredients);
 
