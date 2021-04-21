@@ -13,9 +13,9 @@
         }
       ],
       "retryPolicy": {
-        "maxAttempts": 1000,
-        "initialBackoff": "2s",
-        "maxBackoff": "10s",
+        "maxAttempts": 20,
+        "initialBackoff": "10s",
+        "maxBackoff": "15s",
         "backoffMultiplier": 4,
         "retryableStatusCodes": [
           "UNAVAILABLE",
