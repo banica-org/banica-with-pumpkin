@@ -1,5 +1,6 @@
 package com.market.banica.calculator.service.contract;
 
+import com.market.banica.calculator.model.Pair;
 import com.market.banica.calculator.model.Product;
 
 import java.util.List;
@@ -26,7 +27,7 @@ public interface ProductService {
 
     void deleteProductFromParentIngredients(String parentProductName, String productName);
 
-    Map<Product, Map<String, Long>> getProductIngredientsWithQuantityPerParent(String productName);
+    Map<Product, Map<String, Pair<Long, Long>>> getProductIngredientsWithQuantityPerParent(String productName, long orderedQuantity);
 
     Product getProductFromDatabase(String productName);
 }

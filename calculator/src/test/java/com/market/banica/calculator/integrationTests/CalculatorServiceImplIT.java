@@ -8,6 +8,7 @@ import com.google.gson.Gson;
 import com.market.Origin;
 import com.market.banica.calculator.data.contract.ProductBase;
 import com.market.banica.calculator.dto.ProductDto;
+import com.market.banica.calculator.exception.exceptions.ProductNotAvailableException;
 import com.market.banica.calculator.model.Product;
 import com.market.banica.calculator.service.CalculatorServiceImpl;
 import com.market.banica.calculator.service.contract.BackUpService;
@@ -70,6 +71,7 @@ public class CalculatorServiceImplIT {
     private long onlyWaterQuantity;
     private long waterKetchupQuantity;
     private long tomatoesQuantity;
+    private long tomatoesKetchupQuantity;
     private long ketchupQuantity;
     private long onlyKetchupQuantity;
     private long sugarQuantity;
@@ -98,23 +100,24 @@ public class CalculatorServiceImplIT {
         banica = "banica";
         sauce = "sauce";
 
-        waterQuantity = 300;
+        waterQuantity = 1565000;
         onlyWaterQuantity = 5;
-        waterKetchupQuantity = 100;
-        tomatoesQuantity = 65;
-        ketchupQuantity = 50;
+        waterKetchupQuantity = 200;
+        tomatoesQuantity = 975000;
+        tomatoesKetchupQuantity = 130;
+        ketchupQuantity = 15000;
         onlyKetchupQuantity = 2;
-        sugarQuantity = 50;
-        sauceQuantity = 150;
-        eggsQuantity = 12;
-        crustsQuantity = 200;
-        milkQuantity = 200;
-        pumpkinQuantity = 300;
+        sugarQuantity = 15000;
+        sauceQuantity = 300;
+        eggsQuantity = 4800;
+        crustsQuantity = 400;
+        milkQuantity = 400;
+        pumpkinQuantity = 600;
         banicaQuantity = 2;
     }
 
     @Test
-    public void getProductShouldReturnSingletonListProductDtoWhenProductHasNoIngredients() throws JsonProcessingException {
+    public void getProductShouldReturnSingletonListProductDtoWhenProductHasNoIngredients() throws ProductNotAvailableException {
         //given
         String expectedResult = "[ {\n" +
                 "  \"itemName\" : \"water\",\n" +
@@ -132,20 +135,18 @@ public class CalculatorServiceImplIT {
         //when
         List<ProductDto> actualResult = calculatorService.getProduct(clientId, water, onlyWaterQuantity);
 
-        ObjectWriter objectWriter = new ObjectMapper().writerWithDefaultPrettyPrinter();
-        System.out.println(objectWriter.writeValueAsString(actualResult));
         //then
         assertEquals(convertStringToListOfProductDto(expectedResult).toString(), actualResult.toString());
     }
 
     @Test
-    public void getProductShouldReturnSingletonListProductDtoWhenProductHasIngredientsButBetterSinglePrice() {
+    public void getProductShouldReturnSingletonListProductDtoWhenProductHasIngredientsButBetterSinglePrice() throws ProductNotAvailableException {
         //given
         String expectedResult = "[ {\n" +
                 "  \"itemName\" : \"banica\",\n" +
-                "  \"totalPrice\" : 1995000.0,\n" +
+                "  \"totalPrice\" : 2000000.0,\n" +
                 "  \"productSpecifications\" : [ {\n" +
-                "    \"price\" : 997500.0,\n" +
+                "    \"price\" : 1000000.0,\n" +
                 "    \"location\" : \"AMERICA\",\n" +
                 "    \"quantity\" : 2\n" +
                 "  } ],\n" +
@@ -180,11 +181,11 @@ public class CalculatorServiceImplIT {
     }
 
     @Test
-    public void getProductWithOneLevelInheritanceShouldReturnListOfProductDtoWhenProductHasIngredientsWithBetterPrice() {
+    public void getProductWithOneLevelInheritanceShouldReturnListOfProductDtoWhenProductHasIngredientsWithBetterPrice() throws ProductNotAvailableException, JsonProcessingException {
         //given
         String expectedResult = "[ {\n" +
                 "  \"itemName\" : \"ketchup\",\n" +
-                "  \"totalPrice\" : 261.50,\n" +
+                "  \"totalPrice\" : 197.00,\n" +
                 "  \"productSpecifications\" : [ ],\n" +
                 "  \"ingredients\" : {\n" +
                 "    \"water\" : 100,\n" +
@@ -192,52 +193,45 @@ public class CalculatorServiceImplIT {
                 "  }\n" +
                 "}, {\n" +
                 "  \"itemName\" : \"tomatoes\",\n" +
-                "  \"totalPrice\" : 129.5,\n" +
+                "  \"totalPrice\" : 97.5,\n" +
                 "  \"productSpecifications\" : [ {\n" +
                 "    \"price\" : 1.5,\n" +
                 "    \"location\" : \"AMERICA\",\n" +
-                "    \"quantity\" : 1\n" +
-                "  }, {\n" +
-                "    \"price\" : 2.0,\n" +
-                "    \"location\" : \"AMERICA\",\n" +
-                "    \"quantity\" : 64\n" +
+                "    \"quantity\" : 130\n" +
                 "  } ],\n" +
                 "  \"ingredients\" : { }\n" +
                 "}, {\n" +
                 "  \"itemName\" : \"water\",\n" +
-                "  \"totalPrice\" : 1.25,\n" +
+                "  \"totalPrice\" : 1.00,\n" +
                 "  \"productSpecifications\" : [ {\n" +
                 "    \"price\" : 0.01,\n" +
                 "    \"location\" : \"AMERICA\",\n" +
-                "    \"quantity\" : 75\n" +
-                "  }, {\n" +
-                "    \"price\" : 0.02,\n" +
-                "    \"location\" : \"AMERICA\",\n" +
-                "    \"quantity\" : 25\n" +
+                "    \"quantity\" : 200\n" +
                 "  } ],\n" +
                 "  \"ingredients\" : { }\n" +
-                "} ]";
+                "} ]\n";
         doReturn(getTestData1().get(ketchup)).when(auroraClientSideService)
                 .getIngredient(ketchup, clientId, onlyKetchupQuantity);
         doReturn(getTestData1().get(water)).when(auroraClientSideService)
                 .getIngredient(water, clientId, waterKetchupQuantity);
         doReturn(getTestData1().get(tomatoes)).when(auroraClientSideService)
-                .getIngredient(tomatoes, clientId, tomatoesQuantity);
+                .getIngredient(tomatoes, clientId, tomatoesKetchupQuantity);
 
         //when
         List<ProductDto> actualResult = calculatorService.getProduct(clientId, ketchup,
                 onlyKetchupQuantity);
-
+        ObjectWriter objectWriter = new ObjectMapper().writerWithDefaultPrettyPrinter();
+        System.out.println(objectWriter.writeValueAsString(actualResult));
         //then
         assertEquals(convertStringToListOfProductDto(expectedResult).toString(), actualResult.toString());
     }
 
     @Test
-    public void getProductWithThreeLevelsInheritanceShouldReturnListOfProductDtoWhenProductHasIngredientsWithBetterPrice() throws JsonProcessingException {
+    public void getProductWithThreeLevelsInheritanceShouldReturnListOfProductDtoWhenProductHasIngredientsWithBetterPrice() throws JsonProcessingException, ProductNotAvailableException {
         //given
         String expectedResult = "[ {\n" +
                 "  \"itemName\" : \"banica\",\n" +
-                "  \"totalPrice\" : 1995180.00,\n" +
+                "  \"totalPrice\" : 2007030.00,\n" +
                 "  \"productSpecifications\" : [ ],\n" +
                 "  \"ingredients\" : {\n" +
                 "    \"pumpkin\" : 300,\n" +
@@ -251,11 +245,11 @@ public class CalculatorServiceImplIT {
                 "  \"productSpecifications\" : [ {\n" +
                 "    \"price\" : 1.5,\n" +
                 "    \"location\" : \"AMERICA\",\n" +
-                "    \"quantity\" : 1\n" +
+                "    \"quantity\" : 15000\n" +
                 "  }, {\n" +
                 "    \"price\" : 2.0,\n" +
                 "    \"location\" : \"AMERICA\",\n" +
-                "    \"quantity\" : 64\n" +
+                "    \"quantity\" : 960000\n" +
                 "  } ],\n" +
                 "  \"ingredients\" : { }\n" +
                 "}, {\n" +
@@ -264,7 +258,7 @@ public class CalculatorServiceImplIT {
                 "  \"productSpecifications\" : [ {\n" +
                 "    \"price\" : 3.2,\n" +
                 "    \"location\" : \"AMERICA\",\n" +
-                "    \"quantity\" : 200\n" +
+                "    \"quantity\" : 400\n" +
                 "  } ],\n" +
                 "  \"ingredients\" : { }\n" +
                 "}, {\n" +
@@ -273,16 +267,16 @@ public class CalculatorServiceImplIT {
                 "  \"productSpecifications\" : [ {\n" +
                 "    \"price\" : 1.5,\n" +
                 "    \"location\" : \"AMERICA\",\n" +
-                "    \"quantity\" : 100\n" +
+                "    \"quantity\" : 200\n" +
                 "  }, {\n" +
                 "    \"price\" : 2.0,\n" +
                 "    \"location\" : \"AMERICA\",\n" +
-                "    \"quantity\" : 100\n" +
+                "    \"quantity\" : 200\n" +
                 "  } ],\n" +
                 "  \"ingredients\" : { }\n" +
                 "}, {\n" +
                 "  \"itemName\" : \"sauce\",\n" +
-                "  \"totalPrice\" : 996150.00,\n" +
+                "  \"totalPrice\" : 1002075.00,\n" +
                 "  \"productSpecifications\" : [ ],\n" +
                 "  \"ingredients\" : {\n" +
                 "    \"water\" : 150,\n" +
@@ -295,33 +289,33 @@ public class CalculatorServiceImplIT {
                 "  \"productSpecifications\" : [ {\n" +
                 "    \"price\" : 2.0,\n" +
                 "    \"location\" : \"AMERICA\",\n" +
-                "    \"quantity\" : 50\n" +
+                "    \"quantity\" : 15000\n" +
                 "  } ],\n" +
                 "  \"ingredients\" : { }\n" +
                 "}, {\n" +
                 "  \"itemName\" : \"water\",\n" +
-                "  \"totalPrice\" : 3.50,\n" +
-                "  \"productSpecifications\" : [ {\n" +
-                "    \"price\" : 0.02,\n" +
-                "    \"location\" : \"AMERICA\",\n" +
-                "    \"quantity\" : 100\n" +
-                "  }, {\n" +
-                "    \"price\" : 0.03,\n" +
-                "    \"location\" : \"AMERICA\",\n" +
-                "    \"quantity\" : 50\n" +
-                "  } ],\n" +
-                "  \"ingredients\" : { }\n" +
-                "}, {\n" +
-                "  \"itemName\" : \"water\",\n" +
-                "  \"totalPrice\" : 1.25,\n" +
+                "  \"totalPrice\" : 1.50,\n" +
                 "  \"productSpecifications\" : [ {\n" +
                 "    \"price\" : 0.01,\n" +
                 "    \"location\" : \"AMERICA\",\n" +
-                "    \"quantity\" : 75\n" +
+                "    \"quantity\" : 45000\n" +
+                "  } ],\n" +
+                "  \"ingredients\" : { }\n" +
+                "}, {\n" +
+                "  \"itemName\" : \"water\",\n" +
+                "  \"totalPrice\" : 2.08,\n" +
+                "  \"productSpecifications\" : [ {\n" +
+                "    \"price\" : 0.01,\n" +
+                "    \"location\" : \"AMERICA\",\n" +
+                "    \"quantity\" : 346250\n" +
                 "  }, {\n" +
                 "    \"price\" : 0.02,\n" +
                 "    \"location\" : \"AMERICA\",\n" +
-                "    \"quantity\" : 25\n" +
+                "    \"quantity\" : 652083\n" +
+                "  }, {\n" +
+                "    \"price\" : 0.03,\n" +
+                "    \"location\" : \"AMERICA\",\n" +
+                "    \"quantity\" : 501667\n" +
                 "  } ],\n" +
                 "  \"ingredients\" : { }\n" +
                 "}, {\n" +
@@ -330,12 +324,12 @@ public class CalculatorServiceImplIT {
                 "  \"productSpecifications\" : [ {\n" +
                 "    \"price\" : 1.5,\n" +
                 "    \"location\" : \"AMERICA\",\n" +
-                "    \"quantity\" : 300\n" +
+                "    \"quantity\" : 600\n" +
                 "  } ],\n" +
                 "  \"ingredients\" : { }\n" +
                 "}, {\n" +
                 "  \"itemName\" : \"ketchup\",\n" +
-                "  \"totalPrice\" : 6537.50,\n" +
+                "  \"totalPrice\" : 6579.00,\n" +
                 "  \"productSpecifications\" : [ ],\n" +
                 "  \"ingredients\" : {\n" +
                 "    \"water\" : 100,\n" +
@@ -373,11 +367,11 @@ public class CalculatorServiceImplIT {
     }
 
     @Test
-    public void getProductWithThreeLevelsInheritanceShouldReturnBetterPriceWhenIngredientInCorrectPosition() {
+    public void getProductWithThreeLevelsInheritanceShouldReturnBetterPriceWhenIngredientInCorrectPosition() throws ProductNotAvailableException, JsonProcessingException {
         //given
         String expectedResult = "[ {\n" +
                 "  \"itemName\" : \"banica\",\n" +
-                "  \"totalPrice\" : 1983665.00,\n" +
+                "  \"totalPrice\" : 1983539.00,\n" +
                 "  \"productSpecifications\" : [ ],\n" +
                 "  \"ingredients\" : {\n" +
                 "    \"pumpkin\" : 300,\n" +
@@ -391,11 +385,11 @@ public class CalculatorServiceImplIT {
                 "  \"productSpecifications\" : [ {\n" +
                 "    \"price\" : 0.15,\n" +
                 "    \"location\" : \"AMERICA\",\n" +
-                "    \"quantity\" : 4\n" +
+                "    \"quantity\" : 1600\n" +
                 "  }, {\n" +
                 "    \"price\" : 0.25,\n" +
                 "    \"location\" : \"AMERICA\",\n" +
-                "    \"quantity\" : 8\n" +
+                "    \"quantity\" : 3200\n" +
                 "  } ],\n" +
                 "  \"ingredients\" : { }\n" +
                 "}, {\n" +
@@ -404,9 +398,12 @@ public class CalculatorServiceImplIT {
                 "  \"productSpecifications\" : [ ],\n" +
                 "  \"ingredients\" : {\n" +
                 "    \"water\" : 50,\n" +
-                //best price of water should be here due to biggest difference of best price and
-                // second best price of water(0.50) multiplied by crusts quantity:200*0.5 = 100
-                "    \"eggs\" : 12\n" +//
+                //best price of water should be here due to same difference of total best price and
+                // second total best price of water(20000*0.01)-(20000*0.02) = 200 when compared with sauce,
+                // but before sauce when compared by name
+                // quantity 20000 is calculated as 2(banica quantity)*200(crusts quantity)*50(water quantity) and
+                // represents units of water contained in ordered product - banica
+                "    \"eggs\" : 12\n" +
                 "  }\n" +
                 "}, {\n" +
                 "  \"itemName\" : \"milk\",\n" +
@@ -414,16 +411,16 @@ public class CalculatorServiceImplIT {
                 "  \"productSpecifications\" : [ {\n" +
                 "    \"price\" : 1.5,\n" +
                 "    \"location\" : \"AMERICA\",\n" +
-                "    \"quantity\" : 100\n" +
+                "    \"quantity\" : 200\n" +
                 "  }, {\n" +
                 "    \"price\" : 2.0,\n" +
                 "    \"location\" : \"AMERICA\",\n" +
-                "    \"quantity\" : 100\n" +
+                "    \"quantity\" : 200\n" +
                 "  } ],\n" +
                 "  \"ingredients\" : { }\n" +
                 "}, {\n" +
                 "  \"itemName\" : \"sauce\",\n" +
-                "  \"totalPrice\" : 990412.50,\n" +
+                "  \"totalPrice\" : 990349.50,\n" +
                 "  \"productSpecifications\" : [ ],\n" +
                 "  \"ingredients\" : {\n" +
                 "    \"water\" : 150,\n" +
@@ -436,7 +433,7 @@ public class CalculatorServiceImplIT {
                 "  \"productSpecifications\" : [ {\n" +
                 "    \"price\" : 2.0,\n" +
                 "    \"location\" : \"AMERICA\",\n" +
-                "    \"quantity\" : 50\n" +
+                "    \"quantity\" : 15000\n" +
                 "  } ],\n" +
                 "  \"ingredients\" : { }\n" +
                 "}, {\n" +
@@ -445,20 +442,20 @@ public class CalculatorServiceImplIT {
                 "  \"productSpecifications\" : [ {\n" +
                 "    \"price\" : 0.01,\n" +
                 "    \"location\" : \"AMERICA\",\n" +
-                "    \"quantity\" : 50\n" +
+                "    \"quantity\" : 20000\n" +
                 "  } ],\n" +
                 "  \"ingredients\" : { }\n" +
                 "}, {\n" +
                 "  \"itemName\" : \"water\",\n" +
-                "  \"totalPrice\" : 2.75,\n" +
+                "  \"totalPrice\" : 2.33,\n" +
                 "  \"productSpecifications\" : [ {\n" +
                 "    \"price\" : 0.01,\n" +
                 "    \"location\" : \"AMERICA\",\n" +
-                "    \"quantity\" : 25\n" +
+                "    \"quantity\" : 20000\n" +
                 "  }, {\n" +
                 "    \"price\" : 0.02,\n" +
                 "    \"location\" : \"AMERICA\",\n" +
-                "    \"quantity\" : 125\n" +
+                "    \"quantity\" : 25000\n" +
                 "  } ],\n" +
                 "  \"ingredients\" : { }\n" +
                 "}, {\n" +
@@ -467,22 +464,26 @@ public class CalculatorServiceImplIT {
                 "  \"productSpecifications\" : [ {\n" +
                 "    \"price\" : 1.5,\n" +
                 "    \"location\" : \"AMERICA\",\n" +
-                "    \"quantity\" : 300\n" +
+                "    \"quantity\" : 600\n" +
                 "  } ],\n" +
                 "  \"ingredients\" : { }\n" +
                 "}, {\n" +
                 "  \"itemName\" : \"ketchup\",\n" +
-                //ketchup deliberately set as simple product so best price of
-                // water is supposed to move to crust as sauce difference in best price and second best price of water
-                // is 0.5 and when multiplied by sauce quantity is 150*0.5=75, what is less than crusts difference -100
                 "  \"totalPrice\" : 6500.0,\n" +
+                // ketchup deliberately set as simple product so best price of
+                // water is supposed to move to crusts as sauce difference in total price of water with best water price
+                // and second best price is(40000*0.01 + 5000*0.02)-(20000*0.01 + 25000*0.02) = 200, while crusts has same total price
+                // difference(20000*0.01)-(20000*0.02) = 200, but is before sauce in alphabetical order
+                // quantity 45000 is calculated as 2(banica quantity)*150(sauce quantity)*150(water quantity) and
+                // represents units of water contained in ordered product - banica
                 "  \"productSpecifications\" : [ {\n" +
                 "    \"price\" : 130.0,\n" +
                 "    \"location\" : \"AMERICA\",\n" +
-                "    \"quantity\" : 50\n" +
+                "    \"quantity\" : 15000\n" +
                 "  } ],\n" +
                 "  \"ingredients\" : { }\n" +
                 "} ]\n";
+
         doReturn(getTestData3().get(ketchup)).when(auroraClientSideService)
                 .getIngredient(ketchup, clientId, ketchupQuantity);
         doReturn(getTestData3().get(water)).when(auroraClientSideService)
@@ -506,94 +507,79 @@ public class CalculatorServiceImplIT {
 
         //when
         List<ProductDto> actualResult = calculatorService.getProduct(clientId, banica, banicaQuantity);
-
+        ObjectWriter objectWriter = new ObjectMapper().writerWithDefaultPrettyPrinter();
+        System.out.println(objectWriter.writeValueAsString(actualResult));
         //then
         assertEquals(convertStringToListOfProductDto(expectedResult).toString(), actualResult.toString());
     }
 
     public Map<String, ItemOrderBookResponse> getTestData1() {
         Map<String, ItemOrderBookResponse> data = new LinkedHashMap<>();
-        addProductToDatabase(data, "banica", 997500, 2);
-        //pumpkin:450,milk:350,crusts:780,sauce:996150=997730//better simple price//997500*2=1995000
-        addProductToDatabase(data, "pumpkin", 1.5, 300);
-        addProductToDatabase(data, "milk", 1.5, 100);
-        addProductToDatabase(data, "milk", 2, 100);
-        addProductToDatabase(data, "crusts", 3.9, 200);
-        //water:(50*0.03)1.5,eggs:2.6=4.1//better simple price//3.9 * 200 = 620
-        addProductToDatabase(data, "water", 0.01, 75);
-        addProductToDatabase(data, "water", 0.02, 125);
-        addProductToDatabase(data, "water", 0.03, 100);
-        addProductToDatabase(data, "eggs", 0.15, 4);
-        addProductToDatabase(data, "eggs", 0.25, 8);
-        addProductToDatabase(data, "sauce", 6700, 150);
-        //ketchup:6537.5,water:(100*0.02 + 50*0.03)3.5,sugar:100 =6641//better composite price//6641 * 150=996150
-        addProductToDatabase(data, "sugar", 2, 50);
-        addProductToDatabase(data, "ketchup", 132, 50);
-        //tomatoes:129.5,water:(75*0.01 + 25*0.02)1.25 = 130.75//better composite price//130.75 * 50 = 6537.5
-        addProductToDatabase(data, "tomatoes", 1.5, 1);
-        addProductToDatabase(data, "tomatoes", 2, 64);
+        addProductToDatabase(data, "banica", 1000000, 2);
+        addProductToDatabase(data, "pumpkin", 1.5, 600);
+        addProductToDatabase(data, "milk", 1.5, 200);
+        addProductToDatabase(data, "milk", 2, 200);
+        addProductToDatabase(data, "crusts", 3.9, 400);
+        addProductToDatabase(data, "water", 0.01, 391250);
+        addProductToDatabase(data, "water", 0.02, 652083);
+        addProductToDatabase(data, "water", 0.03, 521667);
+        addProductToDatabase(data, "eggs", 0.15, 1600);
+        addProductToDatabase(data, "eggs", 0.25, 3200);
+        addProductToDatabase(data, "sauce", 6700, 300);
+        addProductToDatabase(data, "sugar", 2, 15000);
+        addProductToDatabase(data, "ketchup", 132, 15000);
+        addProductToDatabase(data, "tomatoes", 1.5, 15000);
+        addProductToDatabase(data, "tomatoes", 2, 960000);
         return data;
     }
 
     public Map<String, ItemOrderBookResponse> getTestData2() {
         Map<String, ItemOrderBookResponse> data = new LinkedHashMap<>();
-        addProductToDatabase(data, "banica", 1000000, 2);
-        //pumpkin:450,milk:350,crusts:640,sauce:996150=997590//better composite price//997590*2=1995180
-        addProductToDatabase(data, "pumpkin", 1.5, 300);
-        addProductToDatabase(data, "milk", 1.5, 100);
-        addProductToDatabase(data, "milk", 2, 100);
-        addProductToDatabase(data, "crusts", 3.2, 200);
-        //water:(50*0.02)1.0,eggs:2.6=3.6//better simple price//3.2 * 200 = 640
-        addProductToDatabase(data, "water", 0.01, 75);
-        addProductToDatabase(data, "water", 0.02, 125);
-        addProductToDatabase(data, "water", 0.03, 100);
-        addProductToDatabase(data, "eggs", 0.15, 4);
-        addProductToDatabase(data, "eggs", 0.25, 8);
-        addProductToDatabase(data, "sauce", 6700, 150);
-        //ketchup:6537.5,water:(100*0.02 + 50*0.03)3.5,sugar:100 =6641//better composite price//6641 * 150=996150
-        addProductToDatabase(data, "sugar", 2, 50);
-        addProductToDatabase(data, "ketchup", 132, 50);
-        //tomatoes:129.5,water:(75*0.01 + 25*0.02)1.25 = 130.75//better composite price//130.75 * 50 = 6537.5
-        addProductToDatabase(data, "tomatoes", 1.5, 1);
-        addProductToDatabase(data, "tomatoes", 2, 64);
+        addProductToDatabase(data, "banica", 1005000, 2);
+        addProductToDatabase(data, "pumpkin", 1.5, 600);
+        addProductToDatabase(data, "milk", 1.5, 200);
+        addProductToDatabase(data, "milk", 2, 200);
+        addProductToDatabase(data, "crusts", 3.2, 400);
+        addProductToDatabase(data, "water", 0.01, 391250);
+        addProductToDatabase(data, "water", 0.02, 652083);
+        addProductToDatabase(data, "water", 0.03, 521667);
+        addProductToDatabase(data, "eggs", 0.15, 1600);
+        addProductToDatabase(data, "eggs", 0.25, 3200);
+        addProductToDatabase(data, "sauce", 6700, 300);
+        addProductToDatabase(data, "sugar", 2, 15000);
+        addProductToDatabase(data, "ketchup", 132, 15000);
+        addProductToDatabase(data, "tomatoes", 1.5, 15000);
+        addProductToDatabase(data, "tomatoes", 2, 960000);
         return data;
     }
 
     public Map<String, ItemOrderBookResponse> getTestData3() {
         Map<String, ItemOrderBookResponse> data = new LinkedHashMap<>();
         addProductToDatabase(data, "banica", 1000000, 2);
-        //pumpkin:450,milk:350,crusts:620,sauce:990412.5=991832.5//better composite price//991832.5*2=1983665
-        addProductToDatabase(data, "pumpkin", 1.5, 300);
-        addProductToDatabase(data, "milk", 1.5, 100);
-        addProductToDatabase(data, "milk", 2, 100);
-        addProductToDatabase(data, "crusts", 3.9, 200);
-        //water:(50*0.01)0.5,eggs:2.6=3.1//better composite product price//3.1*200=620
-        addProductToDatabase(data, "water", 0.01, 75);
-        addProductToDatabase(data, "water", 0.02, 125);
-        addProductToDatabase(data, "water", 0.03, 100);
-        addProductToDatabase(data, "eggs", 0.15, 4);
-        addProductToDatabase(data, "eggs", 0.25, 8);
-        addProductToDatabase(data, "sauce", 6700, 150);
-        //ketchup:6500,water:(25*0.01 + 125*0.02)2.75,sugar:100 =6602.75//better composite price//6602.75*150=990412.5
-        addProductToDatabase(data, "sugar", 2, 50);
-        addProductToDatabase(data, "ketchup", 130, 50);
+        //pumpkin:450,milk:350,crusts:620,sauce:990349.5=991769.5//better composite price//991832.5*2=1983539
+        addProductToDatabase(data, "pumpkin", 1.5, 600);
+        addProductToDatabase(data, "milk", 1.5, 200);
+        addProductToDatabase(data, "milk", 2, 200);
+        addProductToDatabase(data, "crusts", 3.6, 400);
+        //water:(50*0.01)0.5,eggs:2.6=3.1//better composite price//3.1*200=620
+        addProductToDatabase(data, "water", 0.01, 40000);
+        addProductToDatabase(data, "water", 0.02, 1003333);
+        addProductToDatabase(data, "water", 0.03, 521667);
+        addProductToDatabase(data, "eggs", 0.15, 1600);
+        addProductToDatabase(data, "eggs", 0.25, 3200);
+        addProductToDatabase(data, "sauce", 6602.34, 300);
+        //ketchup:6500,water:(66*0.01 + 84*0.02)2.33,sugar:100 =6602.75//better composite price//6602.33*150=990349.5
+        addProductToDatabase(data, "sugar", 2, 15000);
+        addProductToDatabase(data, "ketchup", 130, 15000);
         //tomatoes:129.5,water:(75*0.01 + 25*0.02)1.25 = 130.75//better simple product price//130*50=6500
-        addProductToDatabase(data, "tomatoes", 1.5, 1);
-        addProductToDatabase(data, "tomatoes", 2, 64);
+        addProductToDatabase(data, "tomatoes", 1.5, 15000);
+        addProductToDatabase(data, "tomatoes", 2, 960000);
         return data;
-    }
-    private void addEmptyProductToDatabase(Map<String, ItemOrderBookResponse> data, String productName, double price, int quantity) {
-
-            data.put(productName, ItemOrderBookResponse.newBuilder()
-                    .setItemName(productName)
-                    .addAllOrderbookLayers(new ArrayList<>())
-                    .build());
-
     }
 
     private void addProductToDatabase(Map<String, ItemOrderBookResponse> data, String productName, double price, int quantity) {
 
-        ItemOrderBookResponse item = generateItoOrderBookResponse(productName, price, quantity);
+        ItemOrderBookResponse item = generateOrderBookResponse(productName, price, quantity);
 
         data.merge(productName, item, (a, b) -> {
 
@@ -607,7 +593,7 @@ public class CalculatorServiceImplIT {
         });
     }
 
-    private ItemOrderBookResponse generateItoOrderBookResponse(String productName, double price, int quantity) {
+    private ItemOrderBookResponse generateOrderBookResponse(String productName, double price, int quantity) {
 
         List<OrderBookLayer> list = new ArrayList<>();
         list.add(generateOrderBookLayer(price, quantity));
@@ -627,20 +613,20 @@ public class CalculatorServiceImplIT {
     private List<ProductDto> convertStringToListOfProductDto(String data) {
 
         Gson gson = new Gson();
-        Type productSpecificationListType = new TypeToken<ArrayList<ProductDto>>() {
+        Type productDtoListType = new TypeToken<ArrayList<ProductDto>>() {
         }.getType();
 
         return gson.fromJson(data,
-                productSpecificationListType);
+                productDtoListType);
     }
 
     private ConcurrentHashMap<String, Product> getProductDataAsMap() {
         Gson gson = new Gson();
-        String productSpecificationListAsJson = getProductDataAsString();
-        Type productSpecificationListType = new TypeToken<ConcurrentHashMap<String, Product>>() {
+        String productNameProductMapAsJson = getProductDataAsString();
+        Type productNameProductMapType = new TypeToken<ConcurrentHashMap<String, Product>>() {
         }.getType();
-        ConcurrentHashMap<String, Product> data = gson.fromJson(productSpecificationListAsJson,
-                productSpecificationListType);
+        ConcurrentHashMap<String, Product> data = gson.fromJson(productNameProductMapAsJson,
+                productNameProductMapType);
         return data;
     }
 

@@ -8,9 +8,7 @@ import java.math.BigDecimal;
 public class ProductSpecification {
 
     private BigDecimal price;
-
     private String location;
-
     private Long quantity;
 
 }

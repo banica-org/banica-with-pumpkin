@@ -1,6 +1,7 @@
 package com.market.banica.calculator.service.contract;
 
 import com.market.banica.calculator.dto.ProductDto;
+import com.market.banica.calculator.exception.exceptions.ProductNotAvailableException;
 
 import java.util.List;
 
@@ -17,5 +18,5 @@ public interface CalculatorService {
      * @param quantity quantity of the item
      * @return recipe for item
      */
-    List<ProductDto> getProduct(String clientId, String itemName, long quantity);
+    List<ProductDto> getProduct(String clientId, String itemName, long quantity) throws ProductNotAvailableException;
 }
