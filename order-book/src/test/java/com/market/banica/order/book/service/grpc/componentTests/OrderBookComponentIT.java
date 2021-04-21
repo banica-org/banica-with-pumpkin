@@ -170,7 +170,7 @@ class OrderBookComponentIT {
 
         startAuroraServiceWithSubscribeOverridden(marketChannel, tickResponses);
 
-        InterestsRequest interestsRequest = InterestsRequest.newBuilder().setClientId(clientId).setItemName(EGGS_GOOD).build();
+        InterestsRequest interestsRequest = InterestsRequest.newBuilder().setClientId(clientId).setItemName(marketTopicPrefix + EGGS_GOOD).build();
 
         //Act
         InterestsResponse interestsResponse = blockingStub.announceItemInterest(interestsRequest);
@@ -212,7 +212,7 @@ class OrderBookComponentIT {
         when(itemMarket.getRequestedItem(productName, productQuantity)).thenReturn(layers);
 
         // Start OrderBook
-        startOrderBookService(orderBookService,THREAD_SLEEP_TIME_DEFAULT);
+        startOrderBookService(orderBookService, THREAD_SLEEP_TIME_DEFAULT);
 
         startAuroraServiceWithRequestMethodOverridden();
 

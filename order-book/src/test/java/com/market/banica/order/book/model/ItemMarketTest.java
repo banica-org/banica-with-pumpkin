@@ -39,15 +39,6 @@ public class ItemMarketTest {
     private final Map<String, TreeSet<Item>> allItems = new ConcurrentHashMap<>();
     private final Map<String, Long> productsQuantity = new ConcurrentHashMap<>();
 
-//    @Rule
-//    public TemporaryFolder folder = new TemporaryFolder();
-
-//    {
-//        File createdFile = new File("src/test/java/com/market/banica/order/book/subscribedProductsBackUp.json");
-//        ReflectionTestUtils.setField(itemMarket, "file", createdFile);
-//    }
-
-    @SneakyThrows
     @Before
     public void setUp() {
         TreeSet<Item> items = this.populateItems();
@@ -58,33 +49,6 @@ public class ItemMarketTest {
         ReflectionTestUtils.setField(itemMarket, ALL_ITEMS_FIELD, allItems);
         ReflectionTestUtils.setField(itemMarket, PRODUCTS_QUANTITY_FIELD, productsQuantity);
 
-    }
-
-    @Test
-    public void test() {
-        int a = 4;
-        negative(-a);
-    }
-
-    private void negative(int negative) {
-        System.out.println("negative: " + negative);
-    }
-
-    @Test
-    public void testPersistItem() {
-//        itemMarket.readBackUp();
-//        itemMarket.removeItemFromFileBackUp("newItem");
-//        itemMarket.removeItemFromFileBackUp("a");
-//        itemMarket.removeItemFromFileBackUp("b");
-//        itemMarket.removeItemFromFileBackUp("c");
-
-//        itemMarket.persistItemInFileBackUp("aurora");
-//        itemMarket.persistItemInFileBackUp("test");
-//        itemMarket.persistItemInFileBackUp("c");
-//        itemMarket.persistItemInFileBackUp("b");
-//        itemMarket.persistItemInFileBackUp("a");
-//        itemMarket.persistItemInFileBackUp("d");
-//        itemMarket.persistItemInFileBackUp("e");
     }
 
     @Test
@@ -212,19 +176,5 @@ public class ItemMarketTest {
         items.add(new Item(2.2, 1, Origin.EUROPE));
         items.add(new Item(3.2, 2, Origin.EUROPE));
         return items;
-    }
-
-    private void setFinalStatic(Field field, Object newValue) throws Exception {
-//        field.setAccessible(true);
-//
-//        Field modifiersField = Field.class.getDeclaredField("modifiers");
-//        modifiersField.setAccessible(true);
-//        modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
-//
-//        field.set(null, newValue);
-
-        field = ItemMarket.class.getDeclaredField("FILE_PATH");
-        field.setAccessible(true);
-        field.set(null, newValue);
     }
 }

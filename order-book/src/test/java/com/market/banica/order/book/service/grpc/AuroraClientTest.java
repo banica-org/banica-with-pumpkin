@@ -51,9 +51,6 @@ public class AuroraClientTest {
     private final Map<String, TreeSet<Item>> allItems = new ConcurrentHashMap<>();
     private final Map<String, Context.CancellableContext> cancellableStubs = new ConcurrentHashMap<>();
 
-    @Rule
-    public TemporaryFolder folder = new TemporaryFolder();
-
     @SneakyThrows
     @Before
     public void setUp() {
@@ -65,8 +62,6 @@ public class AuroraClientTest {
         ReflectionTestUtils.setField(itemMarket, ALL_ITEMS_FIELD, allItems);
         ReflectionTestUtils.setField(auroraClient, CANCELLABLE_STUBS_FIELD, cancellableStubs);
         ReflectionTestUtils.setField(auroraClient, MANAGED_CHANNEL_FIELD, managedChannel);
-        File createdFile = folder.newFile("subscribedProductsBackUp.json");
-        ReflectionTestUtils.setField(itemMarket, "file", createdFile);
     }
 
     @Test
