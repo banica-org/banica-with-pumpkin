@@ -29,6 +29,7 @@ public class AuroraClient {
     private final ManagedChannel managedChannel;
     private final Map<String, Context.CancellableContext> cancellableStubs;
 
+    private static final int MAX_RETRY_ATTEMPTS = 1000;
     private static final String MARKET_PREFIX = "market/";
     private static final Logger LOGGER = LogManager.getLogger(AuroraClient.class);
 
@@ -41,6 +42,7 @@ public class AuroraClient {
                 .usePlaintext()
                 .defaultServiceConfig(ChannelRPCConfig.getInstance().getServiceConfig())
                 .enableRetry()
+                .maxRetryAttempts(MAX_RETRY_ATTEMPTS)
                 .build();
 
         this.itemMarket = itemMarket;

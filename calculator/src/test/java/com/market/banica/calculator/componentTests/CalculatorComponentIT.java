@@ -254,7 +254,7 @@ public class CalculatorComponentIT {
         //then
         verify(server)
                 .request(requestCaptor.capture(), ArgumentMatchers.any());
-        assertEquals(orderBookTopicPrefix + productName, requestCaptor.getValue().getTopic());
+        assertEquals(orderBookTopicPrefix + productName + "=unsubscribe", requestCaptor.getValue().getTopic());
     }
 
     @Test
