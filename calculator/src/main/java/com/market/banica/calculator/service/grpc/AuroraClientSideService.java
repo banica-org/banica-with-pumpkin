@@ -54,7 +54,7 @@ public class AuroraClientSideService {
         }
     }
 
-    public ItemOrderBookResponse getIngredient(String productName, String clientId, Long quantity) {
+    public ItemOrderBookResponse getIngredient(String productName, String clientId, long quantity) {
         LOGGER.debug("Inside getIngredient method with parameter product name - {} and client id - {}"
                 , productName, clientId);
 
