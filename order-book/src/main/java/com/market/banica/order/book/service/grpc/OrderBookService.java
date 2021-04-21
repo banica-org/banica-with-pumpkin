@@ -2,6 +2,7 @@ package com.market.banica.order.book.service.grpc;
 
 import com.market.banica.order.book.exception.TrackingException;
 import com.market.banica.order.book.model.ItemMarket;
+import com.market.banica.order.book.util.InterestsPersistence;
 import com.orderbook.CancelSubscriptionRequest;
 import com.orderbook.CancelSubscriptionResponse;
 import com.orderbook.InterestsRequest;
@@ -12,17 +13,22 @@ import com.orderbook.OrderBookLayer;
 import com.orderbook.OrderBookServiceGrpc;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
-import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @Component
-@AllArgsConstructor
 public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplBase {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OrderBookService.class);
@@ -31,6 +37,19 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
 
     private final AuroraClient auroraClient;
     private final ItemMarket itemMarket;
+
+    private final InterestsPersistence interestsPersistence;
+    private final Map<String, Set<String>> interestsMap = new HashMap<>();
+
+    @Autowired
+    public OrderBookService(AuroraClient auroraClient, ItemMarket itemMarket,
+                            @Value("${orderbook.interests.file.name}") final String interestsFileName)
+            throws IOException, TrackingException {
+        this.auroraClient = auroraClient;
+        this.itemMarket = itemMarket;
+        this.interestsPersistence = new InterestsPersistence(interestsFileName, interestsMap);
+        startPersistedInterests();
+    }
 
     @Override
     public void getOrderBookItemLayers(ItemOrderBookRequest request, StreamObserver<ItemOrderBookResponse> responseObserver) {
@@ -54,20 +73,26 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
         final String itemName = request.getItemName();
         final String clientId = request.getClientId();
 
+
         subscriptionExecutor.execute(() -> {
             try {
+                interestsMap.putIfAbsent(clientId, new HashSet<>());
+                interestsMap.get(clientId).add(itemName);
+                interestsPersistence.persistInterests();
+
                 auroraClient.startSubscription(itemName, clientId);
             } catch (TrackingException e) {
-
-                LOGGER.warn("Announce item interest by client id: {} has failed with item: {}",
-                        request.getClientId(), itemName);
+                LOGGER.warn("Announce item interest by client id: {} has failed with item: {}", clientId, itemName);
                 responseObserver.onError(Status.INVALID_ARGUMENT.withDescription("Invalid item name").asException());
-
+            } catch (IOException e) {
+                LOGGER.error("Could not persist to back up file: {}", e.getMessage());
+                responseObserver.onError(Status.ABORTED.withDescription("Interests persistence failed").asException());
             }
         });
+
         responseObserver.onNext(InterestsResponse.newBuilder().build());
         responseObserver.onCompleted();
-        LOGGER.info("Announce item interest by client id: {}", request.getClientId());
+        LOGGER.info("Announce \"{}\" interest by client id: {}", itemName, clientId);
 
     }
 
@@ -76,17 +101,37 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
         final String itemName = request.getItemName();
         final String clientId = request.getClientId();
 
-        try {
+        subscriptionExecutor.execute(() -> {
+            try {
+                if (interestsMap.get(clientId) != null && interestsMap.get(clientId).remove(itemName)) {
+                    interestsPersistence.persistInterests();
 
-            auroraClient.stopSubscription(itemName, clientId);
-            responseObserver.onNext(CancelSubscriptionResponse.newBuilder().build());
-            responseObserver.onCompleted();
-            LOGGER.info("Cancel item subscription by client id: {}", clientId);
+                    auroraClient.stopSubscription(itemName, clientId);
+                    LOGGER.info("Cancel item subscription by client id: {}", clientId);
+                } else {
+                    throw new TrackingException("Item is already being tracked!");
+                }
+            } catch (TrackingException e) {
+                LOGGER.error("Cancel item subscription by client id: {} has failed with item: {}", clientId, itemName);
+                responseObserver.onError(Status.INVALID_ARGUMENT.withDescription("Invalid item name").asException());
+            } catch (IOException e) {
+                LOGGER.error("Could not persist to back up file: {}", e.getMessage());
+                responseObserver.onError(Status.ABORTED.withDescription("Interests persistence failed").asException());
+            }
+        });
 
-        } catch (TrackingException e) {
+        responseObserver.onNext(CancelSubscriptionResponse.newBuilder().build());
+        responseObserver.onCompleted();
+        LOGGER.info("Stopped \"{}\" interest by client id: {}", itemName, clientId);
 
-            LOGGER.error("Cancel item subscription by client id: {} has failed with item: {}", clientId, itemName);
-            responseObserver.onError(Status.INVALID_ARGUMENT.withDescription("Invalid item name").asException());
+    }
+
+    private void startPersistedInterests() throws IOException, TrackingException {
+        this.interestsPersistence.loadInterests();
+        for (Map.Entry<String, Set<String>> clientEntry : interestsMap.entrySet()) {
+            for (String interest : clientEntry.getValue()) {
+                auroraClient.startSubscription(interest, clientEntry.getKey());
+            }
         }
     }
 
