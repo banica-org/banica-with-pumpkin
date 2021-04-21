@@ -7,6 +7,7 @@ import com.market.banica.generator.util.PersistScheduler;
 import java.util.List;
 
 public interface MarketState {
+    void publishUpdate(String itemName, long itemQuantity, double itemPrice);
 
     void addTickToMarketSnapshot(MarketTick marketTick);
 

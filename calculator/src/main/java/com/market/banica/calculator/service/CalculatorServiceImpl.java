@@ -102,6 +102,9 @@ public class CalculatorServiceImpl implements CalculatorService {
                     resultProductPriceComponentsSet, productPriceComponentsSetByProductIdMap,
                     result);
         }
+        for (ProductDto productDto : result) {
+            auroraService.buyProduct(productDto);
+        }
 
         return result;
     }

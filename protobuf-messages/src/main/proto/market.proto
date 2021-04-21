@@ -33,7 +33,19 @@ message CatalogueResponse{
   repeated string foodItems = 1;
 }
 
+message ProductBuyRequest {
+  string itemName = 1;
+  int64 itemQuantity = 2;
+  double itemPrice = 3;
+  Origin origin = 4;
+}
+
+message BuySellProductResponse {
+  string message = 1;
+}
+
 service MarketService{
   rpc subscribeForItem(MarketDataRequest) returns (stream TickResponse);
   rpc requestCatalogue(CatalogueRequest) returns (CatalogueResponse);
+  rpc buyProduct (ProductBuyRequest) returns (BuySellProductResponse);
 }

@@ -2,13 +2,20 @@ package com.market.banica.aurora.service;
 
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
+import com.market.BuySellProductResponse;
+import com.market.MarketServiceGrpc;
+import com.market.ProductBuyRequest;
+import com.market.banica.aurora.config.ChannelManager;
 import com.market.banica.aurora.handlers.SubscribeHandler;
+import io.grpc.ManagedChannel;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.market.banica.aurora.handlers.RequestHandler;
+
+import java.util.Optional;
 
 
 @Service
@@ -18,11 +25,13 @@ public class AuroraServiceImpl extends AuroraServiceGrpc.AuroraServiceImplBase {
     private final RequestHandler requestHandler;
 
     private final SubscribeHandler subscribeHandler;
+    private final ChannelManager channelManager;
 
     @Autowired
-    public AuroraServiceImpl(RequestHandler requestHandler, SubscribeHandler subscribeHandler) {
+    public AuroraServiceImpl(RequestHandler requestHandler, SubscribeHandler subscribeHandler, ChannelManager channelManager) {
         this.requestHandler = requestHandler;
         this.subscribeHandler = subscribeHandler;
+        this.channelManager = channelManager;
     }
 
     @Override
@@ -35,5 +44,14 @@ public class AuroraServiceImpl extends AuroraServiceGrpc.AuroraServiceImplBase {
     public void subscribe(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
         LOGGER.info("Accepted subscribe from client {}", request.getClientId());
         subscribeHandler.handleSubscribe(request, responseObserver);
+    }
+
+    @Override
+    public void buyProduct(ProductBuyRequest request, StreamObserver<BuySellProductResponse> responseObserver) {
+        Optional<ManagedChannel> channelByKey = channelManager.getChannelByKey("market-europe");
+        MarketServiceGrpc.MarketServiceBlockingStub stub = MarketServiceGrpc.newBlockingStub(channelByKey.get());
+        BuySellProductResponse buySellProductResponse = stub.buyProduct(request);
+        responseObserver.onNext(buySellProductResponse);
+        responseObserver.onCompleted();
     }
 }

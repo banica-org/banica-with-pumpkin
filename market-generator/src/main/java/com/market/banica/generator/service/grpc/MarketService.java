@@ -1,9 +1,11 @@
 package com.market.banica.generator.service.grpc;
 
+import com.market.BuySellProductResponse;
 import com.market.CatalogueRequest;
 import com.market.CatalogueResponse;
 import com.market.MarketDataRequest;
 import com.market.MarketServiceGrpc;
+import com.market.ProductBuyRequest;
 import com.market.TickResponse;
 import com.market.banica.generator.service.MarketState;
 import com.market.banica.generator.service.SubscriptionManager;
@@ -32,6 +34,13 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
         if (hasSuccessfulBootstrap) {
             subscriptionManager.subscribe(request, responseObserver);
         }
+    }
+
+    @Override
+    public void buyProduct(ProductBuyRequest request, StreamObserver<BuySellProductResponse> responseObserver) {
+        marketState.publishUpdate(request.getItemName(), -request.getItemQuantity(), request.getItemPrice());
+        responseObserver.onNext(BuySellProductResponse.newBuilder().setMessage("Bought successfully!").build());
+        responseObserver.onCompleted();
     }
 
     @Override

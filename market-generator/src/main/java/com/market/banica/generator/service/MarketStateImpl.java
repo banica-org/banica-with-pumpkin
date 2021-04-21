@@ -55,6 +55,11 @@ public class MarketStateImpl implements MarketState {
         persistScheduler.scheduleSnapshot();
     }
 
+    public void publishUpdate(String itemName, long itemQuantity, double itemPrice) {
+        MarketTick marketTick = new MarketTick(itemName, itemQuantity, itemPrice, System.currentTimeMillis());
+        subscriptionManager.notifySubscribers(convertMarketTickToTickResponse(marketTick));
+    }
+
     @Override
     public void addTickToMarketSnapshot(MarketTick marketTick) {
         executorService.execute(() -> {

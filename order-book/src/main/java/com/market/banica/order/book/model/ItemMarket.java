@@ -3,6 +3,7 @@ package com.market.banica.order.book.model;
 import com.aurora.Aurora;
 import com.google.gson.Gson;
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.market.Origin;
 import com.market.TickResponse;
 import com.market.banica.common.util.ApplicationDirectoryUtil;
 import com.market.banica.order.book.exception.IncorrectResponseException;
@@ -47,6 +48,7 @@ public class ItemMarket {
         this.productsQuantity = new ConcurrentHashMap<>();
         this.subscribedItems = new HashSet<>();
         FILE_PATH = fileName;
+        addDummyData();
     }
 
     public Optional<Set<Item>> getItemSetByName(String itemName) {
@@ -58,12 +60,32 @@ public class ItemMarket {
     }
 
     public void addTrackedItem(String itemName) {
-        this.allItems.put(itemName, new TreeSet<>());
+//        this.allItems.put(itemName, new TreeSet<>());
+        this.allItems.putIfAbsent(itemName, new TreeSet<>());
         this.productsQuantity.putIfAbsent(itemName, 0L);
     }
 
     public void removeUntrackedItem(String itemName) {
         this.allItems.remove(itemName);
+    }
+
+    private void addDummyData() {
+        extracted("cheese", 2.6, 5, Origin.EUROPE);
+        extracted("eggs", 5.0, 20, Origin.EUROPE);
+        extracted("water", 5.0, 400, Origin.EUROPE);
+        extracted("tomatoes", 5.0, 70, Origin.EUROPE);
+        extracted("milk", 5.0, 3, Origin.EUROPE);
+        extracted("pumpkin", 5.0, 400, Origin.EUROPE);
+        extracted("sugar", 5.0, 60, Origin.EUROPE);
+    }
+
+    private void extracted(String product, double price, long quantity, Origin origin) {
+        TreeSet<Item> itemSet = new TreeSet<>();
+        itemSet.add(new Item(price, quantity, origin));
+        this.allItems.put(product, itemSet);
+        for (Item item : itemSet) {
+            this.productsQuantity.merge(product, item.getQuantity(), Long::sum);
+        }
     }
 
     public void updateItem(Aurora.AuroraResponse response) {
@@ -89,15 +111,18 @@ public class ItemMarket {
 
         this.productsQuantity.merge(tickResponse.getGoodName(), tickResponse.getQuantity(), Long::sum);
 
-        LOGGER.info("Products data updated!");
-
+//        LOGGER.info("Products data updated!");
+        System.out.println(item.toString());
+        System.out.println("-------------");
         if (itemSet.contains(item)) {
-
             Item presentItem = itemSet.stream().filter(currentItem -> currentItem.compareTo(item) == 0).findFirst().get();
+            System.out.println("vefore updare ->" + presentItem.toString());
             presentItem.setQuantity(presentItem.getQuantity() + item.getQuantity());
+            System.out.println("after updare ->" + presentItem.toString());
             return;
         }
         itemSet.add(item);
+        System.out.println();
     }
 
     public List<OrderBookLayer> getRequestedItem(String itemName, long quantity) {
@@ -124,7 +149,7 @@ public class ItemMarket {
 
                 OrderBookLayer.Builder currentLayer = populateItemLayer(iterator, itemLeft, currentItem);
 
-                this.productsQuantity.put(itemName, this.productsQuantity.get(itemName) - currentLayer.getQuantity());
+//                this.productsQuantity.put(itemName, this.productsQuantity.get(itemName) - currentLayer.getQuantity());
                 itemLeft -= currentLayer.getQuantity();
 
                 OrderBookLayer orderBookLayer = currentLayer
@@ -203,12 +228,12 @@ public class ItemMarket {
         if (currentItem.getQuantity() > itemLeft) {
 
             currentLayer.setQuantity(itemLeft);
-            currentItem.setQuantity(currentItem.getQuantity() - itemLeft);
+//            currentItem.setQuantity(currentItem.getQuantity() - itemLeft);
 
         } else if (currentItem.getQuantity() <= itemLeft) {
 
             currentLayer.setQuantity(currentItem.getQuantity());
-            iterator.remove();
+//            iterator.remove();
         }
         return currentLayer;
     }

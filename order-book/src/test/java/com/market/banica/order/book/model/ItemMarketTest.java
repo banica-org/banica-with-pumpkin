@@ -42,10 +42,10 @@ public class ItemMarketTest {
 //    @Rule
 //    public TemporaryFolder folder = new TemporaryFolder();
 
-    {
-        File createdFile = new File("src/test/java/com/market/banica/order/book/subscribedProductsBackUp.json");
-        ReflectionTestUtils.setField(itemMarket, "file", createdFile);
-    }
+//    {
+//        File createdFile = new File("src/test/java/com/market/banica/order/book/subscribedProductsBackUp.json");
+//        ReflectionTestUtils.setField(itemMarket, "file", createdFile);
+//    }
 
     @SneakyThrows
     @Before
@@ -60,7 +60,17 @@ public class ItemMarketTest {
 
     }
 
-        @Test
+    @Test
+    public void test() {
+        int a = 4;
+        negative(-a);
+    }
+
+    private void negative(int negative) {
+        System.out.println("negative: " + negative);
+    }
+
+    @Test
     public void testPersistItem() {
 //        itemMarket.readBackUp();
 //        itemMarket.removeItemFromFileBackUp("newItem");
