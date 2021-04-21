@@ -101,7 +101,7 @@ public class ItemMarket {
 
         List<OrderBookLayer> layers;
         try {
-            lock.writeLock().lock();
+            lock.readLock().lock();
 
             layers = new ArrayList<>();
 
@@ -121,7 +121,7 @@ public class ItemMarket {
                 layers.add(orderBookLayer);
             }
         } finally {
-            lock.writeLock().unlock();
+            lock.readLock().unlock();
         }
         return layers;
     }
