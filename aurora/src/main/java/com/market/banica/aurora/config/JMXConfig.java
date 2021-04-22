@@ -141,11 +141,18 @@ public class JMXConfig {
         builder.append("Channel : State of channel.\n");
 
         channels.getChannels().entrySet()
-                .forEach(entry -> builder.append(String.format("%s : %s \n", entry.getKey(), entry.getValue().getState(true)))
+                .forEach(entry -> builder.append(String.format("%s : %s \n", entry.getKey(), entry.getValue().getState(false)))
                 );
 
-
         return builder.toString();
+    }
+
+    @ManagedOperation
+    public void refreshChannels() {
+        channels.getChannels().entrySet()
+                .forEach(entry -> entry.getValue().getState(true)
+                );
+
     }
 
 
