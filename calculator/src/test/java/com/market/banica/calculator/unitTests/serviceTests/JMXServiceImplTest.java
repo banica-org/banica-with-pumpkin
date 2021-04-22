@@ -1,8 +1,7 @@
-package com.market.banica.calculator.service;
+package com.market.banica.calculator.unitTests.serviceTests;
 
-import com.market.banica.calculator.data.contract.ProductBase;
 import com.market.banica.calculator.enums.UnitOfMeasure;
-import com.market.banica.calculator.model.Product;
+import com.market.banica.calculator.service.JMXServiceImpl;
 import com.market.banica.calculator.service.contract.ProductService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -10,11 +9,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class JMXServiceImplTest {
@@ -23,27 +21,9 @@ class JMXServiceImplTest {
     public static final Integer QUANTITY = 3;
     @Mock
     private ProductService productService;
-    @Mock
-    private ProductBase productBase;
 
     @InjectMocks
     private JMXServiceImpl jmxService;
-
-
-    @Test
-    void getDatabaseShouldReturnHasMapWithKeyProductNameAndValueProduct() {
-        //Arrange
-        HashMap<String, Product> productsDatabase = new HashMap<>();
-        when(productBase.getDatabase()).thenReturn(productsDatabase);
-
-        //Act
-        Map<String, Product> database = jmxService.getDatabase();
-
-        //Assert
-        verify(productBase, times(1)).getDatabase();
-        assertEquals(productsDatabase, database);
-
-    }
 
     @Test
     void createProductShouldInvokeProductServiceCreateMethod() {
@@ -75,9 +55,9 @@ class JMXServiceImplTest {
     @Test
     void getProductQuantityShouldInvokeProductServiceGetProductQuantityAndReturnProductQuantity() {
         //Arrange
-        when(productService.getProductQuantity(PRODUCT_NAME, INGREDIENT_NAME)).thenReturn(1);
+        when(productService.getProductQuantity(PRODUCT_NAME, INGREDIENT_NAME)).thenReturn(1L);
         //Act
-        int expected = jmxService.getProductQuantity(PRODUCT_NAME, INGREDIENT_NAME);
+        long expected = jmxService.getProductQuantity(PRODUCT_NAME, INGREDIENT_NAME);
         // Assert
         assertEquals(expected, 1);
     }

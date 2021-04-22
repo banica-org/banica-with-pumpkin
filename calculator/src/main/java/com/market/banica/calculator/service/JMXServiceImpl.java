@@ -1,7 +1,5 @@
 package com.market.banica.calculator.service;
 
-import com.market.banica.calculator.data.contract.ProductBase;
-import com.market.banica.calculator.model.Product;
 import com.market.banica.calculator.service.contract.JMXServiceMBean;
 import com.market.banica.calculator.service.contract.ProductService;
 import lombok.RequiredArgsConstructor;
@@ -12,8 +10,6 @@ import org.springframework.jmx.export.annotation.ManagedOperation;
 import org.springframework.jmx.export.annotation.ManagedResource;
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
-
 @EnableMBeanExport
 @ManagedResource
 @Service
@@ -23,15 +19,6 @@ public class JMXServiceImpl implements JMXServiceMBean {
     private static final Logger LOGGER = LoggerFactory.getLogger(JMXServiceImpl.class);
 
     private final ProductService productService;
-    private final ProductBase productBase;
-
-    @Override
-    @ManagedOperation
-    public Map<String, Product> getDatabase() {
-        LOGGER.info("GetDatabase called from JMX server");
-
-        return productBase.getDatabase();
-    }
 
     @Override
     @ManagedOperation
@@ -75,12 +62,12 @@ public class JMXServiceImpl implements JMXServiceMBean {
 
     @Override
     @ManagedOperation
-    public int getProductQuantity(String parentProductName, String productName) {
+    public long getProductQuantity(String parentProductName, String productName) {
         LOGGER.debug("In getProductQuantity method with parameters: parentProductName {} and productName {}"
                 , parentProductName, productName);
         LOGGER.info("GetProductQuantity called from JMX server");
 
-        int result = productService.getProductQuantity(parentProductName, productName);
+        long result = productService.getProductQuantity(parentProductName, productName);
 
         LOGGER.debug("Quantity checked from JMX server for product {} with parent product {}", parentProductName, productName);
         return result;
