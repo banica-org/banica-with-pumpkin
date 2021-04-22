@@ -99,7 +99,6 @@ public class MarketTestIT {
     public void cleanMarketState() {
         ReflectionTestUtils.setField(marketState, "marketState", new ConcurrentHashMap<String, Set<MarketTick>>());
         ReflectionTestUtils.setField(marketState, "marketSnapshot", new LinkedBlockingQueue<MarketTick>());
-        System.out.println(marketState.generateMarketTicks("eggs"));
     }
 
     @Test
