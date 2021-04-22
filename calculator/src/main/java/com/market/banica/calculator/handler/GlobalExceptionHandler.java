@@ -16,18 +16,13 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
 
-    @ExceptionHandler({IncorrectResponseException.class, TrackingException.class})
-    public ResponseEntity<ErrorMessage> customExceptionHandler(Exception exception) {
-        return new ResponseEntity<>(new ErrorMessage(exception.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorMessage> illegalArgumentExceptionExceptionHandler(IllegalArgumentException exception) {
         return new ResponseEntity<>(new ErrorMessage(exception.getMessage()), HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorMessage> genericExceptionHandler(Exception exception) {
+    @ExceptionHandler({IncorrectResponseException.class, TrackingException.class,Exception.class})
+    public ResponseEntity<ErrorMessage> customExceptionHandler(Exception exception) {
         return new ResponseEntity<>(new ErrorMessage(exception.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 

@@ -42,9 +42,6 @@ public class JMXServiceImpl implements JMXServiceMBean {
                 ingredientsList);
         LOGGER.info("CreateProduct called from JMX server");
 
-        DataValidator.validateIncomingData(newProductName);
-        DataValidator.validateIncomingData(unitOfMeasure);
-
         productService.createProduct(newProductName, unitOfMeasure, ingredientsList);
 
         LOGGER.debug("New product created from JMX server with product name {} and unit of measure {}"
@@ -57,9 +54,6 @@ public class JMXServiceImpl implements JMXServiceMBean {
         LOGGER.debug("In addIngredient method with parameters: parentProductName {},productName {} and quantity {}" +
                 parentProductName, productName, quantity);
         LOGGER.info("AddIngredient called from JMX server");
-
-        DataValidator.validateIncomingData(parentProductName);
-        DataValidator.validateIncomingData(productName);
 
         productService.addIngredient(parentProductName, productName, quantity);
 
@@ -74,9 +68,6 @@ public class JMXServiceImpl implements JMXServiceMBean {
                 " and newQuantity {}", parentProductName, productName, newQuantity);
         LOGGER.info("SetProductQuantity called from JMX server");
 
-        DataValidator.validateIncomingData(parentProductName);
-        DataValidator.validateIncomingData(productName);
-
         productService.setProductQuantity(parentProductName, productName, newQuantity);
 
         LOGGER.debug("Quantity set from JMX server to new quantity {} for product {} with parent product {}",
@@ -90,8 +81,6 @@ public class JMXServiceImpl implements JMXServiceMBean {
                 , parentProductName, productName);
         LOGGER.info("GetProductQuantity called from JMX server");
 
-        DataValidator.validateIncomingData(parentProductName);
-        DataValidator.validateIncomingData(productName);
 
         int result = productService.getProductQuantity(parentProductName, productName);
 
@@ -105,7 +94,6 @@ public class JMXServiceImpl implements JMXServiceMBean {
         LOGGER.debug("In getUnitOfMeasure method with parameters: productName {}", productName);
         LOGGER.info("GetUnitOfMeasure called from JMX server");
 
-        DataValidator.validateIncomingData(productName);
 
         String result = productService.getUnitOfMeasure(productName);
 
@@ -119,9 +107,6 @@ public class JMXServiceImpl implements JMXServiceMBean {
         LOGGER.debug("In setUnitOfMeasure method with parameters: productName {} and unitOfMeasure {}", productName, unitOfMeasure);
         LOGGER.info("SetUnitOfMeasure called from JMX server");
 
-        DataValidator.validateIncomingData(unitOfMeasure);
-        DataValidator.validateIncomingData(productName);
-
         productService.setUnitOfMeasure(productName, unitOfMeasure);
 
         LOGGER.debug("UnitOfMeasure set from JMX server for product {}" +
@@ -134,7 +119,6 @@ public class JMXServiceImpl implements JMXServiceMBean {
         LOGGER.debug("In deleteProductFromDatabase method with parameters: productName {}", productName);
         LOGGER.info("DeleteProductFromDatabase called from JMX server");
 
-        DataValidator.validateIncomingData(productName);
 
         productService.deleteProductFromDatabase(productName);
 
@@ -146,9 +130,6 @@ public class JMXServiceImpl implements JMXServiceMBean {
     public void deleteProductFromParentIngredients(String parentProductName, String productName) {
         LOGGER.debug("In deleteIngredient method with parameters: parentProductName {} and productName {}", parentProductName, productName);
         LOGGER.info("DeleteIngredient called from JMX server");
-
-        DataValidator.validateIncomingData(parentProductName);
-        DataValidator.validateIncomingData(productName);
 
         productService.deleteProductFromParentIngredients(parentProductName, productName);
 
