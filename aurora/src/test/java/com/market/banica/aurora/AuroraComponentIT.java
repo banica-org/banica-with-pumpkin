@@ -292,7 +292,7 @@ class AuroraComponentIT {
     @Test
     void subscribe_Should_ForwardToReceiverResponses_When_ReceiverIsRegistered() throws IOException, InterruptedException {
         //Arrange
-        currentPublisher = "aurora";
+        currentPublisher = "aurora-test";
         publishers.addPublisher(currentPublisher);
 
         createFakeReplyingServer();
@@ -650,6 +650,7 @@ class AuroraComponentIT {
         for (int i = 0; i < 3; i++) {
             //do assert.
             assertTrue(statusReport.contains("aurora" + i));
+            jmxConfig.deleteChannel("aurora"+i);
         }
 
         assertFalse(statusReport.contains("aurora3"));
