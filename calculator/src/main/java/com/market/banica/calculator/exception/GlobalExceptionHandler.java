@@ -1,6 +1,7 @@
 package com.market.banica.calculator.exception;
 
 import com.market.banica.calculator.exception.exceptions.BadResponseException;
+import com.market.banica.calculator.exception.exceptions.ProductNotAvailableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -25,8 +26,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(IllegalArgumentException.class)
-    protected ResponseEntity<Object> handleIllegalArgument(
-            RuntimeException runtimeException, WebRequest request) {
+    protected ResponseEntity<Object> handleIllegalArgument(RuntimeException runtimeException, WebRequest request) {
         return handleExceptionInternal(runtimeException, runtimeException.getMessage(),
                 new HttpHeaders(), HttpStatus.BAD_REQUEST, request);
     }
@@ -35,5 +35,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<Object> badAuroraResponse(RuntimeException runtimeException, WebRequest request) {
         return handleExceptionInternal(runtimeException, runtimeException.getMessage(),
                 new HttpHeaders(), HttpStatus.INTERNAL_SERVER_ERROR, request);
+    }
+
+    @ExceptionHandler({ProductNotAvailableException.class})
+    public ResponseEntity<Object> handleNotEnoughResources(Exception exception, WebRequest request) {
+        return handleExceptionInternal(exception, exception.getMessage(),
+                new HttpHeaders(), HttpStatus.OK, request);
     }
 }
