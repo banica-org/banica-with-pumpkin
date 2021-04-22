@@ -19,9 +19,11 @@ import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ItemMarketTest {
+
     private static final String EGGS_ITEM_NAME = "eggs";
     private static final String RICE_ITEM_NAME = "rice";
     private static final String MEAT_ITEM_NAME = "meat";
@@ -133,6 +135,18 @@ public class ItemMarketTest {
     }
 
     @Test
+    public void getProductsQuantityReturnsProductsQuantity() {
+        //Arrange
+        allItems.clear();
+
+        //Act
+        Map<String, Long> productsQuantityActual = this.itemMarket.getProductsQuantity();
+
+        //Assert
+        assertEquals(productsQuantity, productsQuantityActual);
+    }
+
+    @Test
     public void getItemSetByNameWithExistingItemNameReturnsTreeSetOfItems() {
         //Act
         Optional<Set<Item>> itemSetByName = this.itemMarket.getItemSetByName(EGGS_ITEM_NAME);
@@ -146,6 +160,18 @@ public class ItemMarketTest {
         assertTrue(items.contains(new Item(1.2, 3, Origin.EUROPE)));
         assertTrue(items.contains(new Item(2.2, 1, Origin.EUROPE)));
         assertTrue(items.contains(new Item(3.2, 2, Origin.EUROPE)));
+    }
+
+    @Test
+    public void getItemSetByNameWithEmptyItemMarketReturnsOptionalOfNull() {
+        //Arrange
+        allItems.clear();
+
+        //Act
+        Optional<Set<Item>> itemSetByName = this.itemMarket.getItemSetByName(EGGS_ITEM_NAME);
+
+        //Assert
+        assertFalse(itemSetByName.isPresent());
     }
 
     @Test
@@ -168,6 +194,8 @@ public class ItemMarketTest {
 
         //Assert
         assertTrue(items.isEmpty());
+        assertTrue(productsQuantity.containsKey(MEAT_ITEM_NAME));
+        assertEquals(0L, productsQuantity.get(MEAT_ITEM_NAME));
     }
 
     @Test
@@ -180,6 +208,7 @@ public class ItemMarketTest {
 
         //Assert
         assertEquals(2, this.allItems.size());
+        assertFalse(productsQuantity.containsKey(MEAT_ITEM_NAME));
     }
 
     private TreeSet<Item> populateItems() {
@@ -189,4 +218,5 @@ public class ItemMarketTest {
         items.add(new Item(3.2, 2, Origin.EUROPE));
         return items;
     }
+
 }

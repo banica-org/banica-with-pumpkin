@@ -9,7 +9,9 @@ import com.market.MarketServiceGrpc;
 import com.market.Origin;
 import com.market.TickResponse;
 import com.market.banica.common.channel.ChannelRPCConfig;
+import com.market.banica.common.util.ApplicationDirectoryUtil;
 import com.market.banica.order.book.OrderBookApplication;
+import com.market.banica.order.book.exception.TrackingException;
 import com.market.banica.order.book.model.ItemMarket;
 import com.market.banica.order.book.service.grpc.AuroraClient;
 import com.market.banica.order.book.service.grpc.OrderBookService;
@@ -31,11 +33,11 @@ import io.grpc.stub.StreamObserver;
 import io.grpc.testing.GrpcCleanupRule;
 import lombok.SneakyThrows;
 import org.junit.Rule;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -47,6 +49,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -73,11 +76,10 @@ class OrderBookComponentIT {
     @Mock
     private ItemMarket itemMarket;
 
-    @InjectMocks
-    private OrderBookService orderBookService;
+    @Value(value = "${orderbook.interests.file.name}")
+    private String interestsFileName;
 
-    @Autowired
-    private OrderBookService orderBookServiceReal;
+    private OrderBookService orderBookService;
 
     @Autowired
     private TestConfiguration testConfiguration;
@@ -127,7 +129,10 @@ class OrderBookComponentIT {
     private final static int THREAD_SLEEP_TIME_MARKET = 1000;
 
     @BeforeEach
-    void setupChannel() {
+    void setupChannel() throws TrackingException, IOException {
+
+        orderBookService = new OrderBookService(auroraClient, itemMarket, interestsFileName);
+
         serverName = InProcessServerBuilder.generateName();
         serverNameTwo = InProcessServerBuilder.generateName();
         serverNameThree = InProcessServerBuilder.generateName();
@@ -148,12 +153,21 @@ class OrderBookComponentIT {
         blockingStub = OrderBookServiceGrpc.newBlockingStub(grpcCleanup.register(channel));
     }
 
+    @AfterEach
+    void teardown() throws IOException {
+
+        File interestsFile = ApplicationDirectoryUtil.getConfigFile(interestsFileName);
+        assert interestsFile.delete();
+
+    }
+
     @Test
-    public void orderBookServiceToMarketThroughAuroraRetryExecutesWithSuccess() throws IOException {
+    void orderBookServiceToMarketThroughAuroraRetryExecutesWithSuccess() throws IOException {
         //Arrange
         int numberOfTickResponses = 10;
         ReflectionTestUtils.setField(orderBookService, AURORA_CLIENT, auroraClient);
         ReflectionTestUtils.setField(orderBookService, "subscriptionExecutor", MoreExecutors.newDirectExecutorService());
+
         String serverNameMarket = InProcessServerBuilder.generateName();
 
         when(auroraClient.getAsynchronousStub()).thenReturn(asynchronousStub);
@@ -181,7 +195,7 @@ class OrderBookComponentIT {
     }
 
     @Test
-    public void auroraServiceToOrderBookRequestsRetryExecutesWithSuccess() {
+    void auroraServiceToOrderBookRequestsRetryExecutesWithSuccess() {
         //Arrange
         ItemOrderBookResponse response = generateItemOrderBookExpectedResponse();
 
@@ -200,7 +214,7 @@ class OrderBookComponentIT {
     }
 
     @Test
-    public void calculatorToAuroraToOrderBookRequestsRetryExecutesWithSuccess() {
+    void calculatorToAuroraToOrderBookRequestsRetryExecutesWithSuccess() {
         //Arrange
 
         List<OrderBookLayer> layers = new ArrayList<>();
@@ -462,7 +476,5 @@ class OrderBookComponentIT {
                 .build();
         return auroraResponse;
     }
+
 }
-
-
-
