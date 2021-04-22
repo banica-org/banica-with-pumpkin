@@ -4,7 +4,6 @@ import com.market.banica.calculator.data.contract.ProductBase;
 import com.market.banica.calculator.model.Product;
 import com.market.banica.calculator.service.contract.JMXServiceMBean;
 import com.market.banica.calculator.service.contract.ProductService;
-import com.market.banica.common.validator.DataValidator;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

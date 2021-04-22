@@ -2,8 +2,6 @@ package com.market.banica.calculator.handler;
 
 import com.market.banica.common.exception.IncorrectResponseException;
 import com.market.banica.common.exception.TrackingException;
-import io.grpc.StatusException;
-import io.grpc.StatusRuntimeException;
 import org.modelmapper.spi.ErrorMessage;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
