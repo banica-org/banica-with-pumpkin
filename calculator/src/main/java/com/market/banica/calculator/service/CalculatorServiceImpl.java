@@ -7,7 +7,7 @@ import com.google.gson.Gson;
 import com.market.banica.calculator.dto.ProductDto;
 import com.market.banica.calculator.dto.ProductPriceComponentsSet;
 import com.market.banica.calculator.dto.ProductSpecification;
-import com.market.banica.calculator.exception.exceptions.BadResponseException;
+import com.market.banica.calculator.exception.exceptions.ProductNotAvailableException;
 import com.market.banica.calculator.model.Pair;
 import com.market.banica.calculator.model.Product;
 import com.market.banica.calculator.service.contract.CalculatorService;
@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -42,18 +43,17 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class CalculatorServiceImpl implements CalculatorService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CalculatorServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(BackUpServiceImpl.class);
 
     private final AuroraClientSideService auroraService;
     private final ProductService productService;
 
     @Override
-    public List<ProductDto> getProduct(String clientId, String itemName, long quantity) {
+    public List<ProductDto> getProduct(String clientId, String itemName, long quantity) throws ProductNotAvailableException {
+        LOGGER.debug("In getProduct method");
 
-        Map<Product, Map<String, Long>> products = productService.getProductIngredientsWithQuantityPerParent(itemName);
-
-        Map<ProductDto, Map<String, Long>> productDtoMap = new HashMap<>();
-
+        Map<Product, Map<String, Pair<Long, Long>>> products = productService.getProductIngredientsWithQuantityPerParent(itemName, quantity);
+        Map<ProductDto, Map<String, Pair<Long, Long>>> productDtoMap = new HashMap<>();
         Map<String, List<ProductSpecification>> productSpecificationMap = new HashMap<>();
 
         populateDataToDataStructures(clientId, itemName, quantity, products,
@@ -61,7 +61,6 @@ public class CalculatorServiceImpl implements CalculatorService {
 
         Map<String, ProductDto> productDtoNamesMap = productDtoMap.keySet().stream()
                 .collect(Collectors.toMap(ProductDto::getItemName, Function.identity()));
-
         Map<Integer, ProductPriceComponentsSet> productPriceComponentsSetByProductIdMap = new HashMap<>();
 
         ProductPriceComponentsSet result = createBestPricePath(productDtoMap,
@@ -74,30 +73,30 @@ public class CalculatorServiceImpl implements CalculatorService {
     }
 
     private void populateDataToDataStructures(String clientId, String itemName, long quantity,
-                                              Map<Product, Map<String, Long>> products,
-                                              Map<ProductDto, Map<String, Long>> productDtoMap,
+                                              Map<Product, Map<String, Pair<Long, Long>>> products,
+                                              Map<ProductDto, Map<String, Pair<Long, Long>>> productDtoMap,
                                               Map<String, List<ProductSpecification>> productSpecificationMap) {
-
-        populateOrderedProductDataToDataStructures(clientId, itemName, quantity,
-                products, productDtoMap, productSpecificationMap);
+        LOGGER.debug("In populateDataToDataStructures private method");
 
         populateConstituentProductsDataToDataStructures(clientId, products,
                 productDtoMap, productSpecificationMap);
+
+        populateOrderedProductDataToDataStructures(clientId, itemName, quantity,
+                products, productDtoMap, productSpecificationMap);
     }
 
     private List<ProductDto> writeProductsFromBestPricePath(Map<String, List<ProductSpecification>> productSpecificationMap,
                                                             Map<String, ProductDto> productDtoNamesMap,
                                                             ProductPriceComponentsSet resultProductPriceComponentsSet,
                                                             Map<Integer, ProductPriceComponentsSet> productPriceComponentsSetByProductIdMap) {
+        LOGGER.debug("In writeProductsFromBestPricePath private method");
 
         List<ProductDto> result = new ArrayList<>();
 
         if (resultProductPriceComponentsSet.getComponentIngredients().isEmpty()) {
-
             result = Collections.singletonList(createSimpleParentProduct(productSpecificationMap,
                     resultProductPriceComponentsSet));
         } else {
-
             createListOfProductsWhenParentIsComposite(productSpecificationMap, productDtoNamesMap,
                     resultProductPriceComponentsSet, productPriceComponentsSetByProductIdMap,
                     result);
@@ -111,9 +110,9 @@ public class CalculatorServiceImpl implements CalculatorService {
                                                            ProductPriceComponentsSet resultProductPriceComponentsSet,
                                                            Map<Integer, ProductPriceComponentsSet> productPriceComponentsSetByProductIdMap,
                                                            List<ProductDto> result) {
+        LOGGER.debug("In createListOfProductsWhenParentIsComposite private method");
 
         ProductDto parentProduct = productDtoNamesMap.get(resultProductPriceComponentsSet.getProductName());
-
         ProductDto newParentProduct = createParentProduct(resultProductPriceComponentsSet,
                 parentProduct);
 
@@ -129,13 +128,11 @@ public class CalculatorServiceImpl implements CalculatorService {
                                           ProductPriceComponentsSet resultProductPriceComponentsSet,
                                           Map<Integer, ProductPriceComponentsSet> productPriceComponentsSetByProductIdMap,
                                           List<ProductDto> result) {
+        LOGGER.debug("In createIngredientProducts private method");
 
         for (String tempProductName : resultProductPriceComponentsSet.getComponentIngredients().keySet()) {
-
             ProductDto productDto = productDtoNamesMap.get(tempProductName);
-
             for (Integer productId : resultProductPriceComponentsSet.getComponentIngredients().get(tempProductName)) {
-
                 ProductPriceComponentsSet productPriceComponentsSet = productPriceComponentsSetByProductIdMap.get(productId);
 
                 ProductDto newProductDto = new ProductDto();
@@ -161,6 +158,7 @@ public class CalculatorServiceImpl implements CalculatorService {
 
     private ProductDto createParentProduct(ProductPriceComponentsSet resultProductPriceComponentsSet,
                                            ProductDto parentProduct) {
+        LOGGER.debug("In createParentProduct private method");
 
         ProductDto newParentProduct = new ProductDto();
 
@@ -173,6 +171,7 @@ public class CalculatorServiceImpl implements CalculatorService {
 
     private ProductDto createSimpleParentProduct(Map<String, List<ProductSpecification>> productSpecificationMap,
                                                  ProductPriceComponentsSet resultProductPriceComponentsSet) {
+        LOGGER.debug("In createSimpleParentProduct private method");
 
         ProductDto newParentProduct = new ProductDto();
 
@@ -190,20 +189,18 @@ public class CalculatorServiceImpl implements CalculatorService {
                                                              String tempProductName,
                                                              ProductPriceComponentsSet productPriceComponentsSet,
                                                              ProductDto newProductDto) {
+        LOGGER.debug("In createProductSpecificationsForSimpleProduct private method");
 
         long start = productPriceComponentsSet.getReservedQuantityRangeStartEnd().getFirst();
         long range = productPriceComponentsSet.getReservedQuantityRangeStartEnd().getSecond() -
                 productPriceComponentsSet.getReservedQuantityRangeStartEnd().getFirst();
 
         for (ProductSpecification productSpecification : productSpecificationMap.get(tempProductName)) {
-
             ProductSpecification newProductSpecification = new ProductSpecification();
-
             if (start > productSpecification.getQuantity()) {
                 start -= productSpecification.getQuantity();
                 continue;
             }
-
             if (range > productSpecification.getQuantity() - start) {
 
                 newProductSpecification.setLocation(productSpecification.getLocation());
@@ -214,7 +211,6 @@ public class CalculatorServiceImpl implements CalculatorService {
 
                 range -= productSpecification.getQuantity() - start;
                 start = 0;
-
                 continue;
             }
 
@@ -228,14 +224,14 @@ public class CalculatorServiceImpl implements CalculatorService {
         }
     }
 
-    private ProductPriceComponentsSet createBestPricePath(Map<ProductDto, Map<String, Long>> productDtoMap,
+    private ProductPriceComponentsSet createBestPricePath(Map<ProductDto, Map<String, Pair<Long, Long>>> productDtoMap,
                                                           Map<String, List<ProductSpecification>> productSpecificationMap,
                                                           Map<String, ProductDto> productDtoNamesMap,
                                                           Map<Integer, ProductPriceComponentsSet> productPriceComponentsSetByProductIdMap,
-                                                          String itemName) {
+                                                          String itemName) throws ProductNotAvailableException {
+        LOGGER.debug("In createBestPricePath private method");
 
         List<ProductDto> compositeProductDtoList = createListWithOnlyCompositeProducts(productDtoMap);
-
         Map<String, List<List<ProductPriceComponentsSet>>> result = new HashMap<>();
 
         createPriceVariantsForProducts(productDtoMap, productSpecificationMap,
@@ -243,38 +239,36 @@ public class CalculatorServiceImpl implements CalculatorService {
                 compositeProductDtoList, result);
 
         ProductDto orderedProduct = productDtoNamesMap.get(itemName);
-        long orderedQuantity = productDtoMap.get(orderedProduct).get(itemName);
+        long orderedQuantity = productDtoMap.get(orderedProduct).get(itemName).getSecond();
 
         List<ProductPriceComponentsSet> orderedProductPriceVariantsSet =
                 createPriceVariantsForOrderedProduct(productDtoMap, productSpecificationMap,
                         productPriceComponentsSetByProductIdMap, result,
                         orderedProduct, orderedQuantity);
-
         Set<ProductPriceComponentsSet> resultSet = new TreeSet<>(orderedProductPriceVariantsSet);
 
-        if(resultSet.isEmpty()){
-            throw new BadResponseException("Out of resources for this product");
+        if (resultSet.isEmpty()) {
+            throw new ProductNotAvailableException(String.format("Product %s not available on" +
+                    " the market", itemName));
         }
-
         return resultSet.iterator().next();
     }
 
-    private void createPriceVariantsForProducts(Map<ProductDto, Map<String, Long>> productDtoMap,
+    private void createPriceVariantsForProducts(Map<ProductDto, Map<String, Pair<Long, Long>>> productDtoMap,
                                                 Map<String, List<ProductSpecification>> productSpecificationMap,
                                                 Map<String, ProductDto> productDtoNamesMap,
                                                 Map<Integer, ProductPriceComponentsSet> productPriceComponentsSetByProductIdMap,
                                                 List<ProductDto> compositeProductDtoList,
                                                 Map<String, List<List<ProductPriceComponentsSet>>> result) {
+        LOGGER.debug("In createPriceVariantsForProducts private method");
 
         while (true) {
 
             Optional<ProductDto> optionalProductDto = getProductWhichIngredientsAreNotCompositeOrIsChecked
                     (productDtoNamesMap, compositeProductDtoList);
-
             if (!optionalProductDto.isPresent()) {
                 break;
             }
-
             ProductDto tempProduct = optionalProductDto.get();
 
             List<List<ProductPriceComponentsSet>> ingredientsPriceVariantsLists = createPriceVariantsForIngredients(productDtoMap,
@@ -289,18 +283,21 @@ public class CalculatorServiceImpl implements CalculatorService {
                     tempProduct, cartesianProductOfIngredientsPriceVariants);
 
             markCurrentProductAsChecked(tempProduct);
-
             result.put(tempProduct.getItemName(), compositeProductPriceVariantList);
         }
     }
 
     private void markCurrentProductAsChecked(ProductDto tempProduct) {
+        LOGGER.debug("In markCurrentProductAsChecked private method");
+
         tempProduct.setTotalPrice(BigDecimal.valueOf(-1));
     }
 
     private List<List<ProductPriceComponentsSet>> createCompositeProductPriceVariantsFromIngredientsPriceVariants(Map<Integer, ProductPriceComponentsSet> productPriceComponentsSetByProductIdMap,
                                                                                                                   ProductDto tempProduct,
                                                                                                                   List<List<ProductPriceComponentsSet>> cartesianProductOfIngredientsPriceVariants) {
+        LOGGER.debug("In createCompositeProductPriceVariantsFromIngredientsPriceVariants private method");
+
         List<List<ProductPriceComponentsSet>> compositeProductPriceVariantList = new ArrayList<>();
         conflictOfIngredientsQuantitiesRanges:
         for (List<ProductPriceComponentsSet> ingredientsList : cartesianProductOfIngredientsPriceVariants) {
@@ -310,14 +307,12 @@ public class CalculatorServiceImpl implements CalculatorService {
 
             BigDecimal subPrice = BigDecimal.ZERO;
             for (ProductPriceComponentsSet ingredientPriceVariant : ingredientsList) {
-
                 Map<ProductPriceComponentsSet, ProductPriceComponentsSet> sameIngredientsMap =
                         getMapOfExistingIngredientsSameAsCandidateOrContainedFromCandidate
                                 (compositeProductPriceVariant, ingredientPriceVariant,
                                         productPriceComponentsSetByProductIdMap);
 
                 if (isConflictWhenOverlappingRangeOfSameIngredientsQuantities(sameIngredientsMap)) {
-
                     continue conflictOfIngredientsQuantitiesRanges;
                 }
 
@@ -325,16 +320,13 @@ public class CalculatorServiceImpl implements CalculatorService {
                 componentIngredientsNamesMap.put(ingredientPriceVariant.getProductName(), Arrays.asList(ingredientPriceVariant.getProductId()));
 
                 if (!ingredientPriceVariant.getComponentIngredients().isEmpty()) {
-
                     for (String ingredientName : ingredientPriceVariant.getComponentIngredients().keySet()) {
-
                         componentIngredientsNamesMap.merge(ingredientName,
                                 ingredientPriceVariant.getComponentIngredients().get(ingredientName),
                                 (productId1, productId2) ->
                                         Stream.concat(productId1.stream(), productId2.stream())
                                                 .collect(Collectors.toList()));
                     }
-
                 }
                 compositeProductPriceVariant.add(ingredientPriceVariant);
             }
@@ -353,28 +345,24 @@ public class CalculatorServiceImpl implements CalculatorService {
         return compositeProductPriceVariantList;
     }
 
-    private List<List<ProductPriceComponentsSet>> createPriceVariantsForIngredients(Map<ProductDto, Map<String, Long>> productDtoMap,
+    private List<List<ProductPriceComponentsSet>> createPriceVariantsForIngredients(Map<ProductDto, Map<String, Pair<Long, Long>>> productDtoMap,
                                                                                     Map<String, List<ProductSpecification>> productSpecificationMap,
                                                                                     Map<String, ProductDto> productDtoNamesMap,
                                                                                     Map<Integer, ProductPriceComponentsSet> productPriceComponentsSetByProductIdMap,
                                                                                     Map<String, List<List<ProductPriceComponentsSet>>> result,
                                                                                     ProductDto tempProduct) {
-
+        LOGGER.debug("In createPriceVariantsForIngredients private method");
 
         List<List<ProductPriceComponentsSet>> ingredientsPriceVariantsLists = new ArrayList<>();
         for (String ingredientName : tempProduct.getIngredients().keySet()) {
-
             ProductDto ingredient = productDtoNamesMap.get(ingredientName);
-
             if (ingredient.getTotalPrice().equals(BigDecimal.valueOf(-1))) {
-
                 List<ProductPriceComponentsSet> compositeIngredientPriceVariants =
                         createPriceVariantsForCompositeProduct(productDtoMap, productSpecificationMap,
                                 productPriceComponentsSetByProductIdMap, result,
                                 tempProduct, ingredient);
 
                 ingredientsPriceVariantsLists.add(compositeIngredientPriceVariants);
-
                 continue;
             }
 
@@ -386,17 +374,17 @@ public class CalculatorServiceImpl implements CalculatorService {
             if (ingredientPriceVariantsSet.isEmpty()) {
                 return new ArrayList<>();
             }
-
             ingredientsPriceVariantsLists.add(new ArrayList<>(ingredientPriceVariantsSet));
         }
         return ingredientsPriceVariantsLists;
     }
 
-    private List<ProductPriceComponentsSet> createPriceVariantsForOrderedProduct(Map<ProductDto, Map<String, Long>> productDtoMap,
+    private List<ProductPriceComponentsSet> createPriceVariantsForOrderedProduct(Map<ProductDto, Map<String, Pair<Long, Long>>> productDtoMap,
                                                                                  Map<String, List<ProductSpecification>> productSpecificationMap,
                                                                                  Map<Integer, ProductPriceComponentsSet> productPriceComponentsSetByProductIdMap,
                                                                                  Map<String, List<List<ProductPriceComponentsSet>>> result,
                                                                                  ProductDto orderedProduct, long quantity) {
+        LOGGER.debug("In createPriceVariantsForOrderedProduct private method");
 
         Set<ProductPriceComponentsSet> simpleProductPriceVariantsSet = calculatePossiblePricesForProductFromProductSpecifications(
                 productDtoMap, productSpecificationMap, orderedProduct,
@@ -419,15 +407,15 @@ public class CalculatorServiceImpl implements CalculatorService {
             });
         }
         compositeIngredientPriceVariants.addAll(simpleProductPriceVariantsSet);
-
         return compositeIngredientPriceVariants;
     }
 
-    private List<ProductPriceComponentsSet> createPriceVariantsForCompositeProduct(Map<ProductDto, Map<String, Long>> productDtoMap,
+    private List<ProductPriceComponentsSet> createPriceVariantsForCompositeProduct(Map<ProductDto, Map<String, Pair<Long, Long>>> productDtoMap,
                                                                                    Map<String, List<ProductSpecification>> productSpecificationMap,
                                                                                    Map<Integer, ProductPriceComponentsSet> productPriceComponentsSetByProductIdMap,
                                                                                    Map<String, List<List<ProductPriceComponentsSet>>> result,
                                                                                    ProductDto tempProduct, ProductDto ingredient) {
+        LOGGER.debug("In createPriceVariantsForCompositeProduct private method");
 
         Set<ProductPriceComponentsSet> simpleProductPriceVariantsSet = calculatePossiblePricesForProductFromProductSpecifications(
                 productDtoMap, productSpecificationMap, tempProduct,
@@ -457,13 +445,12 @@ public class CalculatorServiceImpl implements CalculatorService {
         return compositeIngredientPriceVariants;
     }
 
-    private List<ProductDto> createListWithOnlyCompositeProducts(Map<ProductDto, Map<String, Long>> productDtoMap) {
+    private List<ProductDto> createListWithOnlyCompositeProducts(Map<ProductDto, Map<String, Pair<Long, Long>>> productDtoMap) {
+        LOGGER.debug("In createListWithOnlyCompositeProducts private method");
 
         List<ProductDto> compositeProductDtoList = new ArrayList<>();
         for (ProductDto productDto : productDtoMap.keySet()) {
-
             if (productDto.getIngredients().isEmpty()) {
-
                 continue;
             }
             compositeProductDtoList.add(productDto);
@@ -471,13 +458,14 @@ public class CalculatorServiceImpl implements CalculatorService {
         return compositeProductDtoList;
     }
 
-    private Set<ProductPriceComponentsSet> calculatePossiblePricesForProductFromProductSpecifications(Map<ProductDto, Map<String, Long>> productDtoMap,
+    private Set<ProductPriceComponentsSet> calculatePossiblePricesForProductFromProductSpecifications(Map<ProductDto, Map<String, Pair<Long, Long>>> productDtoMap,
                                                                                                       Map<String, List<ProductSpecification>> productSpecificationMap,
                                                                                                       ProductDto parentProduct,
                                                                                                       ProductDto ingredient,
                                                                                                       Map<Integer, ProductPriceComponentsSet> productPriceComponentsSetByProductIdMap) {
+        LOGGER.debug("In calculatePossiblePricesForProductFromProductSpecifications private method");
 
-        Collection<List<Pair<String, Long>>> permutationsOfQuantitiesOfProductSet =
+        Collection<List<Pair<String, Pair<Long, Long>>>> permutationsOfQuantitiesOfProductSet =
                 createPermutationsOfAvailableQuantitiesOfIngredient(productDtoMap, ingredient);
 
         return createPossibleProductPriceComponentSetsForProduct(
@@ -488,12 +476,12 @@ public class CalculatorServiceImpl implements CalculatorService {
 
     private Set<ProductPriceComponentsSet> createPossibleProductPriceComponentSetsForProduct(Map<String, List<ProductSpecification>> productSpecificationMap,
                                                                                              ProductDto tempProduct, String ingredientName,
-                                                                                             Collection<List<Pair<String, Long>>> permutationsOfQuantitiesOfProductSet,
+                                                                                             Collection<List<Pair<String, Pair<Long, Long>>>> permutationsOfQuantitiesOfProductSet,
                                                                                              Map<Integer, ProductPriceComponentsSet> productPriceComponentsSetByProductIdMap) {
+        LOGGER.debug("In createPossibleProductPriceComponentSetsForProduct private method");
 
         Set<ProductPriceComponentsSet> ingredientPriceVariantsSet = new HashSet<>();
-        for (List<Pair<String, Long>> permutationsOfQuantities : permutationsOfQuantitiesOfProductSet) {
-
+        for (List<Pair<String, Pair<Long, Long>>> permutationsOfQuantities : permutationsOfQuantitiesOfProductSet) {
             List<ProductSpecification> deepCopyOfProductSpecification =
                     getDeepCopyOfProductSpecifications(productSpecificationMap.get(ingredientName));
 
@@ -508,18 +496,16 @@ public class CalculatorServiceImpl implements CalculatorService {
     private void createSingleProductPriceComponentSetAsIngredientPriceVariant(ProductDto tempProduct,
                                                                               String ingredientName,
                                                                               Set<ProductPriceComponentsSet> ingredientPriceVariantsSet,
-                                                                              List<Pair<String, Long>> permutationsOfQuantities,
+                                                                              List<Pair<String, Pair<Long, Long>>> permutationsOfQuantities,
                                                                               List<ProductSpecification> deepCopyOfProductSpecification,
                                                                               Map<Integer, ProductPriceComponentsSet> productPriceComponentsSetByProductIdMap) {
+        LOGGER.debug("In createSingleProductPriceComponentSetAsIngredientPriceVariant private method");
 
-        for (Pair<String, Long> permutationsOfQuantity : permutationsOfQuantities) {
-
+        for (Pair<String, Pair<Long, Long>> permutationsOfQuantity : permutationsOfQuantities) {
             if (permutationsOfQuantity.getFirst().equals(tempProduct.getItemName())) {
-
                 BigDecimal productPrice = checkPriceForProduct(
                         permutationsOfQuantity.getSecond(),
                         deepCopyOfProductSpecification);
-
                 if (productPrice.equals(BigDecimal.valueOf(0.0))) {
                     break;
                 }
@@ -533,36 +519,35 @@ public class CalculatorServiceImpl implements CalculatorService {
                         productPriceComponentsSetByProductIdMap);
 
                 ingredientPriceVariantsSet.add(ingredientPriceVariant);
-
                 break;
             }
 
-            reserveProductQuantities(permutationsOfQuantity.getSecond(),
+            reserveProductQuantities(permutationsOfQuantity.getSecond().getSecond(),
                     deepCopyOfProductSpecification);
         }
     }
 
-    private long calculatePredecessorsQuantitySum(List<Pair<String, Long>> permutationsOfQuantities,
-                                                  Pair<String, Long> permutationsOfQuantity) {
+    private long calculatePredecessorsQuantitySum(List<Pair<String, Pair<Long, Long>>> permutationsOfQuantities,
+                                                  Pair<String, Pair<Long, Long>> permutationsOfQuantity) {
+        LOGGER.debug("In calculatePredecessorsQuantitySum private method");
 
         long predecessorsQuantitySum = 0;
-        for (Pair<String, Long> permutationsOfQuantityParent : permutationsOfQuantities) {
-
+        for (Pair<String, Pair<Long, Long>> permutationsOfQuantityParent : permutationsOfQuantities) {
             if (permutationsOfQuantityParent.equals(permutationsOfQuantity)) {
-
                 break;
             }
-            predecessorsQuantitySum += permutationsOfQuantityParent.getSecond();
+            predecessorsQuantitySum += permutationsOfQuantityParent.getSecond().getSecond();
         }
         return predecessorsQuantitySum;
     }
 
-    private Collection<List<Pair<String, Long>>> createPermutationsOfAvailableQuantitiesOfIngredient(Map<ProductDto, Map<String, Long>> productDtoMap,
-                                                                                                     ProductDto ingredient) {
+    private Collection<List<Pair<String, Pair<Long, Long>>>> createPermutationsOfAvailableQuantitiesOfIngredient(Map<ProductDto, Map<String, Pair<Long, Long>>> productDtoMap,
+                                                                                                                 ProductDto ingredient) {
+        LOGGER.debug("In createPermutationsOfAvailableQuantitiesOfIngredient private method");
 
-        List<Pair<String, Long>> quantitiesPerParent = productDtoMap.get(ingredient).entrySet()
+        List<Pair<String, Pair<Long, Long>>> quantitiesPerParent = productDtoMap.get(ingredient).entrySet()
                 .stream()
-                .map(set -> new Pair<>(set.getKey(), set.getValue()))
+                .map(set -> new Pair<>(set.getKey(), new Pair<>(set.getValue().getFirst(), set.getValue().getSecond())))
                 .collect(Collectors.toList());
 
         return Collections2.permutations(quantitiesPerParent);
@@ -571,6 +556,7 @@ public class CalculatorServiceImpl implements CalculatorService {
     private ProductPriceComponentsSet createCompositeProductPriceComponentsSet(ProductDto tempProduct, BigDecimal subPrice,
                                                                                Map<String, List<Integer>> componentIngredientsNamesMap,
                                                                                Map<Integer, ProductPriceComponentsSet> productPriceComponentsSetByProductIdMap) {
+        LOGGER.debug("In createCompositeProductPriceComponentsSet private method");
 
         ProductPriceComponentsSet product = new ProductPriceComponentsSet();
 
@@ -579,37 +565,35 @@ public class CalculatorServiceImpl implements CalculatorService {
         product.setProductName(tempProduct.getItemName());
 
         productPriceComponentsSetByProductIdMap.put(product.getProductId(), product);
-
         return product;
     }
 
     private ProductPriceComponentsSet createNotCompositeProductPriceComponentsSet(String ingredientName,
-                                                                                  Pair<String, Long> permutationsOfQuantity,
+                                                                                  Pair<String, Pair<Long, Long>> permutationsOfQuantity,
                                                                                   BigDecimal productPrice,
                                                                                   long predecessorsQuantitySum,
                                                                                   Map<Integer, ProductPriceComponentsSet> productPriceComponentsSetByProductIdMap) {
+        LOGGER.debug("In createNotCompositeProductPriceComponentsSet private method");
 
         ProductPriceComponentsSet ingredientPriceVariant = new ProductPriceComponentsSet();
 
         ingredientPriceVariant.setPrice(productPrice);
         ingredientPriceVariant.getReservedQuantityRangeStartEnd().setFirst(predecessorsQuantitySum);
-        ingredientPriceVariant.getReservedQuantityRangeStartEnd().setSecond(predecessorsQuantitySum + permutationsOfQuantity.getSecond());
+        ingredientPriceVariant.getReservedQuantityRangeStartEnd().setSecond(predecessorsQuantitySum + permutationsOfQuantity.getSecond().getSecond());
         ingredientPriceVariant.setProductName(ingredientName);
 
         productPriceComponentsSetByProductIdMap.put(ingredientPriceVariant.getProductId(), ingredientPriceVariant);
-
         return ingredientPriceVariant;
     }
 
     private boolean isConflictWhenOverlappingRangeOfSameIngredientsQuantities(Map<ProductPriceComponentsSet, ProductPriceComponentsSet> sameIngredientsMap) {
+        LOGGER.debug("In isConflictWhenOverlappingRangeOfSameIngredientsQuantities private method");
 
         if (!sameIngredientsMap.isEmpty()) {
             for (ProductPriceComponentsSet ingredientCandidate : sameIngredientsMap.keySet()) {
-
                 if (ingredientCandidate.getComponentIngredients().isEmpty() &&
                         isQuantityRangesAreOverlapping(ingredientCandidate,
                                 sameIngredientsMap.get(ingredientCandidate))) {
-
                     return true;
                 }
             }
@@ -619,7 +603,7 @@ public class CalculatorServiceImpl implements CalculatorService {
 
     private boolean isQuantityRangesAreOverlapping(ProductPriceComponentsSet ingredientPriceVariant,
                                                    ProductPriceComponentsSet ingredient) {
-
+        LOGGER.debug("In isQuantityRangesAreOverlapping private method");
 
         long existingIngredientRangeStart = ingredient.getReservedQuantityRangeStartEnd().getFirst();
         long existingIngredientRangeEnd = ingredient.getReservedQuantityRangeStartEnd().getSecond();
@@ -636,13 +620,12 @@ public class CalculatorServiceImpl implements CalculatorService {
     private Map<ProductPriceComponentsSet, ProductPriceComponentsSet> getMapOfExistingIngredientsSameAsCandidateOrContainedFromCandidate(List<ProductPriceComponentsSet> compositeProductPriceVariant,
                                                                                                                                          ProductPriceComponentsSet ingredientPriceVariant,
                                                                                                                                          Map<Integer, ProductPriceComponentsSet> productPriceComponentsSetByProductIdMap) {
+        LOGGER.debug("In getMapOfExistingIngredientsSameAsCandidateOrContainedFromCandidate private method");
 
         if (ingredientPriceVariant.getComponentIngredients().isEmpty()) {
-
             return populateResultWhenCandidateAndExistingProductAreSimple(compositeProductPriceVariant,
                     ingredientPriceVariant, productPriceComponentsSetByProductIdMap);
         }
-
         Map<ProductPriceComponentsSet, ProductPriceComponentsSet> result = new HashMap<>();
 
         populateResultWhenCandidateIsCompositeAndExistingProductIsSimple(compositeProductPriceVariant,
@@ -657,6 +640,8 @@ public class CalculatorServiceImpl implements CalculatorService {
     private Map<ProductPriceComponentsSet, ProductPriceComponentsSet> populateResultWhenCandidateAndExistingProductAreSimple(List<ProductPriceComponentsSet> compositeProductPriceVariant,
                                                                                                                              ProductPriceComponentsSet ingredientPriceVariant,
                                                                                                                              Map<Integer, ProductPriceComponentsSet> productPriceComponentsSetByProductIdMap) {
+        LOGGER.debug("In populateResultWhenCandidateAndExistingProductAreSimple private method");
+
         return compositeProductPriceVariant.stream()
                 .filter(priceComponentsSet -> priceComponentsSet.getComponentIngredients().containsKey(ingredientPriceVariant.getProductName()))
                 .flatMap(priceComponentsSet -> priceComponentsSet.getComponentIngredients().get(ingredientPriceVariant.getProductName()).stream())
@@ -668,6 +653,7 @@ public class CalculatorServiceImpl implements CalculatorService {
                                                                            ProductPriceComponentsSet ingredientPriceVariant,
                                                                            Map<Integer, ProductPriceComponentsSet> productPriceComponentsSetByProductIdMap,
                                                                            Map<ProductPriceComponentsSet, ProductPriceComponentsSet> result) {
+        LOGGER.debug("In populateResultWhenCandidateAndExistingProductAreComposite private method");
 
         for (ProductPriceComponentsSet productPriceComponentsSet : compositeProductPriceVariant) {
             if (productPriceComponentsSet.getComponentIngredients().isEmpty() ||
@@ -694,6 +680,7 @@ public class CalculatorServiceImpl implements CalculatorService {
                                                                                   ProductPriceComponentsSet ingredientPriceVariant,
                                                                                   Map<Integer, ProductPriceComponentsSet> productPriceComponentsSetByProductIdMap,
                                                                                   Map<ProductPriceComponentsSet, ProductPriceComponentsSet> result) {
+        LOGGER.debug("In populateResultWhenCandidateIsCompositeAndExistingProductIsSimple private method");
 
         for (ProductPriceComponentsSet productPriceComponentsSet : compositeProductPriceVariant) {
             if (!ingredientPriceVariant.getComponentIngredients().containsKey(productPriceComponentsSet.getProductName())) {
@@ -707,6 +694,7 @@ public class CalculatorServiceImpl implements CalculatorService {
     }
 
     private List<ProductSpecification> getDeepCopyOfProductSpecifications(List<ProductSpecification> productSpecificationList) {
+        LOGGER.debug("In getDeepCopyOfProductSpecifications private method");
 
         Gson gson = new Gson();
         String productSpecificationListAsJson = gson.toJson(productSpecificationList);
@@ -718,6 +706,7 @@ public class CalculatorServiceImpl implements CalculatorService {
 
     private Optional<ProductDto> getProductWhichIngredientsAreNotCompositeOrIsChecked(Map<String, ProductDto> productDtoNamesMap,
                                                                                       List<ProductDto> productDtoList) {
+        LOGGER.debug("In getProductWhichIngredientsAreNotCompositeOrIsChecked private method");
 
         return productDtoList.stream()
                 .filter(productDto -> isLeafIngredient(productDtoNamesMap, productDto) ^
@@ -726,6 +715,7 @@ public class CalculatorServiceImpl implements CalculatorService {
     }
 
     private boolean isLeafIngredient(Map<String, ProductDto> productDtoNamesMap, ProductDto parentProduct) {
+        LOGGER.debug("In isLeafIngredient private method");
 
         return parentProduct.getIngredients().keySet().stream()
                 .allMatch(productName -> {
@@ -734,13 +724,17 @@ public class CalculatorServiceImpl implements CalculatorService {
                 });
     }
 
-    private void populateConstituentProductsDataToDataStructures(String clientId, Map<Product, Map<String, Long>> products,
-                                                                 Map<ProductDto, Map<String, Long>> productDtoMap,
+    private void populateConstituentProductsDataToDataStructures(String clientId,
+                                                                 Map<Product, Map<String, Pair<Long, Long>>> products,
+                                                                 Map<ProductDto, Map<String, Pair<Long, Long>>> productDtoMap,
                                                                  Map<String, List<ProductSpecification>> productSpecificationMap) {
+        LOGGER.debug("In populateConstituentProductsDataToDataStructures private method");
 
         for (Product product : products.keySet()) {
-
-            long tempQuantity = products.get(product).values().stream().mapToLong(Long::longValue).sum();
+            long tempQuantity = products.get(product).values()
+                    .stream()
+                    .mapToLong(Pair::getSecond)
+                    .sum();
 
             getProductsMarketDataFromOrderBook(clientId, product, tempQuantity,
                     productSpecificationMap);
@@ -750,14 +744,14 @@ public class CalculatorServiceImpl implements CalculatorService {
     }
 
     private void populateOrderedProductDataToDataStructures(String clientId, String itemName, long quantity,
-                                                            Map<Product, Map<String, Long>> products,
-                                                            Map<ProductDto, Map<String, Long>> productDtoMap,
+                                                            Map<Product, Map<String, Pair<Long, Long>>> products,
+                                                            Map<ProductDto, Map<String, Pair<Long, Long>>> productDtoMap,
                                                             Map<String, List<ProductSpecification>> productSpecificationMap) {
+        LOGGER.debug("In populateOrderedProductDataToDataStructures private method");
 
         Product orderedProduct = productService.getProductFromDatabase(itemName);
-
-        products.put(orderedProduct, new HashMap<String, Long>() {{
-            put(itemName, quantity);
+        products.put(orderedProduct, new LinkedHashMap<String, Pair<Long, Long>>() {{
+            put(itemName, new Pair<>(1L, quantity));
         }});
 
         getProductsMarketDataFromOrderBook(clientId, orderedProduct, quantity,
@@ -766,73 +760,73 @@ public class CalculatorServiceImpl implements CalculatorService {
     }
 
 
-    private void convertProductToProductDto(Product product, Map<Product, Map<String, Long>> products,
-                                            Map<ProductDto, Map<String, Long>> productDtoMap) {
+    private void convertProductToProductDto(Product product, Map<Product, Map<String, Pair<Long, Long>>> products,
+                                            Map<ProductDto, Map<String, Pair<Long, Long>>> productDtoMap) {
+        LOGGER.debug("In convertProductToProductDto private method");
 
         ProductDto productDto = new ProductDto();
-
         productDto.setItemName(product.getProductName());
-
         if (!product.getIngredients().isEmpty()) {
-
             productDto.setIngredients(product.getIngredients());
         }
-
         productDtoMap.put(productDto, products.get(product));
     }
 
     private void reserveProductQuantities(long orderedProductQuantity,
                                           List<ProductSpecification> productSpecificationList) {
+        LOGGER.debug("In reserveProductQuantities private method");
 
         for (ProductSpecification productSpecification : productSpecificationList) {
-
             if (productSpecification.getQuantity() == 0) {
                 continue;
             }
-
             long tempQuantity = productSpecification.getQuantity();
-
             if (tempQuantity < orderedProductQuantity) {
-
                 productSpecification.setQuantity(0L);
                 orderedProductQuantity -= tempQuantity;
-
             } else {
-
                 productSpecification.setQuantity(tempQuantity - orderedProductQuantity);
-
                 break;
             }
         }
     }
 
-    private BigDecimal checkPriceForProduct(long orderedProductQuantity,
+    private BigDecimal checkPriceForProduct(final Pair<Long, Long> parentAndTotalQuantity,
                                             final List<ProductSpecification> productQuantitiesPerSpecification) {
+        LOGGER.debug("In checkPriceForProduct private method");
 
         BigDecimal result = BigDecimal.ZERO;
+        long parentQuantity = parentAndTotalQuantity.getFirst();
+        long totalQuantity = parentAndTotalQuantity.getSecond();
+        BigDecimal coefficientTotalToParentQuantity = BigDecimal.ONE;
 
+        if (parentQuantity != 1) {
+            coefficientTotalToParentQuantity = BigDecimal.valueOf(totalQuantity)
+                    .divide(BigDecimal.valueOf(parentQuantity), RoundingMode.HALF_DOWN);
+        }
         for (ProductSpecification productSpecification : productQuantitiesPerSpecification) {
-
             if (productSpecification.getPrice().equals(BigDecimal.valueOf(0.0))) {
                 continue;
             }
             long productSpecificationQuantity = productSpecification.getQuantity();
-            if (productSpecificationQuantity < orderedProductQuantity) {
+            if (productSpecificationQuantity < totalQuantity) {
 
-                orderedProductQuantity -= productSpecification.getQuantity();
-                result = result.add(BigDecimal.valueOf(productSpecificationQuantity)
-                        .multiply(productSpecification.getPrice()));
+                totalQuantity -= productSpecification.getQuantity();
 
+                BigDecimal unitQuantity = BigDecimal.valueOf(productSpecificationQuantity)
+                        .divide(coefficientTotalToParentQuantity, RoundingMode.HALF_DOWN);
+                result = result.add(unitQuantity.multiply(productSpecification.getPrice()));
             } else {
-
-                result = result.add(BigDecimal.valueOf(orderedProductQuantity)
+                BigDecimal unitQuantity = BigDecimal.valueOf(totalQuantity)
+                        .divide(coefficientTotalToParentQuantity, RoundingMode.HALF_DOWN);
+                result = result.add(unitQuantity
                         .multiply(productSpecification.getPrice()));
 
-                orderedProductQuantity = 0;
+                totalQuantity = 0;
                 break;
             }
         }
-        if (orderedProductQuantity > 0) {
+        if (totalQuantity > 0) {
             result = BigDecimal.valueOf(0.0);
         }
         return result;
@@ -840,17 +834,16 @@ public class CalculatorServiceImpl implements CalculatorService {
 
     private void getProductsMarketDataFromOrderBook(String clientId, Product product, long quantity,
                                                     Map<String, List<ProductSpecification>> productSpecificationMap) {
+        LOGGER.debug("In getProductsMarketDataFromOrderBook private method");
 
         ItemOrderBookResponse orderBookResponse = auroraService.getIngredient(product.getProductName(),
                 clientId, quantity);
-
         List<ProductSpecification> productSpecifications = new ArrayList<>();
 
         if (orderBookResponse.getOrderbookLayersList().isEmpty()
                 && !orderBookResponse.getItemName().equals(product.getProductName())) {
             return;
         }
-        LOGGER.info("Response received for product {}",product.getProductName());
 
         String productName = orderBookResponse.getItemName();
 
@@ -871,6 +864,8 @@ public class CalculatorServiceImpl implements CalculatorService {
     }
 
     private ProductSpecification createProductSpecification(double price, long quantity, String origin) {
+        LOGGER.debug("In createProductSpecification private method");
+
         ProductSpecification productSpecification = new ProductSpecification();
 
         productSpecification.setPrice(BigDecimal.valueOf(price));

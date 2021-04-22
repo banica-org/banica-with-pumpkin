@@ -34,8 +34,10 @@ public class AuroraClientSideService {
 
     public void announceInterests(String productName) {
         LOGGER.debug("Inside announceInterests method with parameter product name: {}", productName);
+
         String message = String.format("%s=subscribe", productName);
-        Aurora.AuroraResponse auroraResponse = getAuroraResponse(CLIENT_ID, message);
+        Aurora.AuroraResponse auroraResponse = getAuroraResponse(message);
+
         if (!auroraResponse.getMessage().is(InterestsResponse.class)) {
             throw new BadResponseException(AURORA_BAD_RESPONSE_MESSAGE);
         }
@@ -43,20 +45,21 @@ public class AuroraClientSideService {
 
     public void cancelSubscription(String productName) {
         LOGGER.debug("Inside cancelSubscription method with parameter product name: {}", productName);
+
         String message = String.format("%s=unsubscribe", productName);
-        Aurora.AuroraResponse auroraResponse = getAuroraResponse(CLIENT_ID, message);
+        Aurora.AuroraResponse auroraResponse = getAuroraResponse(message);
 
         if (!auroraResponse.getMessage().is(CancelSubscriptionResponse.class)) {
             throw new BadResponseException(AURORA_BAD_RESPONSE_MESSAGE);
         }
     }
 
-    public ItemOrderBookResponse getIngredient(String productName, String clientId, Long quantity) {
-        LOGGER.info("Inside getIngredient method with parameter product name - {} and client id - {}"
+    public ItemOrderBookResponse getIngredient(String productName, String clientId, long quantity) {
+        LOGGER.debug("Inside getIngredient method with parameter product name - {} and client id - {}"
                 , productName, clientId);
 
         String message = String.format("%s/%d", productName, quantity);
-        Aurora.AuroraResponse auroraResponse = getAuroraResponse(clientId, message);
+        Aurora.AuroraResponse auroraResponse = getAuroraResponse(message);
 
         if (!auroraResponse.getMessage().is(ItemOrderBookResponse.class)) {
             throw new BadResponseException(AURORA_BAD_RESPONSE_MESSAGE);
@@ -79,22 +82,22 @@ public class AuroraClientSideService {
         return blockingStub;
     }
 
-    private Aurora.AuroraResponse getAuroraResponse(String clientId, String message) {
+    private Aurora.AuroraResponse getAuroraResponse(String message) {
         LOGGER.debug("In getAuroraResponse private method");
 
-        Aurora.AuroraRequest request = buildAuroraRequest(clientId, message);
+        Aurora.AuroraRequest request = buildAuroraRequest(message);
 
         return getBlockingStub().request(request);
     }
 
-    private Aurora.AuroraRequest buildAuroraRequest(String clientId, String message) {
+    private Aurora.AuroraRequest buildAuroraRequest(String message) {
         LOGGER.debug("In buildAuroraRequest private method");
 
         LOGGER.debug("Building request with parameter {}.", message);
         return Aurora.AuroraRequest
                 .newBuilder()
-                .setClientId(clientId)
                 .setTopic(ORDERBOOK_TOPIC_PREFIX + message)
+                .setClientId(CLIENT_ID)
                 .build();
     }
 }

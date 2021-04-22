@@ -2,6 +2,7 @@ package com.market.banica.calculator.service;
 
 import com.market.banica.calculator.data.contract.ProductBase;
 import com.market.banica.calculator.enums.UnitOfMeasure;
+import com.market.banica.calculator.model.Pair;
 import com.market.banica.calculator.model.Product;
 import com.market.banica.calculator.service.contract.BackUpService;
 import com.market.banica.calculator.service.contract.ProductService;
@@ -12,8 +13,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -55,24 +58,19 @@ public class ProductServiceImpl implements ProductService {
                 , newProductName, unitOfMeasure, ingredientsMap);
 
         if (doesProductExists(newProductName)) {
-
             LOGGER.error("Product with name {} already exists", newProductName);
             throw new IllegalArgumentException("Product with this name already exists");
         }
 
         Product newProduct = new Product();
-
         newProduct.setProductName(newProductName);
-
         newProduct.setUnitOfMeasure(UnitOfMeasure.valueOf(unitOfMeasure.toUpperCase(Locale.ROOT)));
 
         Map<String, Long> ingredients = new HashMap<>();
 
         if (!ingredientsMap.isEmpty()) {
-
             ingredients = setCompositeProductIngredients(ingredientsMap);
         }
-
         newProduct.setIngredients(ingredients);
 
         writeProductToDatabase(newProductName, newProduct);
@@ -86,7 +84,6 @@ public class ProductServiceImpl implements ProductService {
         validateProductExists(productName);
 
         Product parentProduct = getProductFromDatabase(parentProductName);
-
         parentProduct.getIngredients().put(productName, quantity);
 
         writeProductToDatabase(parentProductName, parentProduct);
@@ -167,20 +164,19 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Map<Product, Map<String, Long>> getProductIngredientsWithQuantityPerParent(String productName) {
+    public Map<Product, Map<String, Pair<Long, Long>>> getProductIngredientsWithQuantityPerParent(String productName, long orderedQuantity) {
         LOGGER.debug("In getProductIngredientsWithQuantity method with parameters:productName {}"
                 , productName);
 
         Product product = getProductFromDatabase(productName);
-
-        Map<Product, Map<String, Long>> result = new HashMap<>();
+        Map<Product, LinkedHashMap<String, Pair<Long, Long>>> result = new HashMap<>();
 
         if (!product.getIngredients().isEmpty()) {
-            addAllIngredientsFromProductToMapOfProductAndQuantity(result, product);
+            addAllIngredientsFromProductToMapOfProductAndQuantity(result, product, orderedQuantity);
         }
 
         LOGGER.debug("GetProductIngredientsWithQuantity with product name {} successfully invoked", productName);
-        return result;
+        return new HashMap<>(result);
     }
 
     @Override
@@ -258,12 +254,10 @@ public class ProductServiceImpl implements ProductService {
         String[] ingredientsAsArray = ingredientsMap.split(REGEX_DELIMITER_NEW_PRODUCT_INGREDIENTS);
 
         for (String s : ingredientsAsArray) {
-
             String[] mapEntry = s.split(REGEX_DELIMITER_NEW_PRODUCT_ENTRY_PAIRS);
             long quantity = getValueAsInt(mapEntry[1]);
             ingredients.put(mapEntry[0], quantity);
         }
-
         return ingredients;
     }
 
@@ -293,7 +287,6 @@ public class ProductServiceImpl implements ProductService {
 
         for (Product newProduct : products) {
             if (doesProductExists(newProduct.getProductName())) {
-
                 LOGGER.error("Product with name {} already exists", newProduct.getProductName());
                 throw new IllegalArgumentException("Product already exists");
             }
@@ -306,44 +299,67 @@ public class ProductServiceImpl implements ProductService {
         return products.get(0).getProductName();
     }
 
-    private void addAllIngredientsFromProductToMapOfProductAndQuantity(Map<Product, Map<String, Long>> productQuantitiesMap,
-                                                                       Product parentProduct) {
+    private void addAllIngredientsFromProductToMapOfProductAndQuantity(Map<Product, LinkedHashMap<String, Pair<Long, Long>>> productQuantitiesMap,
+                                                                       Product parentProduct, long orderedQuantity) {
         LOGGER.debug("In addAllIngredientsFromProductToMapOfProductAndQuantity private method");
 
         Queue<Product> tempContainer = new ArrayDeque<>();
         tempContainer.add(parentProduct);
 
         while (!tempContainer.isEmpty()) {
-
             Product tempParentProduct = tempContainer.remove();
-
-            if (!tempParentProduct.getIngredients().isEmpty()) {
-
+            if (tempParentProduct.getIngredients() != null && !tempParentProduct.getIngredients().isEmpty()) {
                 Collection<Product> tempIngredients =
                         convertProductIngredientsNamesToCollectionOfProducts(tempParentProduct);
-
                 tempContainer.addAll(tempIngredients);
 
-                tempIngredients.forEach(ingredient -> {
-                    if (productQuantitiesMap.containsKey(ingredient)) {
-                        productQuantitiesMap
-                                .get(ingredient).put(tempParentProduct.getProductName()
-                                , tempParentProduct.getIngredients().get(ingredient.getProductName()));
-                    } else {
-                        productQuantitiesMap.put(ingredient, new HashMap<String, Long>() {{
-                            put(tempParentProduct.getProductName()
-                                    , tempParentProduct.getIngredients().get(ingredient.getProductName()));
-                        }});
-                    }
-                });
+                createPairWithParentAndTotalQuantities(productQuantitiesMap, orderedQuantity, tempParentProduct, tempIngredients);
             }
         }
     }
 
-    private Collection<Product> convertProductIngredientsNamesToCollectionOfProducts(Product parent) {
+    private void createPairWithParentAndTotalQuantities(Map<Product, LinkedHashMap<String, Pair<Long, Long>>> productQuantitiesMap,
+                                                        long orderedQuantity, Product tempParentProduct,
+                                                        Collection<Product> tempIngredients) {
+        LOGGER.debug("In createPairWithParentAndTotalQuantities private method");
+
+        tempIngredients.forEach(ingredient -> {
+            long quantityInParent = tempParentProduct.getIngredients().get(ingredient.getProductName());
+            long totalQuantity = getTotalQuantity(productQuantitiesMap,
+                    tempParentProduct, orderedQuantity);
+
+            if (productQuantitiesMap.containsKey(ingredient)) {
+                productQuantitiesMap.get(ingredient).put(tempParentProduct.getProductName(),
+                        new Pair<>(quantityInParent, totalQuantity * quantityInParent));
+            } else {
+                productQuantitiesMap.put(ingredient, new LinkedHashMap<String, Pair<Long, Long>>() {{
+                    put(tempParentProduct.getProductName(), new Pair<>(quantityInParent, totalQuantity * quantityInParent));
+                }});
+            }
+        });
+    }
+
+    private long getTotalQuantity(Map<Product, LinkedHashMap<String, Pair<Long, Long>>> productQuantitiesMap,
+                                  Product tempParentProduct, long orderedQuantity) {
+        LOGGER.debug("In getTotalQuantity private method");
+
+        long totalQuantity;
+
+        if (productQuantitiesMap.containsKey(tempParentProduct)) {
+            int lastParentIndex = productQuantitiesMap.get(tempParentProduct).keySet().size() - 1;
+            totalQuantity = new ArrayList<>(
+                    productQuantitiesMap.get(tempParentProduct).entrySet()
+            ).get(lastParentIndex).getValue().getSecond();
+        } else {
+            totalQuantity = orderedQuantity;
+        }
+        return totalQuantity;
+    }
+
+    private Collection<Product> convertProductIngredientsNamesToCollectionOfProducts(Product parentProduct) {
         LOGGER.debug("In convertProductIngredientsNamesToCollectionOfProducts private method");
 
-        return parent.getIngredients().keySet().stream()
+        return parentProduct.getIngredients().keySet().stream()
                 .map(this::getProductFromDatabase)
                 .collect(Collectors.toCollection(ArrayDeque::new));
 
