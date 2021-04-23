@@ -1,8 +1,10 @@
-package com.market.banica.calculator.service;
+package com.market.banica.calculator.unitTests.serviceTests;
 
 import com.market.banica.calculator.data.contract.ProductBase;
 import com.market.banica.calculator.enums.UnitOfMeasure;
+import com.market.banica.calculator.model.Pair;
 import com.market.banica.calculator.model.Product;
+import com.market.banica.calculator.service.ProductServiceImpl;
 import com.market.banica.calculator.service.contract.BackUpService;
 import com.market.banica.calculator.service.grpc.AuroraClientSideService;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,13 +17,15 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ProductServiceImplTest {
     public static final String INGREDIENTS_MAP = "pumpkin:2";
-    public static final Integer QUANTITY = 2;
+    public static final long QUANTITY = 2;
     private static final String BANICA = "banica";
     private static final String PUMPKIN = "pumpkin";
     private Product banica;
@@ -192,7 +196,7 @@ class ProductServiceImplTest {
         when(productBase.getDatabase()).thenReturn(demoDataBase);
 
         //Act
-        int ingredientQuantity = productService.getProductQuantity(BANICA, PUMPKIN);
+        long ingredientQuantity = productService.getProductQuantity(BANICA, PUMPKIN);
 
         assertEquals(ingredientQuantity, QUANTITY);
     }
@@ -284,36 +288,36 @@ class ProductServiceImplTest {
     }
 
     @Test
-    void getProductAsListProductShouldReturnProductAndHisIngredients() {
+    void getProductIngredientsWithQuantitiesPerParentShouldReturnProductIngredientsAndQuantitiesPerParent() {
         //Arrange
         setBanicaIngredients();
         when(productBase.getDatabase()).thenReturn(demoDataBase);
 
         //Act
-        List<Product> products = productService.getProductAsListProduct(BANICA);
+        Map<Product, Map<String, Pair<Long, Long>>> products = productService.getProductIngredientsWithQuantityPerParent(BANICA, QUANTITY);
 
         //Assert
-        assertEquals(products.get(0), banica);
-        assertEquals(products.get(1), pumpkin);
+        assertTrue(products.containsKey(pumpkin));
+        assertTrue(products.get(pumpkin).containsKey(BANICA));
 
     }
 
     @Test
-    void getProductAsListProductShouldReturnSingleProductAndWithoutIngredients() {
+    void getProductAsListProductShouldReturnEmptyMapAndWithoutIngredients() {
         //Arrange
         when(productBase.getDatabase()).thenReturn(demoDataBase);
 
         //Act
-        List<Product> products = productService.getProductAsListProduct(BANICA);
+        Map<Product, Map<String, Pair<Long, Long>>> products = productService.getProductIngredientsWithQuantityPerParent(BANICA, QUANTITY);
 
         //Assert
-        assertEquals(products.get(0), banica);
+        assertFalse(products.containsKey(banica));
 
     }
 
     private void setBanicaIngredients() {
         demoDataBase.put(PUMPKIN, pumpkin);
-        Map<String, Integer> ingredients = new ConcurrentHashMap<>();
+        Map<String, Long> ingredients = new ConcurrentHashMap<>();
         ingredients.put(PUMPKIN, QUANTITY);
         banica.setIngredients(ingredients);
     }

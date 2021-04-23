@@ -6,9 +6,11 @@ import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.Any;
+import com.market.Origin;
 import com.market.banica.calculator.componentTests.configuration.TestConfigurationIT;
 import com.market.banica.calculator.data.contract.ProductBase;
-import com.market.banica.calculator.dto.RecipeDTO;
+import com.market.banica.calculator.dto.ProductDto;
+import com.market.banica.calculator.dto.ProductSpecification;
 import com.market.banica.calculator.enums.UnitOfMeasure;
 import com.market.banica.calculator.model.Product;
 import com.market.banica.calculator.service.contract.JMXServiceMBean;
@@ -77,6 +79,9 @@ public class CalculatorComponentIT {
     @Autowired
     private AuroraClientSideService auroraClientSideService;
 
+    @Value(value = "${product.location}")
+    private String location;
+
     @Value(value = "${client.id}")
     private String clientId;
 
@@ -84,7 +89,7 @@ public class CalculatorComponentIT {
     private String productName;
 
     @Value(value = "${product.quantity}")
-    private int productQuantity;
+    private long productQuantity;
 
     @Value(value = "${product.price}")
     private double price;
@@ -105,7 +110,7 @@ public class CalculatorComponentIT {
 
     private AuroraServiceGrpc.AuroraServiceBlockingStub blockingStub;
 
-    private JacksonTester<RecipeDTO> jsonResponseRecipeDto;
+    private JacksonTester<List<ProductDto>> jsonResponseListProductDto;
     private JacksonTester<List<Product>> jsonRequestProductList;
     private JacksonTester<Product> jsonRequestProduct;
 
@@ -113,7 +118,7 @@ public class CalculatorComponentIT {
     private String productControllerCreateProductUrl;
 
     @BeforeEach
-    public void SetUp() {
+    public void setUp() {
         JacksonTester.initFields(this, new ObjectMapper());
         RestAssured.port = port;
 
@@ -133,13 +138,17 @@ public class CalculatorComponentIT {
     @Test
     public void getRecipeShouldReturnRecipeDtoWhenThereIsResponse() throws IOException {
         //given
-        RecipeDTO response = createRecipeDTO();
+        ProductDto response = createProductDTO();
+        List<ProductDto> result = Collections.singletonList(response);
+        Origin origin = Origin.AMERICA;
         productBase.getDatabase().put(productName, product);
 
         ItemOrderBookResponse itemOrderBookResponse = ItemOrderBookResponse.newBuilder()
                 .setItemName(productName)
                 .addOrderbookLayers(0, OrderBookLayer.newBuilder()
                         .setPrice(price)
+                        .setOrigin(origin)
+                        .setQuantity(productQuantity)
                         .build())
                 .build();
         Aurora.AuroraResponse auroraResponse = Aurora.AuroraResponse.newBuilder()
@@ -157,7 +166,7 @@ public class CalculatorComponentIT {
                 .then()
                 .assertThat()
                 .statusCode(HttpStatus.OK.value())
-                .body(is(jsonResponseRecipeDto.write(response).getJson()));
+                .body(is(jsonResponseListProductDto.write(result).getJson()));
     }
 
     @Test
@@ -274,15 +283,34 @@ public class CalculatorComponentIT {
     }
 
     @NotNull
-    private RecipeDTO createRecipeDTO() {
-        RecipeDTO response = new RecipeDTO();
+    private ProductDto createProductDTO() {
+        ProductDto response = new ProductDto();
+
+        BigDecimal totalPrice = BigDecimal.valueOf(price * productQuantity);
+
         response.setItemName(productName);
-        response.setTotalPrice(BigDecimal.valueOf(price));
+        response.setTotalPrice(totalPrice);
+        response.setProductSpecifications(Collections.singletonList(createProductSpecification()));
+
         return response;
     }
 
+    @NotNull
+    private ProductSpecification createProductSpecification() {
+
+        ProductSpecification productSpecification = new ProductSpecification();
+
+        productSpecification.setLocation(location);
+        productSpecification.setPrice(BigDecimal.valueOf(price));
+        productSpecification.setQuantity(productQuantity);
+
+        return productSpecification;
+    }
+
     private void createProduct() {
+
         product = new Product();
+
         product.setProductName(productName);
         product.setUnitOfMeasure(UnitOfMeasure.GRAM);
         product.setIngredients(new HashMap<>());
