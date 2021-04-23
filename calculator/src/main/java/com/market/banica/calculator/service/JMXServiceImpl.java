@@ -1,5 +1,7 @@
 package com.market.banica.calculator.service;
 
+import com.market.banica.calculator.data.contract.ProductBase;
+import com.market.banica.calculator.model.Product;
 import com.market.banica.calculator.service.contract.JMXServiceMBean;
 import com.market.banica.calculator.service.contract.ProductService;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +11,8 @@ import org.springframework.context.annotation.EnableMBeanExport;
 import org.springframework.jmx.export.annotation.ManagedOperation;
 import org.springframework.jmx.export.annotation.ManagedResource;
 import org.springframework.stereotype.Service;
+
+import java.util.Map;
 
 @EnableMBeanExport
 @ManagedResource
@@ -69,6 +73,8 @@ public class JMXServiceImpl implements JMXServiceMBean {
 
         long result = productService.getProductQuantity(parentProductName, productName);
 
+
+
         LOGGER.debug("Quantity checked from JMX server for product {} with parent product {}", parentProductName, productName);
         return result;
     }
@@ -102,6 +108,7 @@ public class JMXServiceImpl implements JMXServiceMBean {
     public void deleteProductFromDatabase(String productName) {
         LOGGER.debug("In deleteProductFromDatabase method with parameters: productName {}", productName);
         LOGGER.info("DeleteProductFromDatabase called from JMX server");
+
 
         productService.deleteProductFromDatabase(productName);
 

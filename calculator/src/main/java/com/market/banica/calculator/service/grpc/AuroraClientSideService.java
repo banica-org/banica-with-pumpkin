@@ -4,7 +4,7 @@ package com.market.banica.calculator.service.grpc;
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.market.banica.calculator.exception.exceptions.BadResponseException;
+import com.market.banica.common.exception.IncorrectResponseException;
 import com.orderbook.CancelSubscriptionResponse;
 import com.orderbook.InterestsResponse;
 import com.orderbook.ItemOrderBookResponse;
@@ -19,7 +19,7 @@ public class AuroraClientSideService {
 
     private static final String ORDERBOOK_TOPIC_PREFIX = "orderbook/";
 
-    private static final String AURORA_BAD_RESPONSE_MESSAGE = "Bad message from aurora service";
+
 
     private static final String CLIENT_ID = "calculator";
 
@@ -39,7 +39,7 @@ public class AuroraClientSideService {
         Aurora.AuroraResponse auroraResponse = getAuroraResponse(message);
 
         if (!auroraResponse.getMessage().is(InterestsResponse.class)) {
-            throw new BadResponseException(AURORA_BAD_RESPONSE_MESSAGE);
+            throw new IncorrectResponseException("Incorrect response! Response must be from InterestsResponse type.");
         }
     }
 
@@ -50,7 +50,7 @@ public class AuroraClientSideService {
         Aurora.AuroraResponse auroraResponse = getAuroraResponse(message);
 
         if (!auroraResponse.getMessage().is(CancelSubscriptionResponse.class)) {
-            throw new BadResponseException(AURORA_BAD_RESPONSE_MESSAGE);
+            throw new IncorrectResponseException("Incorrect response! Response must be from CancelSubscriptionResponse type.");
         }
     }
 
@@ -62,7 +62,7 @@ public class AuroraClientSideService {
         Aurora.AuroraResponse auroraResponse = getAuroraResponse(message);
 
         if (!auroraResponse.getMessage().is(ItemOrderBookResponse.class)) {
-            throw new BadResponseException(AURORA_BAD_RESPONSE_MESSAGE);
+            throw new IncorrectResponseException("Incorrect response! Response must be from ItemOrderBookResponse type.");
         }
 
         ItemOrderBookResponse response;
@@ -71,7 +71,7 @@ public class AuroraClientSideService {
             response = auroraResponse.getMessage().unpack(ItemOrderBookResponse.class);
         } catch (InvalidProtocolBufferException e) {
             LOGGER.error("Unable to parse Any to desired class: {}", e.getMessage());
-            throw new BadResponseException(AURORA_BAD_RESPONSE_MESSAGE);
+            throw new IncorrectResponseException("Incorrect response! Response must be from ItemOrderBookResponse type.");
         }
 
         return response;
