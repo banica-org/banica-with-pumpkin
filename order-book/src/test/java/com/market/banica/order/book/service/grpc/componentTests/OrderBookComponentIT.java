@@ -9,6 +9,7 @@ import com.market.MarketServiceGrpc;
 import com.market.Origin;
 import com.market.TickResponse;
 import com.market.banica.common.channel.ChannelRPCConfig;
+import com.market.banica.common.exception.TrackingException;
 import com.market.banica.order.book.OrderBookApplication;
 import com.market.banica.order.book.model.ItemMarket;
 import com.market.banica.order.book.service.grpc.AuroraClient;

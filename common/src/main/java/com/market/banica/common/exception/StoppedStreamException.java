@@ -1,4 +1,4 @@
-package com.market.banica.order.book.exception;
+package com.market.banica.common.exception;
 
 public class StoppedStreamException extends Exception {
 
