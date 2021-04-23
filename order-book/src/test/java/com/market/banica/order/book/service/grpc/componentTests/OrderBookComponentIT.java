@@ -2,6 +2,7 @@ package com.market.banica.order.book.service.grpc.componentTests;
 
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.Any;
 import com.market.MarketDataRequest;
 import com.market.MarketServiceGrpc;
