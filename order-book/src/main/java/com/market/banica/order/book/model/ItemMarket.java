@@ -50,6 +50,7 @@ public class ItemMarket {
 
     public void addTrackedItem(String itemName) {
         this.allItems.put(itemName, new TreeSet<>());
+        this.productsQuantity.putIfAbsent(itemName, 0L);
     }
 
     public void removeUntrackedItem(String itemName) {
@@ -109,7 +110,7 @@ public class ItemMarket {
 
         List<OrderBookLayer> layers;
         try {
-            lock.writeLock().lock();
+            lock.readLock().lock();
 
             layers = new ArrayList<>();
 
@@ -119,9 +120,8 @@ public class ItemMarket {
             while (itemLeft > 0) {
                 Item currentItem = iterator.next();
 
-                OrderBookLayer.Builder currentLayer = populateItemLayer(iterator, itemLeft, currentItem);
+                OrderBookLayer.Builder currentLayer = populateItemLayer(itemLeft, currentItem);
 
-                this.productsQuantity.put(itemName, this.productsQuantity.get(itemName) - currentLayer.getQuantity());
                 itemLeft -= currentLayer.getQuantity();
 
                 OrderBookLayer orderBookLayer = currentLayer
@@ -130,24 +130,21 @@ public class ItemMarket {
                 layers.add(orderBookLayer);
             }
         } finally {
-            lock.writeLock().unlock();
+            lock.readLock().unlock();
         }
         return layers;
     }
 
-    private OrderBookLayer.Builder populateItemLayer(Iterator<Item> iterator, long itemLeft, Item currentItem) {
+    private OrderBookLayer.Builder populateItemLayer(long itemLeft, Item currentItem) {
         OrderBookLayer.Builder currentLayer = OrderBookLayer.newBuilder()
                 .setPrice(currentItem.getPrice());
 
         if (currentItem.getQuantity() > itemLeft) {
 
             currentLayer.setQuantity(itemLeft);
-            currentItem.setQuantity(currentItem.getQuantity() - itemLeft);
-
-        } else if (currentItem.getQuantity() <= itemLeft) {
+        } else {
 
             currentLayer.setQuantity(currentItem.getQuantity());
-            iterator.remove();
         }
         return currentLayer;
     }
