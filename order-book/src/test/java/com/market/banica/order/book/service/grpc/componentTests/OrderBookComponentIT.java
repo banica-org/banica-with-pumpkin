@@ -2,7 +2,6 @@ package com.market.banica.order.book.service.grpc.componentTests;
 
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.Any;
 import com.market.MarketDataRequest;
 import com.market.MarketServiceGrpc;
@@ -154,6 +153,7 @@ class OrderBookComponentIT {
         int numberOfTickResponses = 10;
         ReflectionTestUtils.setField(orderBookService, AURORA_CLIENT, auroraClient);
         ReflectionTestUtils.setField(orderBookService, "subscriptionExecutor", MoreExecutors.newDirectExecutorService());
+
         String serverNameMarket = InProcessServerBuilder.generateName();
 
         when(auroraClient.getAsynchronousStub()).thenReturn(asynchronousStub);
@@ -170,7 +170,7 @@ class OrderBookComponentIT {
 
         startAuroraServiceWithSubscribeOverridden(marketChannel, tickResponses);
 
-        InterestsRequest interestsRequest = InterestsRequest.newBuilder().setClientId(clientId).setItemName(marketTopicPrefix + EGGS_GOOD).build();
+        InterestsRequest interestsRequest = InterestsRequest.newBuilder().setClientId(clientId).setItemName(EGGS_GOOD).build();
 
         //Act
         InterestsResponse interestsResponse = blockingStub.announceItemInterest(interestsRequest);
