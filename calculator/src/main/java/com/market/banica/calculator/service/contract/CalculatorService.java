@@ -1,7 +1,7 @@
 package com.market.banica.calculator.service.contract;
 
 import com.market.banica.calculator.dto.ProductDto;
-import com.market.banica.calculator.exception.exceptions.ProductNotAvailableException;
+import com.market.banica.common.exception.ProductNotAvailableException;
 
 import java.util.List;
 
