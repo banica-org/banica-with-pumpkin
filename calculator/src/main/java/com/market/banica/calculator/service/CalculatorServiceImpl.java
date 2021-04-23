@@ -46,6 +46,7 @@ public class CalculatorServiceImpl implements CalculatorService {
 
     private final AuroraClientSideService auroraService;
     private final ProductService productService;
+    Map<String, ProductSpecification> testProductSpecificationMap = new HashMap<>();
 
     @Override
     public List<ProductDto> getProduct(String clientId, String itemName, long quantity) {
@@ -196,7 +197,7 @@ public class CalculatorServiceImpl implements CalculatorService {
                 productPriceComponentsSet.getReservedQuantityRangeStartEnd().getFirst();
 
         for (ProductSpecification productSpecification : productSpecificationMap.get(tempProductName)) {
-
+            // TODO: make buy requests to market from here
             ProductSpecification newProductSpecification = new ProductSpecification();
 
             if (start > productSpecification.getQuantity()) {
@@ -210,6 +211,8 @@ public class CalculatorServiceImpl implements CalculatorService {
                 newProductSpecification.setQuantity(productSpecification.getQuantity() - start);
                 newProductSpecification.setPrice(productSpecification.getPrice());
 
+
+
                 newProductDto.getProductSpecifications().add(newProductSpecification);
 
                 range -= productSpecification.getQuantity() - start;
@@ -221,6 +224,7 @@ public class CalculatorServiceImpl implements CalculatorService {
             newProductSpecification.setLocation(productSpecification.getLocation());
             newProductSpecification.setQuantity(range);
             newProductSpecification.setPrice(productSpecification.getPrice());
+
 
             newProductDto.getProductSpecifications().add(newProductSpecification);
 
@@ -861,6 +865,7 @@ public class CalculatorServiceImpl implements CalculatorService {
                     layer.getQuantity(), layer.getOrigin().toString());
             checkQuantity -= productSpecification.getQuantity();
             productSpecifications.add(productSpecification);
+            testProductSpecificationMap.put(productName, createProductSpecification(layer.getPrice(), layer.getQuantity(), layer.getOrigin().toString()));
 //            auroraService.buyProduct(productName, layer);
         }
 

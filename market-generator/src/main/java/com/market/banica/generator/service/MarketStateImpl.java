@@ -8,14 +8,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.jmx.export.annotation.ManagedOperation;
+import org.springframework.jmx.export.annotation.ManagedResource;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.ManagedBean;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -25,6 +29,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 @Component
+@ManagedResource
 public class MarketStateImpl implements MarketState {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(System.getenv("MARKET") + "." + MarketStateImpl.class.getSimpleName());
@@ -53,6 +58,11 @@ public class MarketStateImpl implements MarketState {
         this.subscriptionManager = subscriptionManager;
         persistScheduler = new PersistScheduler(marketDataLock, snapshotPersistence, marketState, marketSnapshot);
         persistScheduler.scheduleSnapshot();
+    }
+
+    @ManagedOperation
+    public void printState(){
+        this.marketState.entrySet().forEach(System.out::println);
     }
 
     public void publishUpdate(String itemName, long itemQuantity, double itemPrice) {
@@ -88,10 +98,10 @@ public class MarketStateImpl implements MarketState {
                     .map(this::convertMarketTickToTickResponse)
                     .collect(Collectors.toList());
 
-            marketSnapshot.stream()
-                    .filter(marketTick -> marketTick.getGood().equals(good))
-                    .map(this::convertMarketTickToTickResponse)
-                    .forEach(generatedTicks::add);
+//            marketSnapshot.stream()
+//                    .filter(marketTick -> marketTick.getGood().equals(good))
+//                    .map(this::convertMarketTickToTickResponse)
+//                    .forEach(generatedTicks::add);
 
             LOGGER.info("Successfully generated market ticks for {} .", good);
             return generatedTicks;
@@ -103,6 +113,65 @@ public class MarketStateImpl implements MarketState {
 
     public PersistScheduler getPersistScheduler() {
         return persistScheduler;
+    }
+
+    @Override
+    public MarketTick removeItemFromState(String itemName, long itemQuantity, double itemPrice) {
+        try {
+            marketDataLock.writeLock().lock();
+            Set<MarketTick> productInfo = marketState.get(itemName);
+            MarketTick desiredProduct = productInfo
+                    .stream()
+                    .filter(marketTick -> marketTick.getQuantity() == itemQuantity && marketTick.getPrice() == itemPrice)
+                    .findFirst().orElse(null);
+
+            long availableQuantity = 0;
+            if (desiredProduct == null ||
+                    desiredProduct.getQuantity() < itemQuantity) {
+                throw new IllegalArgumentException("No product " + itemName + " with price " + itemPrice
+                        + " and quantity " + itemQuantity + ".");
+            }
+            productInfo.remove(desiredProduct);
+            desiredProduct = new MarketTick(itemName, availableQuantity - itemQuantity, itemPrice, desiredProduct.getTimestamp());
+            productInfo.add(desiredProduct);
+            if (desiredProduct.getPrice() <= 0) {
+                productInfo.remove(desiredProduct);
+            }
+            if (productInfo.size() == 0) {
+                marketState.remove(itemName);
+            }
+
+            publishUpdate(itemName, -itemQuantity, itemPrice);
+            return desiredProduct;
+        } finally {
+
+            marketDataLock.writeLock().lock();
+        }
+    }
+
+    @Override
+    public void addGoodToState(String itemName, double itemPrice, long itemQuantity, long timestamp) {
+        try {
+            marketDataLock.writeLock().lock();
+            Set<MarketTick> productInfo = marketState.get(itemName);
+            if (productInfo == null) {
+                productInfo = new TreeSet<>();
+                productInfo.add(new MarketTick(itemName, itemQuantity, itemPrice, timestamp));
+                marketState.put(itemName, productInfo);
+            } else {
+                MarketTick tick = new MarketTick(itemName, itemQuantity, itemPrice, timestamp);
+                if (productInfo.contains(tick)) {
+                    MarketTick searchedTick = productInfo.stream().filter(currentTick -> currentTick.compareTo(tick) == 0).findFirst().orElse(null);
+                    productInfo.remove(searchedTick);
+                    productInfo.add(new MarketTick(itemName, itemQuantity + searchedTick.getQuantity(), itemPrice, timestamp));
+                } else {
+                    productInfo.add(tick);
+                }
+            }
+            publishUpdate(itemName, itemQuantity, itemPrice);
+        } finally {
+            marketDataLock.writeLock().unlock();
+        }
     }
 
     private TickResponse convertMarketTickToTickResponse(MarketTick marketTick) {

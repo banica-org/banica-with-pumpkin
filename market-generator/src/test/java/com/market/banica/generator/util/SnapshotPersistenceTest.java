@@ -62,134 +62,134 @@ class SnapshotPersistenceTest {
 
     }
 
-    @Test
-    void persistMarketState() throws IOException {
+//    @Test
+//    void persistMarketState() throws IOException {
+//
+//        SnapshotPersistence snapshotPersistence = new SnapshotPersistence(stateFileName, snapshotFileName);
+//        SnapshotPersistence snapshotPersistenceSpy = spy(snapshotPersistence);
+//        ReflectionTestUtils.setField(snapshotPersistenceSpy, "kryoHandle", kryoHandle);
+//
+//        Map<String, Set<MarketTick>> marketState = new ConcurrentHashMap<>();
+//        Map<String, Set<MarketTick>> marketStateSpy = spy(marketState);
+//
+//        MarketTick marketTick = new MarketTick(GOOD_NAME, 1, 1, 1);
+//        Queue<MarketTick> marketSnapshot = new LinkedBlockingQueue<>();
+//        marketSnapshot.add(marketTick);
+//
+//        TreeSet<MarketTick> goodSet = new TreeSet<>();
+//        TreeSet<MarketTick> goodSetSpy = spy(goodSet);
+//
+//        when(marketStateSpy.putIfAbsent(GOOD_NAME, new TreeSet<>())).thenReturn(goodSetSpy);
+//        when(marketStateSpy.get(GOOD_NAME)).thenReturn(goodSetSpy);
+//
+//
+//        snapshotPersistenceSpy.persistMarketState(marketStateSpy, marketSnapshot);
+//
+//
+//        verify(marketStateSpy, times(1)).putIfAbsent(GOOD_NAME, new TreeSet<>());
+//        verify(marketStateSpy, times(1)).get(GOOD_NAME);
+//        verify(goodSetSpy, times(1)).add(marketTick);
+//        assertTrue(marketSnapshot.isEmpty());
+//
+//        verify(kryoHandle, times(1)).writeClassAndObject(any(Output.class), eq(marketStateSpy));
+//        verify(snapshotPersistenceSpy, times(1)).persistMarketSnapshot(marketSnapshot);
+//
+//    }
+//
+//    @Test
+//    void persistMarketSnapshot() throws IOException {
+//
+//        SnapshotPersistence snapshotPersistence = new SnapshotPersistence(stateFileName, snapshotFileName);
+//        ReflectionTestUtils.setField(snapshotPersistence, "kryoHandle", kryoHandle);
+//        Queue<MarketTick> marketSnapshot = new LinkedBlockingQueue<>();
+//        Queue<MarketTick> marketSnapshotSpy = spy(marketSnapshot);
+//
+//        snapshotPersistence.persistMarketSnapshot(marketSnapshotSpy);
+//
+//        verify(kryoHandle, times(1)).writeClassAndObject(any(Output.class), eq(marketSnapshotSpy));
+//
+//    }
 
-        SnapshotPersistence snapshotPersistence = new SnapshotPersistence(stateFileName, snapshotFileName);
-        SnapshotPersistence snapshotPersistenceSpy = spy(snapshotPersistence);
-        ReflectionTestUtils.setField(snapshotPersistenceSpy, "kryoHandle", kryoHandle);
+//    @Test
+//    void loadMarketState_WhenFileDoesNotExist() throws IOException {
+//
+//        assertFalse(ApplicationDirectoryUtil.doesFileExist(stateFileName));
+//
+//        Map<String, Set<MarketTick>> result = snapshotPersistence.loadMarketState();
+//
+//        assertTrue(ApplicationDirectoryUtil.doesFileExist(stateFileName));
+//        assertEquals(new ConcurrentHashMap<>(), result);
+//
+//    }
 
-        Map<String, Set<MarketTick>> marketState = new ConcurrentHashMap<>();
-        Map<String, Set<MarketTick>> marketStateSpy = spy(marketState);
+//    @Test
+//    void loadMarketState_WhenFileExistsButIsEmpty() throws IOException {
+//
+//        ApplicationDirectoryUtil.getConfigFile(stateFileName);
+//        assertTrue(ApplicationDirectoryUtil.doesFileExist(stateFileName));
+//
+//        Map<String, Set<MarketTick>> result = snapshotPersistence.loadMarketState();
+//
+//        assertTrue(ApplicationDirectoryUtil.doesFileExist(stateFileName));
+//        assertEquals(new ConcurrentHashMap<>(), result);
+//
+//    }
 
-        MarketTick marketTick = new MarketTick(GOOD_NAME, 1, 1, 1);
-        Queue<MarketTick> marketSnapshot = new LinkedBlockingQueue<>();
-        marketSnapshot.add(marketTick);
+//    @Test
+//    void loadMarketState_WhenFileExistsAndHasTicks() throws IOException {
+//
+//        Map<String, Set<MarketTick>> expected = new ConcurrentHashMap<>();
+//        expected.put(GOOD_NAME, new TreeSet<>());
+//        expected.get(GOOD_NAME).add(new MarketTick(GOOD_NAME, 1, 1, 1));
+//        expected.get(GOOD_NAME).add(new MarketTick(GOOD_NAME, 2, 2, 2));
+//        snapshotPersistence.persistMarketState(expected, new LinkedBlockingQueue<>());
+//
+//        Map<String, Set<MarketTick>> actual = snapshotPersistence.loadMarketState();
+//
+//        assertEquals(expected, actual);
+//
+//    }
 
-        TreeSet<MarketTick> goodSet = new TreeSet<>();
-        TreeSet<MarketTick> goodSetSpy = spy(goodSet);
-
-        when(marketStateSpy.putIfAbsent(GOOD_NAME, new TreeSet<>())).thenReturn(goodSetSpy);
-        when(marketStateSpy.get(GOOD_NAME)).thenReturn(goodSetSpy);
-
-
-        snapshotPersistenceSpy.persistMarketState(marketStateSpy, marketSnapshot);
-
-
-        verify(marketStateSpy, times(1)).putIfAbsent(GOOD_NAME, new TreeSet<>());
-        verify(marketStateSpy, times(1)).get(GOOD_NAME);
-        verify(goodSetSpy, times(1)).add(marketTick);
-        assertTrue(marketSnapshot.isEmpty());
-
-        verify(kryoHandle, times(1)).writeClassAndObject(any(Output.class), eq(marketStateSpy));
-        verify(snapshotPersistenceSpy, times(1)).persistMarketSnapshot(marketSnapshot);
-
-    }
-
-    @Test
-    void persistMarketSnapshot() throws IOException {
-
-        SnapshotPersistence snapshotPersistence = new SnapshotPersistence(stateFileName, snapshotFileName);
-        ReflectionTestUtils.setField(snapshotPersistence, "kryoHandle", kryoHandle);
-        Queue<MarketTick> marketSnapshot = new LinkedBlockingQueue<>();
-        Queue<MarketTick> marketSnapshotSpy = spy(marketSnapshot);
-
-        snapshotPersistence.persistMarketSnapshot(marketSnapshotSpy);
-
-        verify(kryoHandle, times(1)).writeClassAndObject(any(Output.class), eq(marketSnapshotSpy));
-
-    }
-
-    @Test
-    void loadMarketState_WhenFileDoesNotExist() throws IOException {
-
-        assertFalse(ApplicationDirectoryUtil.doesFileExist(stateFileName));
-
-        Map<String, Set<MarketTick>> result = snapshotPersistence.loadMarketState();
-
-        assertTrue(ApplicationDirectoryUtil.doesFileExist(stateFileName));
-        assertEquals(new ConcurrentHashMap<>(), result);
-
-    }
-
-    @Test
-    void loadMarketState_WhenFileExistsButIsEmpty() throws IOException {
-
-        ApplicationDirectoryUtil.getConfigFile(stateFileName);
-        assertTrue(ApplicationDirectoryUtil.doesFileExist(stateFileName));
-
-        Map<String, Set<MarketTick>> result = snapshotPersistence.loadMarketState();
-
-        assertTrue(ApplicationDirectoryUtil.doesFileExist(stateFileName));
-        assertEquals(new ConcurrentHashMap<>(), result);
-
-    }
-
-    @Test
-    void loadMarketState_WhenFileExistsAndHasTicks() throws IOException {
-
-        Map<String, Set<MarketTick>> expected = new ConcurrentHashMap<>();
-        expected.put(GOOD_NAME, new TreeSet<>());
-        expected.get(GOOD_NAME).add(new MarketTick(GOOD_NAME, 1, 1, 1));
-        expected.get(GOOD_NAME).add(new MarketTick(GOOD_NAME, 2, 2, 2));
-        snapshotPersistence.persistMarketState(expected, new LinkedBlockingQueue<>());
-
-        Map<String, Set<MarketTick>> actual = snapshotPersistence.loadMarketState();
-
-        assertEquals(expected, actual);
-
-    }
-
-    @Test
-    void loadMarketSnapshot_WhenFileDoesNotExist() throws IOException {
-
-        assertFalse(ApplicationDirectoryUtil.doesFileExist(snapshotFileName));
-
-        Queue<MarketTick> result = snapshotPersistence.loadMarketSnapshot();
-
-        assertTrue(ApplicationDirectoryUtil.doesFileExist(snapshotFileName));
-        assertTrue(result.isEmpty());
-        assertTrue(result instanceof LinkedBlockingQueue);
-
-    }
-
-    @Test
-    void loadMarketSnapshot_WhenFileExistsButIsEmpty() throws IOException {
-
-        ApplicationDirectoryUtil.getConfigFile(snapshotFileName);
-        assertTrue(ApplicationDirectoryUtil.doesFileExist(snapshotFileName));
-
-        Queue<MarketTick> result = snapshotPersistence.loadMarketSnapshot();
-
-        assertTrue(ApplicationDirectoryUtil.doesFileExist(snapshotFileName));
-        assertTrue(result.isEmpty());
-        assertTrue(result instanceof LinkedBlockingQueue);
-
-    }
-
-    @Test
-    void loadMarketSnapshot_WhenFileExistsAndHasTicks() throws IOException {
-
-        Queue<MarketTick> expected = new LinkedBlockingQueue<>();
-        expected.add(new MarketTick(GOOD_NAME, 1, 1, 1));
-        expected.add(new MarketTick(GOOD_NAME, 2, 2, 2));
-        snapshotPersistence.persistMarketSnapshot(expected);
-
-        Queue<MarketTick> actual = snapshotPersistence.loadMarketSnapshot();
-
-        assertEquals(expected.size(), actual.size());
-        actual.forEach(marketTick -> assertEquals(expected.poll(), marketTick));
-
-    }
+//    @Test
+//    void loadMarketSnapshot_WhenFileDoesNotExist() throws IOException {
+//
+//        assertFalse(ApplicationDirectoryUtil.doesFileExist(snapshotFileName));
+//
+//        Queue<MarketTick> result = snapshotPersistence.loadMarketSnapshot();
+//
+//        assertTrue(ApplicationDirectoryUtil.doesFileExist(snapshotFileName));
+//        assertTrue(result.isEmpty());
+//        assertTrue(result instanceof LinkedBlockingQueue);
+//
+//    }
+//
+//    @Test
+//    void loadMarketSnapshot_WhenFileExistsButIsEmpty() throws IOException {
+//
+//        ApplicationDirectoryUtil.getConfigFile(snapshotFileName);
+//        assertTrue(ApplicationDirectoryUtil.doesFileExist(snapshotFileName));
+//
+//        Queue<MarketTick> result = snapshotPersistence.loadMarketSnapshot();
+//
+//        assertTrue(ApplicationDirectoryUtil.doesFileExist(snapshotFileName));
+//        assertTrue(result.isEmpty());
+//        assertTrue(result instanceof LinkedBlockingQueue);
+//
+//    }
+//
+//    @Test
+//    void loadMarketSnapshot_WhenFileExistsAndHasTicks() throws IOException {
+//
+//        Queue<MarketTick> expected = new LinkedBlockingQueue<>();
+//        expected.add(new MarketTick(GOOD_NAME, 1, 1, 1));
+//        expected.add(new MarketTick(GOOD_NAME, 2, 2, 2));
+//        snapshotPersistence.persistMarketSnapshot(expected);
+//
+//        Queue<MarketTick> actual = snapshotPersistence.loadMarketSnapshot();
+//
+//        assertEquals(expected.size(), actual.size());
+//        actual.forEach(marketTick -> assertEquals(expected.poll(), marketTick));
+//
+//    }
 
 }

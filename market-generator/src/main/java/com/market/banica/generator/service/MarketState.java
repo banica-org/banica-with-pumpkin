@@ -15,4 +15,7 @@ public interface MarketState {
 
     PersistScheduler getPersistScheduler();
 
+    MarketTick removeItemFromState(String itemName, long itemQuantity, double itemPrice);
+
+    void addGoodToState(String itemName, double itemPrice, long itemQuantity, long timestamp);
 }

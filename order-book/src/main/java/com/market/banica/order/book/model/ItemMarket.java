@@ -12,9 +12,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.EnableMBeanExport;
+import org.springframework.jmx.export.annotation.ManagedOperation;
+import org.springframework.jmx.export.annotation.ManagedResource;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -32,6 +36,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 
 @Component
+@ManagedResource
+@EnableMBeanExport
 public class ItemMarket {
 
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
@@ -49,6 +55,7 @@ public class ItemMarket {
         this.subscribedItems = new HashSet<>();
         FILE_PATH = fileName;
         addDummyData();
+        print(productsQuantity);
     }
 
     public Optional<Set<Item>> getItemSetByName(String itemName) {
@@ -65,22 +72,37 @@ public class ItemMarket {
         this.productsQuantity.putIfAbsent(itemName, 0L);
     }
 
+    private void print(Map<String, Long> productsQuantity) {
+        System.out.println("Before");
+        for (Map.Entry<String, Long> entry : productsQuantity.entrySet()) {
+            System.out.println(entry);
+        }
+
+    }
+
+    @ManagedOperation
+    public void printBeforeDestroy() {
+        System.out.println("After");
+        for (Map.Entry<String, Long> entry : productsQuantity.entrySet()) {
+            System.out.println(entry);
+        }
+    }
+
     public void removeUntrackedItem(String itemName) {
         this.allItems.remove(itemName);
     }
 
     private void addDummyData() {
-        extracted("cheese", 2.6, 5, Origin.EUROPE);
-//        extracted("banica", 3.33, 5, Origin.EUROPE);
-        extracted("crusts", 1.0, 500, Origin.EUROPE);
-        extracted("eggs", 5.0, 8, Origin.EUROPE);
-        extracted("eggs", 5.0, 8, Origin.AMERICA);
+        extracted("cheese", 9999.9, 5, Origin.EUROPE);
+//        extracted("crusts", 1.0, 500, Origin.EUROPE);
+        extracted("eggs", 5.0, 20, Origin.EUROPE);
+//        extracted("eggs", 5.0, 8, Origin.EUROPE);
+//        extracted("eggs", 5.0, 8, Origin.AMERICA);
         extracted("water", 5.0, 400, Origin.EUROPE);
         extracted("tomatoes", 5.0, 70, Origin.EUROPE);
         extracted("milk", 5.0, 3, Origin.EUROPE);
         extracted("pumpkin", 5.0, 400, Origin.EUROPE);
         extracted("sugar", 5.0, 60, Origin.EUROPE);
-        System.out.println();
     }
 
     private void extracted(String product, double price, long quantity, Origin origin) {
@@ -111,6 +133,7 @@ public class ItemMarket {
         } catch (InvalidProtocolBufferException e) {
             throw new IncorrectResponseException("Response is not correct!");
         }
+        System.out.println("tick resp -> "+tickResponse.getGoodName() + " : " + tickResponse.getQuantity() );
         Set<Item> itemSet = this.allItems.get(tickResponse.getGoodName());
         if (itemSet == null) {
             LOGGER.error("Item: {} is not being tracked and cannot be added to itemMarket!",
@@ -121,7 +144,7 @@ public class ItemMarket {
 
         this.productsQuantity.merge(tickResponse.getGoodName(), tickResponse.getQuantity(), Long::sum);
 
-        LOGGER.info("Products data updated!");
+//        LOGGER.info("Products data updated!");
         if (itemSet.contains(item)) {
             Item presentItem = itemSet.stream().filter(currentItem -> currentItem.compareTo(item) == 0).findFirst().get();
             presentItem.setQuantity(presentItem.getQuantity() + item.getQuantity());
@@ -132,7 +155,7 @@ public class ItemMarket {
 
     public List<OrderBookLayer> getRequestedItem(String itemName, long quantity) {
 
-        LOGGER.info("Getting requested item: {} with quantity: {}", itemName, quantity);
+//        LOGGER.info("Getting requested item: {} with quantity: {}", itemName, quantity);
         TreeSet<Item> items = this.allItems.get(itemName);
 
         if (items == null || this.productsQuantity.get(itemName) < quantity) {
@@ -142,7 +165,7 @@ public class ItemMarket {
 
         List<OrderBookLayer> layers;
         try {
-            lock.writeLock().lock();
+            lock.readLock().lock();
 
             layers = new ArrayList<>();
 
@@ -162,7 +185,7 @@ public class ItemMarket {
                 layers.add(orderBookLayer);
             }
         } finally {
-            lock.writeLock().unlock();
+            lock.readLock().unlock();
         }
         return layers;
     }

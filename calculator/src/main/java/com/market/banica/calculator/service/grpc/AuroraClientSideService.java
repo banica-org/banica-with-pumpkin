@@ -4,17 +4,21 @@ package com.market.banica.calculator.service.grpc;
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.market.AvailabilityResponse;
 import com.market.BuySellProductResponse;
+import com.market.Origin;
 import com.market.ProductBuyRequest;
+import com.market.ProductSellRequest;
 import com.market.banica.calculator.exception.exceptions.BadResponseException;
 import com.orderbook.CancelSubscriptionResponse;
 import com.orderbook.InterestsResponse;
 import com.orderbook.ItemOrderBookResponse;
-import com.orderbook.OrderBookLayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
 
 
 @Service
@@ -82,15 +86,44 @@ public class AuroraClientSideService {
         return blockingStub;
     }
 
-    public void buyProduct(String itemName, OrderBookLayer layer) {
+    public AvailabilityResponse checkAvailability(String itemName, double price, long quantity, Origin origin) {
+        System.out.println("In Calculator-AuroraService buyProduct() method");
         ProductBuyRequest productBuyRequest = ProductBuyRequest.newBuilder()
                 .setItemName(itemName)
-                .setItemQuantity(layer.getQuantity())
-                .setItemPrice(layer.getPrice())
-                .setOrigin(layer.getOrigin())
+                .setItemQuantity(quantity)
+                .setItemPrice(price)
+                .setOrigin(origin)
                 .build();
-        BuySellProductResponse buySellProductResponse = getBlockingStub().buyProduct(productBuyRequest);
-        System.out.println(buySellProductResponse.getMessage());
+        AvailabilityResponse availabilityResponse = getBlockingStub().checkAvailability(productBuyRequest);
+
+        System.out.println("In Calculator-AuroraService buyProduct() method response -> " + availabilityResponse.toString());
+        return availabilityResponse;
+    }
+
+    public void sellProduct(String itemName, double itemPrice, long itemQuantity, String itemOrigin, long itemTimestamp) {
+        ProductSellRequest sellRequest = ProductSellRequest.newBuilder()
+                .setItemName(itemName)
+                .setItemPrice(itemPrice)
+                .setItemQuantity(itemQuantity)
+                .setMarketName(itemOrigin)
+                .setTimestamp(itemTimestamp)
+                .build();
+        getBlockingStub().sellProduct(sellRequest);
+    }
+
+    public void buyProduct(String itemName, double itemPrice, long itemQuantity, String itemOrigin, long itemTimestamp) {
+        // string itemName = 1;
+        //  int64 itemQuantity = 2;
+        //  double itemPrice = 3;
+        //  Origin origin = 4;
+        ProductBuyRequest buyRequest = ProductBuyRequest.newBuilder()
+                .setItemName(itemName)
+                .setItemQuantity(itemQuantity)
+                .setItemPrice(itemPrice)
+                .setOrigin(Origin.valueOf(itemOrigin))
+                .setTimestamp(itemTimestamp)
+                .build();
+        getBlockingStub().buyProduct(buyRequest);
     }
 
     private Aurora.AuroraResponse getAuroraResponse(String clientId, String message) {

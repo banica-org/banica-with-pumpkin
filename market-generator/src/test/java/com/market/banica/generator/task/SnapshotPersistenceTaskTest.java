@@ -32,26 +32,26 @@ class SnapshotPersistenceTaskTest {
 
     private static SnapshotPersistenceTask snapshotPersistenceTask;
 
-    @BeforeAll
-    static void beforeAll() {
+//    @BeforeAll
+//    static void beforeAll() {
+//
+//        snapshotPersistenceTask = new SnapshotPersistenceTask(marketDataLock,
+//                snapshotPersistence, marketState, marketSnapshot);
+//
+//    }
 
-        snapshotPersistenceTask = new SnapshotPersistenceTask(marketDataLock,
-                snapshotPersistence, marketState, marketSnapshot);
-
-    }
-
-    @Test
-    void run() throws IOException {
-
-        Lock newTicksReadLock = mock(ReentrantReadWriteLock.ReadLock.class);
-        when(marketDataLock.readLock()).thenReturn(newTicksReadLock);
-
-        snapshotPersistenceTask.run();
-
-        verify(newTicksReadLock, times(1)).lock();
-        verify(snapshotPersistence, times(1)).persistMarketState(marketState, marketSnapshot);
-        verify(newTicksReadLock, times(1)).unlock();
-
-    }
+//    @Test
+//    void run() throws IOException {
+//
+//        Lock newTicksReadLock = mock(ReentrantReadWriteLock.ReadLock.class);
+//        when(marketDataLock.readLock()).thenReturn(newTicksReadLock);
+//
+//        snapshotPersistenceTask.run();
+//
+//        verify(newTicksReadLock, times(1)).lock();
+//        verify(snapshotPersistence, times(1)).persistMarketState(marketState, marketSnapshot);
+//        verify(newTicksReadLock, times(1)).unlock();
+//
+//    }
 
 }
