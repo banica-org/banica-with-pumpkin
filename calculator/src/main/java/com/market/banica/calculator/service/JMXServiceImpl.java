@@ -23,15 +23,6 @@ public class JMXServiceImpl implements JMXServiceMBean {
     private static final Logger LOGGER = LoggerFactory.getLogger(JMXServiceImpl.class);
 
     private final ProductService productService;
-    private final ProductBase productBase;
-
-    @Override
-    @ManagedOperation
-    public Map<String, Product> getDatabase() {
-        LOGGER.info("GetDatabase called from JMX server");
-
-        return productBase.getDatabase();
-    }
 
     @Override
     @ManagedOperation
@@ -75,13 +66,14 @@ public class JMXServiceImpl implements JMXServiceMBean {
 
     @Override
     @ManagedOperation
-    public int getProductQuantity(String parentProductName, String productName) {
+    public long getProductQuantity(String parentProductName, String productName) {
         LOGGER.debug("In getProductQuantity method with parameters: parentProductName {} and productName {}"
                 , parentProductName, productName);
         LOGGER.info("GetProductQuantity called from JMX server");
 
+        long result = productService.getProductQuantity(parentProductName, productName);
 
-        int result = productService.getProductQuantity(parentProductName, productName);
+
 
         LOGGER.debug("Quantity checked from JMX server for product {} with parent product {}", parentProductName, productName);
         return result;
@@ -92,7 +84,6 @@ public class JMXServiceImpl implements JMXServiceMBean {
     public String getUnitOfMeasure(String productName) {
         LOGGER.debug("In getUnitOfMeasure method with parameters: productName {}", productName);
         LOGGER.info("GetUnitOfMeasure called from JMX server");
-
 
         String result = productService.getUnitOfMeasure(productName);
 

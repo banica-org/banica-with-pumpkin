@@ -30,6 +30,7 @@ import io.grpc.inprocess.InProcessChannelBuilder;
 import io.grpc.inprocess.InProcessServerBuilder;
 import io.grpc.stub.StreamObserver;
 import io.grpc.testing.GrpcCleanupRule;
+import lombok.SneakyThrows;
 import org.junit.Rule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -65,8 +66,6 @@ import static org.mockito.Mockito.when;
 @ActiveProfiles("testOrderBookIT")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class OrderBookComponentIT {
-    public static final String ITEM_NAME = "eggs";
-    public static final String CLIENT_ID = "clientId";
 
     @SpyBean
     @Autowired
@@ -156,6 +155,7 @@ class OrderBookComponentIT {
         int numberOfTickResponses = 10;
         ReflectionTestUtils.setField(orderBookService, AURORA_CLIENT, auroraClient);
         ReflectionTestUtils.setField(orderBookService, "subscriptionExecutor", MoreExecutors.newDirectExecutorService());
+
         String serverNameMarket = InProcessServerBuilder.generateName();
 
         when(auroraClient.getAsynchronousStub()).thenReturn(asynchronousStub);
@@ -213,8 +213,7 @@ class OrderBookComponentIT {
 
         when(itemMarket.getRequestedItem(productName, productQuantity)).thenReturn(layers);
 
-        // Start OrderBook
-        startOrderBookService(orderBookService,THREAD_SLEEP_TIME_DEFAULT);
+        startOrderBookService(orderBookService, THREAD_SLEEP_TIME_DEFAULT);
 
         startAuroraServiceWithRequestMethodOverridden();
 
@@ -261,13 +260,10 @@ class OrderBookComponentIT {
         grpcCleanup.register(InProcessServerBuilder
                 .forName(serverName).directExecutor()
                 .addService(new OrderBookServiceGrpc.OrderBookServiceImplBase() {
+                    @SneakyThrows
                     @Override
                     public void announceItemInterest(InterestsRequest request, StreamObserver<InterestsResponse> responseObserver) {
-                        try {
-                            auroraClient.startSubscription(request.getItemName(), request.getClientId());
-                        } catch (TrackingException e) {
-                            e.printStackTrace();
-                        }
+                        auroraClient.startSubscription(request.getItemName(), request.getClientId());
                         responseObserver.onNext(InterestsResponse.newBuilder().build());
                         responseObserver.onCompleted();
                     }
@@ -297,13 +293,10 @@ class OrderBookComponentIT {
         grpcCleanup.register(channel);
         grpcCleanup.register(InProcessServerBuilder
                 .forName(serverName).directExecutor().addService(new OrderBookServiceGrpc.OrderBookServiceImplBase() {
+                    @SneakyThrows
                     @Override
                     public void cancelItemSubscription(CancelSubscriptionRequest request, StreamObserver<CancelSubscriptionResponse> responseObserver) {
-                        try {
-                            auroraClient.stopSubscription(request.getItemName(), request.getClientId());
-                        } catch (TrackingException e) {
-                            e.printStackTrace();
-                        }
+                        auroraClient.stopSubscription(request.getItemName(), request.getClientId());
                         responseObserver.onNext(CancelSubscriptionResponse.newBuilder().build());
                         responseObserver.onCompleted();
                     }
@@ -472,3 +465,6 @@ class OrderBookComponentIT {
         return auroraResponse;
     }
 }
+
+
+
