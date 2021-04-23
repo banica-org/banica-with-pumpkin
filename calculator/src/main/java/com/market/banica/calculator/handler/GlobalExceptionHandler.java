@@ -1,5 +1,6 @@
 package com.market.banica.calculator.handler;
 
+import com.market.banica.common.exception.ProductNotAvailableException;
 import com.market.banica.common.exception.IncorrectResponseException;
 import com.market.banica.common.exception.TrackingException;
 import org.modelmapper.spi.ErrorMessage;
@@ -15,8 +16,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ErrorMessage> illegalArgumentExceptionExceptionHandler(IllegalArgumentException exception) {
+    public ResponseEntity<ErrorMessage> illegalArgumentExceptionHandler(IllegalArgumentException exception) {
         return new ResponseEntity<>(new ErrorMessage(exception.getMessage()), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(ProductNotAvailableException.class)
+    public ResponseEntity<ErrorMessage> productNotAvailableExceptionHandler(ProductNotAvailableException exception) {
+        return new ResponseEntity<>(new ErrorMessage(exception.getMessage()), HttpStatus.OK);
     }
 
     @ExceptionHandler({IncorrectResponseException.class, TrackingException.class,Exception.class})
