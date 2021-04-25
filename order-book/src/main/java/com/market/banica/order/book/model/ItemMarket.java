@@ -141,7 +141,7 @@ public class ItemMarket {
         } catch (InvalidProtocolBufferException e) {
             throw new IncorrectResponseException("Response is not correct!");
         }
-        System.out.println("tick resp -> "+tickResponse.getGoodName() + " : " + tickResponse.getQuantity() );
+        System.out.println("tick resp -> " + tickResponse.getGoodName() + " : " + tickResponse.getQuantity());
         Set<Item> itemSet = this.allItems.get(tickResponse.getGoodName());
         if (itemSet == null) {
             LOGGER.error("Item: {} is not being tracked and cannot be added to itemMarket!",
@@ -156,9 +156,11 @@ public class ItemMarket {
         if (itemSet.contains(item)) {
             Item presentItem = itemSet.stream().filter(currentItem -> currentItem.compareTo(item) == 0).findFirst().get();
             presentItem.setQuantity(presentItem.getQuantity() + item.getQuantity());
+            printBeforeDestroy();
             return;
         }
         itemSet.add(item);
+        printBeforeDestroy();
     }
 
     public List<OrderBookLayer> getRequestedItem(String itemName, long quantity) {

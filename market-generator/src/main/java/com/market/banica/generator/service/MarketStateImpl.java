@@ -111,32 +111,56 @@ public class MarketStateImpl implements MarketState {
         try {
             marketDataLock.writeLock().lock();
             Set<MarketTick> productInfo = marketState.get(itemName);
-            MarketTick desiredProduct = productInfo
-                    .stream()
-                    .filter(marketTick -> marketTick.getQuantity() == itemQuantity && marketTick.getPrice() == itemPrice)
-                    .findFirst().orElse(null);
-
-            long availableQuantity = 0;
-            if (desiredProduct == null ||
-                    desiredProduct.getQuantity() < itemQuantity) {
+            if (productInfo == null) {
                 throw new IllegalArgumentException("No product " + itemName + " with price " + itemPrice
                         + " and quantity " + itemQuantity + ".");
             }
-            productInfo.remove(desiredProduct);
-            desiredProduct = new MarketTick(itemName, availableQuantity - itemQuantity, itemPrice, desiredProduct.getTimestamp());
-            productInfo.add(desiredProduct);
-            if (desiredProduct.getPrice() <= 0) {
-                productInfo.remove(desiredProduct);
-            }
-            if (productInfo.size() == 0) {
-                marketState.remove(itemName);
+            List<MarketTick> collect = productInfo
+                    .stream()
+                    .filter(marketTick -> marketTick.getPrice() == itemPrice).collect(Collectors.toList());
+            long foundItemsQuantity = collect.stream().mapToLong(MarketTick::getQuantity).sum();
+
+            if (foundItemsQuantity < itemQuantity || collect.size() == 0) {
+                throw new IllegalArgumentException("No product " + itemName + " with price " + itemPrice
+                        + " and quantity " + itemQuantity + ".");
             }
 
+            long availableQuantity = 0;
+            MarketTick desiredProduct = null;
+            long leftQuantity = itemQuantity;
+
+            for (MarketTick tick : collect) {
+                if (leftQuantity <= 0) {
+                    break;
+                }
+                if (tick == null) {
+                    throw new IllegalArgumentException("No product " + itemName + " with price " + itemPrice
+                            + " and quantity " + itemQuantity + ".");
+                }
+                availableQuantity = tick.getQuantity();
+                productInfo.remove(tick);
+                leftQuantity -= availableQuantity;
+
+                if (leftQuantity < availableQuantity && leftQuantity < 0) {
+                    tick = new MarketTick(itemName, Math.abs(leftQuantity), tick.getPrice(), tick.getTimestamp());
+                } else {
+                    tick = new MarketTick(itemName, availableQuantity - itemQuantity, tick.getPrice(), tick.getTimestamp());
+                }
+                desiredProduct = tick;
+                productInfo.add(tick);
+
+                if (tick.getQuantity() <= 0) {
+                    productInfo.remove(tick);
+                }
+                if (productInfo.size() == 0) {
+                    marketState.remove(itemName);
+                }
+            }
             publishUpdate(itemName, -itemQuantity, itemPrice);
             return desiredProduct;
         } finally {
 
-            marketDataLock.writeLock().lock();
+            marketDataLock.writeLock().unlock();
         }
     }
 
