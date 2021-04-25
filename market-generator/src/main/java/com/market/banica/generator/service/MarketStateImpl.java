@@ -55,6 +55,12 @@ public class MarketStateImpl implements MarketState {
         persistScheduler.scheduleSnapshot();
     }
 
+    public void publishUpdate(String itemName, long itemQuantity, double itemPrice) {
+        MarketTick marketTick = new MarketTick(itemName, itemQuantity, itemPrice, System.currentTimeMillis());
+        subscriptionManager.notifySubscribers(convertMarketTickToTickResponse(marketTick));
+    }
+
+
     @Override
     public void addTickToMarketSnapshot(MarketTick marketTick) {
         executorService.execute(() -> {
@@ -83,10 +89,10 @@ public class MarketStateImpl implements MarketState {
                     .map(this::convertMarketTickToTickResponse)
                     .collect(Collectors.toList());
 
-            marketSnapshot.stream()
-                    .filter(marketTick -> marketTick.getGood().equals(good))
-                    .map(this::convertMarketTickToTickResponse)
-                    .forEach(generatedTicks::add);
+//            marketSnapshot.stream()
+//                    .filter(marketTick -> marketTick.getGood().equals(good))
+//                    .map(this::convertMarketTickToTickResponse)
+//                    .forEach(generatedTicks::add);
 
             LOGGER.info("Successfully generated market ticks for {} .", good);
             return generatedTicks;
@@ -98,6 +104,65 @@ public class MarketStateImpl implements MarketState {
 
     public PersistScheduler getPersistScheduler() {
         return persistScheduler;
+    }
+
+    @Override
+    public MarketTick removeItemFromState(String itemName, long itemQuantity, double itemPrice) {
+        try {
+            marketDataLock.writeLock().lock();
+            Set<MarketTick> productInfo = marketState.get(itemName);
+            MarketTick desiredProduct = productInfo
+                    .stream()
+                    .filter(marketTick -> marketTick.getQuantity() == itemQuantity && marketTick.getPrice() == itemPrice)
+                    .findFirst().orElse(null);
+
+            long availableQuantity = 0;
+            if (desiredProduct == null ||
+                    desiredProduct.getQuantity() < itemQuantity) {
+                throw new IllegalArgumentException("No product " + itemName + " with price " + itemPrice
+                        + " and quantity " + itemQuantity + ".");
+            }
+            productInfo.remove(desiredProduct);
+            desiredProduct = new MarketTick(itemName, availableQuantity - itemQuantity, itemPrice, desiredProduct.getTimestamp());
+            productInfo.add(desiredProduct);
+            if (desiredProduct.getPrice() <= 0) {
+                productInfo.remove(desiredProduct);
+            }
+            if (productInfo.size() == 0) {
+                marketState.remove(itemName);
+            }
+
+            publishUpdate(itemName, -itemQuantity, itemPrice);
+            return desiredProduct;
+        } finally {
+
+            marketDataLock.writeLock().lock();
+        }
+    }
+
+    @Override
+    public void addGoodToState(String itemName, double itemPrice, long itemQuantity, long timestamp) {
+        try {
+            marketDataLock.writeLock().lock();
+            Set<MarketTick> productInfo = marketState.get(itemName);
+            if (productInfo == null) {
+                productInfo = new TreeSet<>();
+                productInfo.add(new MarketTick(itemName, itemQuantity, itemPrice, timestamp));
+                marketState.put(itemName, productInfo);
+            } else {
+                MarketTick tick = new MarketTick(itemName, itemQuantity, itemPrice, timestamp);
+                if (productInfo.contains(tick)) {
+                    MarketTick searchedTick = productInfo.stream().filter(currentTick -> currentTick.compareTo(tick) == 0).findFirst().orElse(null);
+                    productInfo.remove(searchedTick);
+                    productInfo.add(new MarketTick(itemName, itemQuantity + searchedTick.getQuantity(), itemPrice, timestamp));
+                } else {
+                    productInfo.add(tick);
+                }
+            }
+            publishUpdate(itemName, itemQuantity, itemPrice);
+        } finally {
+            marketDataLock.writeLock().unlock();
+        }
     }
 
     private TickResponse convertMarketTickToTickResponse(MarketTick marketTick) {
