@@ -1,6 +1,7 @@
 package com.market.banica.calculator.controller;
 
 import com.market.banica.calculator.dto.ProductDto;
+import com.market.banica.calculator.service.contract.TransactionService;
 import com.market.banica.common.exception.ProductNotAvailableException;
 import com.market.banica.calculator.service.contract.CalculatorService;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ import java.util.List;
 public class CalculatorController {
 
     private final CalculatorService service;
+    private final TransactionService transactionService;
     private static final Logger LOGGER = LoggerFactory.getLogger(CalculatorController.class);
 
     @GetMapping("/{clientId}/{itemName}/{quantity}")
@@ -38,5 +40,15 @@ public class CalculatorController {
 
 
         return service.getProduct(clientId, itemName, quantity);
+    }
+    @GetMapping("/buy/{clientId}/{itemName}/{quantity}")
+    public List<ProductDto> buyProduct(@PathVariable("clientId") @NotBlank String clientId,
+                                       @PathVariable("itemName") @NotBlank String itemName,
+                                       @PathVariable("quantity") @Min(1) long quantity) {
+        LOGGER.info("GET /calculator called");
+
+        List<ProductDto> productDtos = transactionService.buyProduct(clientId, itemName, quantity);
+
+        return productDtos;
     }
 }

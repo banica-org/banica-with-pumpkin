@@ -94,9 +94,16 @@ public class ItemMarket {
     }
 
     private void addDummyData() {
-        extracted("cheese", 9999.9, 5, Origin.EUROPE);
+        //        extracted("banica", 1.0, 7, Origin.EUROPE);
+        extracted("banica", 7.0, 7, Origin.EUROPE);
 //        extracted("crusts", 1.0, 500, Origin.EUROPE);
-        extracted("eggs", 5.0, 20, Origin.EUROPE);
+        extracted("crusts", 1.0, 20, Origin.EUROPE);
+//        extracted("eggs", 1.0, 20, Origin.EUROPE);
+        extracted("eggs", 1.0, 500, Origin.EUROPE);
+
+
+        extracted("cheese", 9999.9, 5, Origin.EUROPE);
+//        extracted("eggs", 5.0, 20, Origin.EUROPE);
 //        extracted("eggs", 5.0, 8, Origin.EUROPE);
 //        extracted("eggs", 5.0, 8, Origin.AMERICA);
         extracted("water", 5.0, 400, Origin.EUROPE);

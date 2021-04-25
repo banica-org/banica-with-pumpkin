@@ -165,6 +165,11 @@ public class MarketStateImpl implements MarketState {
         }
     }
 
+    @Override
+    public Map<String, Set<MarketTick>> getMarketState() {
+        return this.marketState;
+    }
+
     private TickResponse convertMarketTickToTickResponse(MarketTick marketTick) {
         return TickResponse.newBuilder()
                 .setOrigin(MarketTick.getOrigin())

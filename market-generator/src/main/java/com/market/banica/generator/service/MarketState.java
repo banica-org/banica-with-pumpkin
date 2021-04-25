@@ -5,6 +5,8 @@ import com.market.banica.generator.model.MarketTick;
 import com.market.banica.generator.util.PersistScheduler;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public interface MarketState {
 
@@ -18,4 +20,5 @@ public interface MarketState {
 
     void addGoodToState(String itemName, double itemPrice, long itemQuantity, long timestamp);
 
+    Map<String, Set<MarketTick>> getMarketState();
 }

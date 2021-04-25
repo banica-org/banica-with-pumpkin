@@ -20,7 +20,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @Service
@@ -38,6 +40,35 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
     public MarketService(SubscriptionManager subscriptionManager, MarketState marketState) {
         this.subscriptionManager = subscriptionManager;
         this.marketState = marketState;
+        addDummyData();
+    }
+
+    private void addDummyData() {
+        Map<String, Set<MarketTick>> marketState = this.marketState.getMarketState();
+        long millis = System.currentTimeMillis();
+//        TreeSet<MarketTick> eggTicks = new TreeSet<>();
+//        marketState.put("eggs", eggTicks);
+
+        TreeSet<MarketTick> waterTicks = new TreeSet<>();
+        waterTicks.add(new MarketTick("waterTicks", 5, 5.0, millis));
+        marketState.put("water", waterTicks);
+
+        TreeSet<MarketTick> crustTicks = new TreeSet<>();
+        crustTicks.add(new MarketTick("crusts", 500, 1.0, millis));
+        marketState.put("crusts", crustTicks);
+
+        TreeSet<MarketTick> banicaTicks = new TreeSet<>();
+        banicaTicks.add(new MarketTick("banica", 2, 1.0, millis));
+        banicaTicks.add(new MarketTick("banica", 2, 1.0, millis + 1));
+        banicaTicks.add(new MarketTick("banica", 3, 1.0, millis + 2));
+        marketState.put("banica", banicaTicks);
+//        marketState.addGoodToState("eggs", 5.0, 400, millis);
+//        this.marketState.addGoodToState("waterTicks", 5.0, 400, millis);
+//        eggTicks.add(new MarketTick("eggs", 20, 5.0, millis));
+        this.marketState.addGoodToState("tomatoes", 5.0, 70, millis);
+        this.marketState.addGoodToState("milk", 5.0, 3, millis);
+        this.marketState.addGoodToState("pumpkin", 5.0, 400, millis);
+        this.marketState.addGoodToState("sugar", 5.0, 60, millis);
     }
 
     @Override
