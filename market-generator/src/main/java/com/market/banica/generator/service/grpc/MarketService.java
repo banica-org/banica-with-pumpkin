@@ -54,7 +54,7 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
         marketState.put("water", waterTicks);
 
         TreeSet<MarketTick> crustTicks = new TreeSet<>();
-        crustTicks.add(new MarketTick("crusts", 500, 1.0, millis));
+        crustTicks.add(new MarketTick("crusts", 20, 1.0, millis));
         marketState.put("crusts", crustTicks);
 
         TreeSet<MarketTick> banicaTicks = new TreeSet<>();

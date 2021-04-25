@@ -9,12 +9,14 @@ import com.market.banica.calculator.dto.ProductSpecification;
 import com.market.banica.calculator.service.contract.CalculatorService;
 import com.market.banica.calculator.service.contract.TransactionService;
 import com.market.banica.calculator.service.grpc.AuroraClientSideService;
+import com.market.banica.common.exception.ProductNotAvailableException;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,13 +36,15 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     public List<ProductDto> buyProduct(String clientId, String itemName, long quantity) {
-        List<ProductDto> purchaseProducts = getPurchaseProducts(clientId, itemName, quantity);
+        List<ProductDto> purchaseProducts = null;
+        try {
+            purchaseProducts = getPurchaseProducts(clientId, itemName, quantity);
+        } catch (ProductNotAvailableException e) {
+            e.printStackTrace();
+        }
         List<ProductDto> collect = purchaseProducts.stream().filter(productDto -> !productDto.getProductSpecifications().isEmpty()).collect(Collectors.toList());
 
         List<ItemDto> pendingItems = new ArrayList<>();
-
-        int productsSpecificationCounter = getProductsSpecificationCounter(collect);
-        AtomicInteger successfulBuyResponseCounter = new AtomicInteger();
 
         boolean areAvailable = true;
         for (int i = 0; i < collect.size() && areAvailable; i++) {
@@ -62,12 +66,12 @@ public class TransactionServiceImpl implements TransactionService {
                 pendingItems.add(new ItemDto(productName, productPrice, productOrigin.toString(), productQuantity, buySellProductResponse.getTimestamp()));
             }
         }
-
         if (!areAvailable) {
             returnPendingProducts(pendingItems);
-        } else {
-            buyPendingProducts(pendingItems);
+            return Collections.emptyList();
         }
+
+        buyPendingProducts(pendingItems);
         return purchaseProducts;
 
     }
@@ -90,7 +94,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     }
 
-    private List<ProductDto> getPurchaseProducts(String clientId, String itemName, long quantity) {
+    private List<ProductDto> getPurchaseProducts(String clientId, String itemName, long quantity) throws ProductNotAvailableException {
         return new ArrayList<>(calculatorService.getProduct(clientId, itemName, quantity));
     }
 }

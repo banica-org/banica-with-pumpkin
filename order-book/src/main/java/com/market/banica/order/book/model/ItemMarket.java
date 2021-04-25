@@ -98,7 +98,7 @@ public class ItemMarket {
         extracted("banica", 7.0, 7, Origin.EUROPE);
 //        extracted("crusts", 1.0, 500, Origin.EUROPE);
         extracted("crusts", 1.0, 20, Origin.EUROPE);
-//        extracted("eggs", 1.0, 20, Origin.EUROPE);
+        extracted("eggs", 1.0, 20, Origin.EUROPE);
         extracted("eggs", 1.0, 500, Origin.EUROPE);
 
 
