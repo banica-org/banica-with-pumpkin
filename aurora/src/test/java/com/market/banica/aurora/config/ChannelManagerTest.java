@@ -44,7 +44,7 @@ class ChannelManagerTest {
         channelProperty.setHost(HOST);
         channelProperty.setPort(PORT);
     }
-    
+
     @Test
     void getAllChannelsContainingPrefixAsteriskReturnsAllChannels() {
         //Arrange
