@@ -14,7 +14,10 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -22,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class AuroraClientTest {
+
     private static final String EGGS_ITEM_NAME = "eggs";
     private static final String RICE_ITEM_NAME = "rice";
     private static final String MEAT_ITEM_NAME = "meat";
@@ -45,7 +49,7 @@ public class AuroraClientTest {
     private final AuroraClient auroraClient = new AuroraClient(itemMarket, DEFAULT_HOST, DEFAULT_PORT);
 
     private final Map<String, TreeSet<Item>> allItems = new ConcurrentHashMap<>();
-    private final Map<String, Context.CancellableContext> cancellableStubs = new ConcurrentHashMap<>();
+    private final Map<String, Set<Context.CancellableContext>> cancellableStubs = new ConcurrentHashMap<>();
 
     @Before
     public void setUp() {
@@ -75,7 +79,9 @@ public class AuroraClientTest {
     @Test(expected = TrackingException.class)
     public void startSubscriptionWithExistingItemsThrowsTrackingException() throws TrackingException {
         //Arrange
-        this.cancellableStubs.put(MEAT_ITEM_NAME, Context.current().withCancellation());
+        this.cancellableStubs.put(MEAT_ITEM_NAME,
+                Collections.synchronizedSet(new HashSet<>(Collections
+                        .singletonList(Context.current().withCancellation()))));
 
         //Act
         this.auroraClient.startSubscription(MEAT_ITEM_NAME, CLIENT);
@@ -84,7 +90,9 @@ public class AuroraClientTest {
     @Test
     public void stopSubscriptionRemovesCancellableContextAndProductFromItemMarketWithSuccess() throws TrackingException {
         //Arrange
-        this.cancellableStubs.put(RICE_ITEM_NAME, Context.current().withCancellation());
+        this.cancellableStubs.put(RICE_ITEM_NAME,
+                Collections.synchronizedSet(new HashSet<>(Collections
+                        .singletonList(Context.current().withCancellation()))));
 
         //Act
         this.auroraClient.stopSubscription(RICE_ITEM_NAME, CLIENT);
@@ -121,4 +129,5 @@ public class AuroraClientTest {
         items.add(new Item(3.2, 2, Origin.EUROPE));
         return items;
     }
+
 }

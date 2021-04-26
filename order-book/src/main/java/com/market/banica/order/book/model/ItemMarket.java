@@ -3,7 +3,6 @@ package com.market.banica.order.book.model;
 import com.aurora.Aurora;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.market.TickResponse;
-
 import com.market.banica.common.exception.IncorrectResponseException;
 import com.market.banica.common.validator.DataValidator;
 import com.orderbook.OrderBookLayer;
@@ -57,16 +56,12 @@ public class ItemMarket {
 
     public void updateItem(Aurora.AuroraResponse response) {
 
-        if (!response.getMessage().is(TickResponse.class)) {
-            throw new IncorrectResponseException("Response is not correct!");
-        }
-
         TickResponse tickResponse;
 
         try {
             tickResponse = response.getMessage().unpack(TickResponse.class);
         } catch (InvalidProtocolBufferException e) {
-            throw new IncorrectResponseException("Incorrect response! Response must be from IncorrectResponseException type.");
+            throw new IncorrectResponseException("Incorrect response! Response must be from TickResponse type.");
         }
 
         String goodName = tickResponse.getGoodName();
