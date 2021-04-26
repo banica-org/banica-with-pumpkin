@@ -89,10 +89,10 @@ public class MarketStateImpl implements MarketState {
                     .map(this::convertMarketTickToTickResponse)
                     .collect(Collectors.toList());
 
-//            marketSnapshot.stream()
-//                    .filter(marketTick -> marketTick.getGood().equals(good))
-//                    .map(this::convertMarketTickToTickResponse)
-//                    .forEach(generatedTicks::add);
+         /* marketSnapshot.stream()
+                  .filter(marketTick -> marketTick.getGood().equals(good))
+                  .map(this::convertMarketTickToTickResponse)
+                  .forEach(generatedTicks::add);*/
 
             LOGGER.info("Successfully generated market ticks for {} .", good);
             return generatedTicks;
@@ -125,7 +125,7 @@ public class MarketStateImpl implements MarketState {
                         + " and quantity " + itemQuantity + ".");
             }
 
-            long availableQuantity = 0;
+            long availableQuantity;
             MarketTick desiredProduct = null;
             long leftQuantity = itemQuantity;
 
@@ -152,9 +152,6 @@ public class MarketStateImpl implements MarketState {
                 if (tick.getQuantity() <= 0) {
                     productInfo.remove(tick);
                 }
-//                if (productInfo.size() == 0) {
-//                    marketState.remove(itemName);
-//                }
             }
             publishUpdate(itemName, -itemQuantity, itemPrice);
             return desiredProduct;

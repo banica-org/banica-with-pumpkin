@@ -1,7 +1,6 @@
 package com.market.banica.calculator.service;
 
 import com.market.AvailabilityResponse;
-import com.market.BuySellProductResponse;
 import com.market.Origin;
 import com.market.banica.calculator.dto.ItemDto;
 import com.market.banica.calculator.dto.ProductDto;
@@ -17,38 +16,30 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor(onConstructor = @__(@Autowired))
 public class TransactionServiceImpl implements TransactionService {
 
-    public static final String AVAILABLE_BUY_RESPONSE_MESSAGE = "Available";
-    public static final String UNAVAILABLE_BUY_RESPONSE_MESSAGE = "Unavailable";
-
     private final CalculatorService calculatorService;
     private final AuroraClientSideService auroraClientSideService;
 
-
     @Override
-    public List<ProductDto> buyProduct(String clientId, String itemName, long quantity) {
-        List<ProductDto> purchaseProducts = null;
-        try {
-            purchaseProducts = getPurchaseProducts(clientId, itemName, quantity);
-        } catch (ProductNotAvailableException e) {
-            e.printStackTrace();
-        }
-        List<ProductDto> collect = purchaseProducts.stream().filter(productDto -> !productDto.getProductSpecifications().isEmpty()).collect(Collectors.toList());
+    public List<ProductDto> buyProduct(String clientId, String itemName, long quantity) throws ProductNotAvailableException {
+        List<ProductDto> purchaseProducts = getPurchaseProducts(clientId, itemName, quantity);
+
+        List<ProductDto> notCompoundProducts = getNotCompoundProducts(purchaseProducts);
 
         List<ItemDto> pendingItems = new ArrayList<>();
 
         boolean areAvailable = true;
-        for (int i = 0; i < collect.size() && areAvailable; i++) {
-            ProductDto purchaseProduct = collect.get(i);
+
+        for (ProductDto purchaseProduct : notCompoundProducts) {
+            if (!areAvailable) {
+                break;
+            }
             String productName = purchaseProduct.getItemName();
 
             for (ProductSpecification productSpecification : purchaseProduct.getProductSpecifications()) {
@@ -57,22 +48,16 @@ public class TransactionServiceImpl implements TransactionService {
                 Long productQuantity = productSpecification.getQuantity();
                 Origin productOrigin = Origin.valueOf(productSpecification.getLocation());
 
-                AvailabilityResponse buySellProductResponse = auroraClientSideService
-                        .checkAvailability(productName, productPrice.doubleValue(), productQuantity, productOrigin);
-//              // .setItemName(itemName)
-//                .setItemQuantity(quantity)
-//                .setItemPrice(price)
-//                .setOrigin(origin)
-//                .build();
-                //request -> availability/itemName/quantity/price/origin
+                AvailabilityResponse availabilityResponse = auroraClientSideService.checkAvailability(productName, productPrice.doubleValue(), productQuantity, productOrigin);
 
-                if (!buySellProductResponse.getIsAvailable()) {
+                if (!availabilityResponse.getIsAvailable()) {
                     areAvailable = false;
                     break;
                 }
-                pendingItems.add(new ItemDto(productName, productPrice, productOrigin.toString(), productQuantity, buySellProductResponse.getTimestamp()));
+                pendingItems.add(new ItemDto(productName, productPrice, productOrigin.toString(), productQuantity, availabilityResponse.getTimestamp()));
             }
         }
+
         if (!areAvailable) {
             returnPendingProducts(pendingItems);
             return Collections.emptyList();
@@ -83,25 +68,21 @@ public class TransactionServiceImpl implements TransactionService {
 
     }
 
-    private void buyPendingProducts(List<ItemDto> pendingItems) {
-        pendingItems.forEach(item -> auroraClientSideService.buyProduct(item.getName(), item.getPrice().doubleValue(),
-                item.getQuantity(), item.getLocation(), item.getTimeStamp()));
+    private List<ProductDto> getPurchaseProducts(String clientId, String itemName, long quantity) throws ProductNotAvailableException {
+        return new ArrayList<>(calculatorService.getProduct(clientId, itemName, quantity));
+    }
+
+    private List<ProductDto> getNotCompoundProducts(List<ProductDto> purchaseProducts) {
+        return purchaseProducts.stream().filter(productDto -> !productDto.getProductSpecifications().isEmpty()).collect(Collectors.toList());
     }
 
     private void returnPendingProducts(List<ItemDto> pendingItems) {
-        pendingItems.forEach(item -> auroraClientSideService.sellProduct(item.getName(), item.getPrice().doubleValue(),
+        pendingItems.forEach(item -> auroraClientSideService.returnPendingProductInMarket(item.getName(), item.getPrice().doubleValue(),
                 item.getQuantity(), item.getLocation(), item.getTimeStamp()));
     }
 
-    private int getProductsSpecificationCounter(List<ProductDto> purchaseProducts) {
-        return Math.toIntExact(purchaseProducts
-                .stream()
-                .mapToLong(productDto -> productDto.getProductSpecifications().size())
-                .count());
-
-    }
-
-    private List<ProductDto> getPurchaseProducts(String clientId, String itemName, long quantity) throws ProductNotAvailableException {
-        return new ArrayList<>(calculatorService.getProduct(clientId, itemName, quantity));
+    private void buyPendingProducts(List<ItemDto> pendingItems) {
+        pendingItems.forEach(item -> auroraClientSideService.buyProductFromMarket(item.getName(), item.getPrice().doubleValue(),
+                item.getQuantity(), item.getLocation(), item.getTimeStamp()));
     }
 }

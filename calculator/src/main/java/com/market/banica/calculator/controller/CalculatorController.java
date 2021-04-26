@@ -44,7 +44,7 @@ public class CalculatorController {
     @GetMapping("/buy/{clientId}/{itemName}/{quantity}")
     public List<ProductDto> buyProduct(@PathVariable("clientId") @NotBlank String clientId,
                                        @PathVariable("itemName") @NotBlank String itemName,
-                                       @PathVariable("quantity") @Min(1) long quantity) {
+                                       @PathVariable("quantity") @Min(1) long quantity) throws ProductNotAvailableException {
         LOGGER.info("GET /calculator called");
 
         List<ProductDto> productDtos = transactionService.buyProduct(clientId, itemName, quantity);

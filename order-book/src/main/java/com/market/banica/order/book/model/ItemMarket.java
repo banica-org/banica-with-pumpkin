@@ -53,8 +53,7 @@ public class ItemMarket {
         this.productsQuantity = new ConcurrentHashMap<>();
         this.subscribedItems = new HashSet<>();
         FILE_PATH = fileName;
-        addDummyData();
-        print();
+
     }
 
     public Optional<Set<Item>> getItemSetByName(String itemName) {
@@ -66,22 +65,9 @@ public class ItemMarket {
     }
 
     public void addTrackedItem(String itemName) {
-//        this.allItems.put(itemName, new TreeSet<>());
-        this.allItems.putIfAbsent(itemName, new TreeSet<>());
-        this.productsQuantity.putIfAbsent(itemName, 0L);
+       this.allItems.put(itemName, new TreeSet<>());
     }
 
-    private void print() {
-        System.out.println("Before");
-//        for (Map.Entry<String, Long> entry : productsQuantity.entrySet()) {
-//            System.out.println(entry);
-//        }
-        allItems.forEach((k, v) -> {
-//            System.out.println(k);
-            v.forEach(val -> System.out.printf("%s -> %s%n", k, val));
-        });
-
-    }
 
     @ManagedOperation
     public void printBeforeDestroy() {
@@ -93,28 +79,6 @@ public class ItemMarket {
 
     public void removeUntrackedItem(String itemName) {
         this.allItems.remove(itemName);
-    }
-
-    private void addDummyData() {
-        //        extracted("banica", 1.0, 7, Origin.EUROPE);
-        extracted("banica", 7.0, 7, Origin.EUROPE);
-//        extracted("crusts", 1.0, 500, Origin.EUROPE);
-        extracted("crusts", 1.0, 20, Origin.EUROPE);
-        extracted("crusts", 2.0, 20, Origin.EUROPE);
-        extracted("eggs", 1.0, 20, Origin.EUROPE);
-        extracted("eggs", 2.0, 20, Origin.EUROPE);
-//        extracted("eggs", 1.0, 500, Origin.EUROPE);
-
-
-        extracted("cheese", 9999.9, 5, Origin.EUROPE);
-//        extracted("eggs", 5.0, 20, Origin.EUROPE);
-//        extracted("eggs", 5.0, 8, Origin.EUROPE);
-//        extracted("eggs", 5.0, 8, Origin.AMERICA);
-        extracted("water", 5.0, 400, Origin.EUROPE);
-        extracted("tomatoes", 5.0, 70, Origin.EUROPE);
-        extracted("milk", 5.0, 3, Origin.EUROPE);
-        extracted("pumpkin", 5.0, 400, Origin.EUROPE);
-        extracted("sugar", 5.0, 60, Origin.EUROPE);
     }
 
     private void extracted(String product, double price, long quantity, Origin origin) {
@@ -157,15 +121,13 @@ public class ItemMarket {
 
             this.productsQuantity.merge(tickResponse.getGoodName(), tickResponse.getQuantity(), Long::sum);
 
-//        LOGGER.info("Products data updated!");
+
             if (itemSet.contains(item)) {
                 Item presentItem = itemSet.stream().filter(currentItem -> currentItem.compareTo(item) == 0).findFirst().get();
                 presentItem.setQuantity(presentItem.getQuantity() + item.getQuantity());
-                print();
                 return;
             }
             itemSet.add(item);
-            print();
         } finally {
             lock.writeLock().unlock();
         }
@@ -173,7 +135,7 @@ public class ItemMarket {
 
     public List<OrderBookLayer> getRequestedItem(String itemName, long quantity) {
 
-//        LOGGER.info("Getting requested item: {} with quantity: {}", itemName, quantity);
+       LOGGER.info("Getting requested item: {} with quantity: {}", itemName, quantity);
         TreeSet<Item> items = this.allItems.get(itemName);
 
         if (items == null || this.productsQuantity.get(itemName) < quantity) {

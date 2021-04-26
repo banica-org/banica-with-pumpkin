@@ -34,7 +34,7 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
 
     private final MarketState marketState;
 
-    private final Map<String, Map<Double, MarketTick>> waitingOrders = new HashMap<>();
+    private final Map<String, Map<Double, MarketTick>> pendingOrders = new HashMap<>();
 
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
@@ -42,7 +42,7 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
     public MarketService(SubscriptionManager subscriptionManager, MarketState marketState) {
         this.subscriptionManager = subscriptionManager;
         this.marketState = marketState;
-        addDummyData();
+        //  addDummyData();
     }
 
     @ManagedOperation
@@ -88,55 +88,62 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
 
     @Override
     public void subscribeForItem(MarketDataRequest request, StreamObserver<TickResponse> responseObserver) {
-//        boolean hasSuccessfulBootstrap = bootstrapGeneratedTicks(request, responseObserver);
-//        if (hasSuccessfulBootstrap) {
-        subscriptionManager.subscribe(request, responseObserver);
-//        }
+        boolean hasSuccessfulBootstrap = bootstrapGeneratedTicks(request, responseObserver);
+        if (hasSuccessfulBootstrap) {
+            subscriptionManager.subscribe(request, responseObserver);
+        }
     }
 
     @Override
-    public void buyProduct(ProductBuySellRequest
-                                   request, StreamObserver<BuySellProductResponse> responseObserver) {
+    public void buyProduct(ProductBuySellRequest request, StreamObserver<BuySellProductResponse> responseObserver) {
+
+        cleanPendingOrdersCollection(request);
+
+        responseObserver.onNext(BuySellProductResponse
+                .newBuilder()
+                .setMessage(String.format("Item with name %s was successfully bought from %s market.", request.getItemName(), request.getMarketName()))
+                .build());
+        responseObserver.onCompleted();
+
+    }
+
+    @Override
+    public void returnPendingProduct(ProductBuySellRequest request, StreamObserver<BuySellProductResponse> responseObserver) {
+
+        cleanPendingOrdersCollection(request);
+
+        marketState.addGoodToState(request.getItemName(), request.getItemPrice(), request.getItemQuantity(), request.getTimestamp());
+
+        responseObserver.onNext(BuySellProductResponse
+                .newBuilder()
+                .setMessage(String.format("Item with name %s was successfully returned to market", request.getItemName()))
+                .build());
+        responseObserver.onCompleted();
+    }
+
+    private void cleanPendingOrdersCollection(ProductBuySellRequest request) {
         try {
             lock.writeLock().lock();
-            Map<Double, MarketTick> productInfo = waitingOrders.get(request.getItemName());
-            if (productInfo.size() == 1) {
-                waitingOrders.remove(request.getItemName());
+            MarketTick marketTick = pendingOrders.get(request.getItemName()).get(request.getItemPrice());
+
+            if (marketTick.getQuantity() > request.getItemQuantity()) {
+                long newMarketTickQuantity = marketTick.getQuantity() - request.getItemQuantity();
+                MarketTick newMarketTick = new MarketTick(marketTick.getGood(), newMarketTickQuantity, marketTick.getPrice(), marketTick.getTimestamp());
+                pendingOrders.get(request.getItemName()).put(request.getItemPrice(), newMarketTick);
             } else {
-                long quantity = productInfo.get(request.getItemPrice()).getQuantity();
-                if (quantity == request.getItemQuantity()) {
-                    productInfo.remove(request.getItemPrice());
-                } else {
-                    productInfo.put(request.getItemPrice(),
-                            new MarketTick(request.getItemName(), quantity - request.getItemQuantity(), request.getItemPrice(), request.getTimestamp()));
-                }
+                pendingOrders.get(request.getItemName()).remove(request.getItemPrice());
             }
 
-            responseObserver.onNext(BuySellProductResponse
-                    .newBuilder()
-                    .setMessage("Product " + request.getItemName() + " bought")
-                    .build());
-            responseObserver.onCompleted();
+            if (pendingOrders.get(request.getItemName()).isEmpty()) {
+                pendingOrders.remove(request.getItemName());
+            }
         } finally {
             lock.writeLock().unlock();
         }
     }
 
     @Override
-    public void sellProduct(ProductBuySellRequest
-                                    request, StreamObserver<BuySellProductResponse> responseObserver) {
-        marketState.addGoodToState(request.getItemName(), request.getItemPrice(), request.getItemQuantity(), request.getTimestamp());
-        responseObserver
-                .onNext(BuySellProductResponse
-                        .newBuilder()
-                        .setMessage("Sold " + request.getItemName() + " successfully.")
-                        .build());
-        responseObserver.onCompleted();
-    }
-
-    @Override
-    public void checkAvailability(ProductBuySellRequest
-                                          request, StreamObserver<AvailabilityResponse> responseObserver) {
+    public void checkAvailability(ProductBuySellRequest request, StreamObserver<AvailabilityResponse> responseObserver) {
         boolean isAvailable = false;
         MarketTick marketTick = new MarketTick();
         try {
@@ -158,13 +165,13 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
     }
 
     private void addItemToPending(ProductBuySellRequest request, long timestamp) {
-        Map<Double, MarketTick> pendingProductInfo = waitingOrders.get(request.getItemName());
+        Map<Double, MarketTick> pendingProductInfo = pendingOrders.get(request.getItemName());
         MarketTick tick;
         if (pendingProductInfo == null) {
             pendingProductInfo = new TreeMap<>();
             tick = new MarketTick(request.getItemName(), request.getItemQuantity(), request.getItemPrice(), timestamp);
             pendingProductInfo.put(request.getItemPrice(), tick);
-            waitingOrders.put(request.getItemName(), pendingProductInfo);
+            pendingOrders.put(request.getItemName(), pendingProductInfo);
         } else {
             MarketTick currentMarketTick = pendingProductInfo.get(request.getItemPrice());
             tick = new MarketTick(request.getItemName(), currentMarketTick.getQuantity() + request.getItemQuantity(), request.getItemPrice(), timestamp);

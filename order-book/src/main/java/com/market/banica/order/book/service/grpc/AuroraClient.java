@@ -99,7 +99,7 @@ public class AuroraClient {
         return AuroraServiceGrpc.newStub(managedChannel);
     }
 
-    @PostConstruct
+   /* @PostConstruct
     private void subscribeOnCreation() {
         Set<String> subscribedItems = this.itemMarket.getSubscribedItems();
         for (String itemName : subscribedItems) {
@@ -109,7 +109,7 @@ public class AuroraClient {
                 LOGGER.error(e.getMessage());
             }
         }
-    }
+    }*/
 
     @PreDestroy
     private void stop() throws InterruptedException {

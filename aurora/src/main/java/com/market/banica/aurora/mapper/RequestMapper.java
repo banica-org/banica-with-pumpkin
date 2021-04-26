@@ -81,32 +81,40 @@ public class RequestMapper {
     }
 
     private Aurora.AuroraResponse renderMarketMapping(Aurora.AuroraRequest incomingRequest, ManagedChannel channelByKey) {
-        // available -> market-europe/availability/itemName/price/quantity/origin
+        LOGGER.info("Mapping messages for market.");
         String[] topicSplit = incomingRequest.getTopic().split(SPLIT_SLASH_REGEX);
+
         MarketServiceGrpc.MarketServiceBlockingStub marketStub = stubManager.getMarketBlockingStub(channelByKey);
 
-        ProductBuySellRequest.Builder request = ProductBuySellRequest.newBuilder()
-                .setItemName(topicSplit[2])
-                .setItemPrice(Double.parseDouble(topicSplit[3]))
-                .setItemQuantity(Long.parseLong(topicSplit[4]))
-                .setMarketName(topicSplit[5]);
+        String itemName = topicSplit[2];
+        double itemPrice = Double.parseDouble(topicSplit[3]);
+        long itemQuantity = Long.parseLong(topicSplit[4]);
+        String marketName = topicSplit[5];
 
-        if (topicSplit.length == 6 && topicSplit[1].equals("availability")) {
+        ProductBuySellRequest.Builder request = ProductBuySellRequest.newBuilder()
+                .setItemName(itemName)
+                .setItemPrice(itemPrice)
+                .setItemQuantity(itemQuantity)
+                .setMarketName(marketName);
+
+        String requestPrefix = topicSplit[1];
+
+        if (topicSplit.length == 6 && requestPrefix.equals("availability")) {
             return Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(marketStub.checkAvailability(request.build()))).build();
         }
-        request.setTimestamp(Long.parseLong(topicSplit[6]));
-        if (topicSplit.length == 7 && topicSplit[1].equals("return")) {
 
-            // return -> market-europe/return/itemName/price/quantity/origin/timestamp
-            return Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(marketStub.sellProduct(request.build()))).build();
+        long timeStamp = Long.parseLong(topicSplit[6]);
 
+        request.setTimestamp(timeStamp);
+
+        if (topicSplit.length == 7 && requestPrefix.equals("return")) {
+            return Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(marketStub.returnPendingProduct(request.build()))).build();
         }
-        if (topicSplit.length == 7 && topicSplit[1].equals("buy")) {
 
-            // buy -> market-europe/buy/itemName/price/quantity/origin/timestamp
+        if (topicSplit.length == 7 && requestPrefix.equals("buy")) {
             return Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(marketStub.buyProduct(request.build()))).build();
         }
-        return null;
+        throw new IllegalArgumentException("Client requested an unsupported message from market. Message is: " + incomingRequest.getTopic());
     }
 
     private Aurora.AuroraResponse renderAuroraMapping(Aurora.AuroraRequest incomingRequest, ManagedChannel channelByKey) {
