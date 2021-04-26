@@ -42,7 +42,7 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
     public MarketService(SubscriptionManager subscriptionManager, MarketState marketState) {
         this.subscriptionManager = subscriptionManager;
         this.marketState = marketState;
-        addDummyData();
+//        addDummyData();
     }
 
     @ManagedOperation
@@ -88,14 +88,15 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
 
     @Override
     public void subscribeForItem(MarketDataRequest request, StreamObserver<TickResponse> responseObserver) {
-//        boolean hasSuccessfulBootstrap = bootstrapGeneratedTicks(request, responseObserver);
-//        if (hasSuccessfulBootstrap) {
-        subscriptionManager.subscribe(request, responseObserver);
-//        }
+        boolean hasSuccessfulBootstrap = bootstrapGeneratedTicks(request, responseObserver);
+        if (hasSuccessfulBootstrap) {
+            subscriptionManager.subscribe(request, responseObserver);
+        }
     }
 
     @Override
-    public void buyProduct(ProductBuySellRequest request, StreamObserver<BuySellProductResponse> responseObserver) {
+    public void buyProduct(ProductBuySellRequest
+                                   request, StreamObserver<BuySellProductResponse> responseObserver) {
         try {
             lock.writeLock().lock();
             Map<Double, MarketTick> productInfo = waitingOrders.get(request.getItemName());
@@ -122,7 +123,8 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
     }
 
     @Override
-    public void sellProduct(ProductBuySellRequest request, StreamObserver<BuySellProductResponse> responseObserver) {
+    public void sellProduct(ProductBuySellRequest
+                                    request, StreamObserver<BuySellProductResponse> responseObserver) {
         marketState.addGoodToState(request.getItemName(), request.getItemPrice(), request.getItemQuantity(), request.getTimestamp());
         responseObserver
                 .onNext(BuySellProductResponse
@@ -133,7 +135,8 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
     }
 
     @Override
-    public void checkAvailability(ProductBuySellRequest request, StreamObserver<AvailabilityResponse> responseObserver) {
+    public void checkAvailability(ProductBuySellRequest
+                                          request, StreamObserver<AvailabilityResponse> responseObserver) {
         boolean isAvailable = false;
         MarketTick marketTick = new MarketTick();
         try {
