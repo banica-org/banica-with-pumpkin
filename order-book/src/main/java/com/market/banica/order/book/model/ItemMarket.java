@@ -3,7 +3,9 @@ package com.market.banica.order.book.model;
 import com.aurora.Aurora;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.market.TickResponse;
-import com.market.banica.order.book.exception.IncorrectResponseException;
+
+import com.market.banica.common.exception.IncorrectResponseException;
+import com.market.banica.common.validator.DataValidator;
 import com.orderbook.OrderBookLayer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -46,6 +48,7 @@ public class ItemMarket {
 
     public void addTrackedItem(String itemName) {
         this.allItems.put(itemName, new TreeSet<>());
+        this.productsQuantity.putIfAbsent(itemName, 0L);
     }
 
     public void removeUntrackedItem(String itemName) {
@@ -63,17 +66,21 @@ public class ItemMarket {
         try {
             tickResponse = response.getMessage().unpack(TickResponse.class);
         } catch (InvalidProtocolBufferException e) {
-            throw new IncorrectResponseException("Response is not correct!");
+            throw new IncorrectResponseException("Incorrect response! Response must be from IncorrectResponseException type.");
         }
-        Set<Item> itemSet = this.allItems.get(tickResponse.getGoodName());
+
+        String goodName = tickResponse.getGoodName();
+        DataValidator.validateIncomingData(goodName);
+
+        Set<Item> itemSet = this.allItems.get(goodName);
         if (itemSet == null) {
             LOGGER.error("Item: {} is not being tracked and cannot be added to itemMarket!",
-                    tickResponse.getGoodName());
+                    goodName);
             return;
         }
         Item item = populateItem(tickResponse);
 
-        this.productsQuantity.merge(tickResponse.getGoodName(), tickResponse.getQuantity(), Long::sum);
+        this.productsQuantity.merge(goodName, tickResponse.getQuantity(), Long::sum);
 
         LOGGER.info("Products data updated!");
 
@@ -89,6 +96,9 @@ public class ItemMarket {
     public List<OrderBookLayer> getRequestedItem(String itemName, long quantity) {
 
         LOGGER.info("Getting requested item: {} with quantity: {}", itemName, quantity);
+
+        DataValidator.validateIncomingData(itemName);
+
         TreeSet<Item> items = this.allItems.get(itemName);
 
         if (items == null || this.productsQuantity.get(itemName) < quantity) {
@@ -98,7 +108,7 @@ public class ItemMarket {
 
         List<OrderBookLayer> layers;
         try {
-            lock.writeLock().lock();
+            lock.readLock().lock();
 
             layers = new ArrayList<>();
 
@@ -108,9 +118,8 @@ public class ItemMarket {
             while (itemLeft > 0) {
                 Item currentItem = iterator.next();
 
-                OrderBookLayer.Builder currentLayer = populateItemLayer(iterator, itemLeft, currentItem);
+                OrderBookLayer.Builder currentLayer = populateItemLayer(itemLeft, currentItem);
 
-                this.productsQuantity.put(itemName, this.productsQuantity.get(itemName) - currentLayer.getQuantity());
                 itemLeft -= currentLayer.getQuantity();
 
                 OrderBookLayer orderBookLayer = currentLayer
@@ -119,24 +128,21 @@ public class ItemMarket {
                 layers.add(orderBookLayer);
             }
         } finally {
-            lock.writeLock().unlock();
+            lock.readLock().unlock();
         }
         return layers;
     }
 
-    private OrderBookLayer.Builder populateItemLayer(Iterator<Item> iterator, long itemLeft, Item currentItem) {
+    private OrderBookLayer.Builder populateItemLayer(long itemLeft, Item currentItem) {
         OrderBookLayer.Builder currentLayer = OrderBookLayer.newBuilder()
                 .setPrice(currentItem.getPrice());
 
         if (currentItem.getQuantity() > itemLeft) {
 
             currentLayer.setQuantity(itemLeft);
-            currentItem.setQuantity(currentItem.getQuantity() - itemLeft);
-
-        } else if (currentItem.getQuantity() <= itemLeft) {
+        } else {
 
             currentLayer.setQuantity(currentItem.getQuantity());
-            iterator.remove();
         }
         return currentLayer;
     }

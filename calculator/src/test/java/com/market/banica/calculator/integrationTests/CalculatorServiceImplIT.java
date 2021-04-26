@@ -8,7 +8,7 @@ import com.google.gson.Gson;
 import com.market.Origin;
 import com.market.banica.calculator.data.contract.ProductBase;
 import com.market.banica.calculator.dto.ProductDto;
-import com.market.banica.calculator.exception.exceptions.ProductNotAvailableException;
+import com.market.banica.common.exception.ProductNotAvailableException;
 import com.market.banica.calculator.model.Product;
 import com.market.banica.calculator.service.CalculatorServiceImpl;
 import com.market.banica.calculator.service.contract.BackUpService;

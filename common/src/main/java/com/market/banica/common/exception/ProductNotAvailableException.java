@@ -1,4 +1,4 @@
-package com.market.banica.calculator.exception.exceptions;
+package com.market.banica.common.exception;
 
 public class ProductNotAvailableException extends Exception {
 
