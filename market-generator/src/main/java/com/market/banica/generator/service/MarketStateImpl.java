@@ -152,9 +152,9 @@ public class MarketStateImpl implements MarketState {
                 if (tick.getQuantity() <= 0) {
                     productInfo.remove(tick);
                 }
-                if (productInfo.size() == 0) {
-                    marketState.remove(itemName);
-                }
+//                if (productInfo.size() == 0) {
+//                    marketState.remove(itemName);
+//                }
             }
             publishUpdate(itemName, -itemQuantity, itemPrice);
             return desiredProduct;

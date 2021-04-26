@@ -8,6 +8,7 @@ import com.market.AvailabilityResponse;
 import com.market.Origin;
 import com.market.ProductBuyRequest;
 import com.market.ProductSellRequest;
+import com.market.TickResponse;
 import com.market.banica.common.exception.IncorrectResponseException;
 import com.orderbook.CancelSubscriptionResponse;
 import com.orderbook.InterestsResponse;
@@ -17,12 +18,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Locale;
+
 
 @Service
 public class AuroraClientSideService {
 
     private static final String ORDERBOOK_TOPIC_PREFIX = "orderbook/";
-
 
 
     private static final String CLIENT_ID = "calculator";
@@ -85,44 +87,80 @@ public class AuroraClientSideService {
 
         return blockingStub;
     }
+
     public AvailabilityResponse checkAvailability(String itemName, double price, long quantity, Origin origin) {
         System.out.println("In Calculator-AuroraService buyProduct() method");
-        ProductBuyRequest productBuyRequest = ProductBuyRequest.newBuilder()
-                .setItemName(itemName)
-                .setItemQuantity(quantity)
-                .setItemPrice(price)
-                .setOrigin(origin)
-                .build();
-        AvailabilityResponse availabilityResponse = getBlockingStub().checkAvailability(productBuyRequest);
+//        ProductBuyRequest productBuyRequest = ProductBuyRequest.newBuilder()
+//                .setItemName(itemName)
+//                .setItemPrice(price)
+//                .setItemQuantity(quantity)
+//                .setOrigin(origin)
+//                .build();
+// .                 setItemName(topicSplit[1])
+//        //                .setItemPrice(Double.parseDouble(topicSplit[2]))
+//        //                .setItemQuantity(Long.parseLong(topicSplit[3]))
+//        //                .setMarketName(topicSplit[4]);
+//        // available -> availability/itemName/price/quantity/origin
+//        AvailabilityResponse availabilityResponse = getBlockingStub().checkAvailability(productBuyRequest);
+        String originValue = origin.toString();
 
+        Aurora.AuroraRequest availabilityRequest = Aurora.AuroraRequest.newBuilder()
+                .setClientId(CLIENT_ID)
+                .setTopic(String.format("market-%s/availability/%s/%f/%d/%s", originValue.toLowerCase(Locale.ROOT), itemName, price, quantity, originValue))
+                .build();
+        Aurora.AuroraResponse availabilityResponse = getBlockingStub().request(availabilityRequest);
+        if (!availabilityResponse.getMessage().is(AvailabilityResponse.class)) {
+            throw new IncorrectResponseException("Response is not correct!");
+        }
+        AvailabilityResponse response;
+        try {
+            response = availabilityResponse.getMessage().unpack(AvailabilityResponse.class);
+        } catch (InvalidProtocolBufferException e) {
+            throw new IncorrectResponseException("Response is not correct!");
+        }
         System.out.println("In Calculator-AuroraService buyProduct() method response -> " + availabilityResponse.toString());
-        return availabilityResponse;
+        return response;
     }
 
     public void sellProduct(String itemName, double itemPrice, long itemQuantity, String itemOrigin, long itemTimestamp) {
-        ProductSellRequest sellRequest = ProductSellRequest.newBuilder()
-                .setItemName(itemName)
-                .setItemPrice(itemPrice)
-                .setItemQuantity(itemQuantity)
-                .setMarketName(itemOrigin)
-                .setTimestamp(itemTimestamp)
+//        ProductSellRequest sellRequest = ProductSellRequest.newBuilder()
+//                .setItemName(itemName)
+//                .setItemPrice(itemPrice)
+//                .setItemQuantity(itemQuantity)
+//                .setMarketName(itemOrigin)
+//                .setTimestamp(itemTimestamp)
+//                .build();
+//        getBlockingStub().sellProduct(sellRequest);
+
+        //return -> market-europe/return/itemName/price/quantity/origin/timestamp
+        String pattern = "market-%s/return/%s/%f/%d/%s/%d";
+        Aurora.AuroraRequest availabilityRequest = Aurora.AuroraRequest.newBuilder()
+                .setClientId(CLIENT_ID)
+                .setTopic(String.format(pattern, itemOrigin.toLowerCase(Locale.ROOT),
+                        itemName, itemPrice, itemQuantity, itemOrigin))
                 .build();
-        getBlockingStub().sellProduct(sellRequest);
+        getBlockingStub().request(availabilityRequest);
     }
 
     public void buyProduct(String itemName, double itemPrice, long itemQuantity, String itemOrigin, long itemTimestamp) {
-        // string itemName = 1;
-        //  int64 itemQuantity = 2;
-        //  double itemPrice = 3;
-        //  Origin origin = 4;
-        ProductBuyRequest buyRequest = ProductBuyRequest.newBuilder()
-                .setItemName(itemName)
-                .setItemQuantity(itemQuantity)
-                .setItemPrice(itemPrice)
-                .setOrigin(Origin.valueOf(itemOrigin))
-                .setTimestamp(itemTimestamp)
+//        ProductBuyRequest buyRequest = ProductBuyRequest.newBuilder()
+//                .setItemName(itemName)
+//                .setItemPrice(itemPrice)
+//                .setItemQuantity(itemQuantity)
+//                .setOrigin(Origin.valueOf(itemOrigin))
+//                .setTimestamp(itemTimestamp)
+//                .build();
+//        getBlockingStub().buyProduct(buyRequest);
+
+        // buy -> market-europe/buy/itemName/price/quantity/origin/timestamp
+
+        String pattern = "market-%s/buy/%s/%f/%d/%s/%d";
+        Aurora.AuroraRequest availabilityRequest = Aurora.AuroraRequest.newBuilder()
+                .setClientId(CLIENT_ID)
+                .setTopic(String.format(pattern, itemOrigin.toLowerCase(Locale.ROOT),
+                        itemName, itemPrice, itemQuantity, itemOrigin))
                 .build();
-        getBlockingStub().buyProduct(buyRequest);
+        getBlockingStub().request(availabilityRequest);
     }
 
     private Aurora.AuroraResponse getAuroraResponse(String message) {

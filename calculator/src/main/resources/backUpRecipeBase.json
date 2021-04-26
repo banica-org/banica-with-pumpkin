@@ -7,14 +7,14 @@
       "eggs": 1
     }
   },
-  "eggs": {
-    "productName": "eggs",
-    "unitOfMeasure": "PIECE",
-    "ingredients": {}
-  },
   "crusts": {
     "productName": "crusts",
     "unitOfMeasure": "GRAM",
+    "ingredients": {}
+  },
+  "eggs": {
+    "productName": "eggs",
+    "unitOfMeasure": "PIECE",
     "ingredients": {}
   }
 }

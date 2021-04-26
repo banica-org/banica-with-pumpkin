@@ -22,8 +22,5 @@ service AuroraService{
 
   rpc request (AuroraRequest) returns (AuroraResponse);
   rpc subscribe (AuroraRequest) returns (stream AuroraResponse);
-  rpc buyProduct (market.ProductBuyRequest) returns (market.BuySellProductResponse);
-  rpc sellProduct (market.ProductSellRequest) returns (market.BuySellProductResponse);
-  rpc checkAvailability (market.ProductBuyRequest) returns (market.AvailabilityResponse);
 
 }

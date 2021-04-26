@@ -59,6 +59,13 @@ public class TransactionServiceImpl implements TransactionService {
 
                 AvailabilityResponse buySellProductResponse = auroraClientSideService
                         .checkAvailability(productName, productPrice.doubleValue(), productQuantity, productOrigin);
+//              // .setItemName(itemName)
+//                .setItemQuantity(quantity)
+//                .setItemPrice(price)
+//                .setOrigin(origin)
+//                .build();
+                //request -> availability/itemName/quantity/price/origin
+
                 if (!buySellProductResponse.getIsAvailable()) {
                     areAvailable = false;
                     break;

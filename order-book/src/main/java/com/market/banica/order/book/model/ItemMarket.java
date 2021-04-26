@@ -5,10 +5,8 @@ import com.google.gson.Gson;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.market.Origin;
 import com.market.TickResponse;
-
 import com.market.banica.common.exception.IncorrectResponseException;
 import com.market.banica.common.util.ApplicationDirectoryUtil;
-import com.market.banica.common.validator.DataValidator;
 import com.orderbook.OrderBookLayer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -56,7 +54,7 @@ public class ItemMarket {
         this.subscribedItems = new HashSet<>();
         FILE_PATH = fileName;
         addDummyData();
-        print(productsQuantity);
+        print();
     }
 
     public Optional<Set<Item>> getItemSetByName(String itemName) {
@@ -73,11 +71,15 @@ public class ItemMarket {
         this.productsQuantity.putIfAbsent(itemName, 0L);
     }
 
-    private void print(Map<String, Long> productsQuantity) {
+    private void print() {
         System.out.println("Before");
-        for (Map.Entry<String, Long> entry : productsQuantity.entrySet()) {
-            System.out.println(entry);
-        }
+//        for (Map.Entry<String, Long> entry : productsQuantity.entrySet()) {
+//            System.out.println(entry);
+//        }
+        allItems.forEach((k, v) -> {
+//            System.out.println(k);
+            v.forEach(val -> System.out.printf("%s -> %s%n", k, val));
+        });
 
     }
 
@@ -98,8 +100,10 @@ public class ItemMarket {
         extracted("banica", 7.0, 7, Origin.EUROPE);
 //        extracted("crusts", 1.0, 500, Origin.EUROPE);
         extracted("crusts", 1.0, 20, Origin.EUROPE);
+        extracted("crusts", 2.0, 20, Origin.EUROPE);
         extracted("eggs", 1.0, 20, Origin.EUROPE);
-        extracted("eggs", 1.0, 500, Origin.EUROPE);
+        extracted("eggs", 2.0, 20, Origin.EUROPE);
+//        extracted("eggs", 1.0, 500, Origin.EUROPE);
 
 
         extracted("cheese", 9999.9, 5, Origin.EUROPE);
@@ -135,32 +139,36 @@ public class ItemMarket {
         }
 
         TickResponse tickResponse;
-
+        lock.writeLock().lock();
         try {
-            tickResponse = response.getMessage().unpack(TickResponse.class);
-        } catch (InvalidProtocolBufferException e) {
-            throw new IncorrectResponseException("Response is not correct!");
-        }
-        System.out.println("tick resp -> " + tickResponse.getGoodName() + " : " + tickResponse.getQuantity());
-        Set<Item> itemSet = this.allItems.get(tickResponse.getGoodName());
-        if (itemSet == null) {
-            LOGGER.error("Item: {} is not being tracked and cannot be added to itemMarket!",
-                    tickResponse.getGoodName());
-            return;
-        }
-        Item item = populateItem(tickResponse);
+            try {
+                tickResponse = response.getMessage().unpack(TickResponse.class);
+            } catch (InvalidProtocolBufferException e) {
+                throw new IncorrectResponseException("Response is not correct!");
+            }
+            System.out.println("tick resp -> " + tickResponse.getGoodName() + " : " + tickResponse.getQuantity());
+            Set<Item> itemSet = this.allItems.get(tickResponse.getGoodName());
+            if (itemSet == null) {
+                LOGGER.error("Item: {} is not being tracked and cannot be added to itemMarket!",
+                        tickResponse.getGoodName());
+                return;
+            }
+            Item item = populateItem(tickResponse);
 
-        this.productsQuantity.merge(tickResponse.getGoodName(), tickResponse.getQuantity(), Long::sum);
+            this.productsQuantity.merge(tickResponse.getGoodName(), tickResponse.getQuantity(), Long::sum);
 
 //        LOGGER.info("Products data updated!");
-        if (itemSet.contains(item)) {
-            Item presentItem = itemSet.stream().filter(currentItem -> currentItem.compareTo(item) == 0).findFirst().get();
-            presentItem.setQuantity(presentItem.getQuantity() + item.getQuantity());
-            printBeforeDestroy();
-            return;
+            if (itemSet.contains(item)) {
+                Item presentItem = itemSet.stream().filter(currentItem -> currentItem.compareTo(item) == 0).findFirst().get();
+                presentItem.setQuantity(presentItem.getQuantity() + item.getQuantity());
+                print();
+                return;
+            }
+            itemSet.add(item);
+            print();
+        } finally {
+            lock.writeLock().unlock();
         }
-        itemSet.add(item);
-        printBeforeDestroy();
     }
 
     public List<OrderBookLayer> getRequestedItem(String itemName, long quantity) {

@@ -31,4 +31,8 @@ public class StubManager {
         return MarketServiceGrpc.newStub(channel);
     }
 
+    public MarketServiceGrpc.MarketServiceBlockingStub getMarketBlockingStub(ManagedChannel channel){
+        return MarketServiceGrpc.newBlockingStub(channel);
+    }
+
 }

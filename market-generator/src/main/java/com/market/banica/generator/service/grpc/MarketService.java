@@ -6,8 +6,7 @@ import com.market.CatalogueRequest;
 import com.market.CatalogueResponse;
 import com.market.MarketDataRequest;
 import com.market.MarketServiceGrpc;
-import com.market.ProductBuyRequest;
-import com.market.ProductSellRequest;
+import com.market.ProductBuySellRequest;
 import com.market.TickResponse;
 import com.market.banica.generator.model.MarketTick;
 import com.market.banica.generator.service.MarketState;
@@ -16,6 +15,8 @@ import io.grpc.Status;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jmx.export.annotation.ManagedOperation;
+import org.springframework.jmx.export.annotation.ManagedResource;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -26,6 +27,7 @@ import java.util.TreeSet;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @Service
+@ManagedResource
 public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
 
     private final SubscriptionManager subscriptionManager;
@@ -43,18 +45,31 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
         addDummyData();
     }
 
+    @ManagedOperation
+    public void printState() {
+        this.marketState.getMarketState().entrySet().forEach(System.out::println);
+    }
+
     private void addDummyData() {
         Map<String, Set<MarketTick>> marketState = this.marketState.getMarketState();
         long millis = System.currentTimeMillis();
-//        TreeSet<MarketTick> eggTicks = new TreeSet<>();
-//        marketState.put("eggs", eggTicks);
+        TreeSet<MarketTick> eggTicks = new TreeSet<>();
+        eggTicks.add(new MarketTick("eggs", 20, 1.0, millis));
+        eggTicks.add(new MarketTick("eggs", 20, 2.0, millis));
+//        eggTicks.add(new MarketTick("eggs", 11, 1.0, millis));
+        marketState.put("eggs", eggTicks);
+
 
         TreeSet<MarketTick> waterTicks = new TreeSet<>();
         waterTicks.add(new MarketTick("waterTicks", 5, 5.0, millis));
         marketState.put("water", waterTicks);
 
         TreeSet<MarketTick> crustTicks = new TreeSet<>();
+        crustTicks.add(new MarketTick("crusts", 20, 2.0, millis));
         crustTicks.add(new MarketTick("crusts", 20, 1.0, millis));
+//        crustTicks.add(new MarketTick("crusts", 1, 1.0, millis));
+//        crustTicks.add(new MarketTick("crusts", 3, 1.0, millis + 1));
+//        crustTicks.add(new MarketTick("crusts", 7, 1.0, millis + 2));
         marketState.put("crusts", crustTicks);
 
         TreeSet<MarketTick> banicaTicks = new TreeSet<>();
@@ -80,7 +95,7 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
     }
 
     @Override
-    public void buyProduct(ProductBuyRequest request, StreamObserver<BuySellProductResponse> responseObserver) {
+    public void buyProduct(ProductBuySellRequest request, StreamObserver<BuySellProductResponse> responseObserver) {
         try {
             lock.writeLock().lock();
             Map<Double, MarketTick> productInfo = waitingOrders.get(request.getItemName());
@@ -107,7 +122,7 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
     }
 
     @Override
-    public void sellProduct(ProductSellRequest request, StreamObserver<BuySellProductResponse> responseObserver) {
+    public void sellProduct(ProductBuySellRequest request, StreamObserver<BuySellProductResponse> responseObserver) {
         marketState.addGoodToState(request.getItemName(), request.getItemPrice(), request.getItemQuantity(), request.getTimestamp());
         responseObserver
                 .onNext(BuySellProductResponse
@@ -118,7 +133,7 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
     }
 
     @Override
-    public void checkAvailability(ProductBuyRequest request, StreamObserver<AvailabilityResponse> responseObserver) {
+    public void checkAvailability(ProductBuySellRequest request, StreamObserver<AvailabilityResponse> responseObserver) {
         boolean isAvailable = false;
         MarketTick marketTick = new MarketTick();
         try {
@@ -133,13 +148,13 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
                 .setItemName(request.getItemName())
                 .setItemPrice(request.getItemPrice())
                 .setItemQuantity(request.getItemQuantity())
-                .setMarketName(request.getOrigin().toString())
+                .setMarketName(request.getMarketName())
                 .setTimestamp(marketTick.getTimestamp())
                 .build());
         responseObserver.onCompleted();
     }
 
-    private void addItemToPending(ProductBuyRequest request, long timestamp) {
+    private void addItemToPending(ProductBuySellRequest request, long timestamp) {
         Map<Double, MarketTick> pendingProductInfo = waitingOrders.get(request.getItemName());
         MarketTick tick;
         if (pendingProductInfo == null) {

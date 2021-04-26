@@ -4,6 +4,8 @@ package com.market.banica.aurora.mapper;
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
 import com.google.protobuf.Any;
+import com.market.MarketServiceGrpc;
+import com.market.ProductBuySellRequest;
 import com.market.banica.aurora.config.ChannelManager;
 import com.market.banica.aurora.config.StubManager;
 import com.orderbook.CancelSubscriptionRequest;
@@ -32,8 +34,8 @@ public class RequestMapper {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RequestMapper.class);
 
-    private  ChannelManager channelManager;
-    private  StubManager stubManager;
+    private ChannelManager channelManager;
+    private StubManager stubManager;
 
     public static final String SPLIT_SLASH_REGEX = "/+";
     public static final String SPLIT_EQUALS_REGEX = "=";
@@ -71,11 +73,41 @@ public class RequestMapper {
             return this.renderOrderbookMapping(incomingRequest, channelByKey.get());
         } else if (destinationOfMessage.contains(AURORA)) {
             return renderAuroraMapping(incomingRequest, channelByKey.get());
-        } else if (destinationOfMessage.contains(MARKET)){
+        } else if (destinationOfMessage.contains(MARKET)) {
+//            return renderMarketMapping(incomingRequest, channelByKey.get());
             throw new ServiceNotFoundException("Unimplemented publisher!");
         }
 
         throw new ServiceNotFoundException(BAD_PUBLISHER_REQUEST + ". Requested publisher is: " + destinationOfMessage);
+    }
+
+    private Aurora.AuroraResponse renderMarketMapping(Aurora.AuroraRequest incomingRequest, ManagedChannel channelByKey) {
+        // available -> market-europe/availability/itemName/price/quantity/origin
+        String[] topicSplit = incomingRequest.getTopic().split(SPLIT_SLASH_REGEX);
+        MarketServiceGrpc.MarketServiceBlockingStub marketStub = stubManager.getMarketBlockingStub(channelByKey);
+
+        ProductBuySellRequest.Builder request = ProductBuySellRequest.newBuilder()
+                .setItemName(topicSplit[2])
+                .setItemPrice(Double.parseDouble(topicSplit[3]))
+                .setItemQuantity(Long.parseLong(topicSplit[4]))
+                .setMarketName(topicSplit[5]);
+
+        if (topicSplit.length == 6 && topicSplit[1].equals("availability")) {
+            return Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(marketStub.checkAvailability(request.build()))).build();
+        }
+        request.setTimestamp(Long.parseLong(topicSplit[6]));
+        if (topicSplit.length == 7 && topicSplit[1].equals("return")) {
+
+            // return -> market-europe/return/itemName/price/quantity/origin/timestamp
+            return Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(marketStub.sellProduct(request.build()))).build();
+
+        }
+        if (topicSplit.length == 7 && topicSplit[1].equals("buy")) {
+
+            // buy -> market-europe/buy/itemName/price/quantity/origin/timestamp
+            return Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(marketStub.buyProduct(request.build()))).build();
+        }
+        return null;
     }
 
     private Aurora.AuroraResponse renderAuroraMapping(Aurora.AuroraRequest incomingRequest, ManagedChannel channelByKey) {
