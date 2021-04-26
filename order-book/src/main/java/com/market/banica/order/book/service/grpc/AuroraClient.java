@@ -112,6 +112,8 @@ public class AuroraClient {
             String marketDestination = reconnectionResponse.getDestination();
             String clientId = reconnectionResponse.getClientId();
 
+            itemMarket.zeroingMarketProductsFromMarket(marketDestination, itemName);
+
             final Aurora.AuroraRequest request = Aurora.AuroraRequest.newBuilder()
                     .setTopic(marketDestination + "/" + itemName)
                     .setClientId(clientId)

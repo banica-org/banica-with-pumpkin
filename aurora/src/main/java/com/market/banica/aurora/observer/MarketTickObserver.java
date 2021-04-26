@@ -47,7 +47,8 @@ public class MarketTickObserver implements StreamObserver<TickResponse> {
         LOGGER.warn("Unable to forward.");
         LOGGER.error(throwable.getMessage());
 
-        if (Status.fromThrowable(throwable).equals(Status.UNAVAILABLE)) {
+        if (Status.fromThrowable(throwable).getCode().equals(Status.Code.UNAVAILABLE)) {
+            LOGGER.warn("Market server: {} has suddenly became offline.", destinationOfMessages);
             synchronized (forwardResponse) {
                 forwardResponse.onNext(this.wrapReconnect(buildReconnect()));
             }
@@ -87,4 +88,5 @@ public class MarketTickObserver implements StreamObserver<TickResponse> {
                 .setMessage(Any.pack(reconnectionResponse))
                 .build();
     }
+
 }
