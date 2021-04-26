@@ -2,7 +2,6 @@ package com.market.banica.aurora.config;
 
 import com.market.banica.aurora.model.ChannelProperty;
 import com.market.banica.common.channel.ChannelRPCConfig;
-import io.grpc.ConnectivityState;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import lombok.NoArgsConstructor;
@@ -34,7 +33,7 @@ public class ChannelManager {
         LOGGER.debug("Getting channel with key {}", key);
         Optional<ManagedChannel> managedChannel = Optional.ofNullable(channels.get(key));
         if (!managedChannel.isPresent()) {
-            managedChannel = Optional.ofNullable(null);
+            managedChannel = Optional.empty();
         }
         return managedChannel;
     }
