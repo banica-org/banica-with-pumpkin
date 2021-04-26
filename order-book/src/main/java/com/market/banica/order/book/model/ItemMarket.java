@@ -66,7 +66,7 @@ public class ItemMarket {
         try {
             tickResponse = response.getMessage().unpack(TickResponse.class);
         } catch (InvalidProtocolBufferException e) {
-            throw new IncorrectResponseException("Incorrect response! Response must be from IncorrectResponseException type.");
+            throw new IncorrectResponseException("Incorrect response! Response must be from TickResponse type.");
         }
 
         String goodName = tickResponse.getGoodName();
