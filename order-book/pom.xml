@@ -95,6 +95,11 @@
             <artifactId>common</artifactId>
             <version>${common.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.esotericsoftware</groupId>
+            <artifactId>kryo</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

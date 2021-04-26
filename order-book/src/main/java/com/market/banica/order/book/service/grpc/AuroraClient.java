@@ -26,13 +26,15 @@ import java.util.concurrent.TimeUnit;
 @Service
 @Getter
 public class AuroraClient {
-    private final ItemMarket itemMarket;
-    private final ManagedChannel managedChannel;
-    private final Map<String, Context.CancellableContext> cancellableStubs;
+
+    private static final Logger LOGGER = LogManager.getLogger(AuroraClient.class);
 
     private static final int MAX_RETRY_ATTEMPTS = 1000;
     private static final String MARKET_PREFIX = "market/";
-    private static final Logger LOGGER = LogManager.getLogger(AuroraClient.class);
+
+    private final ItemMarket itemMarket;
+    private final ManagedChannel managedChannel;
+    private final Map<String, Context.CancellableContext> cancellableStubs;
 
     @Autowired
     AuroraClient(ItemMarket itemMarket,
