@@ -3,6 +3,8 @@ package com.market.banica.aurora.observer;
 import com.aurora.Aurora;
 import com.google.protobuf.Any;
 import com.market.TickResponse;
+import com.orderbook.ReconnectionResponse;
+import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,13 +18,18 @@ public class MarketTickObserver implements StreamObserver<TickResponse> {
     AtomicInteger openStreams;
 
     private final String client;
+    private final String destinationOfMessages;
+    private final String item;
 
     private final StreamObserver<Aurora.AuroraResponse> forwardResponse;
 
-    public MarketTickObserver(String client, StreamObserver<Aurora.AuroraResponse> forwardResponse,AtomicInteger openStreams) {
+    public MarketTickObserver(String client, StreamObserver<Aurora.AuroraResponse> forwardResponse, AtomicInteger openStreams,
+                              String destinationOfMessages, String item) {
         this.client = client;
         this.forwardResponse = forwardResponse;
         this.openStreams = openStreams;
+        this.destinationOfMessages = destinationOfMessages;
+        this.item = item;
     }
 
     @Override
@@ -30,7 +37,7 @@ public class MarketTickObserver implements StreamObserver<TickResponse> {
         LOGGER.debug("Forwarding response to client {}", client);
         Aurora.AuroraResponse response = this.wrapResponse(tickResponse);
 
-        synchronized (forwardResponse){
+        synchronized (forwardResponse) {
             forwardResponse.onNext(response);
         }
     }
@@ -40,10 +47,17 @@ public class MarketTickObserver implements StreamObserver<TickResponse> {
         LOGGER.warn("Unable to forward.");
         LOGGER.error(throwable.getMessage());
 
+        if (Status.fromThrowable(throwable).equals(Status.UNAVAILABLE)) {
+            synchronized (forwardResponse) {
+                forwardResponse.onNext(this.wrapReconnect(buildReconnect()));
+            }
+        }
+
         if (openStreams.decrementAndGet() == 0) {
             forwardResponse.onCompleted();
         }
     }
+
 
     @Override
     public void onCompleted() {
@@ -53,9 +67,24 @@ public class MarketTickObserver implements StreamObserver<TickResponse> {
         }
     }
 
-    private Aurora.AuroraResponse wrapResponse(TickResponse tickResponse){
+    private ReconnectionResponse buildReconnect() {
+        return ReconnectionResponse.newBuilder()
+                .setClientId(client)
+                .setDestination(destinationOfMessages)
+                .setItemName(item)
+                .build();
+
+    }
+
+    private Aurora.AuroraResponse wrapResponse(TickResponse tickResponse) {
         return Aurora.AuroraResponse.newBuilder()
                 .setMessage(Any.pack(tickResponse))
+                .build();
+    }
+
+    private Aurora.AuroraResponse wrapReconnect(ReconnectionResponse reconnectionResponse) {
+        return Aurora.AuroraResponse.newBuilder()
+                .setMessage(Any.pack(reconnectionResponse))
                 .build();
     }
 }

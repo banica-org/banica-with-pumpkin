@@ -22,7 +22,9 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
+import java.util.AbstractMap;
 import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.Executors;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -72,6 +74,8 @@ class SubscribeMapperTest {
     @Spy
     private SubscribeMapper subscribeMapper;
 
+    private static Map.Entry<String,ManagedChannel> dummyEntry;
+
     @BeforeAll
     static void setUp() throws IOException {
         FakeServerGenerator.createFakeServer(AURORA_SERVER_NAME, grpcCleanup, AURORA_SERVER_CHANNEL);
@@ -80,6 +84,7 @@ class SubscribeMapperTest {
         FakeServerGenerator.addChannel("auroraServerChannel", AURORA_SERVER_CHANNEL);
         FakeServerGenerator.addChannel("marketServerChannel", MARKET_SERVER_CHANNEL);
         FakeServerGenerator.addChannel("dummyChannel", DUMMY_MANAGED_CHANNEL);
+        dummyEntry =  new AbstractMap.SimpleEntry<>("dummyChannel",DUMMY_MANAGED_CHANNEL);
     }
 
     @AfterAll
@@ -96,14 +101,14 @@ class SubscribeMapperTest {
 
     @Test
     void renderSubscribeWithRequestForOrderBookInvokesOnError() {
-        when(channelManager.getAllChannelsContainingPrefix(any())).thenReturn(Collections.singletonList(DUMMY_MANAGED_CHANNEL));
+        when(channelManager.getAllChannelsContainingPrefix(any())).thenReturn(Collections.singletonList(dummyEntry));
         subscribeMapper.renderSubscribe(ORDERBOOK_REQUEST, responseObserver);
         verify(responseObserver, times(1)).onError(any());
     }
 
     @Test
     void renderSubscribeWithRequestForUnsupportedServiceInvokesOnError() {
-        when(channelManager.getAllChannelsContainingPrefix(any())).thenReturn(Collections.singletonList(DUMMY_MANAGED_CHANNEL));
+        when(channelManager.getAllChannelsContainingPrefix(any())).thenReturn(Collections.singletonList(dummyEntry));
         subscribeMapper.renderSubscribe(INVALID_REQUEST, responseObserver);
         verify(responseObserver, times(1)).onError(any());
     }
@@ -111,7 +116,7 @@ class SubscribeMapperTest {
     @Test
     void renderSubscribeWithRequestForMarketServiceSubscribesResponseObserverAndCallsOnNextAndOnCompleted() throws InterruptedException {
         //Arrange
-        when(channelManager.getAllChannelsContainingPrefix(any())).thenReturn(Collections.singletonList(DUMMY_MANAGED_CHANNEL));
+        when(channelManager.getAllChannelsContainingPrefix(any())).thenReturn(Collections.singletonList(dummyEntry));
         when(stubManager.getMarketStub(any())).thenReturn(marketStub);
 
         //Act
@@ -128,7 +133,7 @@ class SubscribeMapperTest {
     @Test
     void renderSubscribeWithRequestForAuroraServiceSubscribesResponseObserverAndCallsOnNextAndOnCompleted() throws InterruptedException {
         //Arrange
-        when(channelManager.getAllChannelsContainingPrefix(any())).thenReturn(Collections.singletonList(DUMMY_MANAGED_CHANNEL));
+        when(channelManager.getAllChannelsContainingPrefix(any())).thenReturn(Collections.singletonList(dummyEntry));
         when(stubManager.getAuroraStub(any())).thenReturn(auroraStub);
 
         //Act

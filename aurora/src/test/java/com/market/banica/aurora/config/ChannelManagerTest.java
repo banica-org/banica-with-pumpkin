@@ -2,7 +2,6 @@ package com.market.banica.aurora.config;
 
 import com.market.banica.aurora.model.ChannelProperty;
 import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -10,9 +9,10 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -33,7 +33,7 @@ class ChannelManagerTest {
     private static ChannelProperty channelProperty;
 
     @Mock
-    private  ManagedChannel managedChannel;
+    private ManagedChannel managedChannel;
 
     @Spy
     private ChannelManager channelManager;
@@ -44,18 +44,16 @@ class ChannelManagerTest {
         channelProperty.setHost(HOST);
         channelProperty.setPort(PORT);
     }
-
+    
     @Test
     void getAllChannelsContainingPrefixAsteriskReturnsAllChannels() {
         //Arrange
         channelManager.getChannels().put(CHANNEL_PREFIX_MARKET, managedChannel);
         channelManager.getChannels().put(CHANNEL_PREFIX_WEATHER, managedChannel);
 
-        ManagedChannel marketChannel = channelManager.getChannels().get(CHANNEL_PREFIX_MARKET);
-        ManagedChannel marketWeather = channelManager.getChannels().get(CHANNEL_PREFIX_WEATHER);
-        List<ManagedChannel> expectedList = Arrays.asList(marketWeather, marketChannel);
+        List<Map.Entry<String, ManagedChannel>> expectedList = new ArrayList<>(channelManager.getChannels().entrySet());
         //Act
-        List<ManagedChannel> actualList = channelManager.getAllChannelsContainingPrefix(CHANNEL_PREFIX_ASTERISK);
+        List<Map.Entry<String, ManagedChannel>> actualList = channelManager.getAllChannelsContainingPrefix(CHANNEL_PREFIX_ASTERISK);
 
         //Assert
         assertEquals(expectedList, actualList);
