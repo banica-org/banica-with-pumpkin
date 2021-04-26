@@ -137,7 +137,7 @@ public class AuroraClientSideService {
         Aurora.AuroraRequest availabilityRequest = Aurora.AuroraRequest.newBuilder()
                 .setClientId(CLIENT_ID)
                 .setTopic(String.format(pattern, itemOrigin.toLowerCase(Locale.ROOT),
-                        itemName, itemPrice, itemQuantity, itemOrigin))
+                        itemName, itemPrice, itemQuantity, itemOrigin, itemTimestamp))
                 .build();
         getBlockingStub().request(availabilityRequest);
     }
@@ -158,7 +158,7 @@ public class AuroraClientSideService {
         Aurora.AuroraRequest availabilityRequest = Aurora.AuroraRequest.newBuilder()
                 .setClientId(CLIENT_ID)
                 .setTopic(String.format(pattern, itemOrigin.toLowerCase(Locale.ROOT),
-                        itemName, itemPrice, itemQuantity, itemOrigin))
+                        itemName, itemPrice, itemQuantity, itemOrigin, itemTimestamp))
                 .build();
         getBlockingStub().request(availabilityRequest);
     }

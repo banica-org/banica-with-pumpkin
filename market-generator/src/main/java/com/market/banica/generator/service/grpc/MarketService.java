@@ -42,7 +42,7 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
     public MarketService(SubscriptionManager subscriptionManager, MarketState marketState) {
         this.subscriptionManager = subscriptionManager;
         this.marketState = marketState;
-//        addDummyData();
+        addDummyData();
     }
 
     @ManagedOperation
@@ -88,10 +88,10 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
 
     @Override
     public void subscribeForItem(MarketDataRequest request, StreamObserver<TickResponse> responseObserver) {
-        boolean hasSuccessfulBootstrap = bootstrapGeneratedTicks(request, responseObserver);
-        if (hasSuccessfulBootstrap) {
-            subscriptionManager.subscribe(request, responseObserver);
-        }
+//        boolean hasSuccessfulBootstrap = bootstrapGeneratedTicks(request, responseObserver);
+//        if (hasSuccessfulBootstrap) {
+        subscriptionManager.subscribe(request, responseObserver);
+//        }
     }
 
     @Override

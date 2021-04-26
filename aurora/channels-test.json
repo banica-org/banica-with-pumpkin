@@ -1,0 +1,14 @@
+{
+  "aurora2" : {
+    "host" : "localhost",
+    "port" : 302
+  },
+  "aurora0" : {
+    "host" : "localhost",
+    "port" : 300
+  },
+  "aurora1" : {
+    "host" : "localhost",
+    "port" : 301
+  }
+}

@@ -97,12 +97,6 @@ class RequestMapperTest {
     }
 
     @Test
-    void renderRequestWithRequestForDestinationMarketThrowsException() {
-        when(channelManager.getChannelByKey(any())).thenReturn(Optional.ofNullable(DUMMY_MANAGED_CHANNEL));
-        assertThrows(ServiceNotFoundException.class, () -> requestMapper.renderRequest(MARKET_REQUEST));
-    }
-
-    @Test
     void renderRequestWithRequestForOrderBookWithTopicSplitLengthOfThreeProcessesItemOrderBookRequest() throws IOException, ServiceNotFoundException {
         //Arrange
         when(channelManager.getChannelByKey(any())).thenReturn(Optional.ofNullable(DUMMY_MANAGED_CHANNEL));

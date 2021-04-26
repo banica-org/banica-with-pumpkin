@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.market.banica.calculator.controller.CalculatorController;
 import com.market.banica.calculator.dto.ProductDto;
 import com.market.banica.calculator.service.contract.CalculatorService;
+import com.market.banica.calculator.service.contract.TransactionService;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,6 +34,9 @@ public class CalculatorControllerTest {
 
     @MockBean
     CalculatorService service;
+
+    @MockBean
+    TransactionService transactionService;
 
     @Autowired
     private MockMvc mockMvc;

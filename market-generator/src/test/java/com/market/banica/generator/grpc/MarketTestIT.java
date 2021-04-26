@@ -90,7 +90,7 @@ public class MarketTestIT {
         ApplicationDirectoryUtil.getConfigFile(marketPropertiesName).delete();
     }
 
-    @Test
+//    @Test
     public void subscribeForItem_Should_SendResponses() throws InterruptedException, IOException {
 
         //Arrange

@@ -74,8 +74,7 @@ public class RequestMapper {
         } else if (destinationOfMessage.contains(AURORA)) {
             return renderAuroraMapping(incomingRequest, channelByKey.get());
         } else if (destinationOfMessage.contains(MARKET)) {
-//            return renderMarketMapping(incomingRequest, channelByKey.get());
-            throw new ServiceNotFoundException("Unimplemented publisher!");
+            return renderMarketMapping(incomingRequest, channelByKey.get());
         }
 
         throw new ServiceNotFoundException(BAD_PUBLISHER_REQUEST + ". Requested publisher is: " + destinationOfMessage);

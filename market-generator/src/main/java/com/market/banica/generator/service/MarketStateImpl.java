@@ -89,10 +89,10 @@ public class MarketStateImpl implements MarketState {
                     .map(this::convertMarketTickToTickResponse)
                     .collect(Collectors.toList());
 
-            marketSnapshot.stream()
-                    .filter(marketTick -> marketTick.getGood().equals(good))
-                    .map(this::convertMarketTickToTickResponse)
-                    .forEach(generatedTicks::add);
+//            marketSnapshot.stream()
+//                    .filter(marketTick -> marketTick.getGood().equals(good))
+//                    .map(this::convertMarketTickToTickResponse)
+//                    .forEach(generatedTicks::add);
 
             LOGGER.info("Successfully generated market ticks for {} .", good);
             return generatedTicks;
