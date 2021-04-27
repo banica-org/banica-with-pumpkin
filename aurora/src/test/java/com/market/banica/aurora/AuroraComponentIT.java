@@ -37,13 +37,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -111,7 +109,6 @@ class AuroraComponentIT {
 
 
     @AfterAll
-
     public static void cleanUp() throws IOException {
         ApplicationDirectoryUtil.getConfigFile(channelsBackupUrl).delete();
         ApplicationDirectoryUtil.getConfigFile(publishersBackupUrl).delete();
@@ -292,7 +289,7 @@ class AuroraComponentIT {
     @Test
     void subscribe_Should_ForwardToReceiverResponses_When_ReceiverIsRegistered() throws IOException, InterruptedException {
         //Arrange
-        currentPublisher = "aurora";
+        currentPublisher = "aurora-test";
         publishers.addPublisher(currentPublisher);
 
         createFakeReplyingServer();
@@ -517,7 +514,7 @@ class AuroraComponentIT {
                 })
                 .collect(Collectors.toList());
         assertNotEquals(expectedResponses, unpackedResponses);
-        assertEquals(3,unpackedResponses.size() );
+        assertEquals(3, unpackedResponses.size());
     }
 
     @Test
@@ -650,11 +647,12 @@ class AuroraComponentIT {
         for (int i = 0; i < 3; i++) {
             //do assert.
             assertTrue(statusReport.contains("aurora" + i));
+            jmxConfig.deleteChannel("aurora"+i);
         }
 
         assertFalse(statusReport.contains("aurora3"));
 
-        assertEquals("aurora",publishers.getPublishersList().get(0));
+        assertEquals("aurora", publishers.getPublishersList().get(0));
     }
 
     private Map<String, ChannelProperty> getDummyChannels() {

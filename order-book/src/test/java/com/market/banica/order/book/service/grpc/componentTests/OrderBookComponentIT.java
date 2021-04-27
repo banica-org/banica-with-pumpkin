@@ -52,6 +52,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.Executors;
 
@@ -301,7 +303,9 @@ class OrderBookComponentIT {
     @Test
     void cancelItemSubscription_Should_ReturnResponse() throws IOException {
         // Arrange
-        auroraClient.getCancellableStubs().put(productName, Context.current().withCancellation());
+        auroraClient.getCancellableStubs().put(productName,
+                Collections.synchronizedSet(new HashSet<>(Collections
+                        .singletonList(Context.current().withCancellation()))));
         grpcCleanup.register(channel);
         grpcCleanup.register(InProcessServerBuilder
                 .forName(serverName).directExecutor().addService(new OrderBookServiceGrpc.OrderBookServiceImplBase() {

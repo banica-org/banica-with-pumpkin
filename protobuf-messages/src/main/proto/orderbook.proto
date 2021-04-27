@@ -30,6 +30,12 @@ message InterestsRequest {
   string client_id = 2;
 }
 
+message ReconnectionResponse{
+  string item_name = 1;
+  string client_id = 2;
+  string destination = 3;
+}
+
 message InterestsResponse {
 }
 

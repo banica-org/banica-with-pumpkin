@@ -3,7 +3,6 @@ package com.market.banica.order.book.model;
 import com.aurora.Aurora;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.market.TickResponse;
-
 import com.market.banica.common.exception.IncorrectResponseException;
 import com.market.banica.common.validator.DataValidator;
 import com.orderbook.OrderBookLayer;
@@ -57,40 +56,44 @@ public class ItemMarket {
 
     public void updateItem(Aurora.AuroraResponse response) {
 
-        if (!response.getMessage().is(TickResponse.class)) {
-            throw new IncorrectResponseException("Response is not correct!");
-        }
-
-        TickResponse tickResponse;
-
         try {
-            tickResponse = response.getMessage().unpack(TickResponse.class);
-        } catch (InvalidProtocolBufferException e) {
-            throw new IncorrectResponseException("Incorrect response! Response must be from TickResponse type.");
+            lock.writeLock().lock();
+
+            TickResponse tickResponse;
+
+            try {
+                tickResponse = response.getMessage().unpack(TickResponse.class);
+            } catch (InvalidProtocolBufferException e) {
+                throw new IncorrectResponseException("Incorrect response! Response must be from TickResponse type.");
+            }
+
+            String goodName = tickResponse.getGoodName();
+            DataValidator.validateIncomingData(goodName);
+
+            Set<Item> itemSet = this.allItems.get(goodName);
+            if (itemSet == null) {
+                LOGGER.error("Item: {} is not being tracked and cannot be added to itemMarket!",
+                        goodName);
+                return;
+            }
+            Item item = populateItem(tickResponse);
+
+            this.productsQuantity.merge(goodName, tickResponse.getQuantity(), Long::sum);
+
+            LOGGER.info("Products data updated!");
+
+            if (itemSet.contains(item)) {
+
+                Item presentItem = itemSet.stream().filter(currentItem -> currentItem.compareTo(item) == 0).findFirst().get();
+                presentItem.setQuantity(presentItem.getQuantity() + item.getQuantity());
+                return;
+            }
+            itemSet.add(item);
+
+        } finally {
+            lock.writeLock().unlock();
         }
 
-        String goodName = tickResponse.getGoodName();
-        DataValidator.validateIncomingData(goodName);
-
-        Set<Item> itemSet = this.allItems.get(goodName);
-        if (itemSet == null) {
-            LOGGER.error("Item: {} is not being tracked and cannot be added to itemMarket!",
-                    goodName);
-            return;
-        }
-        Item item = populateItem(tickResponse);
-
-        this.productsQuantity.merge(goodName, tickResponse.getQuantity(), Long::sum);
-
-        LOGGER.info("Products data updated!");
-
-        if (itemSet.contains(item)) {
-
-            Item presentItem = itemSet.stream().filter(currentItem -> currentItem.compareTo(item) == 0).findFirst().get();
-            presentItem.setQuantity(presentItem.getQuantity() + item.getQuantity());
-            return;
-        }
-        itemSet.add(item);
     }
 
     public List<OrderBookLayer> getRequestedItem(String itemName, long quantity) {
@@ -155,6 +158,27 @@ public class ItemMarket {
         item.setOrigin(tickResponse.getOrigin());
 
         return item;
+    }
+
+    public void zeroingMarketProductsFromMarket(String marketDestination, String itemName) {
+        try {
+            lock.writeLock().lock();
+
+            long removedItemProductQuantity = 0;
+            final Iterator<Item> itemsIterator = allItems.get(itemName).iterator();
+
+            while (itemsIterator.hasNext()) {
+                Item currentItem = itemsIterator.next();
+                if (currentItem.getOrigin().toString().equalsIgnoreCase(marketDestination.split("-")[1])) {
+                    removedItemProductQuantity += currentItem.getQuantity();
+                    itemsIterator.remove();
+                }
+            }
+
+            productsQuantity.put(itemName, productsQuantity.get(itemName) - removedItemProductQuantity);
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
 }
