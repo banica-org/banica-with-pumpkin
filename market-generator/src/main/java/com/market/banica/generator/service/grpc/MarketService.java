@@ -42,48 +42,6 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
     public MarketService(SubscriptionManager subscriptionManager, MarketState marketState) {
         this.subscriptionManager = subscriptionManager;
         this.marketState = marketState;
-        //  addDummyData();
-    }
-
-    @ManagedOperation
-    public void printState() {
-        this.marketState.getMarketState().entrySet().forEach(System.out::println);
-    }
-
-    private void addDummyData() {
-        Map<String, Set<MarketTick>> marketState = this.marketState.getMarketState();
-        long millis = System.currentTimeMillis();
-        TreeSet<MarketTick> eggTicks = new TreeSet<>();
-        eggTicks.add(new MarketTick("eggs", 20, 1.0, millis));
-        eggTicks.add(new MarketTick("eggs", 20, 2.0, millis));
-//        eggTicks.add(new MarketTick("eggs", 11, 1.0, millis));
-        marketState.put("eggs", eggTicks);
-
-
-        TreeSet<MarketTick> waterTicks = new TreeSet<>();
-        waterTicks.add(new MarketTick("waterTicks", 5, 5.0, millis));
-        marketState.put("water", waterTicks);
-
-        TreeSet<MarketTick> crustTicks = new TreeSet<>();
-        crustTicks.add(new MarketTick("crusts", 20, 2.0, millis));
-        crustTicks.add(new MarketTick("crusts", 20, 1.0, millis));
-//        crustTicks.add(new MarketTick("crusts", 1, 1.0, millis));
-//        crustTicks.add(new MarketTick("crusts", 3, 1.0, millis + 1));
-//        crustTicks.add(new MarketTick("crusts", 7, 1.0, millis + 2));
-        marketState.put("crusts", crustTicks);
-
-        TreeSet<MarketTick> banicaTicks = new TreeSet<>();
-        banicaTicks.add(new MarketTick("banica", 2, 1.0, millis));
-        banicaTicks.add(new MarketTick("banica", 2, 1.0, millis + 1));
-        banicaTicks.add(new MarketTick("banica", 3, 1.0, millis + 2));
-        marketState.put("banica", banicaTicks);
-//        marketState.addGoodToState("eggs", 5.0, 400, millis);
-//        this.marketState.addGoodToState("waterTicks", 5.0, 400, millis);
-//        eggTicks.add(new MarketTick("eggs", 20, 5.0, millis));
-        this.marketState.addGoodToState("tomatoes", 5.0, 70, millis);
-        this.marketState.addGoodToState("milk", 5.0, 3, millis);
-        this.marketState.addGoodToState("pumpkin", 5.0, 400, millis);
-        this.marketState.addGoodToState("sugar", 5.0, 60, millis);
     }
 
     @Override
@@ -167,16 +125,17 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
     private void addItemToPending(ProductBuySellRequest request, long timestamp) {
         Map<Double, MarketTick> pendingProductInfo = pendingOrders.get(request.getItemName());
         MarketTick tick;
+
         if (pendingProductInfo == null) {
             pendingProductInfo = new TreeMap<>();
-            tick = new MarketTick(request.getItemName(), request.getItemQuantity(), request.getItemPrice(), timestamp);
-            pendingProductInfo.put(request.getItemPrice(), tick);
             pendingOrders.put(request.getItemName(), pendingProductInfo);
-        } else {
-            MarketTick currentMarketTick = pendingProductInfo.get(request.getItemPrice());
-            tick = new MarketTick(request.getItemName(), currentMarketTick.getQuantity() + request.getItemQuantity(), request.getItemPrice(), timestamp);
-            pendingProductInfo.put(request.getItemPrice(), tick);
         }
+        if (!pendingProductInfo.containsKey(request.getItemPrice())) {
+            pendingProductInfo.put(request.getItemPrice(), new MarketTick());
+        }
+
+        tick = pendingProductInfo.get(request.getItemPrice());
+        pendingProductInfo.put(request.getItemPrice(), new MarketTick(request.getItemName(), tick.getQuantity() + request.getItemQuantity(), request.getItemPrice(), timestamp));
     }
 
     @Override

@@ -5,7 +5,6 @@ import com.aurora.AuroraServiceGrpc;
 import com.market.banica.common.channel.ChannelRPCConfig;
 import com.market.banica.common.exception.TrackingException;
 import com.market.banica.common.exception.StoppedStreamException;
-import com.market.banica.common.validator.DataValidator;
 import com.market.banica.order.book.model.ItemMarket;
 import com.market.banica.order.book.observer.AuroraStreamObserver;
 import io.grpc.Context;
@@ -18,10 +17,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -98,18 +95,6 @@ public class AuroraClient {
     public AuroraServiceGrpc.AuroraServiceStub getAsynchronousStub() {
         return AuroraServiceGrpc.newStub(managedChannel);
     }
-
-   /* @PostConstruct
-    private void subscribeOnCreation() {
-        Set<String> subscribedItems = this.itemMarket.getSubscribedItems();
-        for (String itemName : subscribedItems) {
-            try {
-                this.startSubscription(itemName, "calculator");
-            } catch (TrackingException e) {
-                LOGGER.error(e.getMessage());
-            }
-        }
-    }*/
 
     @PreDestroy
     private void stop() throws InterruptedException {

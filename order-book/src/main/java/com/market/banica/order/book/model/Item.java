@@ -6,14 +6,12 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.ToString;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
 @EqualsAndHashCode
-@ToString
 public class Item implements Comparable<Item> {
 
     private double price;
@@ -28,5 +26,10 @@ public class Item implements Comparable<Item> {
         }
         return result;
     }
-
+    @Override
+    public String toString() {
+        return "price=" + price +
+                ", quantity=" + quantity +
+                ", origin=" + origin;
+    }
 }

@@ -44,12 +44,12 @@ public class MarketTick implements Comparable<MarketTick> {
 
     @Override
     public int compareTo(MarketTick other) {
-//        return Long.compare(this.timestamp, other.timestamp);
         int result = Double.compare(this.price, other.price);
         if (result == 0) {
             result = Long.compare(this.timestamp, other.timestamp);
         }
         return result;
     }
+
 
 }

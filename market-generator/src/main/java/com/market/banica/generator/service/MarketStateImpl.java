@@ -12,8 +12,10 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PreDestroy;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.TreeSet;
@@ -60,6 +62,31 @@ public class MarketStateImpl implements MarketState {
         subscriptionManager.notifySubscribers(convertMarketTickToTickResponse(marketTick));
     }
 
+    public Optional<Set<MarketTick>> getMarketTicksByProductName(String productName) {
+        return Optional.of(this.marketState.get(productName));
+    }
+
+    public Map<String, Map<Double, Long>> getProductsQuantity() {
+        Map<String, Map<Double, Long>> map = new HashMap<>();
+
+        marketState.forEach((productName, productTicks) -> {
+
+            Map<Double, Long> secondMap = new HashMap<>();
+
+            productTicks.forEach(marketTick -> {
+                if (secondMap.containsKey(marketTick.getPrice())) {
+                    Long newQuantity = secondMap.get(marketTick.getPrice()) + marketTick.getQuantity();
+                    secondMap.put(marketTick.getPrice(), newQuantity);
+                } else {
+                    secondMap.put(marketTick.getPrice(), marketTick.getQuantity());
+                }
+            });
+
+            map.put(productName,secondMap);
+        });
+
+        return map;
+    }
 
     @Override
     public void addTickToMarketSnapshot(MarketTick marketTick) {
@@ -89,10 +116,10 @@ public class MarketStateImpl implements MarketState {
                     .map(this::convertMarketTickToTickResponse)
                     .collect(Collectors.toList());
 
-         /* marketSnapshot.stream()
-                  .filter(marketTick -> marketTick.getGood().equals(good))
-                  .map(this::convertMarketTickToTickResponse)
-                  .forEach(generatedTicks::add);*/
+            marketSnapshot.stream()
+                    .filter(marketTick -> marketTick.getGood().equals(good))
+                    .map(this::convertMarketTickToTickResponse)
+                    .forEach(generatedTicks::add);
 
             LOGGER.info("Successfully generated market ticks for {} .", good);
             return generatedTicks;
@@ -213,5 +240,4 @@ public class MarketStateImpl implements MarketState {
             Thread.currentThread().interrupt();
         }
     }
-
 }
