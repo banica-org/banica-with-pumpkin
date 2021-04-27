@@ -110,6 +110,8 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
             isAvailable = true;
         } catch (IllegalArgumentException e) {
             e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
 
         responseObserver.onNext(AvailabilityResponse.newBuilder().setIsAvailable(isAvailable)

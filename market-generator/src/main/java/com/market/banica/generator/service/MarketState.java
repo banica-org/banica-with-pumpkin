@@ -16,7 +16,7 @@ public interface MarketState {
 
     PersistScheduler getPersistScheduler();
 
-    MarketTick removeItemFromState(String itemName, long itemQuantity, double itemPrice);
+    MarketTick removeItemFromState(String itemName, long itemQuantity, double itemPrice) throws InterruptedException;
 
     void addGoodToState(String itemName, double itemPrice, long itemQuantity, long timestamp);
 
