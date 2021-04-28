@@ -27,4 +27,11 @@ public class Item implements Comparable<Item> {
         return result;
     }
 
+    @Override
+    public String toString() {
+        return "price=" + price +
+                ", quantity=" + quantity +
+                ", origin=" + origin;
+    }
+
 }
