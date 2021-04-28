@@ -30,7 +30,6 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class SnapshotPersistenceTest {
@@ -72,27 +71,18 @@ class SnapshotPersistenceTest {
         Map<String, Set<MarketTick>> marketState = new ConcurrentHashMap<>();
         Map<String, Set<MarketTick>> marketStateSpy = spy(marketState);
 
-        MarketTick marketTick = new MarketTick(GOOD_NAME, 1, 1, 1);
         Queue<MarketTick> marketSnapshot = new LinkedBlockingQueue<>();
-        marketSnapshot.add(marketTick);
-
-        TreeSet<MarketTick> goodSet = new TreeSet<>();
-        TreeSet<MarketTick> goodSetSpy = spy(goodSet);
-
-        when(marketStateSpy.putIfAbsent(GOOD_NAME, new TreeSet<>())).thenReturn(goodSetSpy);
-        when(marketStateSpy.get(GOOD_NAME)).thenReturn(goodSetSpy);
+        Queue<MarketTick> marketSnapshotSpy = spy(marketSnapshot);
 
 
-        snapshotPersistenceSpy.persistMarketState(marketStateSpy, marketSnapshot);
+        snapshotPersistenceSpy.persistMarketState(marketStateSpy, marketSnapshotSpy);
 
 
-        verify(marketStateSpy, times(1)).putIfAbsent(GOOD_NAME, new TreeSet<>());
-        verify(marketStateSpy, times(1)).get(GOOD_NAME);
-        verify(goodSetSpy, times(1)).add(marketTick);
+        verify(marketSnapshotSpy, times(1)).clear();
         assertTrue(marketSnapshot.isEmpty());
 
         verify(kryoHandle, times(1)).writeClassAndObject(any(Output.class), eq(marketStateSpy));
-        verify(snapshotPersistenceSpy, times(1)).persistMarketSnapshot(marketSnapshot);
+        verify(snapshotPersistenceSpy, times(1)).persistMarketSnapshot(marketSnapshotSpy);
 
     }
 
@@ -115,7 +105,7 @@ class SnapshotPersistenceTest {
 
         assertFalse(ApplicationDirectoryUtil.doesFileExist(stateFileName));
 
-        Map<String, Set<MarketTick>> result = snapshotPersistence.loadMarketState();
+        Map<String, Set<MarketTick>> result = snapshotPersistence.loadMarketState(new LinkedBlockingQueue<>());
 
         assertTrue(ApplicationDirectoryUtil.doesFileExist(stateFileName));
         assertEquals(new ConcurrentHashMap<>(), result);
@@ -128,7 +118,7 @@ class SnapshotPersistenceTest {
         ApplicationDirectoryUtil.getConfigFile(stateFileName);
         assertTrue(ApplicationDirectoryUtil.doesFileExist(stateFileName));
 
-        Map<String, Set<MarketTick>> result = snapshotPersistence.loadMarketState();
+        Map<String, Set<MarketTick>> result = snapshotPersistence.loadMarketState(new LinkedBlockingQueue<>());
 
         assertTrue(ApplicationDirectoryUtil.doesFileExist(stateFileName));
         assertEquals(new ConcurrentHashMap<>(), result);
@@ -138,13 +128,22 @@ class SnapshotPersistenceTest {
     @Test
     void loadMarketState_WhenFileExistsAndHasTicks() throws IOException {
 
+        Queue<MarketTick> marketSnapshotQueue = new LinkedBlockingQueue<>();
+        marketSnapshotQueue.add(new MarketTick(GOOD_NAME, 3, 3, 3));
+        marketSnapshotQueue.add(new MarketTick(GOOD_NAME, 4, 4, 4));
+
+        snapshotPersistence.persistMarketSnapshot(marketSnapshotQueue);
+
         Map<String, Set<MarketTick>> expected = new ConcurrentHashMap<>();
         expected.put(GOOD_NAME, new TreeSet<>());
         expected.get(GOOD_NAME).add(new MarketTick(GOOD_NAME, 1, 1, 1));
         expected.get(GOOD_NAME).add(new MarketTick(GOOD_NAME, 2, 2, 2));
         snapshotPersistence.persistMarketState(expected, new LinkedBlockingQueue<>());
 
-        Map<String, Set<MarketTick>> actual = snapshotPersistence.loadMarketState();
+        Map<String, Set<MarketTick>> actual = snapshotPersistence.loadMarketState(marketSnapshotQueue);
+
+        expected.get(GOOD_NAME).add(new MarketTick(GOOD_NAME, 3, 3, 3));
+        expected.get(GOOD_NAME).add(new MarketTick(GOOD_NAME, 4, 4, 4));
 
         assertEquals(expected, actual);
 

@@ -197,7 +197,7 @@ class TickGeneratorImplTest {
         tickGenerator.executeTickTask(marketTick, tickTask, delay);
 
 
-        verify(marketState, times(1)).addTickToMarketSnapshot(marketTick);
+        verify(marketState, times(1)).addTickToMarket(marketTick);
         verify(tickScheduler, times(1)).schedule(tickTask, delay, TimeUnit.SECONDS);
         verify(tickTasks, times(1)).put(GOOD_BANICA, taskScheduledFuture);
 
