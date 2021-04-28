@@ -1,6 +1,5 @@
 package com.market.banica.generator.grpc;
 
-import com.google.common.util.concurrent.MoreExecutors;
 import com.market.MarketDataRequest;
 import com.market.MarketServiceGrpc;
 import com.market.TickResponse;
@@ -18,7 +17,6 @@ import io.grpc.testing.GrpcCleanupRule;
 import org.junit.Rule;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -82,7 +80,6 @@ public class MarketTestIT {
     @BeforeEach
     public void setup() {
 
-        ReflectionTestUtils.setField(marketState,"executorService", MoreExecutors.newDirectExecutorService());
         ReflectionTestUtils.setField(marketState, "marketState", new ConcurrentHashMap<String, Set<MarketTick>>());
         ReflectionTestUtils.setField(marketState, "marketSnapshot", new LinkedBlockingQueue<MarketTick>());
 
@@ -192,7 +189,7 @@ public class MarketTestIT {
                                         .asException());
                                 break;
                             }
-                            MarketTick marketTick = new MarketTick(GOOD, 10, 1.0, new Date().getTime());
+                            MarketTick marketTick = new MarketTick(GOOD, 10, 1.0, new Date().getTime() + i);
                             TickResponse response = TickResponse.newBuilder()
                                     .setOrigin(MarketTick.getOrigin())
                                     .setGoodName(marketTick.getGood())
@@ -218,7 +215,7 @@ public class MarketTestIT {
     private void addExpectedResponses(List<TickResponse> expectedResponses) {
         for (int i = 0; i < 5; i++) {
             MarketTick.setOrigin("AMERICA");
-            MarketTick marketTick = new MarketTick(GOOD, 10, 1.0, new Date().getTime());
+            MarketTick marketTick = new MarketTick(GOOD, 10, 1.0, new Date().getTime() + i);
             marketState.addTickToMarket(marketTick);
 
             TickResponse response = TickResponse.newBuilder()
