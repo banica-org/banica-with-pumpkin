@@ -38,9 +38,6 @@ public class ItemMarket {
         this.productsQuantity = new ConcurrentHashMap<>();
     }
 
-    public Map<String, Long> getProductsQuantity() {
-        return productsQuantity;
-    }
 
     public Optional<Set<Item>> getItemSetByName(String itemName) {
         return Optional.ofNullable(this.allItems.get(itemName));
