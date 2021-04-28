@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
@@ -40,7 +41,7 @@ public class SubscribeMapper {
 
     public void renderSubscribe(Aurora.AuroraRequest incomingRequest, StreamObserver<Aurora.AuroraResponse> responseObserver) {
         String destinationOfMessage = incomingRequest.getTopic().split("/")[0];
-        List<ManagedChannel> channelsWithPrefix = channelManager.getAllChannelsContainingPrefix(destinationOfMessage);
+        List<Map.Entry<String, ManagedChannel>> channelsWithPrefix = channelManager.getAllChannelsContainingPrefix(destinationOfMessage);
 
         if (channelsWithPrefix.isEmpty()) {
             LOGGER.warn("Unsupported message have reached aurora.");
@@ -68,14 +69,14 @@ public class SubscribeMapper {
         }
     }
 
-    private void renderAuroraMapping(Aurora.AuroraRequest incomingRequest, StreamObserver<Aurora.AuroraResponse> responseObserver, List<ManagedChannel> channelsWithPrefix) {
+    private void renderAuroraMapping(Aurora.AuroraRequest incomingRequest, StreamObserver<Aurora.AuroraResponse> responseObserver, List<Map.Entry<String, ManagedChannel>> channelsWithPrefix) {
         AtomicInteger openStreams = new AtomicInteger(channelsWithPrefix.size());
 
-        channelsWithPrefix.forEach(channel -> this.stubManager.getAuroraStub(channel)
+        channelsWithPrefix.forEach(channel -> this.stubManager.getAuroraStub(channel.getValue())
                 .subscribe(incomingRequest, new AuroraObserver(incomingRequest, responseObserver, openStreams)));
     }
 
-    private void renderMarketMapping(Aurora.AuroraRequest incomingRequest, StreamObserver<Aurora.AuroraResponse> responseObserver, List<ManagedChannel> channelsWithPrefix) {
+    private void renderMarketMapping(Aurora.AuroraRequest incomingRequest, StreamObserver<Aurora.AuroraResponse> responseObserver, List<Map.Entry<String, ManagedChannel>> channelsWithPrefix) {
         String itemForSubscribing = incomingRequest.getTopic().split("/")[1];
         AtomicInteger openStreams = new AtomicInteger(channelsWithPrefix.size());
 
@@ -84,7 +85,9 @@ public class SubscribeMapper {
                 .setGoodName(itemForSubscribing)
                 .build();
 
-        channelsWithPrefix.forEach(channel -> stubManager.getMarketStub(channel)
-                .subscribeForItem(marketDataRequest, new MarketTickObserver(incomingRequest.getClientId(), responseObserver, openStreams)));
+        channelsWithPrefix.forEach(channel -> stubManager.getMarketStub(channel.getValue())
+                .subscribeForItem(marketDataRequest
+                        , new MarketTickObserver(incomingRequest.getClientId(), responseObserver
+                                , openStreams, channel.getKey(), marketDataRequest.getGoodName())));
     }
 }

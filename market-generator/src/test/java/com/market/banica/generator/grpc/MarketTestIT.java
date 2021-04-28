@@ -16,6 +16,7 @@ import io.grpc.stub.StreamObserver;
 import io.grpc.testing.GrpcCleanupRule;
 import org.junit.Rule;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,12 +26,16 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -88,6 +93,12 @@ public class MarketTestIT {
         ApplicationDirectoryUtil.getConfigFile(marketStateName).delete();
         ApplicationDirectoryUtil.getConfigFile(marketSnapshotName).delete();
         ApplicationDirectoryUtil.getConfigFile(marketPropertiesName).delete();
+    }
+
+    @AfterEach
+    public void cleanMarketState() {
+        ReflectionTestUtils.setField(marketState, "marketState", new ConcurrentHashMap<String, Set<MarketTick>>());
+        ReflectionTestUtils.setField(marketState, "marketSnapshot", new LinkedBlockingQueue<MarketTick>());
     }
 
     @Test
@@ -211,7 +222,7 @@ public class MarketTestIT {
         }
     }
 
-    private void createStub(MarketDataRequest request, ArrayList<TickResponse> receivedResponses, CountDownLatch latch){
+    private void createStub(MarketDataRequest request, ArrayList<TickResponse> receivedResponses, CountDownLatch latch) {
         MarketServiceGrpc.newStub(marketChannel).subscribeForItem(request, new StreamObserver<TickResponse>() {
             @Override
             public void onNext(TickResponse tickResponse) {
