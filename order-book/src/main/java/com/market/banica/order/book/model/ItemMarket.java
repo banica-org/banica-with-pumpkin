@@ -3,6 +3,7 @@ package com.market.banica.order.book.model;
 import com.aurora.Aurora;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.market.TickResponse;
+
 import com.market.banica.common.exception.IncorrectResponseException;
 import com.market.banica.common.validator.DataValidator;
 import com.orderbook.OrderBookLayer;
@@ -37,8 +38,12 @@ public class ItemMarket {
         this.productsQuantity = new ConcurrentHashMap<>();
     }
 
+    public Map<String, Long> getProductsQuantity() {
+        return productsQuantity;
+    }
+
     public Optional<Set<Item>> getItemSetByName(String itemName) {
-        return Optional.of(this.allItems.get(itemName));
+        return Optional.ofNullable(this.allItems.get(itemName));
     }
 
     public Set<String> getItemNameSet() {
@@ -47,11 +52,12 @@ public class ItemMarket {
 
     public void addTrackedItem(String itemName) {
         this.allItems.put(itemName, new TreeSet<>());
-        this.productsQuantity.putIfAbsent(itemName, 0L);
+        this.productsQuantity.put(itemName, 0L);
     }
 
     public void removeUntrackedItem(String itemName) {
         this.allItems.remove(itemName);
+        this.productsQuantity.remove(itemName);
     }
 
     public void updateItem(Aurora.AuroraResponse response) {
@@ -69,8 +75,8 @@ public class ItemMarket {
                 throw new IncorrectResponseException("Incorrect response! Response must be from IncorrectResponseException type.");
             }
 
-            String goodName = tickResponse.getGoodName();
-            DataValidator.validateIncomingData(goodName);
+        String goodName = tickResponse.getGoodName();
+        DataValidator.validateIncomingData(goodName);
 
             Set<Item> itemSet = this.allItems.get(goodName);
             if (itemSet == null) {
@@ -79,11 +85,11 @@ public class ItemMarket {
             }
             Item item = populateItem(tickResponse);
 
-            this.productsQuantity.merge(goodName, tickResponse.getQuantity(), Long::sum);
+        this.productsQuantity.merge(goodName, tickResponse.getQuantity(), Long::sum);
 
-            LOGGER.info("Products data updated!");
+        LOGGER.info("Products data updated!");
 
-            if (itemSet.contains(item)) {
+        if (itemSet.contains(item)) {
 
                 Item presentItem = itemSet.stream().filter(currentItem -> currentItem.compareTo(item) == 0).findFirst().get();
                 long quantity = presentItem.getQuantity() + item.getQuantity();
@@ -172,4 +178,25 @@ public class ItemMarket {
     public Map<String, Long> getProductsQuantity() {
         return productsQuantity;
     }
+    public void zeroingMarketProductsFromMarket(String marketDestination, String itemName) {
+        try {
+            lock.writeLock().lock();
+
+            long removedItemProductQuantity = 0;
+            final Iterator<Item> itemsIterator = allItems.get(itemName).iterator();
+
+            while (itemsIterator.hasNext()) {
+                Item currentItem = itemsIterator.next();
+                if (currentItem.getOrigin().toString().equalsIgnoreCase(marketDestination.split("-")[1])) {
+                    removedItemProductQuantity += currentItem.getQuantity();
+                    itemsIterator.remove();
+                }
+            }
+
+            productsQuantity.put(itemName, productsQuantity.get(itemName) - removedItemProductQuantity);
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
 }

@@ -39,14 +39,14 @@ public class ChannelManager {
         return managedChannel;
     }
 
-    public List<ManagedChannel> getAllChannelsContainingPrefix(String prefix) {
+
+    public List<Map.Entry<String,ManagedChannel>> getAllChannelsContainingPrefix(String prefix) {
         String loweredPrefix = prefix.toLowerCase();
         if (prefix.equalsIgnoreCase("*")) {
-            return new ArrayList<>(this.channels.values());
+            return new ArrayList<>(this.channels.entrySet());
         }
         return this.channels.entrySet().stream()
                 .filter(entry -> entry.getKey().startsWith(loweredPrefix))
-                .map(Map.Entry::getValue)
                 .collect(Collectors.toList());
     }
 
