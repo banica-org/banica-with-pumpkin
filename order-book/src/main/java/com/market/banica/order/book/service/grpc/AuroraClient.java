@@ -2,12 +2,14 @@ package com.market.banica.order.book.service.grpc;
 
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.market.banica.common.channel.ChannelRPCConfig;
-import com.market.banica.common.exception.TrackingException;
+import com.market.banica.common.exception.IncorrectResponseException;
 import com.market.banica.common.exception.StoppedStreamException;
-import com.market.banica.common.validator.DataValidator;
+import com.market.banica.common.exception.TrackingException;
 import com.market.banica.order.book.model.ItemMarket;
 import com.market.banica.order.book.observer.AuroraStreamObserver;
+import com.orderbook.ReconnectionResponse;
 import io.grpc.Context;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -19,8 +21,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PreDestroy;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -34,7 +41,8 @@ public class AuroraClient {
 
     private final ItemMarket itemMarket;
     private final ManagedChannel managedChannel;
-    private final Map<String, Context.CancellableContext> cancellableStubs;
+    private final Map<String, Set<Context.CancellableContext>> cancellableStubs;
+    private final ExecutorService reconnectionExecutor = Executors.newSingleThreadExecutor();
 
     @Autowired
     AuroraClient(ItemMarket itemMarket,
@@ -67,7 +75,8 @@ public class AuroraClient {
         LOGGER.info("Start gathering product data.");
 
         Context.CancellableContext withCancellation = Context.current().withCancellation();
-        cancellableStubs.put(requestedItem, withCancellation);
+        cancellableStubs.put(requestedItem, Collections.synchronizedSet(
+                new HashSet<>(Collections.singletonList(withCancellation))));
         itemMarket.addTrackedItem(requestedItem);
         try {
             withCancellation.run(() -> startMarketStream(request));
@@ -82,15 +91,50 @@ public class AuroraClient {
             throw new TrackingException("Item is not being tracked!");
         }
 
-        Context.CancellableContext cancelledStub = cancellableStubs.remove(requestedItem);
-        cancelledStub.cancel(new StoppedStreamException("Stopped tracking stream for: " + requestedItem));
+        Set<Context.CancellableContext> cancelledStub = cancellableStubs.remove(requestedItem);
+        cancelledStub.forEach(cancellableContext -> cancellableContext
+                .cancel(new StoppedStreamException("Stopped tracking stream for: " + requestedItem)));
         itemMarket.removeUntrackedItem(requestedItem);
+    }
+
+    public void reconnectToMarket(Aurora.AuroraResponse response) {
+
+        reconnectionExecutor.execute(() -> {
+            ReconnectionResponse reconnectionResponse;
+
+            try {
+                reconnectionResponse = response.getMessage().unpack(ReconnectionResponse.class);
+            } catch (InvalidProtocolBufferException e) {
+                throw new IncorrectResponseException("Incorrect response! Response must be from ReconnectionResponse type.");
+            }
+
+            String itemName = reconnectionResponse.getItemName();
+            String marketDestination = reconnectionResponse.getDestination();
+            String clientId = reconnectionResponse.getClientId();
+
+            itemMarket.zeroingMarketProductsFromMarket(marketDestination, itemName);
+
+            final Aurora.AuroraRequest request = Aurora.AuroraRequest.newBuilder()
+                    .setTopic(marketDestination + "/" + itemName)
+                    .setClientId(clientId)
+                    .build();
+
+            Context.CancellableContext withCancellation = Context.current().withCancellation();
+            cancellableStubs.get(itemName).add(withCancellation);
+
+            try {
+                withCancellation.run(() -> startMarketStream(request));
+            } catch (Exception e) {
+                LOGGER.error("Tracking for {} has suddenly stopped due to: {}", itemName, e.getMessage());
+            }
+        });
+
     }
 
     private void startMarketStream(Aurora.AuroraRequest request) {
         final AuroraServiceGrpc.AuroraServiceStub asynchronousStub = getAsynchronousStub();
 
-        asynchronousStub.subscribe(request, new AuroraStreamObserver(itemMarket));
+        asynchronousStub.subscribe(request, new AuroraStreamObserver(itemMarket, this));
     }
 
     public AuroraServiceGrpc.AuroraServiceStub getAsynchronousStub() {

@@ -35,7 +35,7 @@ class MarketTickObserverTest {
 
     @BeforeEach
     public void setUp() {
-        marketTickObserver = new MarketTickObserver(CLIENT_ID, forwardResponse, activeStreamsCounter);
+        marketTickObserver = new MarketTickObserver(CLIENT_ID, forwardResponse, activeStreamsCounter,"TEST","banica");
     }
 
     @Test
