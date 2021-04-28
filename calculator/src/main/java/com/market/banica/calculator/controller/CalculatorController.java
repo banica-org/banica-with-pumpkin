@@ -16,13 +16,6 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import java.util.List;
 
-/**
- * Date: 3/10/2021 Time: 7:44 AM
- * <p>
- *
- * @author Vladislav_Zlatanov
- */
-
 @RestController
 @RequestMapping(value = "calculator")
 @RequiredArgsConstructor

@@ -1,6 +1,5 @@
 package com.market.banica.generator.state;
 
-import com.market.banica.generator.model.MarketTick;
 import com.market.banica.generator.service.MarketStateImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.EnableMBeanExport;
