@@ -94,6 +94,15 @@ public class MarketTestIT {
 
     }
 
+    @AfterEach
+    void tearDown() throws IOException {
+
+        assert ApplicationDirectoryUtil.getConfigFile(marketStateName).delete();
+        assert ApplicationDirectoryUtil.getConfigFile(marketSnapshotName).delete();
+        assert ApplicationDirectoryUtil.getConfigFile(marketPropertiesName).delete();
+
+    }
+
     @AfterAll
     public static void cleanUp() throws IOException {
 
