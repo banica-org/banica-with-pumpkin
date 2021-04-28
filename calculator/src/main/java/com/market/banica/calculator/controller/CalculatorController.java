@@ -33,10 +33,10 @@ public class CalculatorController {
     private static final Logger LOGGER = LoggerFactory.getLogger(CalculatorController.class);
 
     @GetMapping("/{clientId}/{itemName}/{quantity}")
-    public List<ProductDto> getProduct(@PathVariable("clientId") @NotBlank String clientId,
-                                       @PathVariable("itemName") @NotBlank String itemName,
-                                       @PathVariable("quantity") @Min(1) long quantity) throws ProductNotAvailableException {
-        LOGGER.info("GET /calculator called");
+    public List<ProductDto> getBestPriceForRecipe(@PathVariable("clientId") @NotBlank String clientId,
+                                                  @PathVariable("itemName") @NotBlank String itemName,
+                                                  @PathVariable("quantity") @Min(1) long quantity) throws ProductNotAvailableException {
+        LOGGER.info("GET /calculator called.");
 
 
         return service.getProduct(clientId, itemName, quantity);
@@ -45,10 +45,9 @@ public class CalculatorController {
     public List<ProductDto> buyProduct(@PathVariable("clientId") @NotBlank String clientId,
                                        @PathVariable("itemName") @NotBlank String itemName,
                                        @PathVariable("quantity") @Min(1) long quantity) throws ProductNotAvailableException {
-        LOGGER.info("GET /calculator called");
 
-        List<ProductDto> productDtos = transactionService.buyProduct(clientId, itemName, quantity);
+        LOGGER.info("GET /calculator/buy/{clientId}/{itemName}/{quantity} method is called.");
 
-        return productDtos;
+        return transactionService.buyProduct(clientId, itemName, quantity);
     }
 }

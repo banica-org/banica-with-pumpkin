@@ -24,7 +24,6 @@ public class ProductController {
     @PostMapping
     public Product createProduct(@RequestBody final List<Product> products) {
         LOGGER.info("POST /product called");
-        System.out.println();
         LOGGER.debug("Product controller: in createProduct method");
         return productService.createProduct(products);
     }

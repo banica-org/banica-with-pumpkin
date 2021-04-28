@@ -127,8 +127,7 @@ public class AuroraClientSideService {
     }
 
     public void buyProductFromMarket(String itemName, double itemPrice, long itemQuantity, String itemOrigin, long itemTimestamp) {
-        String message = String.format(BUY_PRODUCT_PATTERN, itemOrigin.toLowerCase(Locale.ROOT),
-                itemName, itemPrice, itemQuantity, itemOrigin, itemTimestamp);
+        String message = String.format(BUY_PRODUCT_PATTERN, itemOrigin.toLowerCase(Locale.ROOT), itemName, itemPrice, itemQuantity, itemOrigin, itemTimestamp);
         Aurora.AuroraResponse auroraResponse = getAuroraResponse(message);
 
         if (!auroraResponse.getMessage().is(BuySellProductResponse.class)) {

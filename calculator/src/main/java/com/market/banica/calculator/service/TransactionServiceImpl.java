@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -36,6 +35,8 @@ public class TransactionServiceImpl implements TransactionService {
 
         boolean areAvailable = true;
 
+        ItemDto notAvailableProduct = null;
+
         for (ProductDto purchaseProduct : notCompoundProducts) {
             if (!areAvailable) {
                 break;
@@ -52,6 +53,7 @@ public class TransactionServiceImpl implements TransactionService {
 
                 if (!availabilityResponse.getIsAvailable()) {
                     areAvailable = false;
+                    notAvailableProduct = new ItemDto(productName, productPrice, productOrigin.toString(), productQuantity, availabilityResponse.getTimestamp());
                     break;
                 }
                 pendingItems.add(new ItemDto(productName, productPrice, productOrigin.toString(), productQuantity, availabilityResponse.getTimestamp()));
@@ -60,7 +62,12 @@ public class TransactionServiceImpl implements TransactionService {
 
         if (!areAvailable) {
             returnPendingProducts(pendingItems);
-            return Collections.emptyList();
+            throw new ProductNotAvailableException(String.format("Sorry you can't buy %s, because %s market hasn't %d quantity for %s product on price %.2f.",
+                    itemName,
+                    notAvailableProduct.getLocation(),
+                    notAvailableProduct.getQuantity(),
+                    notAvailableProduct.getName(),
+                    notAvailableProduct.getPrice().doubleValue()));
         }
 
         buyPendingProducts(pendingItems);
@@ -73,16 +80,27 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     private List<ProductDto> getNotCompoundProducts(List<ProductDto> purchaseProducts) {
-        return purchaseProducts.stream().filter(productDto -> !productDto.getProductSpecifications().isEmpty()).collect(Collectors.toList());
+        return purchaseProducts
+                .stream()
+                .filter(productDto -> !productDto.getProductSpecifications().isEmpty())
+                .collect(Collectors.toList());
     }
 
     private void returnPendingProducts(List<ItemDto> pendingItems) {
-        pendingItems.forEach(item -> auroraClientSideService.returnPendingProductInMarket(item.getName(), item.getPrice().doubleValue(),
-                item.getQuantity(), item.getLocation(), item.getTimeStamp()));
+        pendingItems.forEach(item -> auroraClientSideService.returnPendingProductInMarket(
+                item.getName(),
+                item.getPrice().doubleValue(),
+                item.getQuantity(),
+                item.getLocation(),
+                item.getTimeStamp()));
     }
 
     private void buyPendingProducts(List<ItemDto> pendingItems) {
-        pendingItems.forEach(item -> auroraClientSideService.buyProductFromMarket(item.getName(), item.getPrice().doubleValue(),
-                item.getQuantity(), item.getLocation(), item.getTimeStamp()));
+        pendingItems.forEach(item -> auroraClientSideService.buyProductFromMarket(
+                item.getName(),
+                item.getPrice().doubleValue(),
+                item.getQuantity(),
+                item.getLocation(),
+                item.getTimeStamp()));
     }
 }

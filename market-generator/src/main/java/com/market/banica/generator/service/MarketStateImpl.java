@@ -1,6 +1,7 @@
 package com.market.banica.generator.service;
 
 import com.market.TickResponse;
+import com.market.banica.common.exception.ProductNotAvailableException;
 import com.market.banica.generator.model.MarketTick;
 import com.market.banica.generator.util.PersistScheduler;
 import com.market.banica.generator.util.SnapshotPersistence;
@@ -12,19 +13,16 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PreDestroy;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
@@ -60,18 +58,14 @@ public class MarketStateImpl implements MarketState {
         persistScheduler.scheduleSnapshot();
     }
 
-    public void publishUpdate(String itemName, long itemQuantity, double itemPrice) throws IOException {
+    public void publishUpdate(String itemName, long itemQuantity, double itemPrice) {
         MarketTick marketTick = new MarketTick(itemName, itemQuantity, itemPrice, System.currentTimeMillis());
         subscriptionManager.notifySubscribers(convertMarketTickToTickResponse(marketTick));
     }
 
-    public Optional<Set<MarketTick>> getMarketTicksByProductName(String productName) {
-        return Optional.of(this.marketState.get(productName));
-    }
 
-    public Map<String, Map<Double, Long>> getProductsQuantity() {
+    public Map<String, Map<Double, Long>> getMarketStateProductsQuantity() {
         Map<String, Map<Double, Long>> map = new HashMap<>();
-
         marketState.forEach((productName, productTicks) -> {
 
             Map<Double, Long> secondMap = new HashMap<>();
@@ -87,7 +81,29 @@ public class MarketStateImpl implements MarketState {
 
             map.put(productName, secondMap);
         });
+        return map;
+    }
 
+    public Map<String, Map<Double, Long>> getMarketSnapshotProductsQuantity() {
+        Map<String, Map<Double, Long>> map = new HashMap<>();
+        marketSnapshot.forEach(marketTick -> {
+
+            String productName = marketTick.getGood();
+
+            if (!map.containsKey(productName)) {
+                map.put(productName, new HashMap<>());
+            }
+            double productPrice = marketTick.getPrice();
+
+            if (!map.get(productName).containsKey(productPrice)) {
+                map.get(productName).put(productPrice, 0L);
+            }
+
+            Long currentQuantity = map.get(productName).get(productPrice);
+            Long newQuantity = currentQuantity + marketTick.getQuantity();
+
+            map.get(productName).put(productPrice, newQuantity);
+        });
         return map;
     }
 
@@ -137,107 +153,90 @@ public class MarketStateImpl implements MarketState {
     }
 
     @Override
-    public MarketTick removeItemFromState(String itemName, long itemQuantity, double itemPrice) throws InterruptedException {
+    public MarketTick removeItemFromState(String itemName, long itemQuantity, double itemPrice) throws ProductNotAvailableException {
 
-        final AtomicReference<MarketTick> desiredProduct = new AtomicReference<>();
+        MarketTick desiredProduct;
 
-        CountDownLatch countDownLatch = new CountDownLatch(1);
-
-        executorService.execute(() -> {
-            try {
-                marketDataLock.writeLock().lock();
-                Set<MarketTick> productInfo = new TreeSet<>();
-
-                for (MarketTick marketTick : marketState.get(itemName)) {
-                    if (marketTick.getGood().equals(itemName)) {
-                        productInfo.add(marketTick);
-                    }
-                }
+        try {
+            marketDataLock.writeLock().lock();
+            Set<MarketTick> productInfo = marketState.get(itemName);
 
 
-                for (MarketTick marketTick : marketSnapshot) {
-                    if (marketTick.getGood().equals(itemName)) {
-                        productInfo.add(marketTick);
-                    }
-                }
+            List<MarketTick> marketStateTicks = productInfo.stream().filter(marketTick -> marketTick.getPrice() == itemPrice).collect(Collectors.toList());
+            long marketStateTicksQuantity = getQuantityForMarketTicksWithSamePrice(marketStateTicks);
 
-                List<MarketTick> collect = productInfo.stream().filter(marketTick -> marketTick.getPrice() == itemPrice).collect(Collectors.toList());
-                long foundItemsQuantity = collect.stream().mapToLong(MarketTick::getQuantity).sum();
 
-                if (foundItemsQuantity < itemQuantity || collect.size() == 0) {
-
-                    throw new IllegalArgumentException("No product " + itemName + " with price " + itemPrice + " and quantity " + itemQuantity + ".");
-                }
-
-                long availableQuantity;
-                long leftQuantity = itemQuantity;
-
-                for (MarketTick tick : collect) {
-                    if (leftQuantity <= 0) {
-                        break;
-                    }
-                    if (tick == null) {
-                        throw new IllegalArgumentException("No product " + itemName + " with price " + itemPrice + " and quantity " + itemQuantity + ".");
-                    }
-                    availableQuantity = tick.getQuantity();
-                    productInfo.remove(tick);
-                    leftQuantity -= availableQuantity;
-
-                    if (leftQuantity < availableQuantity && leftQuantity < 0) {
-                        tick = new MarketTick(itemName, Math.abs(leftQuantity), tick.getPrice(), tick.getTimestamp());
-                    } else {
-                        tick = new MarketTick(itemName, availableQuantity - itemQuantity, tick.getPrice(), tick.getTimestamp());
-                    }
-                    desiredProduct.set(tick);
-                    productInfo.add(tick);
-
-                    if (tick.getQuantity() <= 0) {
-                        productInfo.remove(tick);
-                    }
-                }
-                try {
-                    publishUpdate(itemName, -itemQuantity, itemPrice);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            } finally {
-                countDownLatch.countDown();
-                marketDataLock.writeLock().unlock();
+            if (marketStateTicksQuantity < itemQuantity || marketStateTicks.size() == 0) {
+                throw new ProductNotAvailableException(String.format("Product with name %s, price %.2f and quantity %d doesn't exist.", itemName, itemPrice, itemQuantity));
             }
-        });
-        countDownLatch.await();
-        return desiredProduct.get();
+
+            desiredProduct = iterateAndRemove(itemName, itemQuantity, itemPrice, productInfo, marketStateTicks);
+
+            publishUpdate(itemName, -itemQuantity, itemPrice);
+        } finally {
+            marketDataLock.writeLock().unlock();
+        }
+        return desiredProduct;
+    }
+
+    private long getQuantityForMarketTicksWithSamePrice(List<MarketTick> marketTicks) {
+        return marketTicks.stream().mapToLong(MarketTick::getQuantity).sum();
+    }
+
+    private MarketTick iterateAndRemove(String itemName, long itemQuantity, double itemPrice, Collection<MarketTick> productInfo, List<MarketTick> marketTicks) {
+        MarketTick desiredProduct = null;
+        long availableQuantity;
+        long leftQuantity = itemQuantity;
+
+        for (MarketTick marketTick : marketTicks) {
+            if (leftQuantity <= 0) {
+                break;
+            }
+
+            availableQuantity = marketTick.getQuantity();
+            productInfo.remove(marketTick);
+            leftQuantity -= availableQuantity;
+
+            if (leftQuantity < availableQuantity && leftQuantity < 0) {
+                marketTick = new MarketTick(itemName, Math.abs(leftQuantity), marketTick.getPrice(), marketTick.getTimestamp());
+            } else {
+                marketTick = new MarketTick(itemName, availableQuantity - itemQuantity, marketTick.getPrice(), marketTick.getTimestamp());
+            }
+
+            productInfo.add(marketTick);
+            desiredProduct = marketTick;
+
+            if (marketTick.getQuantity() <= 0) {
+                productInfo.remove(marketTick);
+            }
+        }
+        return desiredProduct;
     }
 
     @Override
     public void addGoodToState(String itemName, double itemPrice, long itemQuantity, long timestamp) {
-        executorService.execute(() -> {
-            try {
-                marketDataLock.writeLock().lock();
-                Set<MarketTick> productInfo = marketState.get(itemName);
-                if (productInfo == null) {
-                    productInfo = new TreeSet<>();
-                    productInfo.add(new MarketTick(itemName, itemQuantity, itemPrice, timestamp));
-                    marketState.put(itemName, productInfo);
+        try {
+            marketDataLock.writeLock().lock();
+            Set<MarketTick> productInfo = marketState.get(itemName);
+            if (productInfo == null) {
+                productInfo = new TreeSet<>();
+                productInfo.add(new MarketTick(itemName, itemQuantity, itemPrice, timestamp));
+                marketState.put(itemName, productInfo);
+            } else {
+                MarketTick tick = new MarketTick(itemName, itemQuantity, itemPrice, timestamp);
+                if (productInfo.contains(tick)) {
+                    MarketTick searchedTick = productInfo.stream().filter(currentTick -> currentTick.compareTo(tick) == 0).findFirst().orElse(null);
+                    productInfo.remove(searchedTick);
+                    productInfo.add(new MarketTick(itemName, itemQuantity + searchedTick.getQuantity(), itemPrice, timestamp));
                 } else {
-                    MarketTick tick = new MarketTick(itemName, itemQuantity, itemPrice, timestamp);
-                    if (productInfo.contains(tick)) {
-                        MarketTick searchedTick = productInfo.stream().filter(currentTick -> currentTick.compareTo(tick) == 0).findFirst().orElse(null);
-                        productInfo.remove(searchedTick);
-                        productInfo.add(new MarketTick(itemName, itemQuantity + searchedTick.getQuantity(), itemPrice, timestamp));
-                    } else {
-                        productInfo.add(tick);
-                    }
+                    productInfo.add(tick);
                 }
-                try {
-                    publishUpdate(itemName, itemQuantity, itemPrice);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            } finally {
-                marketDataLock.writeLock().unlock();
             }
-        });
+            publishUpdate(itemName, itemQuantity, itemPrice);
+
+        } finally {
+            marketDataLock.writeLock().unlock();
+        }
     }
 
     @Override

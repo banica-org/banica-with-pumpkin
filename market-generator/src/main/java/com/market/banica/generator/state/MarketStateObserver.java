@@ -9,8 +9,6 @@ import org.springframework.jmx.export.annotation.ManagedResource;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @EnableMBeanExport
 @ManagedResource
@@ -25,17 +23,13 @@ public class MarketStateObserver {
     }
 
     @ManagedOperation
-    public Set<String> getAllItemsByName(String itemName) {
-        return marketState.getMarketTicksByProductName(itemName)
-                .orElseThrow(() -> new IllegalArgumentException("Product: " + itemName + " is not tracked!"))
-                .stream()
-                .map(MarketTick::toString)
-                .collect(Collectors.toSet());
+    public Map<String, Map<Double, Long>> getMarketStateProductsQuantity() {
+        return marketState.getMarketStateProductsQuantity();
     }
 
     @ManagedOperation
-    public Map<String, Map<Double, Long>> getProductsQuantity() {
-        return marketState.getProductsQuantity();
+    public Map<String, Map<Double, Long>> getMarketSnapshotProductsQuantity() {
+        return marketState.getMarketSnapshotProductsQuantity();
     }
 
 }
