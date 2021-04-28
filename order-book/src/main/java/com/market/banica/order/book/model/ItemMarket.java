@@ -38,8 +38,12 @@ public class ItemMarket {
         this.productsQuantity = new ConcurrentHashMap<>();
     }
 
+    public Map<String, Long> getProductsQuantity() {
+        return productsQuantity;
+    }
+
     public Optional<Set<Item>> getItemSetByName(String itemName) {
-        return Optional.of(this.allItems.get(itemName));
+        return Optional.ofNullable(this.allItems.get(itemName));
     }
 
     public Set<String> getItemNameSet() {
@@ -48,11 +52,12 @@ public class ItemMarket {
 
     public void addTrackedItem(String itemName) {
         this.allItems.put(itemName, new TreeSet<>());
-        this.productsQuantity.putIfAbsent(itemName, 0L);
+        this.productsQuantity.put(itemName, 0L);
     }
 
     public void removeUntrackedItem(String itemName) {
         this.allItems.remove(itemName);
+        this.productsQuantity.remove(itemName);
     }
 
     public void updateItem(Aurora.AuroraResponse response) {
