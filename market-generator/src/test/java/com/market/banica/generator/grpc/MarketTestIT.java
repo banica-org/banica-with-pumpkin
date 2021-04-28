@@ -1,5 +1,6 @@
 package com.market.banica.generator.grpc;
 
+import com.google.common.util.concurrent.MoreExecutors;
 import com.market.MarketDataRequest;
 import com.market.MarketServiceGrpc;
 import com.market.TickResponse;
@@ -17,6 +18,7 @@ import io.grpc.testing.GrpcCleanupRule;
 import org.junit.Rule;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,8 +39,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 
 @SpringJUnitConfig
@@ -80,6 +82,10 @@ public class MarketTestIT {
     @BeforeEach
     public void setup() {
 
+        ReflectionTestUtils.setField(marketState,"executorService", MoreExecutors.newDirectExecutorService());
+        ReflectionTestUtils.setField(marketState, "marketState", new ConcurrentHashMap<String, Set<MarketTick>>());
+        ReflectionTestUtils.setField(marketState, "marketSnapshot", new LinkedBlockingQueue<MarketTick>());
+
         marketName = InProcessServerBuilder.generateName();
         marketChannel = InProcessChannelBuilder
                 .forName(marketName)
@@ -90,15 +96,11 @@ public class MarketTestIT {
 
     @AfterAll
     public static void cleanUp() throws IOException {
-        ApplicationDirectoryUtil.getConfigFile(marketStateName).delete();
-        ApplicationDirectoryUtil.getConfigFile(marketSnapshotName).delete();
-        ApplicationDirectoryUtil.getConfigFile(marketPropertiesName).delete();
-    }
 
-    @AfterEach
-    public void cleanMarketState() {
-        ReflectionTestUtils.setField(marketState, "marketState", new ConcurrentHashMap<String, Set<MarketTick>>());
-        ReflectionTestUtils.setField(marketState, "marketSnapshot", new LinkedBlockingQueue<MarketTick>());
+        assert ApplicationDirectoryUtil.getConfigFile(marketStateName).delete();
+        assert ApplicationDirectoryUtil.getConfigFile(marketSnapshotName).delete();
+        assert ApplicationDirectoryUtil.getConfigFile(marketPropertiesName).delete();
+
     }
 
     @Test
@@ -208,7 +210,7 @@ public class MarketTestIT {
         for (int i = 0; i < 5; i++) {
             MarketTick.setOrigin("AMERICA");
             MarketTick marketTick = new MarketTick(GOOD, 10, 1.0, new Date().getTime());
-            marketState.addTickToMarketSnapshot(marketTick);
+            marketState.addTickToMarket(marketTick);
 
             TickResponse response = TickResponse.newBuilder()
                     .setOrigin(MarketTick.getOrigin())

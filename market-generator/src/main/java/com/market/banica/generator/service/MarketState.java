@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface MarketState {
 
-    void addTickToMarketSnapshot(MarketTick marketTick);
+    void addTickToMarket(MarketTick marketTick);
 
     List<TickResponse> generateMarketTicks(String good);
 
