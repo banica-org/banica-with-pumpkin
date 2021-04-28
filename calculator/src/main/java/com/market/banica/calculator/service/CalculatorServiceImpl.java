@@ -248,9 +248,9 @@ public class CalculatorServiceImpl implements CalculatorService {
         Set<ProductPriceComponentsSet> resultSet = new TreeSet<>(orderedProductPriceVariantsSet);
 
         if (resultSet.isEmpty()) {
-            throw new ProductNotAvailableException(String.format("Product %s not available on" +
-                    " the market", itemName));
+            throw new ProductNotAvailableException(String.format("Sorry you can't buy %s, because in markets doesn't have enough products quantity.",itemName));
         }
+
         return resultSet.iterator().next();
     }
 

@@ -1,0 +1,26 @@
+{
+  "crusts" : {
+    "productName" : "crusts",
+    "unitOfMeasure" : "GRAM",
+    "ingredients" : { }
+  },
+  "eggs" : {
+    "productName" : "eggs",
+    "unitOfMeasure" : "PIECE",
+    "ingredients" : { }
+  },
+  "banica" : {
+    "productName" : "banica",
+    "unitOfMeasure" : "GRAM",
+    "ingredients" : {
+      "crusts" : 10,
+      "eggs" : 10,
+      "cheese" : 10
+    }
+  },
+  "cheese" : {
+    "productName" : "cheese",
+    "unitOfMeasure" : "PIECE",
+    "ingredients" : { }
+  }
+}
