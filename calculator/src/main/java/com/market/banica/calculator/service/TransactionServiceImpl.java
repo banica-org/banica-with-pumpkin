@@ -35,8 +35,6 @@ public class TransactionServiceImpl implements TransactionService {
 
         boolean areAvailable = true;
 
-        ItemDto notAvailableProduct = null;
-
         for (ProductDto purchaseProduct : notCompoundProducts) {
             if (!areAvailable) {
                 break;
@@ -53,7 +51,6 @@ public class TransactionServiceImpl implements TransactionService {
 
                 if (!availabilityResponse.getIsAvailable()) {
                     areAvailable = false;
-                    notAvailableProduct = new ItemDto(productName, productPrice, productOrigin.toString(), productQuantity, availabilityResponse.getTimestamp());
                     break;
                 }
                 pendingItems.add(new ItemDto(productName, productPrice, productOrigin.toString(), productQuantity, availabilityResponse.getTimestamp()));
@@ -62,12 +59,6 @@ public class TransactionServiceImpl implements TransactionService {
 
         if (!areAvailable) {
             returnPendingProducts(pendingItems);
-            throw new ProductNotAvailableException(String.format("Sorry you can't buy %s, because %s market hasn't %d quantity for %s product on price %.2f.",
-                    itemName,
-                    notAvailableProduct.getLocation(),
-                    notAvailableProduct.getQuantity(),
-                    notAvailableProduct.getName(),
-                    notAvailableProduct.getPrice().doubleValue()));
         }
 
         buyPendingProducts(pendingItems);
