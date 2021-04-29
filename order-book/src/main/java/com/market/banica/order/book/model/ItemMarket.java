@@ -3,6 +3,7 @@ package com.market.banica.order.book.model;
 import com.aurora.Aurora;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.market.TickResponse;
+
 import com.market.banica.common.exception.IncorrectResponseException;
 import com.market.banica.common.validator.DataValidator;
 import com.orderbook.OrderBookLayer;
