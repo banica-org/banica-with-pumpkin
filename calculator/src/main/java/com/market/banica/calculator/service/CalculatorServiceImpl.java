@@ -43,7 +43,7 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class CalculatorServiceImpl implements CalculatorService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(BackUpServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CalculatorServiceImpl.class);
 
     private final AuroraClientSideService auroraService;
     private final ProductService productService;

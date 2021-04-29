@@ -15,6 +15,7 @@ import com.market.banica.calculator.enums.UnitOfMeasure;
 import com.market.banica.calculator.model.Product;
 import com.market.banica.calculator.service.contract.JMXServiceMBean;
 import com.market.banica.calculator.service.grpc.AuroraClientSideService;
+import com.market.banica.common.util.ApplicationDirectoryUtil;
 import com.orderbook.CancelSubscriptionResponse;
 import com.orderbook.InterestsResponse;
 import com.orderbook.ItemOrderBookResponse;
@@ -271,11 +272,11 @@ public class CalculatorComponentIT {
     }
 
     @AfterEach
-    public void cleanUp() {
+    public void cleanUp() throws IOException {
 
         productBase.getDatabase().clear();
 
-        File data = new File(databaseBackupUrl);
+        File data = ApplicationDirectoryUtil.getConfigFile(databaseBackupUrl);
 
         if (data.length() > 0) {
             data.delete();
