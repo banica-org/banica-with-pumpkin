@@ -3,6 +3,7 @@ package com.market.banica.generator.service;
 
 import com.google.common.util.concurrent.MoreExecutors;
 import com.market.TickResponse;
+import com.market.banica.common.exception.ProductNotAvailableException;
 import com.market.banica.common.util.ApplicationDirectoryUtil;
 import com.market.banica.generator.model.MarketTick;
 import com.market.banica.generator.util.PersistScheduler;
@@ -27,6 +28,8 @@ import java.util.TreeSet;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
@@ -155,6 +158,136 @@ class MarketStateImplTest {
         assertEquals(actual, result);
         verify(marketStateMap, times(1)).getOrDefault(GOOD_BANICA, new TreeSet<>());
         verify(marketSnapshot, times(1)).stream();
+
+    }
+
+    @Test
+    public void removeItemFromStateWithValidRequestRemovesRequiredNumberOfMarketTicks() throws ProductNotAvailableException {
+
+        MarketTick marketTick1 = new MarketTick(GOOD_EGGS, 2, 1, 1);
+        MarketTick marketTick2 = new MarketTick(GOOD_EGGS, 2, 1, 2);
+        MarketTick marketTick3 = new MarketTick(GOOD_EGGS, 7, 1, 3);
+
+        Set<MarketTick> marketTicks = new TreeSet<>(Arrays.asList(marketTick1, marketTick2, marketTick3));
+
+        when(marketStateMap.get(GOOD_EGGS)).thenReturn(marketTicks);
+
+        marketState.removeItemFromState(GOOD_EGGS, 8, 1);
+
+        Set<MarketTick> resultMap = marketStateMap.get(GOOD_EGGS);
+
+        assertEquals(1, resultMap.size());
+        assertEquals(3, resultMap.stream().findFirst().get().getQuantity());
+
+    }
+
+    @Test
+    public void removeItemFromStateWithValidRequestRemovesAllMarketTicks() throws ProductNotAvailableException {
+
+        MarketTick marketTick1 = new MarketTick(GOOD_EGGS, 2, 1, 1);
+        MarketTick marketTick2 = new MarketTick(GOOD_EGGS, 2, 1, 2);
+
+        Set<MarketTick> marketTicks = new TreeSet<>(Arrays.asList(marketTick1, marketTick2));
+
+        when(marketStateMap.get(GOOD_EGGS)).thenReturn(marketTicks);
+
+        marketState.removeItemFromState(GOOD_EGGS, 4, 1);
+
+        Set<MarketTick> resultMap = marketStateMap.get(GOOD_EGGS);
+
+        assertEquals(0, resultMap.size());
+
+    }
+
+    @Test
+    public void removeItemFromStateThrowsExceptionWhenRequestedItemIsNotAvailableOnMarket() {
+
+        when(marketStateMap.get(GOOD_EGGS)).thenReturn(Collections.emptySet());
+
+        assertThrows(ProductNotAvailableException.class, () -> marketState.removeItemFromState(GOOD_EGGS, 8, 1));
+
+    }
+
+    @Test
+    public void removeItemFromStateThrowsExceptionWhenQuantityOfRequestedItemIsGreaterThanAvailableMarketTick() {
+
+        MarketTick marketTick1 = new MarketTick(GOOD_EGGS, 7, 1, 1);
+
+        Set<MarketTick> marketTicks = new TreeSet<>(Collections.singletonList(marketTick1));
+
+        when(marketStateMap.get(GOOD_EGGS)).thenReturn(marketTicks);
+
+        assertThrows(ProductNotAvailableException.class, () -> marketState.removeItemFromState(GOOD_EGGS, 8, 1));
+
+    }
+
+    @Test
+    public void addGoodToStateCreatesNewTreeSetWhenMarketStateDoesNotContainMarketTickWithGivenName() {
+
+        long timestamp = System.currentTimeMillis();
+        long quantity = 5;
+        double price = 1.0;
+
+        MarketTick expectedMarketTick = new MarketTick(GOOD_EGGS, quantity, price, timestamp);
+
+        Set<MarketTick> marketTickSet = new TreeSet<>();
+        marketTickSet.add(expectedMarketTick);
+
+        marketState.addGoodToState(GOOD_EGGS, price, quantity, timestamp);
+
+        when(marketStateMap.get(GOOD_EGGS)).thenReturn(marketTickSet);
+
+        Set<MarketTick> expectedMarketTicks = marketStateMap.get(GOOD_EGGS);
+
+        assertEquals(1, expectedMarketTicks.size());
+        assertEquals(expectedMarketTick, expectedMarketTicks.stream().findFirst().get());
+
+    }
+
+    @Test
+    public void addGoodToStateIncreasesCurrentMarketTickWhenAddingTheSameMarketTick() {
+
+        long timestamp = System.currentTimeMillis();
+        long quantity = 5;
+        double price = 1.0;
+
+        MarketTick expectedMarketTick = new MarketTick(GOOD_EGGS, quantity, price, timestamp);
+
+        Set<MarketTick> marketTickSet = new TreeSet<>();
+        marketTickSet.add(expectedMarketTick);
+
+        when(marketStateMap.get(GOOD_EGGS)).thenReturn(marketTickSet);
+
+        marketState.addGoodToState(GOOD_EGGS, price, quantity, timestamp);
+
+        Set<MarketTick> expectedMarketTicks = marketStateMap.get(GOOD_EGGS);
+
+        MarketTick availableMarketTick = expectedMarketTicks.stream().findFirst().get();
+
+        assertEquals(1, expectedMarketTicks.size());
+        assertEquals(10, availableMarketTick.getQuantity());
+        assertNotEquals(expectedMarketTick, availableMarketTick);
+
+    }
+
+    @Test
+    public void addGoodToStateAddsSecondMarketTickWhenMarketStateInNotEmpty() {
+
+        MarketTick firstMarketTick = new MarketTick(GOOD_EGGS, 7, 2, 1);
+
+        Set<MarketTick> marketTickSet = new TreeSet<>();
+        marketTickSet.add(firstMarketTick);
+
+        when(marketStateMap.get(GOOD_EGGS)).thenReturn(marketTickSet);
+
+        marketState.addGoodToState(GOOD_EGGS, 1, 8, 1);
+
+        Set<MarketTick> expectedMarketTicks = marketStateMap.get(GOOD_EGGS);
+
+        MarketTick availableMarketTick = expectedMarketTicks.stream().findFirst().get();
+
+        assertEquals(2, expectedMarketTicks.size());
+        assertEquals(8, availableMarketTick.getQuantity());
 
     }
 

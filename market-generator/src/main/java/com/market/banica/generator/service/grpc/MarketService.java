@@ -74,33 +74,6 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
         responseObserver.onCompleted();
     }
 
-    private void cleanPendingOrdersCollection(ProductBuySellRequest request) {
-        try {
-            lock.writeLock().lock();
-            String productName = request.getItemName();
-            double productPrice = request.getItemPrice();
-            long productQuantity = request.getItemQuantity();
-
-            MarketTick marketTick = pendingOrders.get(productName).get(productPrice);
-
-            if (marketTick.getQuantity() > productQuantity) {
-                long newMarketTickQuantity = marketTick.getQuantity() - productQuantity;
-
-                MarketTick newMarketTick = new MarketTick(marketTick.getGood(), newMarketTickQuantity, marketTick.getPrice(), marketTick.getTimestamp());
-
-                pendingOrders.get(productName).put(productPrice, newMarketTick);
-            } else {
-                pendingOrders.get(productName).remove(productPrice);
-            }
-
-            if (pendingOrders.get(productName).isEmpty()) {
-                pendingOrders.remove(productName);
-            }
-        } finally {
-            lock.writeLock().unlock();
-        }
-    }
-
     @Override
     public void checkAvailability(ProductBuySellRequest request, StreamObserver<AvailabilityResponse> responseObserver) {
         boolean isAvailable = false;
@@ -132,6 +105,38 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
         responseObserver.onCompleted();
     }
 
+    @Override
+    public void requestCatalogue(CatalogueRequest request, StreamObserver<CatalogueResponse> responseObserver) {
+        super.requestCatalogue(request, responseObserver);
+    }
+
+    private void cleanPendingOrdersCollection(ProductBuySellRequest request) {
+        try {
+            lock.writeLock().lock();
+            String productName = request.getItemName();
+            double productPrice = request.getItemPrice();
+            long productQuantity = request.getItemQuantity();
+
+            MarketTick marketTick = pendingOrders.get(productName).get(productPrice);
+
+            if (marketTick.getQuantity() > productQuantity) {
+                long newMarketTickQuantity = marketTick.getQuantity() - productQuantity;
+
+                MarketTick newMarketTick = new MarketTick(marketTick.getGood(), newMarketTickQuantity, marketTick.getPrice(), marketTick.getTimestamp());
+
+                pendingOrders.get(productName).put(productPrice, newMarketTick);
+            } else {
+                pendingOrders.get(productName).remove(productPrice);
+            }
+
+            if (pendingOrders.get(productName).isEmpty()) {
+                pendingOrders.remove(productName);
+            }
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
     private void addItemToPending(ProductBuySellRequest request, long timestamp) {
         Map<Double, MarketTick> pendingProductInfo = pendingOrders.get(request.getItemName());
         MarketTick tick;
@@ -147,11 +152,6 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
         tick = pendingProductInfo.get(request.getItemPrice());
         MarketTick newMarketTick = new MarketTick(request.getItemName(), tick.getQuantity() + request.getItemQuantity(), request.getItemPrice(), timestamp);
         pendingProductInfo.put(request.getItemPrice(), newMarketTick);
-    }
-
-    @Override
-    public void requestCatalogue(CatalogueRequest request, StreamObserver<CatalogueResponse> responseObserver) {
-        super.requestCatalogue(request, responseObserver);
     }
 
     private boolean bootstrapGeneratedTicks(MarketDataRequest request,

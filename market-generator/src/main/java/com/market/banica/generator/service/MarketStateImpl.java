@@ -179,6 +179,37 @@ public class MarketStateImpl implements MarketState {
         return desiredProduct;
     }
 
+    @Override
+    public void addGoodToState(String itemName, double itemPrice, long itemQuantity, long timestamp) {
+        try {
+            marketDataLock.writeLock().lock();
+            Set<MarketTick> productInfo = marketState.get(itemName);
+            if (productInfo == null) {
+                productInfo = new TreeSet<>();
+                productInfo.add(new MarketTick(itemName, itemQuantity, itemPrice, timestamp));
+                marketState.put(itemName, productInfo);
+            } else {
+                MarketTick tick = new MarketTick(itemName, itemQuantity, itemPrice, timestamp);
+                if (productInfo.contains(tick)) {
+                    MarketTick searchedTick = productInfo.stream().filter(currentTick -> currentTick.compareTo(tick) == 0).findFirst().orElse(null);
+                    productInfo.remove(searchedTick);
+                    productInfo.add(new MarketTick(itemName, itemQuantity + searchedTick.getQuantity(), itemPrice, timestamp));
+                } else {
+                    productInfo.add(tick);
+                }
+            }
+            publishUpdate(itemName, itemQuantity, itemPrice);
+
+        } finally {
+            marketDataLock.writeLock().unlock();
+        }
+    }
+
+    @Override
+    public Map<String, Set<MarketTick>> getMarketState() {
+        return this.marketState;
+    }
+
     private long getQuantityForMarketTicksWithSamePrice(List<MarketTick> marketTicks) {
         return marketTicks.stream().mapToLong(MarketTick::getQuantity).sum();
     }
@@ -211,37 +242,6 @@ public class MarketStateImpl implements MarketState {
             }
         }
         return desiredProduct;
-    }
-
-    @Override
-    public void addGoodToState(String itemName, double itemPrice, long itemQuantity, long timestamp) {
-        try {
-            marketDataLock.writeLock().lock();
-            Set<MarketTick> productInfo = marketState.get(itemName);
-            if (productInfo == null) {
-                productInfo = new TreeSet<>();
-                productInfo.add(new MarketTick(itemName, itemQuantity, itemPrice, timestamp));
-                marketState.put(itemName, productInfo);
-            } else {
-                MarketTick tick = new MarketTick(itemName, itemQuantity, itemPrice, timestamp);
-                if (productInfo.contains(tick)) {
-                    MarketTick searchedTick = productInfo.stream().filter(currentTick -> currentTick.compareTo(tick) == 0).findFirst().orElse(null);
-                    productInfo.remove(searchedTick);
-                    productInfo.add(new MarketTick(itemName, itemQuantity + searchedTick.getQuantity(), itemPrice, timestamp));
-                } else {
-                    productInfo.add(tick);
-                }
-            }
-            publishUpdate(itemName, itemQuantity, itemPrice);
-
-        } finally {
-            marketDataLock.writeLock().unlock();
-        }
-    }
-
-    @Override
-    public Map<String, Set<MarketTick>> getMarketState() {
-        return this.marketState;
     }
 
     private TickResponse convertMarketTickToTickResponse(MarketTick marketTick) {
