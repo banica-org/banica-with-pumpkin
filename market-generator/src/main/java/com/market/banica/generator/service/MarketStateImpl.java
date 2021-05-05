@@ -170,7 +170,7 @@ public class MarketStateImpl implements MarketState {
                 throw new ProductNotAvailableException(String.format("Product with name %s, price %.2f and quantity %d doesn't exist.", itemName, itemPrice, itemQuantity));
             }
 
-            desiredProduct = iterateAndRemove(itemName, itemQuantity, itemPrice, productInfo, marketStateTicks);
+            desiredProduct = iterateAndRemove(itemName, itemQuantity, productInfo, marketStateTicks);
 
             publishUpdate(itemName, -itemQuantity, itemPrice);
         } finally {
@@ -214,7 +214,7 @@ public class MarketStateImpl implements MarketState {
         return marketTicks.stream().mapToLong(MarketTick::getQuantity).sum();
     }
 
-    private MarketTick iterateAndRemove(String itemName, long itemQuantity, double itemPrice, Collection<MarketTick> productInfo, List<MarketTick> marketTicks) {
+    private MarketTick iterateAndRemove(String itemName, long itemQuantity, Collection<MarketTick> productInfo, List<MarketTick> marketTicks) {
         MarketTick desiredProduct = null;
         long availableQuantity;
         long leftQuantity = itemQuantity;

@@ -160,7 +160,7 @@ class MarketServiceImplTest {
     }
 
     @Test
-    public void checkAvailabilityAddsIncreasesPreviousRecordInPendingOrders() throws ProductNotAvailableException {
+    public void checkAvailabilityIncreasesPreviousRecordQuantityInPendingOrders() throws ProductNotAvailableException {
 
         ProductBuySellRequest availabilityRequest = populateBuySellRequest(GOOD_BANICA, AMOUNT, PRICE_1);
 
@@ -214,7 +214,7 @@ class MarketServiceImplTest {
     }
 
     @Test
-    public void returnPendingProductRemovesMarketTrickFromPendingOrders() {
+    public void returnPendingProductRemovesMarketTickFromPendingOrders() {
 
         long amount = 10;
 
@@ -234,7 +234,7 @@ class MarketServiceImplTest {
     }
 
     @Test
-    public void returnPendingProductDecreasesMarketTrickFromPendingOrders() {
+    public void returnPendingProductDecreasesMarketTickFromPendingOrders() {
         long expectedQuantity = 4;
 
         MarketTick marketTick = new MarketTick(GOOD_BANICA, 10, PRICE_1, TIMESTAMP);
