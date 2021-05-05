@@ -19,13 +19,11 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -104,10 +102,12 @@ class MarketStateImplTest {
         when(marketStateMap.get(GOOD_BANICA)).thenReturn(emptySetSpy);
 
 
-        marketState.addTickToMarketSnapshot(marketTick);
+        marketState.addTickToMarket(marketTick);
 
 
         verify(marketSnapshot, times(1)).add(marketTick);
+        verify(marketStateMap, times(1)).putIfAbsent(GOOD_BANICA, new TreeSet<>());
+        verify(emptySetSpy, times(1)).add(marketTick);
         verify(snapshotPersistence, times(1)).persistMarketSnapshot(marketSnapshot);
         verify(subscriptionManager, times(1))
                 .notifySubscribers(convertMarketTickToTickResponse(marketTick));
@@ -115,40 +115,21 @@ class MarketStateImplTest {
     }
 
     @Test
-    void generateMarketTicks_WhenGoodDoesNotExist() {
-
-        MarketTick marketTick1 = new MarketTick(GOOD_EGGS, 1, 1, 1);
-        MarketTick marketTick2 = new MarketTick(GOOD_EGGS, 2, 2, 2);
-
-        when(marketStateMap.getOrDefault(GOOD_BANICA, new TreeSet<>())).thenReturn(new TreeSet<>());
-        when(marketSnapshot.stream()).thenReturn(Stream.of(marketTick1, marketTick2));
-
-
-        List<TickResponse> result = marketState.generateMarketTicks(GOOD_BANICA);
-
-
-        assertEquals(Collections.emptyList(), result);
-        verify(marketStateMap, times(1)).getOrDefault(GOOD_BANICA, new TreeSet<>());
-        verify(marketSnapshot, times(1)).stream();
-
-    }
-
-    @Test
-    void generateMarketTicks_WhenGoodExists() {
+    void generateMarketTicks() {
 
         MarketTick marketTick1 = new MarketTick(GOOD_BANICA, 1, 1, 1);
         MarketTick marketTick2 = new MarketTick(GOOD_BANICA, 2, 2, 2);
         MarketTick marketTick3 = new MarketTick(GOOD_EGGS, 3, 3, 3);
         MarketTick marketTick4 = new MarketTick(GOOD_BANICA, 4, 4, 4);
 
-        Set<MarketTick> marketTicks = new TreeSet<>(Arrays.asList(marketTick1, marketTick2));
+        Set<MarketTick> marketTicks = new TreeSet<>(Arrays.asList(marketTick1, marketTick2, marketTick3, marketTick4));
 
         when(marketStateMap.getOrDefault(GOOD_BANICA, new TreeSet<>()))
                 .thenReturn(marketTicks);
-        when(marketSnapshot.stream()).thenReturn(Stream.of(marketTick3, marketTick4));
 
         List<TickResponse> actual = Arrays.asList(convertMarketTickToTickResponse(marketTick1),
                 convertMarketTickToTickResponse(marketTick2),
+                convertMarketTickToTickResponse(marketTick3),
                 convertMarketTickToTickResponse(marketTick4));
 
 
@@ -157,7 +138,6 @@ class MarketStateImplTest {
 
         assertEquals(actual, result);
         verify(marketStateMap, times(1)).getOrDefault(GOOD_BANICA, new TreeSet<>());
-        verify(marketSnapshot, times(1)).stream();
 
     }
 

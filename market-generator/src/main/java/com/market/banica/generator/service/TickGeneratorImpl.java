@@ -86,7 +86,7 @@ public class TickGeneratorImpl implements TickGenerator {
     @Override
     public void executeTickTask(MarketTick marketTick, TickTask nextTick, long delay) {
 
-        marketState.addTickToMarketSnapshot(marketTick);
+        marketState.addTickToMarket(marketTick);
 
         ScheduledFuture<?> taskScheduledFuture = tickScheduler.schedule(nextTick, delay, TimeUnit.SECONDS);
 

@@ -35,18 +35,12 @@ public class SnapshotPersistence {
 
     public void persistMarketState(Map<String, Set<MarketTick>> marketState, Queue<MarketTick> marketSnapshot) throws IOException {
 
-        while (!marketSnapshot.isEmpty()) {
-            MarketTick currentTick = marketSnapshot.poll();
-            String good = currentTick.getGood();
-            marketState.putIfAbsent(good, new TreeSet<>());
-            marketState.get(good).add(currentTick);
-        }
-
         Output output = new Output(new FileOutputStream(ApplicationDirectoryUtil.getConfigFile(stateFileName)));
         kryoHandle.writeClassAndObject(output, marketState);
         output.close();
         LOGGER.info("Persisting market state!");
 
+        marketSnapshot.clear();
         persistMarketSnapshot(marketSnapshot);
 
     }
@@ -61,7 +55,7 @@ public class SnapshotPersistence {
     }
 
     @SuppressWarnings({"unchecked"})
-    public Map<String, Set<MarketTick>> loadMarketState() throws IOException {
+    public Map<String, Set<MarketTick>> loadMarketState(Queue<MarketTick> marketSnapshot) throws IOException {
 
         Map<String, Set<MarketTick>> loadedMarketStateTicks = new ConcurrentHashMap<>();
 
@@ -82,6 +76,13 @@ public class SnapshotPersistence {
             LOGGER.info("Loaded market state ticks!");
 
         }
+
+        for (MarketTick currentTick : marketSnapshot) {
+            String good = currentTick.getGood();
+            loadedMarketStateTicks.putIfAbsent(good, new TreeSet<>());
+            loadedMarketStateTicks.get(good).add(currentTick);
+        }
+
         return loadedMarketStateTicks;
 
     }

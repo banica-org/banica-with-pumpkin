@@ -50,8 +50,8 @@ public class MarketStateImpl implements MarketState {
                            @Value("${tick.market.snapshot.file.name}") String snapshotFileName,
                            MarketSubscriptionManager subscriptionManager) throws IOException {
         snapshotPersistence = new SnapshotPersistence(stateFileName, snapshotFileName);
-        this.marketState = snapshotPersistence.loadMarketState();
         this.marketSnapshot = snapshotPersistence.loadMarketSnapshot();
+        this.marketState = snapshotPersistence.loadMarketState(marketSnapshot);
         this.executorService = Executors.newSingleThreadExecutor();
         this.subscriptionManager = subscriptionManager;
         persistScheduler = new PersistScheduler(marketDataLock, snapshotPersistence, marketState, marketSnapshot);
@@ -108,11 +108,15 @@ public class MarketStateImpl implements MarketState {
     }
 
     @Override
-    public void addTickToMarketSnapshot(MarketTick marketTick) {
+    public void addTickToMarket(MarketTick marketTick) {
         executorService.execute(() -> {
             try {
                 marketDataLock.writeLock().lock();
                 marketSnapshot.add(marketTick);
+
+                String good = marketTick.getGood();
+                marketState.putIfAbsent(good, new TreeSet<>());
+                marketState.get(good).add(marketTick);
 
                 snapshotPersistence.persistMarketSnapshot(marketSnapshot);
 
@@ -131,17 +135,10 @@ public class MarketStateImpl implements MarketState {
         try {
             marketDataLock.readLock().lock();
 
-            List<TickResponse> generatedTicks = marketState.getOrDefault(good, new TreeSet<>()).stream()
+            LOGGER.info("Generating market ticks for {} .", good);
+            return marketState.getOrDefault(good, new TreeSet<>()).stream()
                     .map(this::convertMarketTickToTickResponse)
                     .collect(Collectors.toList());
-
-            marketSnapshot.stream()
-                    .filter(marketTick -> marketTick.getGood().equals(good))
-                    .map(this::convertMarketTickToTickResponse)
-                    .forEach(generatedTicks::add);
-
-            LOGGER.info("Successfully generated market ticks for {} .", good);
-            return generatedTicks;
 
         } finally {
             marketDataLock.readLock().unlock();
