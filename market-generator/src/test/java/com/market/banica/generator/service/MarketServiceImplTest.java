@@ -69,9 +69,9 @@ class MarketServiceImplTest {
     @SuppressWarnings("unchecked")
     private final ServerCallStreamObserver<CatalogueResponse> subscriberRequest = mock(ServerCallStreamObserver.class);
     @SuppressWarnings("unchecked")
-    private final ServerCallStreamObserver<AvailabilityResponse> subscriberAvailability = mock(ServerCallStreamObserver.class);
+    private final ServerCallStreamObserver<AvailabilityResponse> calculatorAvailability = mock(ServerCallStreamObserver.class);
     @SuppressWarnings("unchecked")
-    private final ServerCallStreamObserver<BuySellProductResponse> subscriberReturnProduct = mock(ServerCallStreamObserver.class);
+    private final ServerCallStreamObserver<BuySellProductResponse> calculatorReturnProduct = mock(ServerCallStreamObserver.class);
 
     @Test
     void subscribe_ValidRequest_BootstrapAndAddSubscriber() {
@@ -150,7 +150,7 @@ class MarketServiceImplTest {
 
         when(marketState.removeItemFromState(GOOD_BANICA, AMOUNT, PRICE_1)).thenReturn(marketTick);
 
-        marketService.checkAvailability(availabilityRequest, subscriberAvailability);
+        marketService.checkAvailability(availabilityRequest, calculatorAvailability);
 
         MarketTick marketTickInPendingOrders = pendingOrders.get(GOOD_BANICA).get(PRICE_1);
 
@@ -168,8 +168,8 @@ class MarketServiceImplTest {
 
         when(marketState.removeItemFromState(GOOD_BANICA, AMOUNT, PRICE_1)).thenReturn(marketTick);
 
-        marketService.checkAvailability(availabilityRequest, subscriberAvailability);
-        marketService.checkAvailability(availabilityRequest, subscriberAvailability);
+        marketService.checkAvailability(availabilityRequest, calculatorAvailability);
+        marketService.checkAvailability(availabilityRequest, calculatorAvailability);
 
         MarketTick marketTickWithIncreasedQuantity = pendingOrders.get(GOOD_BANICA).get(PRICE_1);
 
@@ -190,8 +190,8 @@ class MarketServiceImplTest {
         when(marketState.removeItemFromState(GOOD_BANICA, AMOUNT, PRICE_1)).thenReturn(marketTick);
         when(marketState.removeItemFromState(GOOD_BANICA, AMOUNT, PRICE_2)).thenReturn(secondMarketTick);
 
-        marketService.checkAvailability(availabilityRequest, subscriberAvailability);
-        marketService.checkAvailability(secondAvailabilityRequest, subscriberAvailability);
+        marketService.checkAvailability(availabilityRequest, calculatorAvailability);
+        marketService.checkAvailability(secondAvailabilityRequest, calculatorAvailability);
 
         assertEquals(2, pendingOrders.get(GOOD_BANICA).size());
         verify(marketState, times(1)).removeItemFromState(GOOD_BANICA, AMOUNT, PRICE_1);
@@ -208,7 +208,7 @@ class MarketServiceImplTest {
 
         ProductBuySellRequest request = populateBuySellRequest(GOOD_BANICA, 10, PRICE_1);
 
-        marketService.returnPendingProduct(request, subscriberReturnProduct);
+        marketService.returnPendingProduct(request, calculatorReturnProduct);
 
         assertEquals(0, pendingOrders.size());
     }
@@ -227,7 +227,7 @@ class MarketServiceImplTest {
 
         ProductBuySellRequest request = populateBuySellRequest(GOOD_BANICA, amount, PRICE_1);
 
-        marketService.returnPendingProduct(request, subscriberReturnProduct);
+        marketService.returnPendingProduct(request, calculatorReturnProduct);
 
         assertEquals(1, pendingOrders.size());
         assertEquals(amount, pendingOrders.get(GOOD_BANICA).get(PRICE_2).getQuantity());
@@ -244,7 +244,7 @@ class MarketServiceImplTest {
 
         ProductBuySellRequest request = populateBuySellRequest(GOOD_BANICA, 6, PRICE_1);
 
-        marketService.returnPendingProduct(request, subscriberReturnProduct);
+        marketService.returnPendingProduct(request, calculatorReturnProduct);
 
         assertEquals(1, pendingOrders.size());
         assertEquals(expectedQuantity, pendingOrders.get(GOOD_BANICA).get(PRICE_1).getQuantity());

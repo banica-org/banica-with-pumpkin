@@ -163,7 +163,7 @@ class MarketStateImplTest {
     }
 
     @Test
-    public void removeItemFromStateWithValidRequestDecreasesRequiredNumberOfMarketTickQuatity() throws ProductNotAvailableException {
+    public void removeItemFromStateWithValidRequestDecreasesRequiredNumberOfMarketTickQuantity() throws ProductNotAvailableException {
 
         MarketTick marketTick1 = new MarketTick(GOOD_EGGS, 7, 1, 1);
         MarketTick marketTick2 = new MarketTick(GOOD_EGGS, 8, 1, 2);
