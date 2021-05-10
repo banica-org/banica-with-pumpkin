@@ -81,7 +81,7 @@ public class RequestMapper {
     }
 
     private Aurora.AuroraResponse renderMarketMapping(Aurora.AuroraRequest incomingRequest, ManagedChannel channelByKey) {
-        LOGGER.info("Mapping messages for market.");
+        LOGGER.debug("Mapping messages for market.");
         String[] topicSplit = incomingRequest.getTopic().split(SPLIT_SLASH_REGEX);
 
         MarketServiceGrpc.MarketServiceBlockingStub marketStub = stubManager.getMarketBlockingStub(channelByKey);
@@ -118,10 +118,10 @@ public class RequestMapper {
     }
 
     private Aurora.AuroraResponse renderAuroraMapping(Aurora.AuroraRequest incomingRequest, ManagedChannel channelByKey) {
-        LOGGER.info("Mapping request for aurora.");
+        LOGGER.debug("Mapping request for aurora.");
         AuroraServiceGrpc.AuroraServiceBlockingStub auroraBlockingStub = stubManager.getAuroraBlockingStub(channelByKey);
 
-        LOGGER.info(IN_AURORA_REQUEST);
+        LOGGER.debug(IN_AURORA_REQUEST);
         return auroraBlockingStub.request(incomingRequest);
     }
 
@@ -131,7 +131,7 @@ public class RequestMapper {
     }
 
     private Aurora.AuroraResponse renderOrderbookMapping(Aurora.AuroraRequest incomingRequest, ManagedChannel channelByKey) {
-        LOGGER.info("Mapping messages for orderbook.");
+        LOGGER.debug("Mapping messages for orderbook.");
         String[] topicSplit = incomingRequest.getTopic().split(SPLIT_SLASH_REGEX);
 
         try {

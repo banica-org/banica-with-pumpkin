@@ -11,10 +11,13 @@ import com.market.TickResponse;
 import com.market.banica.common.exception.ProductNotAvailableException;
 import com.market.banica.generator.model.MarketTick;
 import com.market.banica.generator.service.MarketState;
+import com.market.banica.generator.service.MarketStateImpl;
 import com.market.banica.generator.service.SubscriptionManager;
 import io.grpc.Status;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jmx.export.annotation.ManagedResource;
 import org.springframework.stereotype.Service;
@@ -27,6 +30,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 @Service
 @ManagedResource
 public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(System.getenv("MARKET") + "." + MarketService.class.getSimpleName());
 
     private final SubscriptionManager subscriptionManager;
 
@@ -89,7 +94,7 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
             addItemToPending(request, marketTick.getTimestamp());
             isAvailable = true;
         } catch (ProductNotAvailableException e) {
-            e.printStackTrace();
+            LOGGER.error("Error occurred while checking availability with exception : {}",e );
         }
 
         AvailabilityResponse availabilityResponse = AvailabilityResponse.newBuilder()

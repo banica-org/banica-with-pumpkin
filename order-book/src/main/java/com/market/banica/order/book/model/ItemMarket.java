@@ -84,7 +84,7 @@ public class ItemMarket {
 
         this.productsQuantity.merge(goodName, tickResponse.getQuantity(), Long::sum);
 
-        LOGGER.info("Products data updated!");
+        LOGGER.debug("Products data updated with value: {}" + tickResponse.toString());
 
         if (itemSet.contains(item)) {
 
