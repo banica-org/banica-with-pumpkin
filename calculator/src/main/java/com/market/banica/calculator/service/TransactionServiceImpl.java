@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 @Service
@@ -45,7 +46,7 @@ public class TransactionServiceImpl implements TransactionService {
 
                 BigDecimal productPrice = productSpecification.getPrice();
                 Long productQuantity = productSpecification.getQuantity();
-                Origin productOrigin = Origin.valueOf(productSpecification.getLocation());
+                Origin productOrigin = Origin.valueOf(productSpecification.getLocation().toUpperCase(Locale.ROOT));
 
                 AvailabilityResponse availabilityResponse = auroraClientSideService.checkAvailability(productName, productPrice.doubleValue(), productQuantity, productOrigin);
 
@@ -59,9 +60,10 @@ public class TransactionServiceImpl implements TransactionService {
 
         if (!areAvailable) {
             returnPendingProducts(pendingItems);
+        }else {
+            buyPendingProducts(pendingItems);
         }
 
-        buyPendingProducts(pendingItems);
         return purchaseProducts;
 
     }

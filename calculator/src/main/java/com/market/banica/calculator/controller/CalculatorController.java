@@ -21,7 +21,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CalculatorController {
 
-    private final CalculatorService service;
+    private final CalculatorService calculatorService;
     private final TransactionService transactionService;
     private static final Logger LOGGER = LoggerFactory.getLogger(CalculatorController.class);
 
@@ -32,7 +32,7 @@ public class CalculatorController {
         LOGGER.info("GET /calculator called.");
 
 
-        return service.getProduct(clientId, itemName, quantity);
+        return calculatorService.getProduct(clientId, itemName, quantity);
     }
     @GetMapping("/buy/{clientId}/{itemName}/{quantity}")
     public List<ProductDto> buyProduct(@PathVariable("clientId") @NotBlank String clientId,
