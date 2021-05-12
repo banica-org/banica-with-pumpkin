@@ -53,7 +53,7 @@ public class TransactionServiceImpl implements TransactionService {
                 Long productQuantity = productSpecification.getQuantity();
                 Origin productOrigin = Origin.valueOf(productSpecification.getLocation().toUpperCase(Locale.ROOT));
 
-                AvailabilityResponse availabilityResponse = auroraClientSideService.checkAvailability(productName, productPrice.doubleValue(), productQuantity, productOrigin);
+                AvailabilityResponse availabilityResponse = this.auroraClientSideService.checkAvailability(productName, productPrice.doubleValue(), productQuantity, productOrigin);
 
                 if (!availabilityResponse.getIsAvailable()) {
                     areAvailable = false;
@@ -80,19 +80,19 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     public String sellProduct(List<ItemDto> itemsToSell) {
-        StringBuilder responseMessage = new StringBuilder();
+        StringBuilder stringBuilder = new StringBuilder();
 
-        for (ItemDto itemToSell : itemsToSell) {
+        for (ItemDto item : itemsToSell) {
             long itemTimestamp = System.currentTimeMillis();
-            String sellMessage = this.auroraClientSideService.sellProduct(itemToSell.getName(), itemToSell.getPrice().doubleValue(), itemToSell.getQuantity(), itemToSell.getLocation(), itemTimestamp);
-            responseMessage.append(sellMessage);
+            String responseMessage = this.auroraClientSideService.sellProductToMarket(item.getName(), item.getPrice().doubleValue(), item.getQuantity(), item.getLocation(), itemTimestamp);
+            stringBuilder.append(responseMessage).append(System.lineSeparator());
         }
 
-        return responseMessage.toString().trim();
+        return stringBuilder.toString().trim();
     }
 
     private List<ProductDto> getPurchaseProducts(String clientId, String itemName, long quantity) throws ProductNotAvailableException {
-        return new ArrayList<>(calculatorService.getProduct(clientId, itemName, quantity));
+        return new ArrayList<>(this.calculatorService.getProduct(clientId, itemName, quantity));
     }
 
     private List<ProductDto> getNotCompoundProducts(List<ProductDto> purchaseProducts) {
