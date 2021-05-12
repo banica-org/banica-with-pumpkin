@@ -1,14 +1,19 @@
 package com.market.banica.calculator.controller;
 
+import com.market.banica.calculator.dto.ItemDto;
 import com.market.banica.calculator.dto.ProductDto;
+import com.market.banica.calculator.model.Product;
 import com.market.banica.calculator.service.contract.TransactionService;
 import com.market.banica.common.exception.ProductNotAvailableException;
 import com.market.banica.calculator.service.contract.CalculatorService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -34,6 +39,7 @@ public class CalculatorController {
 
         return calculatorService.getProduct(clientId, itemName, quantity);
     }
+
     @GetMapping("/buy/{clientId}/{itemName}/{quantity}")
     public List<ProductDto> buyProduct(@PathVariable("clientId") @NotBlank String clientId,
                                        @PathVariable("itemName") @NotBlank String itemName,
@@ -42,5 +48,13 @@ public class CalculatorController {
         LOGGER.info("GET /calculator/buy/{clientId}/{itemName}/{quantity} method is called.");
 
         return transactionService.buyProduct(clientId, itemName, quantity);
+    }
+
+    @PostMapping("/sell/{clientId}")
+    public ResponseEntity<String> sellProduct(@RequestBody final List<ItemDto> products) {
+
+        LOGGER.info("GET /calculator/buy/{clientId}/{itemName}/{quantity} method is called.");
+
+        return ResponseEntity.ok(transactionService.sellProduct(products));
     }
 }

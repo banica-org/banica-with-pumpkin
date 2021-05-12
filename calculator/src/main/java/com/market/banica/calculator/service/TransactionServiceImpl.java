@@ -26,6 +26,8 @@ public class TransactionServiceImpl implements TransactionService {
     private final CalculatorService calculatorService;
     private final AuroraClientSideService auroraClientSideService;
 
+    private static final String PRODUCT_NOT_AVAILABLE_MESSAGE = "%s with quantity %d is currently not available on the %s market";
+
     @Override
     public List<ProductDto> buyProduct(String clientId, String itemName, long quantity) throws ProductNotAvailableException {
         List<ProductDto> purchaseProducts = getPurchaseProducts(clientId, itemName, quantity);
@@ -35,6 +37,9 @@ public class TransactionServiceImpl implements TransactionService {
         List<ItemDto> pendingItems = new ArrayList<>();
 
         boolean areAvailable = true;
+        String unavailableProductName = "";
+        String unavailableProductMarketName = "";
+        long unavailableProductQuantity = 0;
 
         for (ProductDto purchaseProduct : notCompoundProducts) {
             if (!areAvailable) {
@@ -52,6 +57,9 @@ public class TransactionServiceImpl implements TransactionService {
 
                 if (!availabilityResponse.getIsAvailable()) {
                     areAvailable = false;
+                    unavailableProductName = availabilityResponse.getItemName();
+                    unavailableProductQuantity = availabilityResponse.getItemQuantity();
+                    unavailableProductMarketName = availabilityResponse.getMarketName();
                     break;
                 }
                 pendingItems.add(new ItemDto(productName, productPrice, productOrigin.toString(), productQuantity, availabilityResponse.getTimestamp()));
@@ -60,12 +68,27 @@ public class TransactionServiceImpl implements TransactionService {
 
         if (!areAvailable) {
             returnPendingProducts(pendingItems);
-        }else {
+
+            throw new ProductNotAvailableException(String.format(PRODUCT_NOT_AVAILABLE_MESSAGE,
+                    unavailableProductName.toUpperCase(Locale.ROOT), unavailableProductQuantity, unavailableProductMarketName));
+        } else {
             buyPendingProducts(pendingItems);
         }
 
         return purchaseProducts;
 
+    }
+
+    public String sellProduct(List<ItemDto> itemsToSell) {
+        StringBuilder responseMessage = new StringBuilder();
+
+        for (ItemDto itemToSell : itemsToSell) {
+            long itemTimestamp = System.currentTimeMillis();
+            String sellMessage = this.auroraClientSideService.sellProduct(itemToSell.getName(), itemToSell.getPrice().doubleValue(), itemToSell.getQuantity(), itemToSell.getLocation(), itemTimestamp);
+            responseMessage.append(sellMessage);
+        }
+
+        return responseMessage.toString().trim();
     }
 
     private List<ProductDto> getPurchaseProducts(String clientId, String itemName, long quantity) throws ProductNotAvailableException {

@@ -11,7 +11,6 @@ import com.market.TickResponse;
 import com.market.banica.common.exception.ProductNotAvailableException;
 import com.market.banica.generator.model.MarketTick;
 import com.market.banica.generator.service.MarketState;
-import com.market.banica.generator.service.MarketStateImpl;
 import com.market.banica.generator.service.SubscriptionManager;
 import io.grpc.Status;
 import io.grpc.stub.ServerCallStreamObserver;
@@ -69,11 +68,15 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
 
     @Override
     public void returnPendingProduct(ProductBuySellRequest request, StreamObserver<BuySellProductResponse> responseObserver) {
-
         cleanPendingOrdersCollection(request);
+        sellProduct(request, responseObserver);
+    }
+
+    @Override
+    public void sellProduct(ProductBuySellRequest request, StreamObserver<BuySellProductResponse> responseObserver) {
         marketState.addGoodToState(request.getItemName(), request.getItemPrice(), request.getItemQuantity(), request.getTimestamp());
 
-        BuySellProductResponse buySellProductResponse = BuySellProductResponse.newBuilder().setMessage(String.format("Item with name %s was successfully returned to market.", request.getItemName())).build();
+        BuySellProductResponse buySellProductResponse = BuySellProductResponse.newBuilder().setMessage(String.format("Item with name %s was successfully sold to market.", request.getItemName())).build();
 
         responseObserver.onNext(buySellProductResponse);
         responseObserver.onCompleted();
@@ -94,7 +97,7 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
             addItemToPending(request, marketTick.getTimestamp());
             isAvailable = true;
         } catch (ProductNotAvailableException e) {
-            LOGGER.error("Error occurred while checking availability with exception : {}",e );
+            LOGGER.error("Error occurred while checking availability with exception : {}", e);
         }
 
         AvailabilityResponse availabilityResponse = AvailabilityResponse.newBuilder()

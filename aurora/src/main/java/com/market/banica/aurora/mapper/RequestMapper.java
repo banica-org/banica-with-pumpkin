@@ -114,6 +114,11 @@ public class RequestMapper {
         if (topicSplit.length == 7 && requestPrefix.equals("buy")) {
             return Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(marketStub.buyProduct(request.build()))).build();
         }
+
+        if (topicSplit.length == 7 && requestPrefix.equals("sell")) {
+            return Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(marketStub.sellProduct(request.build()))).build();
+        }
+
         throw new IllegalArgumentException("Client requested an unsupported message from market. Message is: " + incomingRequest.getTopic());
     }
 

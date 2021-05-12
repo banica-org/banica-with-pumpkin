@@ -3,7 +3,6 @@ package com.market.banica.order.book.model;
 import com.aurora.Aurora;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.market.TickResponse;
-
 import com.market.banica.common.exception.IncorrectResponseException;
 import com.market.banica.common.validator.DataValidator;
 import com.orderbook.OrderBookLayer;
@@ -72,8 +71,8 @@ public class ItemMarket {
                 throw new IncorrectResponseException("Incorrect response! Response must be from IncorrectResponseException type.");
             }
 
-        String goodName = tickResponse.getGoodName();
-        DataValidator.validateIncomingData(goodName);
+            String goodName = tickResponse.getGoodName();
+            DataValidator.validateIncomingData(goodName);
 
             Set<Item> itemSet = this.allItems.get(goodName);
             if (itemSet == null) {
@@ -82,11 +81,11 @@ public class ItemMarket {
             }
             Item item = populateItem(tickResponse);
 
-        this.productsQuantity.merge(goodName, tickResponse.getQuantity(), Long::sum);
+            this.productsQuantity.merge(goodName, tickResponse.getQuantity(), Long::sum);
 
-        LOGGER.debug("Products data updated with value: {}" + tickResponse.toString());
+            LOGGER.debug("Products data updated with value: {}" + tickResponse.toString());
 
-        if (itemSet.contains(item)) {
+            if (itemSet.contains(item)) {
 
                 Item presentItem = itemSet.stream().filter(currentItem -> currentItem.compareTo(item) == 0).findFirst().get();
                 long quantity = presentItem.getQuantity() + item.getQuantity();
@@ -175,6 +174,7 @@ public class ItemMarket {
     public Map<String, Long> getProductsQuantity() {
         return productsQuantity;
     }
+
     public void zeroingMarketProductsFromMarket(String marketDestination, String itemName) {
         try {
             lock.writeLock().lock();
