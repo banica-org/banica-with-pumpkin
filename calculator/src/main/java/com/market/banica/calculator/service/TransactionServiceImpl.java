@@ -30,12 +30,16 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     public List<ProductDto> buyProduct(String clientId, String itemName, long quantity) throws ProductNotAvailableException {
         List<ProductDto> purchaseProducts = getPurchaseProducts(clientId, itemName, quantity);
+
         List<ProductDto> notCompoundProducts = getNotCompoundProducts(purchaseProducts);
+
         List<ItemDto> pendingItems = new ArrayList<>();
+
         boolean areAvailable = true;
         String unavailableProductName = "";
         String unavailableProductMarketName = "";
         long unavailableProductQuantity = 0;
+
         for (ProductDto purchaseProduct : notCompoundProducts) {
             if (!areAvailable) {
                 break;

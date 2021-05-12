@@ -23,9 +23,10 @@ import java.util.Locale;
 public class AuroraClientSideService {
 
     private static final String ORDERBOOK_TOPIC_PREFIX = "orderbook";
-
     private static final String CLIENT_ID = "calculator";
-
+    public static final String SUBSCRIBE_FOR_PRODUCT_PATTERN = "%s/%s=subscribe";
+    public static final String UNSUBSCRIBE_FOR_PRODUCT_PATTERN = "%s/%s=unsubscribe";
+    public static final String GET_INGREDIENT_PATTERN = "%s/%s/%d";
     public static final String AVAILABILITY_REQUEST_PATTERN = "market-%s/availability/%s/%f/%d/%s";
     public static final String RETURN_PENDING_PRODUCT_PATTERN = "market-%s/return/%s/%f/%d/%s/%d";
     public static final String BUY_PRODUCT_PATTERN = "market-%s/buy/%s/%f/%d/%s/%d";
@@ -42,7 +43,7 @@ public class AuroraClientSideService {
     public void announceInterests(String productName) {
         LOGGER.debug("Inside announceInterests method with parameter product name: {}", productName);
 
-        String message = String.format("%s/%s=subscribe", ORDERBOOK_TOPIC_PREFIX, productName);
+        String message = String.format(SUBSCRIBE_FOR_PRODUCT_PATTERN, ORDERBOOK_TOPIC_PREFIX, productName);
         Aurora.AuroraResponse auroraResponse = getAuroraResponse(message);
 
         if (!auroraResponse.getMessage().is(InterestsResponse.class)) {
@@ -53,7 +54,7 @@ public class AuroraClientSideService {
     public void cancelSubscription(String productName) {
         LOGGER.debug("Inside cancelSubscription method with parameter product name: {}", productName);
 
-        String message = String.format("%s/%s=unsubscribe", ORDERBOOK_TOPIC_PREFIX, productName);
+        String message = String.format(UNSUBSCRIBE_FOR_PRODUCT_PATTERN, ORDERBOOK_TOPIC_PREFIX, productName);
         Aurora.AuroraResponse auroraResponse = getAuroraResponse(message);
 
         if (!auroraResponse.getMessage().is(CancelSubscriptionResponse.class)) {
@@ -65,7 +66,7 @@ public class AuroraClientSideService {
         LOGGER.debug("Inside getIngredient method with parameter product name - {} and client id - {}"
                 , productName, clientId);
 
-        String message = String.format("%s/%s/%d", ORDERBOOK_TOPIC_PREFIX, productName, quantity);
+        String message = String.format(GET_INGREDIENT_PATTERN   , ORDERBOOK_TOPIC_PREFIX, productName, quantity);
         Aurora.AuroraResponse auroraResponse = getAuroraResponse(message);
 
         if (!auroraResponse.getMessage().is(ItemOrderBookResponse.class)) {

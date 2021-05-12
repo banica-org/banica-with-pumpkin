@@ -44,6 +44,9 @@ public class RequestMapper {
     public static final String ORDERBOOK = "orderbook";
     public static final String AURORA = "aurora";
     public static final String MARKET = "market";
+    public static final String AVAILABILITY_ACTION = "availability";
+    public static final String RETURN_ACTION = "return";
+    public static final String BUY_ACTION = "buy";
     public static final String BAD_PUBLISHER_REQUEST = "Unknown Publisher";
     public static final String IN_CANCEL_ITEM_SUBSCRIPTION = "Forwarding to orderbook - cancelItemSubscription.";
     public static final String IN_ANNOUNCE_ITEM_INTEREST = "Forwarding to orderbook - announceItemInterest.";
@@ -99,7 +102,7 @@ public class RequestMapper {
 
         String requestPrefix = topicSplit[1];
 
-        if (topicSplit.length == 6 && requestPrefix.equals("availability")) {
+        if (topicSplit.length == 6 && requestPrefix.equals(AVAILABILITY_ACTION)) {
             return Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(marketStub.checkAvailability(request.build()))).build();
         }
 
@@ -107,11 +110,11 @@ public class RequestMapper {
 
         request.setTimestamp(timeStamp);
 
-        if (topicSplit.length == 7 && requestPrefix.equals("return")) {
+        if (topicSplit.length == 7 && requestPrefix.equals(RETURN_ACTION)) {
             return Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(marketStub.returnPendingProduct(request.build()))).build();
         }
 
-        if (topicSplit.length == 7 && requestPrefix.equals("buy")) {
+        if (topicSplit.length == 7 && requestPrefix.equals(BUY_ACTION)) {
             return Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(marketStub.buyProduct(request.build()))).build();
         }
         throw new IllegalArgumentException("Client requested an unsupported message from market. Message is: " + incomingRequest.getTopic());
