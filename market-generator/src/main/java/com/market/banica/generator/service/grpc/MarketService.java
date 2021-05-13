@@ -93,7 +93,7 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
             addItemToPending(request, marketTick.getTimestamp());
             isAvailable = true;
         } catch (ProductNotAvailableException e) {
-            LOGGER.error("Error occurred while checking availability with exception : {}",e );
+            LOGGER.error("Error occurred while checking availability with exception : {}", e);
         }
 
         AvailabilityResponse availabilityResponse = AvailabilityResponse.newBuilder()
