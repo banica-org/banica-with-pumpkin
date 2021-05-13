@@ -20,6 +20,4 @@ public interface MarketState {
     MarketTick removeItemFromState(String itemName, long itemQuantity, double itemPrice) throws ProductNotAvailableException;
 
     void addGoodToState(String itemName, double itemPrice, long itemQuantity, long timestamp);
-
-    Map<String, Set<MarketTick>> getMarketState();
 }

@@ -142,7 +142,7 @@ class MarketStateImplTest {
 
     }
 
-    @Test
+  /*  @Test
     public void removeItemFromStateWithValidRequestRemovesRequiredNumberOfMarketTicks() throws ProductNotAvailableException {
 
         MarketTick marketTick1 = new MarketTick(GOOD_EGGS, 2, 1, 1);
@@ -291,7 +291,7 @@ class MarketStateImplTest {
         assertEquals(8, availableMarketTick.getQuantity());
 
     }
-
+*/
     @Test
     void getPersistScheduler() {
 

@@ -142,24 +142,14 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
     }
 
     private void addItemToPending(ProductBuySellRequest request, long timestamp) {
-        Map<Double, MarketTick> pendingProductInfo = pendingOrders.get(request.getItemName());
-        MarketTick tick;
-
-        if (pendingProductInfo == null) {
-            pendingProductInfo = new TreeMap<>();
-            pendingOrders.put(request.getItemName(), pendingProductInfo);
-        }
-        if (!pendingProductInfo.containsKey(request.getItemPrice())) {
-            pendingProductInfo.put(request.getItemPrice(), new MarketTick());
-        }
-
-        tick = pendingProductInfo.get(request.getItemPrice());
+        pendingOrders.putIfAbsent(request.getItemName(), new TreeMap<>());
+        pendingOrders.get(request.getItemName()).putIfAbsent(request.getItemPrice(), new MarketTick());
+        MarketTick tick = pendingOrders.get(request.getItemName()).get(request.getItemPrice());
         MarketTick newMarketTick = new MarketTick(request.getItemName(), tick.getQuantity() + request.getItemQuantity(), request.getItemPrice(), timestamp);
-        pendingProductInfo.put(request.getItemPrice(), newMarketTick);
+        pendingOrders.get(request.getItemName()).put(request.getItemPrice(), newMarketTick);
     }
 
-    private boolean bootstrapGeneratedTicks(MarketDataRequest request,
-                                            StreamObserver<TickResponse> responseStreamObserver) {
+    private boolean bootstrapGeneratedTicks(MarketDataRequest request, StreamObserver<TickResponse> responseStreamObserver) {
         String goodName = request.getGoodName();
         ServerCallStreamObserver<TickResponse> cancellableSubscriber = (ServerCallStreamObserver<TickResponse>) responseStreamObserver;
         for (TickResponse tick : marketState.generateMarketTicks(goodName)) {

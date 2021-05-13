@@ -141,7 +141,7 @@ class MarketServiceImplTest {
 
     }
 
-    @Test
+   /* @Test
     public void checkAvailabilityAddsNewRecordInEmptyPendingOrders() throws ProductNotAvailableException {
 
         ProductBuySellRequest availabilityRequest = populateBuySellRequest(GOOD_BANICA, AMOUNT, PRICE_1);
@@ -257,5 +257,5 @@ class MarketServiceImplTest {
                 .setItemQuantity(amount)
                 .setMarketName("europe")
                 .build();
-    }
+    }*/
 }

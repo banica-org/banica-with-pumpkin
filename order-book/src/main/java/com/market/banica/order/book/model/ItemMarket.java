@@ -46,6 +46,10 @@ public class ItemMarket {
         return this.allItems.keySet();
     }
 
+    public Map<String, Long> getProductsQuantity() {
+        return productsQuantity;
+    }
+
     public void addTrackedItem(String itemName) {
         this.allItems.put(itemName, new TreeSet<>());
         this.productsQuantity.put(itemName, 0L);
@@ -58,9 +62,6 @@ public class ItemMarket {
 
     public void updateItem(Aurora.AuroraResponse response) {
 
-        if (!response.getMessage().is(TickResponse.class)) {
-            throw new IncorrectResponseException("Response is not correct!");
-        }
         try {
             lock.writeLock().lock();
             TickResponse tickResponse;
@@ -68,7 +69,7 @@ public class ItemMarket {
             try {
                 tickResponse = response.getMessage().unpack(TickResponse.class);
             } catch (InvalidProtocolBufferException e) {
-                throw new IncorrectResponseException("Incorrect response! Response must be from IncorrectResponseException type.");
+                throw new IncorrectResponseException("Incorrect response! Response must be from TickResponse type.");
             }
 
             String goodName = tickResponse.getGoodName();
@@ -115,7 +116,7 @@ public class ItemMarket {
         TreeSet<Item> items = this.allItems.get(itemName);
         Long productQuantity = this.productsQuantity.get(itemName);
 
-        if (items == null || productQuantity < quantity || productQuantity == 0) {
+        if (items == null || productQuantity < quantity) {
 
             return Collections.emptyList();
         }
@@ -169,10 +170,6 @@ public class ItemMarket {
         item.setOrigin(tickResponse.getOrigin());
 
         return item;
-    }
-
-    public Map<String, Long> getProductsQuantity() {
-        return productsQuantity;
     }
 
     public void zeroingMarketProductsFromMarket(String marketDestination, String itemName) {

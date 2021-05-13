@@ -1,6 +1,7 @@
 package com.market.banica.generator.service;
 
 import com.market.TickResponse;
+import com.market.banica.common.exception.NotFoundException;
 import com.market.banica.common.exception.ProductNotAvailableException;
 import com.market.banica.generator.model.MarketTick;
 import com.market.banica.generator.util.PersistScheduler;
@@ -14,7 +15,6 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
@@ -59,53 +59,17 @@ public class MarketStateImpl implements MarketState {
     }
 
     public void publishUpdate(String itemName, long itemQuantity, double itemPrice) {
-        MarketTick marketTick = new MarketTick(itemName, itemQuantity, itemPrice, System.currentTimeMillis());
-        subscriptionManager.notifySubscribers(convertMarketTickToTickResponse(marketTick));
-    }
-
-
-    public Map<String, Map<Double, Long>> getMarketStateProductsQuantity() {
-        Map<String, Map<Double, Long>> map = new HashMap<>();
-        marketState.forEach((productName, productTicks) -> {
-
-            Map<Double, Long> secondMap = new HashMap<>();
-
-            productTicks.forEach(marketTick -> {
-                if (secondMap.containsKey(marketTick.getPrice())) {
-                    Long newQuantity = secondMap.get(marketTick.getPrice()) + marketTick.getQuantity();
-                    secondMap.put(marketTick.getPrice(), newQuantity);
-                } else {
-                    secondMap.put(marketTick.getPrice(), marketTick.getQuantity());
-                }
-            });
-
-            map.put(productName, secondMap);
-        });
-        return map;
-    }
-
-    public Map<String, Map<Double, Long>> getMarketSnapshotProductsQuantity() {
-        Map<String, Map<Double, Long>> map = new HashMap<>();
-        marketSnapshot.forEach(marketTick -> {
-
-            String productName = marketTick.getGood();
-
-            if (!map.containsKey(productName)) {
-                map.put(productName, new HashMap<>());
+        executorService.execute(()->{
+            try {
+                marketDataLock.writeLock().lock();
+                MarketTick marketTick = new MarketTick(itemName, itemQuantity, itemPrice, System.currentTimeMillis());
+                subscriptionManager.notifySubscribers(convertMarketTickToTickResponse(marketTick));
+            } finally {
+                marketDataLock.writeLock().unlock();
             }
-            double productPrice = marketTick.getPrice();
-
-            if (!map.get(productName).containsKey(productPrice)) {
-                map.get(productName).put(productPrice, 0L);
-            }
-
-            Long currentQuantity = map.get(productName).get(productPrice);
-            Long newQuantity = currentQuantity + marketTick.getQuantity();
-
-            map.get(productName).put(productPrice, newQuantity);
         });
-        return map;
     }
+
 
     @Override
     public void addTickToMarket(MarketTick marketTick) {
@@ -177,7 +141,7 @@ public class MarketStateImpl implements MarketState {
     }
 
     @Override
-    public void addGoodToState(String itemName, double itemPrice, long itemQuantity, long timestamp) {
+    public void addGoodToState(String itemName, double itemPrice, long itemQuantity, long timestamp) throws NotFoundException {
         try {
             marketDataLock.writeLock().lock();
             Set<MarketTick> productInfo = marketState.get(itemName);
@@ -188,7 +152,12 @@ public class MarketStateImpl implements MarketState {
             } else {
                 MarketTick tick = new MarketTick(itemName, itemQuantity, itemPrice, timestamp);
                 if (productInfo.contains(tick)) {
-                    MarketTick searchedTick = productInfo.stream().filter(currentTick -> currentTick.compareTo(tick) == 0).findFirst().orElse(null);
+                    MarketTick searchedTick = productInfo
+                            .stream()
+                            .filter(currentTick -> currentTick.compareTo(tick) == 0)
+                            .findFirst()
+                            .orElseThrow(() -> new NotFoundException(String.format("Product with %s name, %.2f price and %d quantity is not found in market.", itemName, itemPrice, itemQuantity)));
+
                     productInfo.remove(searchedTick);
                     productInfo.add(new MarketTick(itemName, itemQuantity + searchedTick.getQuantity(), itemPrice, timestamp));
                 } else {
@@ -202,10 +171,6 @@ public class MarketStateImpl implements MarketState {
         }
     }
 
-    @Override
-    public Map<String, Set<MarketTick>> getMarketState() {
-        return this.marketState;
-    }
 
     private long getQuantityForMarketTicksWithSamePrice(List<MarketTick> marketTicks) {
         return marketTicks.stream().mapToLong(MarketTick::getQuantity).sum();

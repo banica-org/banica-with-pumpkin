@@ -32,6 +32,7 @@ public class AuroraClientSideService {
     public static final String AVAILABILITY_REQUEST_PATTERN = "market-%s/availability/%s/%f/%d/%s";
     public static final String RETURN_PENDING_PRODUCT_PATTERN = "market-%s/return/%s/%f/%d/%s/%d";
     public static final String BUY_PRODUCT_PATTERN = "market-%s/buy/%s/%f/%d/%s/%d";
+    public static final String INCORRECT_RESPONSE_MESSAGE = "Incorrect response! Response must be from %s type.";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AuroraClientSideService.class);
 
@@ -89,7 +90,7 @@ public class AuroraClientSideService {
 
         AvailabilityResponse availabilityResponse = unpackAndValidateResponse(auroraResponse, AvailabilityResponse.class);
 
-        LOGGER.info("Item with name {}, quantity={} and market name {} is available.", availabilityResponse.getItemName(), availabilityResponse.getItemQuantity(), availabilityResponse.getMarketName());
+        LOGGER.debug("Item with name {}, quantity={} and market name {} is available.", availabilityResponse.getItemName(), availabilityResponse.getItemQuantity(), availabilityResponse.getMarketName());
 
         return availabilityResponse;
     }
@@ -102,7 +103,7 @@ public class AuroraClientSideService {
 
         BuySellProductResponse buySellProductResponse = unpackAndValidateResponse(auroraResponse, BuySellProductResponse.class);
 
-        LOGGER.info(buySellProductResponse.getMessage());
+        LOGGER.debug(buySellProductResponse.getMessage());
     }
 
     public void buyProductFromMarket(String itemName, double itemPrice, long itemQuantity, String itemOrigin, long itemTimestamp) {
@@ -112,12 +113,12 @@ public class AuroraClientSideService {
 
         BuySellProductResponse buySellProductResponse = unpackAndValidateResponse(auroraResponse, BuySellProductResponse.class);
 
-        LOGGER.info(buySellProductResponse.getMessage());
+        LOGGER.debug(buySellProductResponse.getMessage());
     }
 
     @SuppressWarnings("unchecked")
     private <T> T unpackAndValidateResponse(Aurora.AuroraResponse auroraResponse, Class<T> type) {
-        String exceptionMessage = String.format("Incorrect response! Response must be from %s type.", type.getSimpleName());
+        String exceptionMessage = String.format(INCORRECT_RESPONSE_MESSAGE, type.getSimpleName());
 
         if (!auroraResponse.getMessage().is((Class<? extends AbstractMessage>) type)) {
             throw new IncorrectResponseException(exceptionMessage);

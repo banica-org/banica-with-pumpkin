@@ -103,19 +103,24 @@ public class RequestMapper {
         String requestPrefix = topicSplit[1];
 
         if (topicSplit.length == 6 && requestPrefix.equals(AVAILABILITY_ACTION)) {
-            return Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(marketStub.checkAvailability(request.build()))).build();
+            return Aurora.AuroraResponse.newBuilder()
+                    .setMessage(Any.pack(marketStub.checkAvailability(request.build())))
+                    .build();
         }
 
-        long timeStamp = Long.parseLong(topicSplit[6]);
-
-        request.setTimestamp(timeStamp);
 
         if (topicSplit.length == 7 && requestPrefix.equals(RETURN_ACTION)) {
-            return Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(marketStub.returnPendingProduct(request.build()))).build();
+            request.setTimestamp(Long.parseLong(topicSplit[6]));
+            return Aurora.AuroraResponse.newBuilder()
+                    .setMessage(Any.pack(marketStub.returnPendingProduct(request.build())))
+                    .build();
         }
 
         if (topicSplit.length == 7 && requestPrefix.equals(BUY_ACTION)) {
-            return Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(marketStub.buyProduct(request.build()))).build();
+            request.setTimestamp(Long.parseLong(topicSplit[6]));
+            return Aurora.AuroraResponse.newBuilder()
+                    .setMessage(Any.pack(marketStub.buyProduct(request.build())))
+                    .build();
         }
         throw new IllegalArgumentException("Client requested an unsupported message from market. Message is: " + incomingRequest.getTopic());
     }

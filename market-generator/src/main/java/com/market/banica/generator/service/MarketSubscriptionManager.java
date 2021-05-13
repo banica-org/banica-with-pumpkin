@@ -53,7 +53,7 @@ public class MarketSubscriptionManager implements SubscriptionManager {
             }
 
             try {
-                    currentSubscriber.onNext(response);
+                currentSubscriber.onNext(response);
             } catch (StatusRuntimeException e) {
                 subscribers.remove(currentSubscriber);
                 LOGGER.debug("Subscriber {} unsubscribed.", currentSubscriber);

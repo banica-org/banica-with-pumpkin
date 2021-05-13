@@ -26,11 +26,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(new ErrorMessage(exception.getMessage()), HttpStatus.OK);
     }
 
-    @ExceptionHandler(NotFoundException.class)
-    public ResponseEntity<ErrorMessage> productNotAvailableExceptionHandler(NotFoundException exception) {
-        return new ResponseEntity<>(new ErrorMessage(exception.getMessage()), HttpStatus.NOT_FOUND);
-    }
-
     @ExceptionHandler({IncorrectResponseException.class, TrackingException.class, Exception.class})
     public ResponseEntity<ErrorMessage> customExceptionHandler(Exception exception) {
         return new ResponseEntity<>(new ErrorMessage(exception.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);

@@ -29,16 +29,14 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     public List<ProductDto> buyProduct(String clientId, String itemName, long quantity) throws ProductNotAvailableException {
-        List<ProductDto> purchaseProducts = getPurchaseProducts(clientId, itemName, quantity);
+        List<ProductDto> purchaseProducts = this.calculatorService.getProduct(clientId, itemName, quantity);
 
         List<ProductDto> notCompoundProducts = getNotCompoundProducts(purchaseProducts);
 
         List<ItemDto> pendingItems = new ArrayList<>();
 
         boolean areAvailable = true;
-        String unavailableProductName = "";
-        String unavailableProductMarketName = "";
-        long unavailableProductQuantity = 0;
+        String productAvailabilityResponseErrorMessage = "";
 
         for (ProductDto purchaseProduct : notCompoundProducts) {
             if (!areAvailable) {
@@ -56,9 +54,7 @@ public class TransactionServiceImpl implements TransactionService {
 
                 if (!availabilityResponse.getIsAvailable()) {
                     areAvailable = false;
-                    unavailableProductName = availabilityResponse.getItemName();
-                    unavailableProductQuantity = availabilityResponse.getItemQuantity();
-                    unavailableProductMarketName = availabilityResponse.getMarketName();
+                    productAvailabilityResponseErrorMessage = String.format(PRODUCT_NOT_AVAILABLE_MESSAGE, availabilityResponse.getItemName(), availabilityResponse.getItemQuantity(), availabilityResponse.getMarketName());
                     break;
                 }
                 pendingItems.add(new ItemDto(productName, productPrice, productOrigin.toString(), productQuantity, availabilityResponse.getTimestamp()));
@@ -68,17 +64,12 @@ public class TransactionServiceImpl implements TransactionService {
         if (!areAvailable) {
             returnPendingProducts(pendingItems);
 
-            throw new ProductNotAvailableException(String.format(PRODUCT_NOT_AVAILABLE_MESSAGE,
-                    unavailableProductName.toUpperCase(Locale.ROOT), unavailableProductQuantity, unavailableProductMarketName));
+            throw new ProductNotAvailableException(productAvailabilityResponseErrorMessage);
         }
 
         buyPendingProducts(pendingItems);
 
         return purchaseProducts;
-    }
-
-    private List<ProductDto> getPurchaseProducts(String clientId, String itemName, long quantity) throws ProductNotAvailableException {
-        return new ArrayList<>(this.calculatorService.getProduct(clientId, itemName, quantity));
     }
 
     private List<ProductDto> getNotCompoundProducts(List<ProductDto> purchaseProducts) {
