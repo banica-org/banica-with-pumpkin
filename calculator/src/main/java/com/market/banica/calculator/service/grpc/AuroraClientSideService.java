@@ -116,6 +116,18 @@ public class AuroraClientSideService {
         LOGGER.info(buySellProductResponse.getMessage());
     }
 
+    public String sellProductToMarket(String itemName, double itemPrice, long itemQuantity, String itemOrigin, long itemTimestamp) {
+
+        String message = String.format(SELL_PRODUCT_PATTERN, itemOrigin.toLowerCase(Locale.ROOT), itemName, itemPrice, itemQuantity, itemOrigin, itemTimestamp);
+        Aurora.AuroraResponse auroraResponse = getAuroraResponse(message);
+
+        BuySellProductResponse buySellProductResponse = unpackAndValidateResponse(auroraResponse, BuySellProductResponse.class);
+
+        LOGGER.info(buySellProductResponse.getMessage());
+
+        return buySellProductResponse.getMessage();
+    }
+
     @SuppressWarnings("unchecked")
     private <T> T unpackAndValidateResponse(Aurora.AuroraResponse auroraResponse, Class<T> type) {
         String exceptionMessage = String.format("Incorrect response! Response must be from %s type.", type.getSimpleName());
@@ -133,25 +145,6 @@ public class AuroraClientSideService {
         }
 
         return type.cast(unpack);
-    }
-
-    public String sellProductToMarket(String itemName, double itemPrice, long itemQuantity, String itemOrigin, long itemTimestamp) {
-
-        String message = String.format(SELL_PRODUCT_PATTERN, itemOrigin.toLowerCase(Locale.ROOT), itemName, itemPrice, itemQuantity, itemOrigin, itemTimestamp);
-        Aurora.AuroraResponse auroraResponse = getAuroraResponse(message);
-
-        if (!auroraResponse.getMessage().is(BuySellProductResponse.class)) {
-            throw new IncorrectResponseException("Incorrect response! Response must be from BuySellProductResponse type.");
-        }
-        BuySellProductResponse buySellProductResponse;
-        try {
-            buySellProductResponse = auroraResponse.getMessage().unpack(BuySellProductResponse.class);
-        } catch (InvalidProtocolBufferException e) {
-            throw new IncorrectResponseException("Incorrect response! Response must be from BuySellProductResponse type.");
-        }
-        LOGGER.info(buySellProductResponse.getMessage());
-
-        return buySellProductResponse.getMessage();
     }
 
     private Aurora.AuroraResponse getAuroraResponse(String message) {
