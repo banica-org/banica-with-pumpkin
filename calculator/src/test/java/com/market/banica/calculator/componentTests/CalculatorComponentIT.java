@@ -278,7 +278,7 @@ public class CalculatorComponentIT {
 
         File data = ApplicationDirectoryUtil.getConfigFile(databaseBackupUrl);
 
-        if (data.length() > 0) {
+        if (data.length() >= 0) {
             data.delete();
         }
     }

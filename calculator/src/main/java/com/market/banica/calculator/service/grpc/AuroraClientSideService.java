@@ -3,7 +3,7 @@ package com.market.banica.calculator.service.grpc;
 
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
-import com.google.protobuf.GeneratedMessageV3;
+import com.google.protobuf.AbstractMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.market.AvailabilityResponse;
@@ -119,13 +119,13 @@ public class AuroraClientSideService {
     private <T> T unpackAndValidateResponse(Aurora.AuroraResponse auroraResponse, Class<T> type) {
         String exceptionMessage = String.format("Incorrect response! Response must be from %s type.", type.getSimpleName());
 
-        if (!auroraResponse.getMessage().is((Class<? extends GeneratedMessageV3>) type)) {
+        if (!auroraResponse.getMessage().is((Class<? extends AbstractMessage>) type)) {
             throw new IncorrectResponseException(exceptionMessage);
         }
 
         Message unpack;
         try {
-            unpack = auroraResponse.getMessage().unpack((Class<? extends GeneratedMessageV3>) type);
+            unpack = auroraResponse.getMessage().unpack((Class<? extends AbstractMessage>) type);
         } catch (InvalidProtocolBufferException e) {
             LOGGER.error("Unable to parse Any to desired class: {}", e.getMessage());
             throw new IncorrectResponseException(exceptionMessage);
