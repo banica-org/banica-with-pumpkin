@@ -71,7 +71,7 @@ public class AuroraClientSideService {
 
         Aurora.AuroraResponse auroraResponse = getAuroraResponse(message);
 
-        ItemOrderBookResponse response = unpackAndValidateMessage(auroraResponse, ItemOrderBookResponse.class);
+        ItemOrderBookResponse response = unpackAndValidateResponse(auroraResponse, ItemOrderBookResponse.class);
 
         return response;
     }
@@ -87,7 +87,7 @@ public class AuroraClientSideService {
 
         Aurora.AuroraResponse auroraResponse = getAuroraResponse(message);
 
-        AvailabilityResponse availabilityResponse = unpackAndValidateMessage(auroraResponse, AvailabilityResponse.class);
+        AvailabilityResponse availabilityResponse = unpackAndValidateResponse(auroraResponse, AvailabilityResponse.class);
 
         LOGGER.info("Item with name {}, quantity={} and market name {} is available.", availabilityResponse.getItemName(), availabilityResponse.getItemQuantity(), availabilityResponse.getMarketName());
 
@@ -100,7 +100,7 @@ public class AuroraClientSideService {
 
         Aurora.AuroraResponse auroraResponse = getAuroraResponse(message);
 
-        BuySellProductResponse buySellProductResponse = unpackAndValidateMessage(auroraResponse, BuySellProductResponse.class);
+        BuySellProductResponse buySellProductResponse = unpackAndValidateResponse(auroraResponse, BuySellProductResponse.class);
 
         LOGGER.info(buySellProductResponse.getMessage());
     }
@@ -110,13 +110,13 @@ public class AuroraClientSideService {
 
         Aurora.AuroraResponse auroraResponse = getAuroraResponse(message);
 
-        BuySellProductResponse buySellProductResponse = unpackAndValidateMessage(auroraResponse, BuySellProductResponse.class);
+        BuySellProductResponse buySellProductResponse = unpackAndValidateResponse(auroraResponse, BuySellProductResponse.class);
 
         LOGGER.info(buySellProductResponse.getMessage());
     }
 
     @SuppressWarnings("unchecked")
-    private <T> T unpackAndValidateMessage(Aurora.AuroraResponse auroraResponse, Class<T> type) {
+    private <T> T unpackAndValidateResponse(Aurora.AuroraResponse auroraResponse, Class<T> type) {
         String exceptionMessage = String.format("Incorrect response! Response must be from %s type.", type.getSimpleName());
 
         if (!auroraResponse.getMessage().is((Class<? extends GeneratedMessageV3>) type)) {
