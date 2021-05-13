@@ -22,10 +22,11 @@ import java.util.stream.Collectors;
 @Service
 @AllArgsConstructor(onConstructor = @__(@Autowired))
 public class TransactionServiceImpl implements TransactionService {
-    private static final String PRODUCT_NOT_AVAILABLE_MESSAGE = "%s with quantity %d is currently not available on the %s market";
 
     private final CalculatorService calculatorService;
     private final AuroraClientSideService auroraClientSideService;
+
+    private static final String PRODUCT_NOT_AVAILABLE_MESSAGE = "%s with quantity %d is currently not available on the %s market";
 
     @Override
     public List<ProductDto> buyProduct(String clientId, String itemName, long quantity) throws ProductNotAvailableException {
@@ -70,11 +71,24 @@ public class TransactionServiceImpl implements TransactionService {
 
             throw new ProductNotAvailableException(String.format(PRODUCT_NOT_AVAILABLE_MESSAGE,
                     unavailableProductName.toUpperCase(Locale.ROOT), unavailableProductQuantity, unavailableProductMarketName));
+        } else {
+            buyPendingProducts(pendingItems);
         }
 
-        buyPendingProducts(pendingItems);
-
         return purchaseProducts;
+
+    }
+
+    public String sellProduct(List<ItemDto> itemsToSell) {
+        StringBuilder stringBuilder = new StringBuilder();
+
+        for (ItemDto item : itemsToSell) {
+            long itemTimestamp = System.currentTimeMillis();
+            String responseMessage = this.auroraClientSideService.sellProductToMarket(item.getName(), item.getPrice().doubleValue(), item.getQuantity(), item.getLocation(), itemTimestamp);
+            stringBuilder.append(responseMessage).append(System.lineSeparator());
+        }
+
+        return stringBuilder.toString().trim();
     }
 
     private List<ProductDto> getPurchaseProducts(String clientId, String itemName, long quantity) throws ProductNotAvailableException {

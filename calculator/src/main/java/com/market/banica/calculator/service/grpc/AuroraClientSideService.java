@@ -31,6 +31,7 @@ public class AuroraClientSideService {
     public static final String GET_INGREDIENT_PATTERN = "%s/%s/%d";
     public static final String AVAILABILITY_REQUEST_PATTERN = "market-%s/availability/%s/%f/%d/%s";
     public static final String RETURN_PENDING_PRODUCT_PATTERN = "market-%s/return/%s/%f/%d/%s/%d";
+    public static final String SELL_PRODUCT_PATTERN = "market-%s/sell/%s/%f/%d/%s/%d";
     public static final String BUY_PRODUCT_PATTERN = "market-%s/buy/%s/%f/%d/%s/%d";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AuroraClientSideService.class);
@@ -132,6 +133,25 @@ public class AuroraClientSideService {
         }
 
         return type.cast(unpack);
+    }
+
+    public String sellProductToMarket(String itemName, double itemPrice, long itemQuantity, String itemOrigin, long itemTimestamp) {
+
+        String message = String.format(SELL_PRODUCT_PATTERN, itemOrigin.toLowerCase(Locale.ROOT), itemName, itemPrice, itemQuantity, itemOrigin, itemTimestamp);
+        Aurora.AuroraResponse auroraResponse = getAuroraResponse(message);
+
+        if (!auroraResponse.getMessage().is(BuySellProductResponse.class)) {
+            throw new IncorrectResponseException("Incorrect response! Response must be from BuySellProductResponse type.");
+        }
+        BuySellProductResponse buySellProductResponse;
+        try {
+            buySellProductResponse = auroraResponse.getMessage().unpack(BuySellProductResponse.class);
+        } catch (InvalidProtocolBufferException e) {
+            throw new IncorrectResponseException("Incorrect response! Response must be from BuySellProductResponse type.");
+        }
+        LOGGER.info(buySellProductResponse.getMessage());
+
+        return buySellProductResponse.getMessage();
     }
 
     private Aurora.AuroraResponse getAuroraResponse(String message) {
