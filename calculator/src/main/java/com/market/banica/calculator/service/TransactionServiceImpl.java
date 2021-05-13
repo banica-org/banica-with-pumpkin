@@ -45,11 +45,15 @@ public class TransactionServiceImpl implements TransactionService {
                 break;
             }
             String productName = purchaseProduct.getItemName();
+
             for (ProductSpecification productSpecification : purchaseProduct.getProductSpecifications()) {
+
                 BigDecimal productPrice = productSpecification.getPrice();
                 Long productQuantity = productSpecification.getQuantity();
                 Origin productOrigin = Origin.valueOf(productSpecification.getLocation().toUpperCase(Locale.ROOT));
-                AvailabilityResponse availabilityResponse = auroraClientSideService.checkAvailability(productName, productPrice.doubleValue(), productQuantity, productOrigin);
+
+                AvailabilityResponse availabilityResponse = this.auroraClientSideService.checkAvailability(productName, productPrice.doubleValue(), productQuantity, productOrigin);
+
                 if (!availabilityResponse.getIsAvailable()) {
                     areAvailable = false;
                     unavailableProductName = availabilityResponse.getItemName();
@@ -60,16 +64,21 @@ public class TransactionServiceImpl implements TransactionService {
                 pendingItems.add(new ItemDto(productName, productPrice, productOrigin.toString(), productQuantity, availabilityResponse.getTimestamp()));
             }
         }
+
         if (!areAvailable) {
             returnPendingProducts(pendingItems);
-            throw new ProductNotAvailableException(String.format(PRODUCT_NOT_AVAILABLE_MESSAGE, unavailableProductName.toUpperCase(Locale.ROOT), unavailableProductQuantity, unavailableProductMarketName));
-        } else {
-            buyPendingProducts(pendingItems);
+
+            throw new ProductNotAvailableException(String.format(PRODUCT_NOT_AVAILABLE_MESSAGE,
+                    unavailableProductName.toUpperCase(Locale.ROOT), unavailableProductQuantity, unavailableProductMarketName));
         }
+
+        buyPendingProducts(pendingItems);
+
         return purchaseProducts;
     }
+
     private List<ProductDto> getPurchaseProducts(String clientId, String itemName, long quantity) throws ProductNotAvailableException {
-        return new ArrayList<>(calculatorService.getProduct(clientId, itemName, quantity));
+        return new ArrayList<>(this.calculatorService.getProduct(clientId, itemName, quantity));
     }
 
     private List<ProductDto> getNotCompoundProducts(List<ProductDto> purchaseProducts) {

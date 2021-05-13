@@ -3,7 +3,9 @@ package com.market.banica.calculator.service.grpc;
 
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
+import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.Message;
 import com.market.AvailabilityResponse;
 import com.market.BuySellProductResponse;
 import com.market.Origin;
@@ -63,24 +65,13 @@ public class AuroraClientSideService {
     }
 
     public ItemOrderBookResponse getIngredient(String productName, String clientId, long quantity) {
-        LOGGER.debug("Inside getIngredient method with parameter product name - {} and client id - {}"
-                , productName, clientId);
+        LOGGER.debug("Inside getIngredient method with parameter product name - {} and client id - {}", productName, clientId);
 
-        String message = String.format(GET_INGREDIENT_PATTERN   , ORDERBOOK_TOPIC_PREFIX, productName, quantity);
+        String message = String.format(GET_INGREDIENT_PATTERN, ORDERBOOK_TOPIC_PREFIX, productName, quantity);
+
         Aurora.AuroraResponse auroraResponse = getAuroraResponse(message);
 
-        if (!auroraResponse.getMessage().is(ItemOrderBookResponse.class)) {
-            throw new IncorrectResponseException("Incorrect response! Response must be from ItemOrderBookResponse type.");
-        }
-
-        ItemOrderBookResponse response;
-
-        try {
-            response = auroraResponse.getMessage().unpack(ItemOrderBookResponse.class);
-        } catch (InvalidProtocolBufferException e) {
-            LOGGER.error("Unable to parse Any to desired class: {}", e.getMessage());
-            throw new IncorrectResponseException("Incorrect response! Response must be from ItemOrderBookResponse type.");
-        }
+        ItemOrderBookResponse response = unpackAndValidateMessage(auroraResponse, ItemOrderBookResponse.class);
 
         return response;
     }
@@ -96,16 +87,10 @@ public class AuroraClientSideService {
 
         Aurora.AuroraResponse auroraResponse = getAuroraResponse(message);
 
-        if (!auroraResponse.getMessage().is(AvailabilityResponse.class)) {
-            throw new IncorrectResponseException("Incorrect response! Response must be from AvailabilityResponse type.");
-        }
-        AvailabilityResponse availabilityResponse;
-        try {
-            availabilityResponse = auroraResponse.getMessage().unpack(AvailabilityResponse.class);
-        } catch (InvalidProtocolBufferException e) {
-            throw new IncorrectResponseException("Incorrect response! Response must be from AvailabilityResponse type.");
-        }
+        AvailabilityResponse availabilityResponse = unpackAndValidateMessage(auroraResponse, AvailabilityResponse.class);
+
         LOGGER.info("Item with name {}, quantity={} and market name {} is available.", availabilityResponse.getItemName(), availabilityResponse.getItemQuantity(), availabilityResponse.getMarketName());
+
         return availabilityResponse;
     }
 
@@ -115,32 +100,38 @@ public class AuroraClientSideService {
 
         Aurora.AuroraResponse auroraResponse = getAuroraResponse(message);
 
-        if (!auroraResponse.getMessage().is(BuySellProductResponse.class)) {
-            throw new IncorrectResponseException("Incorrect response! Response must be from BuySellProductResponse type.");
-        }
-        BuySellProductResponse buySellProductResponse;
-        try {
-            buySellProductResponse = auroraResponse.getMessage().unpack(BuySellProductResponse.class);
-        } catch (InvalidProtocolBufferException e) {
-            throw new IncorrectResponseException("Incorrect response! Response must be from BuySellProductResponse type.");
-        }
+        BuySellProductResponse buySellProductResponse = unpackAndValidateMessage(auroraResponse, BuySellProductResponse.class);
+
         LOGGER.info(buySellProductResponse.getMessage());
     }
 
     public void buyProductFromMarket(String itemName, double itemPrice, long itemQuantity, String itemOrigin, long itemTimestamp) {
         String message = String.format(BUY_PRODUCT_PATTERN, itemOrigin.toLowerCase(Locale.ROOT), itemName, itemPrice, itemQuantity, itemOrigin, itemTimestamp);
+
         Aurora.AuroraResponse auroraResponse = getAuroraResponse(message);
 
-        if (!auroraResponse.getMessage().is(BuySellProductResponse.class)) {
-            throw new IncorrectResponseException("Incorrect response! Response must be from BuySellProductResponse type.");
-        }
-        BuySellProductResponse buySellProductResponse;
-        try {
-            buySellProductResponse = auroraResponse.getMessage().unpack(BuySellProductResponse.class);
-        } catch (InvalidProtocolBufferException e) {
-            throw new IncorrectResponseException("Incorrect response! Response must be from BuySellProductResponse type.");
-        }
+        BuySellProductResponse buySellProductResponse = unpackAndValidateMessage(auroraResponse, BuySellProductResponse.class);
+
         LOGGER.info(buySellProductResponse.getMessage());
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> T unpackAndValidateMessage(Aurora.AuroraResponse auroraResponse, Class<T> type) {
+        String exceptionMessage = String.format("Incorrect response! Response must be from %s type.", type.getSimpleName());
+
+        if (!auroraResponse.getMessage().is((Class<? extends GeneratedMessageV3>) type)) {
+            throw new IncorrectResponseException(exceptionMessage);
+        }
+
+        Message unpack;
+        try {
+            unpack = auroraResponse.getMessage().unpack((Class<? extends GeneratedMessageV3>) type);
+        } catch (InvalidProtocolBufferException e) {
+            LOGGER.error("Unable to parse Any to desired class: {}", e.getMessage());
+            throw new IncorrectResponseException(exceptionMessage);
+        }
+
+        return type.cast(unpack);
     }
 
     private Aurora.AuroraResponse getAuroraResponse(String message) {

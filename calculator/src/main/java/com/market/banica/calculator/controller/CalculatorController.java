@@ -34,6 +34,7 @@ public class CalculatorController {
 
         return calculatorService.getProduct(clientId, itemName, quantity);
     }
+
     @GetMapping("/buy/{clientId}/{itemName}/{quantity}")
     public List<ProductDto> buyProduct(@PathVariable("clientId") @NotBlank String clientId,
                                        @PathVariable("itemName") @NotBlank String itemName,
