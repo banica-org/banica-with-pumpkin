@@ -2,7 +2,6 @@ package com.market.banica.aurora.service;
 
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
-import com.market.banica.aurora.config.ChannelManager;
 import com.market.banica.aurora.handlers.RequestHandler;
 import com.market.banica.aurora.handlers.SubscribeHandler;
 import io.grpc.stub.StreamObserver;

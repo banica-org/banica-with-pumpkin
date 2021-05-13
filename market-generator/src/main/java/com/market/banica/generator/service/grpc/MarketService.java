@@ -11,7 +11,6 @@ import com.market.TickResponse;
 import com.market.banica.common.exception.ProductNotAvailableException;
 import com.market.banica.generator.model.MarketTick;
 import com.market.banica.generator.service.MarketState;
-import com.market.banica.generator.service.MarketStateImpl;
 import com.market.banica.generator.service.SubscriptionManager;
 import io.grpc.Status;
 import io.grpc.stub.ServerCallStreamObserver;
