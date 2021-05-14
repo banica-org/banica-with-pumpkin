@@ -43,7 +43,6 @@ message AvailabilityResponse {
   double itemPrice = 3;
   int64 itemQuantity = 4;
   string marketName = 5;
-  int64 timestamp = 6;
 }
 
 message ProductBuySellRequest {

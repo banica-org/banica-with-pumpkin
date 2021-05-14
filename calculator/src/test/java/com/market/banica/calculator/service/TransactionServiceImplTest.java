@@ -127,7 +127,6 @@ class TransactionServiceImplTest {
                 .setItemQuantity(quantity)
                 .setMarketName(String.valueOf(origin))
                 .setIsAvailable(true)
-                .setTimestamp(System.currentTimeMillis())
                 .build();
 
     }
@@ -139,7 +138,6 @@ class TransactionServiceImplTest {
                 .setItemPrice(price)
                 .setItemQuantity(quantity)
                 .setMarketName(String.valueOf(origin))
-                .setTimestamp(System.currentTimeMillis())
                 .build();
 
     }

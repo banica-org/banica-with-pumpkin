@@ -15,6 +15,4 @@ public class ItemDto {
     private String location;
 
     private Long quantity;
-
-    private Long timeStamp;
 }

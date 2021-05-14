@@ -6,8 +6,6 @@ import com.market.banica.generator.model.MarketTick;
 import com.market.banica.generator.util.PersistScheduler;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 public interface MarketState {
 
@@ -19,5 +17,5 @@ public interface MarketState {
 
     MarketTick removeItemFromState(String itemName, long itemQuantity, double itemPrice) throws ProductNotAvailableException;
 
-    void addGoodToState(String itemName, double itemPrice, long itemQuantity, long timestamp);
+    void addProductToMarketState(String itemName, double itemPrice, long itemQuantity);
 }

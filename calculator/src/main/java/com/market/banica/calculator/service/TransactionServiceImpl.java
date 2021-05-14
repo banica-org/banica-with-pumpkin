@@ -57,7 +57,7 @@ public class TransactionServiceImpl implements TransactionService {
                     productAvailabilityResponseErrorMessage = String.format(PRODUCT_NOT_AVAILABLE_MESSAGE, availabilityResponse.getItemName(), availabilityResponse.getItemQuantity(), availabilityResponse.getMarketName());
                     break;
                 }
-                pendingItems.add(new ItemDto(productName, productPrice, productOrigin.toString(), productQuantity, availabilityResponse.getTimestamp()));
+                pendingItems.add(new ItemDto(productName, productPrice, productOrigin.toString(), productQuantity));
             }
         }
 
@@ -84,8 +84,7 @@ public class TransactionServiceImpl implements TransactionService {
                 item.getName(),
                 item.getPrice().doubleValue(),
                 item.getQuantity(),
-                item.getLocation(),
-                item.getTimeStamp()));
+                item.getLocation()));
     }
 
     private void buyPendingProducts(List<ItemDto> pendingItems) {
@@ -93,7 +92,6 @@ public class TransactionServiceImpl implements TransactionService {
                 item.getName(),
                 item.getPrice().doubleValue(),
                 item.getQuantity(),
-                item.getLocation(),
-                item.getTimeStamp()));
+                item.getLocation()));
     }
 }

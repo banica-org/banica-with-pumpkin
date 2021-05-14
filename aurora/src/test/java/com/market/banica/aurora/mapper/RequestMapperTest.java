@@ -2,6 +2,9 @@ package com.market.banica.aurora.mapper;
 
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
+import com.market.AvailabilityResponse;
+import com.market.BuySellProductResponse;
+import com.market.MarketServiceGrpc;
 import com.market.banica.aurora.config.ChannelManager;
 import com.market.banica.aurora.config.StubManager;
 import com.market.banica.aurora.util.FakeServerGenerator;
@@ -37,11 +40,14 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class RequestMapperTest {
 
-    private static final Aurora.AuroraRequest MARKET_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("market/eggs/10").build();
     private static final Aurora.AuroraRequest AURORA_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("aurora/eggs/10").build();
     private static final Aurora.AuroraRequest ORDERBOOK_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("orderbook/eggs/10").build();
     private static final Aurora.AuroraRequest ORDERBOOK_SUBSCRIBE_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("orderbook/eggs=subscribe").build();
     private static final Aurora.AuroraRequest ORDERBOOK_UNSUBSCRIBE_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("orderbook/eggs=unsubscribe").build();
+    public static final Aurora.AuroraRequest MARKET_AVAILABILITY_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("market-europe/availability/eggs/2.50/2").build();
+    public static final Aurora.AuroraRequest MARKET_RETURN_PENDING_PRODUCT_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("market-europe/return/eggs/2.50/2").build();
+    public static final Aurora.AuroraRequest MARKET_BUY_PRODUCT_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("market-europe/buy/eggs/2.50/2").build();
+
     private static final Aurora.AuroraRequest INVALID_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("market/banica").build();
 
     private static final ManagedChannel DUMMY_MANAGED_CHANNEL = ManagedChannelBuilder
@@ -51,16 +57,23 @@ class RequestMapperTest {
 
     private static final String AURORA_SERVER_NAME = "auroraServer";
     private static final String ORDER_BOOK_SERVER_NAME = "orderBookServer";
+    private static final String MARKET_SERVER_NAME = "marketServer";
 
     private static final ManagedChannel AURORA_SERVER_CHANNEL = InProcessChannelBuilder
             .forName(AURORA_SERVER_NAME)
             .executor(Executors.newSingleThreadExecutor()).build();
+
     private static final ManagedChannel ORDER_BOOK_SERVER_CHANNEL = InProcessChannelBuilder
             .forName(ORDER_BOOK_SERVER_NAME)
             .executor(Executors.newSingleThreadExecutor()).build();
 
+    private static final ManagedChannel MARKET_SERVER_CHANNEL = InProcessChannelBuilder
+            .forName(MARKET_SERVER_NAME)
+            .executor(Executors.newSingleThreadExecutor()).build();
+
     private final OrderBookServiceGrpc.OrderBookServiceBlockingStub orderBookBlockingStub = OrderBookServiceGrpc.newBlockingStub(ORDER_BOOK_SERVER_CHANNEL);
     private final AuroraServiceGrpc.AuroraServiceBlockingStub auroraBlockingStub = AuroraServiceGrpc.newBlockingStub(AURORA_SERVER_CHANNEL);
+    private final MarketServiceGrpc.MarketServiceBlockingStub marketBlockingStub = MarketServiceGrpc.newBlockingStub(MARKET_SERVER_CHANNEL);
 
     @Rule
     public static GrpcCleanupRule grpcCleanup = new GrpcCleanupRule();
@@ -79,9 +92,11 @@ class RequestMapperTest {
     public static void setUp() throws IOException {
         FakeServerGenerator.createFakeServer(AURORA_SERVER_NAME, grpcCleanup, AURORA_SERVER_CHANNEL);
         FakeServerGenerator.createFakeServer(ORDER_BOOK_SERVER_NAME, grpcCleanup, ORDER_BOOK_SERVER_CHANNEL);
+        FakeServerGenerator.createFakeServer(MARKET_SERVER_NAME, grpcCleanup, MARKET_SERVER_CHANNEL);
 
         FakeServerGenerator.addChannel("auroraServerChannel", AURORA_SERVER_CHANNEL);
         FakeServerGenerator.addChannel("orderBookServerChannel", ORDER_BOOK_SERVER_CHANNEL);
+        FakeServerGenerator.addChannel("marketServerChannel", MARKET_SERVER_CHANNEL);
         FakeServerGenerator.addChannel("dummyChannel", DUMMY_MANAGED_CHANNEL);
     }
 
@@ -152,5 +167,51 @@ class RequestMapperTest {
 
         //Assert
         assertEquals(AURORA_REQUEST, actual.getMessage().unpack(Aurora.AuroraRequest.class));
+    }
+
+    @Test
+    void renderRequestWithAvailabilityRequestForMarketToChekIfProductExist() throws IOException, ServiceNotFoundException {
+        //Arrange
+        when(channelManager.getChannelByKey(any())).thenReturn(Optional.ofNullable(DUMMY_MANAGED_CHANNEL));
+        when(stubManager.getMarketBlockingStub(any())).thenReturn(marketBlockingStub);
+
+
+        AvailabilityResponse availabilityResponse = AvailabilityResponse.newBuilder().build();
+
+        //Act
+        Aurora.AuroraResponse actual = requestMapper.renderRequest(MARKET_AVAILABILITY_REQUEST);
+
+        //Assert
+        assertEquals(availabilityResponse, actual.getMessage().unpack(AvailabilityResponse.class));
+    }
+
+    @Test
+    void renderRequestWithBuyProductRequestForMarketToBuyTheProductFromMarket() throws IOException, ServiceNotFoundException {
+        //Arrange
+        when(channelManager.getChannelByKey(any())).thenReturn(Optional.ofNullable(DUMMY_MANAGED_CHANNEL));
+        when(stubManager.getMarketBlockingStub(any())).thenReturn(marketBlockingStub);
+
+        BuySellProductResponse buySellProductResponse = BuySellProductResponse.newBuilder().build();
+
+        //Act
+        Aurora.AuroraResponse actual = requestMapper.renderRequest(MARKET_BUY_PRODUCT_REQUEST);
+
+        //Assert
+        assertEquals(buySellProductResponse, actual.getMessage().unpack(BuySellProductResponse.class));
+    }
+
+    @Test
+    void renderRequestWithReturnProductRequestForMarketToReturnTheProductFromMarket() throws IOException, ServiceNotFoundException {
+        //Arrange
+        when(channelManager.getChannelByKey(any())).thenReturn(Optional.ofNullable(DUMMY_MANAGED_CHANNEL));
+        when(stubManager.getMarketBlockingStub(any())).thenReturn(marketBlockingStub);
+
+        BuySellProductResponse buySellProductResponse = BuySellProductResponse.newBuilder().build();
+
+        //Act
+        Aurora.AuroraResponse actual = requestMapper.renderRequest(MARKET_RETURN_PENDING_PRODUCT_REQUEST);
+
+        //Assert
+        assertEquals(buySellProductResponse, actual.getMessage().unpack(BuySellProductResponse.class));
     }
 }

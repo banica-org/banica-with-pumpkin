@@ -3,8 +3,11 @@ package com.market.banica.aurora.util;
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
 import com.google.protobuf.Any;
+import com.market.AvailabilityResponse;
+import com.market.BuySellProductResponse;
 import com.market.MarketDataRequest;
 import com.market.MarketServiceGrpc;
+import com.market.ProductBuySellRequest;
 import com.market.TickResponse;
 import com.orderbook.CancelSubscriptionRequest;
 import com.orderbook.CancelSubscriptionResponse;
@@ -122,6 +125,24 @@ public final class FakeServerGenerator {
             @Override
             public void subscribeForItem(MarketDataRequest request, StreamObserver<TickResponse> responseObserver) {
                 responseObserver.onNext(TickResponse.newBuilder().build());
+                responseObserver.onCompleted();
+            };
+
+            @Override
+            public void buyProduct(ProductBuySellRequest request, StreamObserver<BuySellProductResponse> responseObserver) {
+                responseObserver.onNext(BuySellProductResponse.newBuilder().build());
+                responseObserver.onCompleted();
+            }
+
+            @Override
+            public void returnPendingProduct(ProductBuySellRequest request, StreamObserver<BuySellProductResponse> responseObserver) {
+                responseObserver.onNext(BuySellProductResponse.newBuilder().build());
+                responseObserver.onCompleted();
+            }
+
+            @Override
+            public void checkAvailability(ProductBuySellRequest request, StreamObserver<AvailabilityResponse> responseObserver) {
+                responseObserver.onNext(AvailabilityResponse.newBuilder().build());
                 responseObserver.onCompleted();
             }
         };

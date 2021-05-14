@@ -27,7 +27,6 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
@@ -87,6 +86,7 @@ class MarketStateImplTest {
         reset(marketStateMap);
         reset(marketSnapshot);
         reset(persistScheduler);
+        reset(snapshotPersistence);
 
     }
 
@@ -110,8 +110,7 @@ class MarketStateImplTest {
         verify(marketStateMap, times(1)).putIfAbsent(GOOD_BANICA, new TreeSet<>());
         verify(emptySetSpy, times(1)).add(marketTick);
         verify(snapshotPersistence, times(1)).persistMarketSnapshot(marketSnapshot);
-        verify(subscriptionManager, times(1))
-                .notifySubscribers(convertMarketTickToTickResponse(marketTick));
+        verify(subscriptionManager, times(1)).notifySubscribers(convertMarketTickToTickResponse(marketTick));
 
     }
 
@@ -143,7 +142,7 @@ class MarketStateImplTest {
     }
 
     @Test
-    public void removeItemFromStateWithValidRequestRemovesRequiredNumberOfMarketTicks() throws ProductNotAvailableException {
+    public void removeItemFromStateWithValidRequestRemovesRequiredMarketTicksAmount() throws ProductNotAvailableException {
 
         MarketTick marketTick1 = new MarketTick(GOOD_EGGS, 2, 1, 1);
         MarketTick marketTick2 = new MarketTick(GOOD_EGGS, 2, 1, 2);
@@ -156,9 +155,10 @@ class MarketStateImplTest {
         marketState.removeItemFromState(GOOD_EGGS, 8, 1);
 
         TreeSet<MarketTick> resultMap = (TreeSet<MarketTick>) marketStateMap.get(GOOD_EGGS);
+        long marketTicksQuantitySum = resultMap.stream().mapToLong(MarketTick::getQuantity).sum();
 
-        assertEquals(1, resultMap.size());
-        assertEquals(3, resultMap.first().getQuantity());
+        assertEquals(4, resultMap.size());
+        assertEquals(3, marketTicksQuantitySum);
 
     }
 
@@ -174,16 +174,16 @@ class MarketStateImplTest {
 
         marketState.removeItemFromState(GOOD_EGGS, 5, 1);
 
-        TreeSet<MarketTick> resultMap = (TreeSet<MarketTick>) marketStateMap.get(GOOD_EGGS);
+        Set<MarketTick> resultMap = marketStateMap.get(GOOD_EGGS);
+        long marketTicksQuantitySum = resultMap.stream().mapToLong(MarketTick::getQuantity).sum();
 
-        assertEquals(2, resultMap.size());
-        assertEquals(2, resultMap.first().getQuantity());
-        assertEquals(8, resultMap.last().getQuantity());
+        assertEquals(3, resultMap.size());
+        assertEquals(10, marketTicksQuantitySum);
 
     }
 
     @Test
-    public void removeItemFromStateWithValidRequestRemovesAllMarketTicks() throws ProductNotAvailableException {
+    public void removeItemFromStateWithValidRequestDecreasesMarketTicksQuantity() throws ProductNotAvailableException {
 
         MarketTick marketTick1 = new MarketTick(GOOD_EGGS, 2, 1, 1);
         MarketTick marketTick2 = new MarketTick(GOOD_EGGS, 2, 1, 2);
@@ -195,8 +195,10 @@ class MarketStateImplTest {
         marketState.removeItemFromState(GOOD_EGGS, 4, 1);
 
         Set<MarketTick> resultMap = marketStateMap.get(GOOD_EGGS);
+        long marketTicksQuantitySum = resultMap.stream().mapToLong(MarketTick::getQuantity).sum();
 
-        assertEquals(0, resultMap.size());
+        assertEquals(3, resultMap.size());
+        assertEquals(0, marketTicksQuantitySum);
 
     }
 
@@ -225,49 +227,16 @@ class MarketStateImplTest {
     @Test
     public void addGoodToStateCreatesNewTreeSetWhenMarketStateDoesNotContainMarketTickWithGivenName() {
 
-        long timestamp = System.currentTimeMillis();
         long quantity = 5;
         double price = 1.0;
 
-        MarketTick expectedMarketTick = new MarketTick(GOOD_EGGS, quantity, price, timestamp);
+        when(marketStateMap.get(GOOD_EGGS)).thenReturn(new TreeSet<>());
 
-        Set<MarketTick> marketTickSet = new TreeSet<>();
-        marketTickSet.add(expectedMarketTick);
-
-        marketState.addGoodToState(GOOD_EGGS, price, quantity, timestamp);
-
-        when(marketStateMap.get(GOOD_EGGS)).thenReturn(marketTickSet);
+        marketState.addProductToMarketState(GOOD_EGGS, price, quantity);
 
         TreeSet<MarketTick> expectedMarketTicks = (TreeSet<MarketTick>) marketStateMap.get(GOOD_EGGS);
 
         assertEquals(1, expectedMarketTicks.size());
-        assertEquals(expectedMarketTick, expectedMarketTicks.first());
-
-    }
-
-    @Test
-    public void addGoodToStateIncreasesCurrentMarketTickQuantityWhenAddingTheSameMarketTick() {
-
-        long timestamp = System.currentTimeMillis();
-        long quantity = 5;
-        double price = 1.0;
-
-        MarketTick expectedMarketTick = new MarketTick(GOOD_EGGS, quantity, price, timestamp);
-
-        Set<MarketTick> marketTickSet = new TreeSet<>();
-        marketTickSet.add(expectedMarketTick);
-
-        when(marketStateMap.get(GOOD_EGGS)).thenReturn(marketTickSet);
-
-        marketState.addGoodToState(GOOD_EGGS, price, quantity, timestamp);
-
-        TreeSet<MarketTick> expectedMarketTicks = (TreeSet<MarketTick>) marketStateMap.get(GOOD_EGGS);
-
-        MarketTick availableMarketTick = expectedMarketTicks.first();
-
-        assertEquals(1, expectedMarketTicks.size());
-        assertEquals(10, availableMarketTick.getQuantity());
-        assertNotEquals(expectedMarketTick, availableMarketTick);
 
     }
 
@@ -281,7 +250,7 @@ class MarketStateImplTest {
 
         when(marketStateMap.get(GOOD_EGGS)).thenReturn(marketTickSet);
 
-        marketState.addGoodToState(GOOD_EGGS, 1, 8, 2);
+        marketState.addProductToMarketState(GOOD_EGGS, 1, 8);
 
         TreeSet<MarketTick> expectedMarketTicks = (TreeSet<MarketTick>) marketStateMap.get(GOOD_EGGS);
 
@@ -291,6 +260,7 @@ class MarketStateImplTest {
         assertEquals(7, availableMarketTick.getQuantity());
 
     }
+
     @Test
     void getPersistScheduler() {
 
