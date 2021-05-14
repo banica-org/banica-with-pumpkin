@@ -142,7 +142,7 @@ class MarketStateImplTest {
 
     }
 
-  /*  @Test
+    @Test
     public void removeItemFromStateWithValidRequestRemovesRequiredNumberOfMarketTicks() throws ProductNotAvailableException {
 
         MarketTick marketTick1 = new MarketTick(GOOD_EGGS, 2, 1, 1);
@@ -281,17 +281,16 @@ class MarketStateImplTest {
 
         when(marketStateMap.get(GOOD_EGGS)).thenReturn(marketTickSet);
 
-        marketState.addGoodToState(GOOD_EGGS, 1, 8, 1);
+        marketState.addGoodToState(GOOD_EGGS, 1, 8, 2);
 
         TreeSet<MarketTick> expectedMarketTicks = (TreeSet<MarketTick>) marketStateMap.get(GOOD_EGGS);
 
         MarketTick availableMarketTick = expectedMarketTicks.first();
 
         assertEquals(2, expectedMarketTicks.size());
-        assertEquals(8, availableMarketTick.getQuantity());
+        assertEquals(7, availableMarketTick.getQuantity());
 
     }
-*/
     @Test
     void getPersistScheduler() {
 
