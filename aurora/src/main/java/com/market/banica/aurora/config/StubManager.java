@@ -7,28 +7,34 @@ import com.orderbook.OrderBookServiceGrpc;
 import io.grpc.ManagedChannel;
 import org.springframework.context.annotation.Configuration;
 
+import java.lang.reflect.Method;
+import java.util.AbstractMap;
+import java.util.Map;
+
 @Configuration
 public class StubManager {
 
-    public AuroraServiceGrpc.AuroraServiceStub getAuroraStub(ManagedChannel channel){
-        return AuroraServiceGrpc.newStub(channel);
+    public Map.Entry<AuroraServiceGrpc.AuroraServiceStub, Method[]> getAuroraStub(ManagedChannel channel) {
+
+        AuroraServiceGrpc.AuroraServiceStub auroraServiceStub = AuroraServiceGrpc.newStub(channel);
+        Class auroraStub = auroraServiceStub.getClass();
+        return new AbstractMap.SimpleEntry<>(auroraServiceStub, auroraStub.getDeclaredMethods());
+
     }
 
-    public AuroraServiceGrpc.AuroraServiceBlockingStub getAuroraBlockingStub(ManagedChannel channel){
-        return AuroraServiceGrpc.newBlockingStub(channel);
+    public Map.Entry<OrderBookServiceGrpc.OrderBookServiceBlockingStub, Method[]> getOrderbookBlockingStub(ManagedChannel channel) {
+
+        OrderBookServiceGrpc.OrderBookServiceBlockingStub orderBookServiceBlockingStub = OrderBookServiceGrpc.newBlockingStub(channel);
+        Class orderBookStub = orderBookServiceBlockingStub.getClass();
+        return new AbstractMap.SimpleEntry<>(orderBookServiceBlockingStub, orderBookStub.getDeclaredMethods());
+
     }
 
+    public Map.Entry<MarketServiceGrpc.MarketServiceStub, Method[]> getMarketStub(ManagedChannel channel) {
 
-    public OrderBookServiceGrpc.OrderBookServiceStub getOrderbookStub(ManagedChannel channel){
-        return OrderBookServiceGrpc.newStub(channel);
-    }
-
-    public OrderBookServiceGrpc.OrderBookServiceBlockingStub getOrderbookBlockingStub(ManagedChannel channel){
-        return OrderBookServiceGrpc.newBlockingStub(channel);
-    }
-
-    public MarketServiceGrpc.MarketServiceStub getMarketStub(ManagedChannel channel){
-        return MarketServiceGrpc.newStub(channel);
+        MarketServiceGrpc.MarketServiceStub marketServiceStub = MarketServiceGrpc.newStub(channel);
+        Class marketStub = marketServiceStub.getClass();
+        return new AbstractMap.SimpleEntry<>(marketServiceStub, marketStub.getDeclaredMethods());
     }
 
 }
