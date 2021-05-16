@@ -43,7 +43,6 @@ public class SubscribeMapper {
 
     public void renderSubscribe(Aurora.AuroraRequest incomingRequest, StreamObserver<Aurora.AuroraResponse> responseObserver) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         String destinationOfMessage = incomingRequest.getTopic().split("/")[0];
-        //List<ManagedChannel> channelsWithPrefix = channelManager.getAllChannelsContainingPrefix(destinationOfMessage);
         List<Map.Entry<String, ManagedChannel>> channelsWithPrefix = channelManager.getAllChannelsContainingPrefix(destinationOfMessage);
         if (channelsWithPrefix.isEmpty()) {
             log.warn("Unsupported message have reached aurora.");
