@@ -35,13 +35,8 @@ public class TransactionServiceImpl implements TransactionService {
 
         List<ItemDto> pendingItems = new ArrayList<>();
 
-        boolean areAvailable = true;
-        String productAvailabilityResponseErrorMessage = "";
 
         for (ProductDto purchaseProduct : notCompoundProducts) {
-            if (!areAvailable) {
-                break;
-            }
             String productName = purchaseProduct.getItemName();
 
             for (ProductSpecification productSpecification : purchaseProduct.getProductSpecifications()) {
@@ -53,18 +48,14 @@ public class TransactionServiceImpl implements TransactionService {
                 AvailabilityResponse availabilityResponse = this.auroraClientSideService.checkAvailability(productName, productPrice.doubleValue(), productQuantity, productOrigin);
 
                 if (!availabilityResponse.getIsAvailable()) {
-                    areAvailable = false;
-                    productAvailabilityResponseErrorMessage = String.format(PRODUCT_NOT_AVAILABLE_MESSAGE, availabilityResponse.getItemName(), availabilityResponse.getItemQuantity(), availabilityResponse.getMarketName());
-                    break;
+                    returnPendingProducts(pendingItems);
+                    throw new ProductNotAvailableException(String.format(PRODUCT_NOT_AVAILABLE_MESSAGE,
+                            availabilityResponse.getItemName(),
+                            availabilityResponse.getItemQuantity(),
+                            availabilityResponse.getMarketName()));
                 }
                 pendingItems.add(new ItemDto(productName, productPrice, productOrigin.toString(), productQuantity));
             }
-        }
-
-        if (!areAvailable) {
-            returnPendingProducts(pendingItems);
-
-            throw new ProductNotAvailableException(productAvailabilityResponseErrorMessage);
         }
 
         buyPendingProducts(pendingItems);
