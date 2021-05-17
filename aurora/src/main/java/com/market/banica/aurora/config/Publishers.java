@@ -26,6 +26,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+
 @NoArgsConstructor
 @EnableMBeanExport
 @ManagedResource
@@ -73,16 +74,13 @@ public class Publishers {
         try {
             lock.writeLock().lock();
             LOGGER.debug("Writing back-up to json");
-
             ObjectWriter objectWriter = new ObjectMapper().writerWithDefaultPrettyPrinter();
 
             try (Writer output = new OutputStreamWriter(new FileOutputStream(ApplicationDirectoryUtil.getConfigFile(publishersFileName)), UTF_8)) {
-
                 String jsonData = Utility.getObjectAsJsonString(publishersList, objectWriter);
-
                 output.write(jsonData);
-
                 LOGGER.debug("Back-up written successfully");
+
             } catch (IOException e) {
                 LOGGER.error("Exception thrown during writing back-up : {}", e.getMessage());
             }
@@ -97,23 +95,16 @@ public class Publishers {
         try (InputStream input = new FileInputStream(ApplicationDirectoryUtil.getConfigFile(publishersFileName))) {
 
             if (!ApplicationDirectoryUtil.doesFileExist(publishersFileName)) {
-
                 LOGGER.info("Creating \"{}\" file!", publishersFileName);
                 ApplicationDirectoryUtil.getConfigFile(publishersFileName);
-
                 return new CopyOnWriteArrayList<>();
-
             } else if (ApplicationDirectoryUtil.getConfigFile(publishersFileName).length() == 0) {
-
                 LOGGER.info("File \"{}\" is empty, no publishers were loaded!", publishersFileName);
                 return new CopyOnWriteArrayList<>();
-
             }
 
-            return new ObjectMapper().readValue(input,
-                    new TypeReference<CopyOnWriteArrayList<String>>() {
-                    });
-
+            return new ObjectMapper().readValue(input, new TypeReference<CopyOnWriteArrayList<String>>() {
+            });
         } catch (IOException e) {
             LOGGER.error("Exception occurred during reading file {} with message : {}", publishersFileName, e.getMessage());
         }

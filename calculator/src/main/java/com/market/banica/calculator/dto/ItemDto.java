@@ -9,10 +9,7 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 public class ItemDto {
     private String name;
-
     private BigDecimal price;
-
     private String location;
-
     private Long quantity;
 }

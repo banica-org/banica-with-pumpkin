@@ -118,6 +118,7 @@ public class MarketStateImpl implements MarketState {
                         itemPrice,
                         itemQuantity));
             }
+
             MarketTick marketTick = new MarketTick(itemName, -itemQuantity, itemPrice, System.currentTimeMillis());
             this.addTickToMarket(marketTick);
             desireProduct = new MarketTick(itemName, itemQuantity, itemPrice, System.currentTimeMillis());

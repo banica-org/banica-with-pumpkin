@@ -30,7 +30,9 @@ public class AuroraClientSideService {
     public static final String AVAILABILITY_REQUEST_PATTERN = "market-%s/availability/%s/%f/%d";
     public static final String RETURN_PENDING_PRODUCT_PATTERN = "market-%s/return/%s/%f/%d";
     public static final String BUY_PRODUCT_PATTERN = "market-%s/buy/%s/%f/%d";
+
     public static final String INCORRECT_RESPONSE_MESSAGE = "Incorrect response! Response must be from %s type.";
+
     private static final String ORDERBOOK_TOPIC_PREFIX = "orderbook";
     private static final String CLIENT_ID = "calculator";
     private static final Logger LOGGER = LoggerFactory.getLogger(AuroraClientSideService.class);
@@ -68,9 +70,7 @@ public class AuroraClientSideService {
         LOGGER.debug("Inside getIngredient method with parameter product name - {} and client id - {}", productName, clientId);
 
         String message = String.format(GET_INGREDIENT_PATTERN, ORDERBOOK_TOPIC_PREFIX, productName, quantity);
-
         Aurora.AuroraResponse auroraResponse = getAuroraResponse(message);
-
         ItemOrderBookResponse response = unpackAndValidateResponse(auroraResponse, ItemOrderBookResponse.class);
 
         return response;
@@ -124,21 +124,17 @@ public class AuroraClientSideService {
             LOGGER.error("Unable to parse Any to desired class: {}", e.getMessage());
             throw new IncorrectResponseException(exceptionMessage);
         }
-
         return type.cast(unpack);
     }
 
     private Aurora.AuroraResponse getAuroraResponse(String message) {
         LOGGER.debug("In getAuroraResponse private method");
-
         Aurora.AuroraRequest request = buildAuroraRequest(message);
-
         return getBlockingStub().request(request);
     }
 
     private Aurora.AuroraRequest buildAuroraRequest(String message) {
         LOGGER.debug("In buildAuroraRequest private method");
-
         LOGGER.debug("Building request with parameter {}.", message);
         return Aurora.AuroraRequest
                 .newBuilder()

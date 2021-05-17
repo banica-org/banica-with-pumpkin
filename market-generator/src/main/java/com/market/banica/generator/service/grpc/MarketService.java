@@ -89,6 +89,7 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
     public void checkAvailability(ProductBuySellRequest request, StreamObserver<AvailabilityResponse> responseObserver) {
         boolean isAvailable = false;
         MarketTick marketTick;
+
         String productName = request.getItemName();
         double productPrice = request.getItemPrice();
         long productQuantity = request.getItemQuantity();
@@ -130,7 +131,6 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
 
             if (marketTick.getQuantity() > productQuantity) {
                 long newMarketTickQuantity = marketTick.getQuantity() - productQuantity;
-
                 MarketTick newMarketTick = new MarketTick(
                         marketTick.getGood(),
                         newMarketTickQuantity,

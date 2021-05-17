@@ -69,15 +69,16 @@ public class JMXConfig {
                 LOGGER.error("Channel with prefix {} already exists", channelPrefix);
                 throw new IllegalArgumentException("Channel with this name already exists");
             }
+
             ChannelProperty channelProperty = new ChannelProperty();
             channelProperty.setPort(Integer.parseInt(port));
             channelProperty.setHost(host);
+
             channelPropertyMap.put(channelPrefix, channelProperty);
             channels.addChannel(channelPrefix, channelProperty);
             this.writeBackUp();
-            LOGGER.debug("New channel created from JMX server with host {} and port {}"
-                    , host, port);
 
+            LOGGER.debug("New channel created from JMX server with host {} and port {}", host, port);
         } finally {
             this.lock.writeLock().unlock();
         }
@@ -88,10 +89,12 @@ public class JMXConfig {
         try {
             this.lock.writeLock().lock();
             LOGGER.info("Deleting channel {} from  JMX server", channelPrefix);
+
             if (!channelPropertyMap.containsKey(channelPrefix)) {
                 LOGGER.error("Channel with prefix {} does not exists", channelPrefix);
                 throw new IllegalArgumentException("Channel with this name does not exists");
             }
+
             this.channelPropertyMap.remove(channelPrefix);
             this.channels.deleteChannel(channelPrefix);
             this.writeBackUp();
@@ -105,13 +108,16 @@ public class JMXConfig {
         try {
             this.lock.writeLock().lock();
             LOGGER.debug("Editing channel {} from  JMX server", channelPrefix);
+
             if (!channelPropertyMap.containsKey(channelPrefix)) {
                 LOGGER.error("Channel with prefix {} does not exists", channelPrefix);
                 throw new IllegalArgumentException("Channel with this name does not exists");
             }
+
             ChannelProperty channelProperty = this.channelPropertyMap.remove(channelPrefix);
             channelProperty.setHost(host);
             channelProperty.setPort(Integer.parseInt(port));
+
             this.channelPropertyMap.put(channelPrefix, channelProperty);
             this.channels.editChannel(channelPrefix, channelProperty);
             this.writeBackUp();
@@ -123,11 +129,13 @@ public class JMXConfig {
     @ManagedOperation
     public String getChannelsStatus() {
         StringBuilder builder = new StringBuilder();
-
         builder.append("Channel : State of channel.\n");
-
-        channels.getChannels().entrySet()
-                .forEach(entry -> builder.append(String.format("%s : %s \n", entry.getKey(), entry.getValue().getState(false)))
+        channels
+                .getChannels()
+                .entrySet()
+                .forEach(entry -> builder.append(String.format("%s : %s \n",
+                        entry.getKey(),
+                        entry.getValue().getState(false)))
                 );
 
         return builder.toString();
@@ -136,8 +144,7 @@ public class JMXConfig {
     @ManagedOperation
     public void refreshChannels() {
         channels.getChannels().entrySet()
-                .forEach(entry -> entry.getValue().getState(true)
-                );
+                .forEach(entry -> entry.getValue().getState(true));
 
     }
 

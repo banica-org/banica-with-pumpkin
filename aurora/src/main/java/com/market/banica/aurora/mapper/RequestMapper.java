@@ -40,12 +40,15 @@ public class RequestMapper {
     public static final String SPLIT_SLASH_REGEX = "/+";
     public static final String SPLIT_EQUALS_REGEX = "=";
     public static final String NUMBER_CHECK_REGEX = "^\\d+$";
+
     public static final String ORDERBOOK = "orderbook";
     public static final String AURORA = "aurora";
     public static final String MARKET = "market";
+
     public static final String AVAILABILITY_ACTION = "availability";
     public static final String RETURN_ACTION = "return";
     public static final String BUY_ACTION = "buy";
+
     public static final String BAD_PUBLISHER_REQUEST = "Unknown Publisher";
     public static final String IN_CANCEL_ITEM_SUBSCRIPTION = "Forwarding to orderbook - cancelItemSubscription.";
     public static final String IN_ANNOUNCE_ITEM_INTEREST = "Forwarding to orderbook - announceItemInterest.";
@@ -196,12 +199,10 @@ public class RequestMapper {
                 return Aurora.AuroraResponse.newBuilder()
                         .setMessage(Any.pack(marketStub.checkAvailability(request.build())))
                         .build();
-
             case RETURN_ACTION:
                 return Aurora.AuroraResponse.newBuilder()
                         .setMessage(Any.pack(marketStub.returnPendingProduct(request.build())))
                         .build();
-
             case BUY_ACTION:
                 return Aurora.AuroraResponse.newBuilder()
                         .setMessage(Any.pack(marketStub.buyProduct(request.build())))

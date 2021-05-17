@@ -60,7 +60,6 @@ public class ItemMarket {
     }
 
     public void updateItem(Aurora.AuroraResponse response) {
-
         try {
             lock.writeLock().lock();
             TickResponse tickResponse;
@@ -104,9 +103,7 @@ public class ItemMarket {
     }
 
     public List<OrderBookLayer> getRequestedItem(String itemName, long quantity) {
-
         LOGGER.info("Getting requested item: {} with quantity: {}", itemName, quantity);
-
         DataValidator.validateIncomingData(itemName);
 
         TreeSet<Item> items = this.allItems.get(itemName);
@@ -120,9 +117,7 @@ public class ItemMarket {
         List<OrderBookLayer> layers;
         try {
             lock.readLock().lock();
-
             layers = new ArrayList<>();
-
             Iterator<Item> iterator = items.iterator();
             long itemLeft = quantity;
 
@@ -149,17 +144,14 @@ public class ItemMarket {
                 .setPrice(currentItem.getPrice());
 
         if (currentItem.getQuantity() > itemLeft) {
-
             currentLayer.setQuantity(itemLeft);
         } else {
-
             currentLayer.setQuantity(currentItem.getQuantity());
         }
         return currentLayer;
     }
 
     private Item populateItem(TickResponse tickResponse) {
-
         Item item = new Item();
         item.setPrice(tickResponse.getPrice());
         item.setQuantity(tickResponse.getQuantity());
@@ -182,7 +174,6 @@ public class ItemMarket {
                     itemsIterator.remove();
                 }
             }
-
             productsQuantity.put(itemName, productsQuantity.get(itemName) - removedItemProductQuantity);
         } finally {
             lock.writeLock().unlock();

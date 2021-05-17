@@ -51,7 +51,6 @@ public class ProductControllerTest {
         Product product = new Product();
         List<Product> products = new ArrayList<>(Collections.singletonList(product));
         given(productService.createProduct(products)).willReturn(product);
-
         //when
         MockHttpServletResponse response = mockMvc.perform(
                 post("/product")
@@ -59,7 +58,6 @@ public class ProductControllerTest {
                         .content(jsonResponseListProduct.write(products).getJson())
                         .accept(MediaType.APPLICATION_JSON))
                 .andReturn().getResponse();
-
         //then
         assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
         assertThat(response.getContentAsString())

@@ -36,5 +36,4 @@ public class AuroraServiceImpl extends AuroraServiceGrpc.AuroraServiceImplBase {
         LOGGER.info("Accepted subscribe from client {}", request.getClientId());
         subscribeHandler.handleSubscribe(request, responseObserver);
     }
-
 }
