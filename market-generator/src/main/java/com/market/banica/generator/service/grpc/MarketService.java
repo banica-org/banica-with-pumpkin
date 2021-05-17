@@ -10,11 +10,15 @@ import com.market.banica.generator.service.SubscriptionManager;
 import io.grpc.Status;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
+
+    private static final Logger LOGGER = LogManager.getLogger(MarketService.class);
 
     private final SubscriptionManager subscriptionManager;
 
@@ -27,11 +31,60 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
     }
 
     @Override
-    public void subscribeForItem(MarketDataRequest request, StreamObserver<TickResponse> responseObserver) {
-        boolean hasSuccessfulBootstrap = bootstrapGeneratedTicks(request, responseObserver);
-        if (hasSuccessfulBootstrap) {
-            subscriptionManager.subscribe(request, responseObserver);
+    public StreamObserver<MarketDataRequest> subscribeForItem(StreamObserver<TickResponse> responseObserver) {
+
+        final ServerCallStreamObserver<TickResponse> serverCallStreamObserver =
+                (ServerCallStreamObserver<TickResponse>) responseObserver;
+        serverCallStreamObserver.disableAutoRequest();
+
+        class OnReadyHandler implements Runnable {
+            private boolean wasReady = false;
+
+            @Override
+            public void run() {
+                while (serverCallStreamObserver.isReady() && !wasReady) {
+                    wasReady = true;
+                    serverCallStreamObserver.request(1);
+                }
+            }
         }
+
+        final OnReadyHandler onReadyHandler = new OnReadyHandler();
+        serverCallStreamObserver.setOnReadyHandler(onReadyHandler);
+
+        return new StreamObserver<MarketDataRequest>() {
+            @Override
+            public void onNext(MarketDataRequest request) {
+                try {
+
+                    boolean hasSuccessfulBootstrap = bootstrapGeneratedTicks(request, serverCallStreamObserver);
+                    if (hasSuccessfulBootstrap) {
+                        subscriptionManager.subscribe(request, serverCallStreamObserver);
+                    }
+
+                    if (serverCallStreamObserver.isReady()) {
+                        serverCallStreamObserver.request(1);
+                    } else {
+                        onReadyHandler.wasReady = false;
+                    }
+                } catch (Throwable throwable) {
+                    throwable.printStackTrace();
+                    serverCallStreamObserver.onError(
+                            Status.UNKNOWN.withDescription("Error handling request.").withCause(throwable).asException());
+                }
+            }
+
+            public void onError(Throwable throwable) {
+                LOGGER.warn("Unable to request.");
+                LOGGER.error(throwable.getMessage());
+            }
+
+            public void onCompleted() {
+                LOGGER.info("onCompleted called.");
+            }
+        };
+
+
     }
 
     @Override
