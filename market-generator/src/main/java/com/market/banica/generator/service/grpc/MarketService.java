@@ -68,11 +68,15 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
 
     @Override
     public void returnPendingProduct(ProductBuySellRequest request, StreamObserver<BuySellProductResponse> responseObserver) {
-
         cleanPendingOrdersCollection(request);
-        marketState.addProductToMarketState(request.getItemName(), request.getItemPrice(), request.getItemQuantity());
+        sellProduct(request, responseObserver);
+    }
 
-        BuySellProductResponse buySellProductResponse = BuySellProductResponse.newBuilder().setMessage(String.format("Item with name %s was successfully returned to market.", request.getItemName())).build();
+    @Override
+    public void sellProduct(ProductBuySellRequest request, StreamObserver<BuySellProductResponse> responseObserver) {
+        marketState.addGoodToState(request.getItemName(), request.getItemPrice(), request.getItemQuantity(), request.getTimestamp());
+
+        BuySellProductResponse buySellProductResponse = BuySellProductResponse.newBuilder().setMessage(String.format("Item with name %s was successfully added to market.", request.getItemName())).build();
 
         responseObserver.onNext(buySellProductResponse);
         responseObserver.onCompleted();
@@ -81,13 +85,12 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
     @Override
     public void checkAvailability(ProductBuySellRequest request, StreamObserver<AvailabilityResponse> responseObserver) {
         boolean isAvailable = false;
-        MarketTick marketTick;
+        MarketTick marketTick = new MarketTick();
 
         String productName = request.getItemName();
         double productPrice = request.getItemPrice();
         long productQuantity = request.getItemQuantity();
         String marketName = request.getMarketName();
-
 
         try {
             marketTick = marketState.removeItemFromState(productName, productQuantity, productPrice);
@@ -103,6 +106,7 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
                 .setItemPrice(productPrice)
                 .setItemQuantity(productQuantity)
                 .setMarketName(marketName)
+                .setTimestamp(marketTick.getTimestamp())
                 .build();
 
         responseObserver.onNext(availabilityResponse);
@@ -142,18 +146,24 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
     }
 
     private void addItemToPending(ProductBuySellRequest request, long timestamp) {
-        String itemName = request.getItemName();
-        double itemPrice = request.getItemPrice();
-        long itemQuantity = request.getItemQuantity();
+        Map<Double, MarketTick> pendingProductInfo = pendingOrders.get(request.getItemName());
+        MarketTick tick;
 
-        pendingOrders.putIfAbsent(itemName, new TreeMap<>());
-        pendingOrders.get(itemName).putIfAbsent(itemPrice, new MarketTick());
-        MarketTick tick = pendingOrders.get(itemName).get(itemPrice);
-        MarketTick newMarketTick = new MarketTick(itemName, tick.getQuantity() + itemQuantity, itemPrice, timestamp);
-        pendingOrders.get(itemName).put(itemPrice, newMarketTick);
+        if (pendingProductInfo == null) {
+            pendingProductInfo = new TreeMap<>();
+            pendingOrders.put(request.getItemName(), pendingProductInfo);
+        }
+        if (!pendingProductInfo.containsKey(request.getItemPrice())) {
+            pendingProductInfo.put(request.getItemPrice(), new MarketTick());
+        }
+
+        tick = pendingProductInfo.get(request.getItemPrice());
+        MarketTick newMarketTick = new MarketTick(request.getItemName(), tick.getQuantity() + request.getItemQuantity(), request.getItemPrice(), timestamp);
+        pendingProductInfo.put(request.getItemPrice(), newMarketTick);
     }
 
-    private boolean bootstrapGeneratedTicks(MarketDataRequest request, StreamObserver<TickResponse> responseStreamObserver) {
+    private boolean bootstrapGeneratedTicks(MarketDataRequest request,
+                                            StreamObserver<TickResponse> responseStreamObserver) {
         String goodName = request.getGoodName();
         ServerCallStreamObserver<TickResponse> cancellableSubscriber = (ServerCallStreamObserver<TickResponse>) responseStreamObserver;
         for (TickResponse tick : marketState.generateMarketTicks(goodName)) {
