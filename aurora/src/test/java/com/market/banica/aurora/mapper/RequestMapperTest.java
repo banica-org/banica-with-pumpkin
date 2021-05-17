@@ -40,15 +40,38 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class RequestMapperTest {
 
-    private static final Aurora.AuroraRequest AURORA_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("aurora/eggs/10").build();
-    private static final Aurora.AuroraRequest ORDERBOOK_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("orderbook/eggs/10").build();
-    private static final Aurora.AuroraRequest ORDERBOOK_SUBSCRIBE_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("orderbook/eggs=subscribe").build();
-    private static final Aurora.AuroraRequest ORDERBOOK_UNSUBSCRIBE_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("orderbook/eggs=unsubscribe").build();
-    public static final Aurora.AuroraRequest MARKET_AVAILABILITY_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("market-europe/availability/eggs/2.50/2").build();
-    public static final Aurora.AuroraRequest MARKET_RETURN_PENDING_PRODUCT_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("market-europe/return/eggs/2.50/2").build();
-    public static final Aurora.AuroraRequest MARKET_BUY_PRODUCT_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("market-europe/buy/eggs/2.50/2").build();
-
-    private static final Aurora.AuroraRequest INVALID_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("market/banica").build();
+    public static final Aurora.AuroraRequest MARKET_AVAILABILITY_REQUEST = Aurora.AuroraRequest
+            .newBuilder()
+            .setTopic("market-europe/availability/eggs/2.50/2")
+            .build();
+    public static final Aurora.AuroraRequest MARKET_RETURN_PENDING_PRODUCT_REQUEST = Aurora.AuroraRequest
+            .newBuilder()
+            .setTopic("market-europe/return/eggs/2.50/2")
+            .build();
+    public static final Aurora.AuroraRequest MARKET_BUY_PRODUCT_REQUEST = Aurora.AuroraRequest
+            .newBuilder()
+            .setTopic("market-europe/buy/eggs/2.50/2")
+            .build();
+    private static final Aurora.AuroraRequest AURORA_REQUEST = Aurora.AuroraRequest
+            .newBuilder()
+            .setTopic("aurora/eggs/10")
+            .build();
+    private static final Aurora.AuroraRequest ORDERBOOK_REQUEST = Aurora.AuroraRequest
+            .newBuilder()
+            .setTopic("orderbook/eggs/10")
+            .build();
+    private static final Aurora.AuroraRequest ORDERBOOK_SUBSCRIBE_REQUEST = Aurora.AuroraRequest
+            .newBuilder()
+            .setTopic("orderbook/eggs=subscribe")
+            .build();
+    private static final Aurora.AuroraRequest ORDERBOOK_UNSUBSCRIBE_REQUEST = Aurora.AuroraRequest
+            .newBuilder()
+            .setTopic("orderbook/eggs=unsubscribe")
+            .build();
+    private static final Aurora.AuroraRequest INVALID_REQUEST = Aurora.AuroraRequest
+            .newBuilder()
+            .setTopic("market/banica")
+            .build();
 
     private static final ManagedChannel DUMMY_MANAGED_CHANNEL = ManagedChannelBuilder
             .forAddress("localhost", 1010)
@@ -70,14 +93,14 @@ class RequestMapperTest {
     private static final ManagedChannel MARKET_SERVER_CHANNEL = InProcessChannelBuilder
             .forName(MARKET_SERVER_NAME)
             .executor(Executors.newSingleThreadExecutor()).build();
-
-    private final OrderBookServiceGrpc.OrderBookServiceBlockingStub orderBookBlockingStub = OrderBookServiceGrpc.newBlockingStub(ORDER_BOOK_SERVER_CHANNEL);
-    private final AuroraServiceGrpc.AuroraServiceBlockingStub auroraBlockingStub = AuroraServiceGrpc.newBlockingStub(AURORA_SERVER_CHANNEL);
-    private final MarketServiceGrpc.MarketServiceBlockingStub marketBlockingStub = MarketServiceGrpc.newBlockingStub(MARKET_SERVER_CHANNEL);
-
     @Rule
     public static GrpcCleanupRule grpcCleanup = new GrpcCleanupRule();
-
+    private final OrderBookServiceGrpc.OrderBookServiceBlockingStub orderBookBlockingStub = OrderBookServiceGrpc
+            .newBlockingStub(ORDER_BOOK_SERVER_CHANNEL);
+    private final AuroraServiceGrpc.AuroraServiceBlockingStub auroraBlockingStub = AuroraServiceGrpc
+            .newBlockingStub(AURORA_SERVER_CHANNEL);
+    private final MarketServiceGrpc.MarketServiceBlockingStub marketBlockingStub = MarketServiceGrpc
+            .newBlockingStub(MARKET_SERVER_CHANNEL);
     @Mock
     private ChannelManager channelManager;
 
@@ -116,12 +139,12 @@ class RequestMapperTest {
         //Arrange
         when(channelManager.getChannelByKey(any())).thenReturn(Optional.ofNullable(DUMMY_MANAGED_CHANNEL));
         when(stubManager.getOrderbookBlockingStub(any())).thenReturn(orderBookBlockingStub);
-
-        ItemOrderBookResponse expectedOrderBookResponse = ItemOrderBookResponse.newBuilder().setItemName("eggs").build();
-
+        ItemOrderBookResponse expectedOrderBookResponse = ItemOrderBookResponse
+                .newBuilder()
+                .setItemName("eggs")
+                .build();
         //Act
         Aurora.AuroraResponse actual = requestMapper.renderRequest(ORDERBOOK_REQUEST);
-
         //Assert
         assertEquals(expectedOrderBookResponse, actual.getMessage().unpack(ItemOrderBookResponse.class));
     }
@@ -131,12 +154,9 @@ class RequestMapperTest {
         //Arrange
         when(channelManager.getChannelByKey(any())).thenReturn(Optional.ofNullable(DUMMY_MANAGED_CHANNEL));
         when(stubManager.getOrderbookBlockingStub(any())).thenReturn(orderBookBlockingStub);
-
         InterestsResponse expectedOrderBookResponse = InterestsResponse.newBuilder().build();
-
         //Act
         Aurora.AuroraResponse actual = requestMapper.renderRequest(ORDERBOOK_SUBSCRIBE_REQUEST);
-
         //Assert
         assertEquals(expectedOrderBookResponse, actual.getMessage().unpack(InterestsResponse.class));
     }
@@ -146,12 +166,9 @@ class RequestMapperTest {
         //Arrange
         when(channelManager.getChannelByKey(any())).thenReturn(Optional.ofNullable(DUMMY_MANAGED_CHANNEL));
         when(stubManager.getOrderbookBlockingStub(any())).thenReturn(orderBookBlockingStub);
-
         CancelSubscriptionResponse expectedOrderBookResponse = CancelSubscriptionResponse.newBuilder().build();
-
         //Act
         Aurora.AuroraResponse actual = requestMapper.renderRequest(ORDERBOOK_UNSUBSCRIBE_REQUEST);
-
         //Assert
         assertEquals(expectedOrderBookResponse, actual.getMessage().unpack(CancelSubscriptionResponse.class));
     }
@@ -161,10 +178,8 @@ class RequestMapperTest {
         //Arrange
         when(channelManager.getChannelByKey(any())).thenReturn(Optional.ofNullable(DUMMY_MANAGED_CHANNEL));
         when(stubManager.getAuroraBlockingStub(any())).thenReturn(auroraBlockingStub);
-
         //Act
         Aurora.AuroraResponse actual = requestMapper.renderRequest(AURORA_REQUEST);
-
         //Assert
         assertEquals(AURORA_REQUEST, actual.getMessage().unpack(Aurora.AuroraRequest.class));
     }
@@ -174,13 +189,9 @@ class RequestMapperTest {
         //Arrange
         when(channelManager.getChannelByKey(any())).thenReturn(Optional.ofNullable(DUMMY_MANAGED_CHANNEL));
         when(stubManager.getMarketBlockingStub(any())).thenReturn(marketBlockingStub);
-
-
         AvailabilityResponse availabilityResponse = AvailabilityResponse.newBuilder().build();
-
         //Act
         Aurora.AuroraResponse actual = requestMapper.renderRequest(MARKET_AVAILABILITY_REQUEST);
-
         //Assert
         assertEquals(availabilityResponse, actual.getMessage().unpack(AvailabilityResponse.class));
     }
@@ -190,12 +201,9 @@ class RequestMapperTest {
         //Arrange
         when(channelManager.getChannelByKey(any())).thenReturn(Optional.ofNullable(DUMMY_MANAGED_CHANNEL));
         when(stubManager.getMarketBlockingStub(any())).thenReturn(marketBlockingStub);
-
         BuySellProductResponse buySellProductResponse = BuySellProductResponse.newBuilder().build();
-
         //Act
         Aurora.AuroraResponse actual = requestMapper.renderRequest(MARKET_BUY_PRODUCT_REQUEST);
-
         //Assert
         assertEquals(buySellProductResponse, actual.getMessage().unpack(BuySellProductResponse.class));
     }
@@ -205,12 +213,9 @@ class RequestMapperTest {
         //Arrange
         when(channelManager.getChannelByKey(any())).thenReturn(Optional.ofNullable(DUMMY_MANAGED_CHANNEL));
         when(stubManager.getMarketBlockingStub(any())).thenReturn(marketBlockingStub);
-
         BuySellProductResponse buySellProductResponse = BuySellProductResponse.newBuilder().build();
-
         //Act
         Aurora.AuroraResponse actual = requestMapper.renderRequest(MARKET_RETURN_PENDING_PRODUCT_REQUEST);
-
         //Assert
         assertEquals(buySellProductResponse, actual.getMessage().unpack(BuySellProductResponse.class));
     }

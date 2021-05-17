@@ -69,14 +69,19 @@ public class CalculatorControllerTest {
         given(calculatorService.getProduct(clientId, product, quantity)).willReturn(productDtoList);
 
 
-        MockHttpServletResponse response = mockMvc.perform(MockMvcRequestBuilders.get
-                ("/calculator/" + clientId + "/" + product + "/" + quantity)
-                .accept(MediaType.APPLICATION_JSON))
-                .andReturn().getResponse();
+        MockHttpServletResponse response = mockMvc
+                .perform(MockMvcRequestBuilders
+                        .get("/calculator/" + clientId + "/" + product + "/" + quantity)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andReturn()
+                .getResponse();
 
 
         assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
-        assertThat(response.getContentAsString()).isEqualTo(jacksonResponseProductDtoList.write(productDtoList).getJson());
+        assertThat(response.getContentAsString())
+                .isEqualTo(jacksonResponseProductDtoList
+                        .write(productDtoList)
+                        .getJson());
     }
 
     @Test
@@ -90,14 +95,19 @@ public class CalculatorControllerTest {
         given(transactionService.buyProduct(clientId, product, quantity)).willReturn(productDtoList);
 
 
-        MockHttpServletResponse response = mockMvc.perform(MockMvcRequestBuilders.get
-                ("/calculator/buy/" + clientId + "/" + product + "/" + quantity)
-                .accept(MediaType.APPLICATION_JSON))
-                .andReturn().getResponse();
+        MockHttpServletResponse response = mockMvc
+                .perform(MockMvcRequestBuilders
+                        .get("/calculator/buy/" + clientId + "/" + product + "/" + quantity)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andReturn()
+                .getResponse();
 
 
         assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
-        assertThat(response.getContentAsString()).isEqualTo(jacksonResponseProductDtoList.write(productDtoList).getJson());
+        assertThat(response.getContentAsString())
+                .isEqualTo(jacksonResponseProductDtoList
+                        .write(productDtoList)
+                        .getJson());
     }
 
     @NotNull

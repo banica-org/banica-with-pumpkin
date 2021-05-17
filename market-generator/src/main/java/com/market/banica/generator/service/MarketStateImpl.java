@@ -79,6 +79,7 @@ public class MarketStateImpl implements MarketState {
             }
         });
     }
+
     @Override
     public List<TickResponse> generateMarketTicks(String good) {
         try {
@@ -105,19 +106,20 @@ public class MarketStateImpl implements MarketState {
             marketDataLock.writeLock().lock();
 
             Set<MarketTick> marketTicks = marketState.get(itemName);
-
-            List<MarketTick> marketTicksWihEqualPrices = marketTicks.stream().filter(marketTick -> marketTick.getPrice() == itemPrice).collect(Collectors.toList());
-
+            List<MarketTick> marketTicksWihEqualPrices = marketTicks
+                    .stream()
+                    .filter(marketTick -> marketTick.getPrice() == itemPrice)
+                    .collect(Collectors.toList());
             long marketStateTicksQuantity = getQuantityForMarketTicksWithSamePrice(marketTicksWihEqualPrices);
 
             if (marketStateTicksQuantity < itemQuantity || marketTicksWihEqualPrices.size() == 0) {
-                throw new ProductNotAvailableException(String.format("Product with name %s, price %.2f and quantity %d doesn't exist.", itemName, itemPrice, itemQuantity));
+                throw new ProductNotAvailableException(String.format("Product with name %s, price %.2f and quantity %d doesn't exist.",
+                        itemName,
+                        itemPrice,
+                        itemQuantity));
             }
-
             MarketTick marketTick = new MarketTick(itemName, -itemQuantity, itemPrice, System.currentTimeMillis());
-
             this.addTickToMarket(marketTick);
-
             desireProduct = new MarketTick(itemName, itemQuantity, itemPrice, System.currentTimeMillis());
         } finally {
             marketDataLock.writeLock().unlock();

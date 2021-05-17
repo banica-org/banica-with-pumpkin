@@ -1,7 +1,6 @@
 package com.market.banica.calculator.handler;
 
 import com.market.banica.common.exception.IncorrectResponseException;
-import com.market.banica.common.exception.NotFoundException;
 import com.market.banica.common.exception.ProductNotAvailableException;
 import com.market.banica.common.exception.TrackingException;
 import org.modelmapper.spi.ErrorMessage;

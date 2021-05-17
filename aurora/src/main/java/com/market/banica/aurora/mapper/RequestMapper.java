@@ -40,7 +40,6 @@ public class RequestMapper {
     public static final String SPLIT_SLASH_REGEX = "/+";
     public static final String SPLIT_EQUALS_REGEX = "=";
     public static final String NUMBER_CHECK_REGEX = "^\\d+$";
-
     public static final String ORDERBOOK = "orderbook";
     public static final String AURORA = "aurora";
     public static final String MARKET = "market";
@@ -176,11 +175,9 @@ public class RequestMapper {
 
     private Aurora.AuroraResponse renderMarketMapping(Aurora.AuroraRequest incomingRequest, ManagedChannel channelByKey) {
         LOGGER.debug("Mapping messages for market.");
-
         MarketServiceGrpc.MarketServiceBlockingStub marketStub = stubManager.getMarketBlockingStub(channelByKey);
 
         String[] topicSplit = incomingRequest.getTopic().split(SPLIT_SLASH_REGEX);
-
         String itemName = topicSplit[2];
         double itemPrice = Double.parseDouble(topicSplit[3]);
         long itemQuantity = Long.parseLong(topicSplit[4]);

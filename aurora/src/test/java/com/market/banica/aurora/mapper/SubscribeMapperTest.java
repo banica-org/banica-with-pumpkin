@@ -36,10 +36,23 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class SubscribeMapperTest {
 
-    private static final Aurora.AuroraRequest MARKET_REQUEST = Aurora.AuroraRequest.newBuilder().setClientId("1").setTopic("market/eggs/10").build();
-    private static final Aurora.AuroraRequest AURORA_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("aurora/eggs/10").build();
-    private static final Aurora.AuroraRequest ORDERBOOK_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("orderbook/eggs/10").build();
-    private static final Aurora.AuroraRequest INVALID_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("invalid/request").build();
+    private static final Aurora.AuroraRequest MARKET_REQUEST = Aurora.AuroraRequest
+            .newBuilder()
+            .setClientId("1")
+            .setTopic("market/eggs/10"
+            ).build();
+    private static final Aurora.AuroraRequest AURORA_REQUEST = Aurora.AuroraRequest
+            .newBuilder()
+            .setTopic("aurora/eggs/10")
+            .build();
+    private static final Aurora.AuroraRequest ORDERBOOK_REQUEST = Aurora.AuroraRequest
+            .newBuilder()
+            .setTopic("orderbook/eggs/10")
+            .build();
+    private static final Aurora.AuroraRequest INVALID_REQUEST = Aurora.AuroraRequest
+            .newBuilder()
+            .setTopic("invalid/request")
+            .build();
 
     private static final ManagedChannel DUMMY_MANAGED_CHANNEL = ManagedChannelBuilder
             .forAddress("localhost", 1010)
@@ -118,12 +131,9 @@ class SubscribeMapperTest {
         //Arrange
         when(channelManager.getAllChannelsContainingPrefix(any())).thenReturn(Collections.singletonList(dummyEntry));
         when(stubManager.getMarketStub(any())).thenReturn(marketStub);
-
         //Act
         subscribeMapper.renderSubscribe(MARKET_REQUEST, responseObserver);
-
         Thread.sleep(1000);
-
         //Assert
         verify(stubManager, times(1)).getMarketStub(any());
         verify(responseObserver, times(1)).onNext(any());
@@ -135,12 +145,9 @@ class SubscribeMapperTest {
         //Arrange
         when(channelManager.getAllChannelsContainingPrefix(any())).thenReturn(Collections.singletonList(dummyEntry));
         when(stubManager.getAuroraStub(any())).thenReturn(auroraStub);
-
         //Act
         subscribeMapper.renderSubscribe(AURORA_REQUEST, responseObserver);
-
         Thread.sleep(1000);
-
         //Assert
         verify(stubManager, times(1)).getAuroraStub(any());
         verify(responseObserver, times(3)).onNext(any());

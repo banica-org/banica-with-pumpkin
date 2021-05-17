@@ -1,9 +1,9 @@
 package com.market.banica.calculator.controller;
 
 import com.market.banica.calculator.dto.ProductDto;
+import com.market.banica.calculator.service.contract.CalculatorService;
 import com.market.banica.calculator.service.contract.TransactionService;
 import com.market.banica.common.exception.ProductNotAvailableException;
-import com.market.banica.calculator.service.contract.CalculatorService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,9 +21,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CalculatorController {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(CalculatorController.class);
     private final CalculatorService calculatorService;
     private final TransactionService transactionService;
-    private static final Logger LOGGER = LoggerFactory.getLogger(CalculatorController.class);
 
     @GetMapping("/{clientId}/{itemName}/{quantity}")
     public List<ProductDto> getBestPriceForRecipe(@PathVariable("clientId") @NotBlank String clientId,

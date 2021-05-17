@@ -24,8 +24,6 @@ import java.util.Locale;
 @Service
 public class AuroraClientSideService {
 
-    private static final String ORDERBOOK_TOPIC_PREFIX = "orderbook";
-    private static final String CLIENT_ID = "calculator";
     public static final String SUBSCRIBE_FOR_PRODUCT_PATTERN = "%s/%s=subscribe";
     public static final String UNSUBSCRIBE_FOR_PRODUCT_PATTERN = "%s/%s=unsubscribe";
     public static final String GET_INGREDIENT_PATTERN = "%s/%s/%d";
@@ -33,7 +31,8 @@ public class AuroraClientSideService {
     public static final String RETURN_PENDING_PRODUCT_PATTERN = "market-%s/return/%s/%f/%d";
     public static final String BUY_PRODUCT_PATTERN = "market-%s/buy/%s/%f/%d";
     public static final String INCORRECT_RESPONSE_MESSAGE = "Incorrect response! Response must be from %s type.";
-
+    private static final String ORDERBOOK_TOPIC_PREFIX = "orderbook";
+    private static final String CLIENT_ID = "calculator";
     private static final Logger LOGGER = LoggerFactory.getLogger(AuroraClientSideService.class);
 
     private final AuroraServiceGrpc.AuroraServiceBlockingStub blockingStub;
@@ -83,23 +82,20 @@ public class AuroraClientSideService {
 
     public AvailabilityResponse checkAvailability(String itemName, double price, long quantity, Origin origin) {
         String originValue = origin.toString();
-
         String message = String.format(AVAILABILITY_REQUEST_PATTERN, originValue.toLowerCase(Locale.ROOT), itemName, price, quantity);
-
         Aurora.AuroraResponse auroraResponse = getAuroraResponse(message);
-
         AvailabilityResponse availabilityResponse = unpackAndValidateResponse(auroraResponse, AvailabilityResponse.class);
-
-        LOGGER.debug("Item with name {}, quantity={} and market name {} is available.", availabilityResponse.getItemName(), availabilityResponse.getItemQuantity(), availabilityResponse.getMarketName());
+        LOGGER.debug("Item with name {}, quantity={} and market name {} is available.",
+                availabilityResponse.getItemName(),
+                availabilityResponse.getItemQuantity(),
+                availabilityResponse.getMarketName());
 
         return availabilityResponse;
     }
 
     public void returnPendingProductInMarket(String itemName, double itemPrice, long itemQuantity, String itemOrigin) {
         String message = (String.format(RETURN_PENDING_PRODUCT_PATTERN, itemOrigin.toLowerCase(Locale.ROOT), itemName, itemPrice, itemQuantity));
-
         Aurora.AuroraResponse auroraResponse = getAuroraResponse(message);
-
         BuySellProductResponse buySellProductResponse = unpackAndValidateResponse(auroraResponse, BuySellProductResponse.class);
 
         LOGGER.debug(buySellProductResponse.getMessage());
@@ -107,9 +103,7 @@ public class AuroraClientSideService {
 
     public void buyProductFromMarket(String itemName, double itemPrice, long itemQuantity, String itemOrigin) {
         String message = String.format(BUY_PRODUCT_PATTERN, itemOrigin.toLowerCase(Locale.ROOT), itemName, itemPrice, itemQuantity);
-
         Aurora.AuroraResponse auroraResponse = getAuroraResponse(message);
-
         BuySellProductResponse buySellProductResponse = unpackAndValidateResponse(auroraResponse, BuySellProductResponse.class);
 
         LOGGER.debug(buySellProductResponse.getMessage());

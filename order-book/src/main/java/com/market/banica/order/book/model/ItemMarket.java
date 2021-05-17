@@ -25,11 +25,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 @Component
 public class ItemMarket {
 
+    private static final Logger LOGGER = LogManager.getLogger(ItemMarket.class);
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private final Map<String, TreeSet<Item>> allItems;
     private final Map<String, Long> productsQuantity;
-
-    private static final Logger LOGGER = LogManager.getLogger(ItemMarket.class);
 
     @Autowired
     public ItemMarket() {
@@ -65,13 +64,11 @@ public class ItemMarket {
         try {
             lock.writeLock().lock();
             TickResponse tickResponse;
-
             try {
                 tickResponse = response.getMessage().unpack(TickResponse.class);
             } catch (InvalidProtocolBufferException e) {
                 throw new IncorrectResponseException("Incorrect response! Response must be from TickResponse type.");
             }
-
             String goodName = tickResponse.getGoodName();
             DataValidator.validateIncomingData(goodName);
 
@@ -81,26 +78,25 @@ public class ItemMarket {
                 return;
             }
             Item item = populateItem(tickResponse);
-
             this.productsQuantity.merge(goodName, tickResponse.getQuantity(), Long::sum);
-
             LOGGER.debug("Products data updated with value: {}" + tickResponse.toString());
 
             if (itemSet.contains(item)) {
+                Item presentItem = itemSet
+                        .stream()
+                        .filter(currentItem -> currentItem.compareTo(item) == 0)
+                        .findFirst()
+                        .get();
 
-                Item presentItem = itemSet.stream().filter(currentItem -> currentItem.compareTo(item) == 0).findFirst().get();
                 long quantity = presentItem.getQuantity() + item.getQuantity();
-
                 if (quantity == 0) {
                     itemSet.remove(presentItem);
                     return;
                 }
-
                 presentItem.setQuantity(quantity);
                 return;
             }
             itemSet.add(item);
-
         } finally {
             lock.writeLock().unlock();
         }
