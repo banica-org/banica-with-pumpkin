@@ -45,8 +45,8 @@ public class AuroraClientTest {
             .enableRetry()
             .build();
 
-    private final ItemMarket itemMarket = new ItemMarket();
-    private final AuroraClient auroraClient = new AuroraClient(itemMarket, DEFAULT_HOST, DEFAULT_PORT);
+    private final ItemMarket itemMarket = new ItemMarket(3, "localhost", 9091, 9201);
+    private final AuroraClient auroraClient = new AuroraClient(itemMarket, DEFAULT_HOST, DEFAULT_PORT,9201);
 
     private final Map<String, TreeSet<Item>> allItems = new ConcurrentHashMap<>();
     private final Map<String, Set<Context.CancellableContext>> cancellableStubs = new ConcurrentHashMap<>();
