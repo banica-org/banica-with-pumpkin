@@ -116,6 +116,15 @@ class MarketServiceImplTest {
         when(marketState.generateMarketTicks(GOOD_BANICA)).thenReturn(ticks);
         when(subscriberSubscribe.isCancelled()).thenReturn(true);
 
+//        MarketDataRequest marketDataRequest = MarketDataRequest.newBuilder()
+//                .setClientId(incomingRequest.getClientId())
+//                .setGoodName(itemForSubscribing)
+//                .build();
+//
+//
+//                .subscribeForItem(new MarketTickObserver(incomingRequest.getClientId(), responseObserver, openStreams,
+//                        channel.getKey(), marketDataRequest.getGoodName(), marketDataRequest, backPressureManager, orderBookIdentifier)));
+
 
         marketService.subscribeForItem(MARKET_DATA_REQUEST, subscriberSubscribe);
 

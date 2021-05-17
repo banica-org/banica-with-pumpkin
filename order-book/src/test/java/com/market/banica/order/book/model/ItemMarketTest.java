@@ -9,6 +9,7 @@ import com.orderbook.ItemOrderBookResponse;
 import com.orderbook.OrderBookLayer;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
@@ -32,7 +33,7 @@ public class ItemMarketTest {
     private static final String ALL_ITEMS_FIELD = "allItems";
     private static final String PRODUCTS_QUANTITY_FIELD = "productsQuantity";
 
-    private final ItemMarket itemMarket = new ItemMarket();
+    private final ItemMarket itemMarket = new ItemMarket(3, "localhost", 9091, 9201);
     private final Map<String, TreeSet<Item>> allItems = new ConcurrentHashMap<>();
     private final Map<String, Long> productsQuantity = new ConcurrentHashMap<>();
 
