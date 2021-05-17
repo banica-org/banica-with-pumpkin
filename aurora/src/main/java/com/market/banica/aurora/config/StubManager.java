@@ -18,7 +18,7 @@ public class StubManager {
 
         AuroraServiceGrpc.AuroraServiceStub auroraServiceStub = AuroraServiceGrpc.newStub(channel);
         Class auroraStub = auroraServiceStub.getClass();
-        return new AbstractMap.SimpleEntry<>(auroraServiceStub, auroraStub.getDeclaredMethods());
+        return new AbstractMap.SimpleEntry<>(auroraServiceStub, auroraStub.getMethods());
 
     }
 
@@ -26,7 +26,7 @@ public class StubManager {
 
         OrderBookServiceGrpc.OrderBookServiceBlockingStub orderBookServiceBlockingStub = OrderBookServiceGrpc.newBlockingStub(channel);
         Class orderBookStub = orderBookServiceBlockingStub.getClass();
-        return new AbstractMap.SimpleEntry<>(orderBookServiceBlockingStub, orderBookStub.getDeclaredMethods());
+        return new AbstractMap.SimpleEntry<>(orderBookServiceBlockingStub, orderBookStub.getMethods());
 
     }
 
@@ -34,7 +34,7 @@ public class StubManager {
 
         MarketServiceGrpc.MarketServiceStub marketServiceStub = MarketServiceGrpc.newStub(channel);
         Class marketStub = marketServiceStub.getClass();
-        return new AbstractMap.SimpleEntry<>(marketServiceStub, marketStub.getDeclaredMethods());
+        return new AbstractMap.SimpleEntry<>(marketServiceStub, marketStub.getMethods());
     }
 
 }
