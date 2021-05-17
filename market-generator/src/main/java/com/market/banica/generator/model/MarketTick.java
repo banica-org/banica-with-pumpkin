@@ -47,4 +47,5 @@ public class MarketTick implements Comparable<MarketTick> {
         return Long.compare(this.timestamp, other.timestamp);
     }
 
+
 }

@@ -3,7 +3,6 @@ package com.market.banica.order.book.model;
 import com.aurora.Aurora;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.market.TickResponse;
-
 import com.market.banica.common.exception.IncorrectResponseException;
 import com.market.banica.common.validator.DataValidator;
 import com.orderbook.OrderBookLayer;
@@ -38,9 +37,6 @@ public class ItemMarket {
         this.productsQuantity = new ConcurrentHashMap<>();
     }
 
-    public Map<String, Long> getProductsQuantity() {
-        return productsQuantity;
-    }
 
     public Optional<Set<Item>> getItemSetByName(String itemName) {
         return Optional.ofNullable(this.allItems.get(itemName));
@@ -48,6 +44,10 @@ public class ItemMarket {
 
     public Set<String> getItemNameSet() {
         return this.allItems.keySet();
+    }
+
+    public Map<String, Long> getProductsQuantity() {
+        return productsQuantity;
     }
 
     public void addTrackedItem(String itemName) {
@@ -64,7 +64,6 @@ public class ItemMarket {
 
         try {
             lock.writeLock().lock();
-
             TickResponse tickResponse;
 
             try {
@@ -78,20 +77,26 @@ public class ItemMarket {
 
             Set<Item> itemSet = this.allItems.get(goodName);
             if (itemSet == null) {
-                LOGGER.error("Item: {} is not being tracked and cannot be added to itemMarket!",
-                        goodName);
+                LOGGER.error("Item: {} is not being tracked and cannot be added to itemMarket!", goodName);
                 return;
             }
             Item item = populateItem(tickResponse);
 
             this.productsQuantity.merge(goodName, tickResponse.getQuantity(), Long::sum);
 
-            LOGGER.info("Products data updated!");
+            LOGGER.debug("Products data updated with value: {}" + tickResponse.toString());
 
             if (itemSet.contains(item)) {
 
                 Item presentItem = itemSet.stream().filter(currentItem -> currentItem.compareTo(item) == 0).findFirst().get();
-                presentItem.setQuantity(presentItem.getQuantity() + item.getQuantity());
+                long quantity = presentItem.getQuantity() + item.getQuantity();
+
+                if (quantity == 0) {
+                    itemSet.remove(presentItem);
+                    return;
+                }
+
+                presentItem.setQuantity(quantity);
                 return;
             }
             itemSet.add(item);
@@ -109,8 +114,9 @@ public class ItemMarket {
         DataValidator.validateIncomingData(itemName);
 
         TreeSet<Item> items = this.allItems.get(itemName);
+        Long productQuantity = this.productsQuantity.get(itemName);
 
-        if (items == null || this.productsQuantity.get(itemName) < quantity) {
+        if (items == null || productQuantity < quantity) {
 
             return Collections.emptyList();
         }
