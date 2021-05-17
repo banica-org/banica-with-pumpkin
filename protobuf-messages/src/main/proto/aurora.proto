@@ -19,6 +19,7 @@ message AuroraResponse{
 
 service AuroraService{
 
+  rpc backpressure (AuroraRequest) returns (AuroraResponse);
   rpc request (AuroraRequest) returns (AuroraResponse);
   rpc subscribe (AuroraRequest) returns (stream AuroraResponse);
 
