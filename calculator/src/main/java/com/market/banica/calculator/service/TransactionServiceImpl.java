@@ -22,29 +22,21 @@ import java.util.stream.Collectors;
 @Service
 @AllArgsConstructor(onConstructor = @__(@Autowired))
 public class TransactionServiceImpl implements TransactionService {
+    private static final String PRODUCT_NOT_AVAILABLE_MESSAGE = "%s with quantity %d is currently not available on the %s market";
 
     private final CalculatorService calculatorService;
     private final AuroraClientSideService auroraClientSideService;
 
-    private static final String PRODUCT_NOT_AVAILABLE_MESSAGE = "%s with quantity %d is currently not available on the %s market";
-
     @Override
     public List<ProductDto> buyProduct(String clientId, String itemName, long quantity) throws ProductNotAvailableException {
-        List<ProductDto> purchaseProducts = getPurchaseProducts(clientId, itemName, quantity);
+        List<ProductDto> purchaseProducts = this.calculatorService.getProduct(clientId, itemName, quantity);
 
         List<ProductDto> notCompoundProducts = getNotCompoundProducts(purchaseProducts);
 
         List<ItemDto> pendingItems = new ArrayList<>();
 
-        boolean areAvailable = true;
-        String unavailableProductName = "";
-        String unavailableProductMarketName = "";
-        long unavailableProductQuantity = 0;
 
         for (ProductDto purchaseProduct : notCompoundProducts) {
-            if (!areAvailable) {
-                break;
-            }
             String productName = purchaseProduct.getItemName();
 
             for (ProductSpecification productSpecification : purchaseProduct.getProductSpecifications()) {
@@ -56,43 +48,19 @@ public class TransactionServiceImpl implements TransactionService {
                 AvailabilityResponse availabilityResponse = this.auroraClientSideService.checkAvailability(productName, productPrice.doubleValue(), productQuantity, productOrigin);
 
                 if (!availabilityResponse.getIsAvailable()) {
-                    areAvailable = false;
-                    unavailableProductName = availabilityResponse.getItemName();
-                    unavailableProductQuantity = availabilityResponse.getItemQuantity();
-                    unavailableProductMarketName = availabilityResponse.getMarketName();
-                    break;
+                    returnPendingProducts(pendingItems);
+                    throw new ProductNotAvailableException(String.format(PRODUCT_NOT_AVAILABLE_MESSAGE,
+                            availabilityResponse.getItemName(),
+                            availabilityResponse.getItemQuantity(),
+                            availabilityResponse.getMarketName()));
                 }
-                pendingItems.add(new ItemDto(productName, productPrice, productOrigin.toString(), productQuantity, availabilityResponse.getTimestamp()));
+                pendingItems.add(new ItemDto(productName, productPrice, productOrigin.toString(), productQuantity));
             }
         }
 
-        if (!areAvailable) {
-            returnPendingProducts(pendingItems);
-
-            throw new ProductNotAvailableException(String.format(PRODUCT_NOT_AVAILABLE_MESSAGE,
-                    unavailableProductName.toUpperCase(Locale.ROOT), unavailableProductQuantity, unavailableProductMarketName));
-        } else {
-            buyPendingProducts(pendingItems);
-        }
+        buyPendingProducts(pendingItems);
 
         return purchaseProducts;
-
-    }
-
-    public String sellProduct(List<ItemDto> itemsToSell) {
-        StringBuilder stringBuilder = new StringBuilder();
-
-        for (ItemDto item : itemsToSell) {
-            long itemTimestamp = System.currentTimeMillis();
-            String responseMessage = this.auroraClientSideService.sellProductToMarket(item.getName(), item.getPrice().doubleValue(), item.getQuantity(), item.getLocation(), itemTimestamp);
-            stringBuilder.append(responseMessage).append(System.lineSeparator());
-        }
-
-        return stringBuilder.toString().trim();
-    }
-
-    private List<ProductDto> getPurchaseProducts(String clientId, String itemName, long quantity) throws ProductNotAvailableException {
-        return new ArrayList<>(this.calculatorService.getProduct(clientId, itemName, quantity));
     }
 
     private List<ProductDto> getNotCompoundProducts(List<ProductDto> purchaseProducts) {
@@ -107,8 +75,7 @@ public class TransactionServiceImpl implements TransactionService {
                 item.getName(),
                 item.getPrice().doubleValue(),
                 item.getQuantity(),
-                item.getLocation(),
-                item.getTimeStamp()));
+                item.getLocation()));
     }
 
     private void buyPendingProducts(List<ItemDto> pendingItems) {
@@ -116,7 +83,6 @@ public class TransactionServiceImpl implements TransactionService {
                 item.getName(),
                 item.getPrice().doubleValue(),
                 item.getQuantity(),
-                item.getLocation(),
-                item.getTimeStamp()));
+                item.getLocation()));
     }
 }
