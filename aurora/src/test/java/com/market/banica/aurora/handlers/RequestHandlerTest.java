@@ -36,8 +36,10 @@ class RequestHandlerTest {
     void handleRequestWithLegalResponseFromRenderRequestInvokesOnNextAndOnCompleted() throws NoSuchObjectException, ServiceNotFoundException {
         //Arrange
         Mockito.when(requestMapper.renderRequest(AURORA_REQUEST_BANICA)).thenReturn(Aurora.AuroraResponse.newBuilder().build());
+
         //Act
         requestHandler.handleRequest(AURORA_REQUEST_BANICA, auroraResponse);
+
         //Assert
         verify(auroraResponse, times(1)).onNext(any());
         verify(auroraResponse, times(1)).onCompleted();

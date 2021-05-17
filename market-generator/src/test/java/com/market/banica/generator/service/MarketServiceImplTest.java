@@ -53,10 +53,7 @@ class MarketServiceImplTest {
     private final long TIMESTAMP = System.currentTimeMillis();
 
 
-    private final MarketDataRequest MARKET_DATA_REQUEST = MarketDataRequest
-            .newBuilder()
-            .setGoodName(GOOD_BANICA)
-            .build();
+    private final MarketDataRequest MARKET_DATA_REQUEST = MarketDataRequest.newBuilder().setGoodName(GOOD_BANICA).build();
 
     private final Map<String, Map<Double, MarketTick>> pendingOrders = new HashMap<>();
 
@@ -115,8 +112,7 @@ class MarketServiceImplTest {
 
         marketService.subscribeForItem(MARKET_DATA_REQUEST, subscriberSubscribe);
 
-        verify(marketSubscriptionServiceImpl, times(0))
-                .subscribe(MARKET_DATA_REQUEST, subscriberSubscribe);
+        verify(marketSubscriptionServiceImpl, times(0)).subscribe(MARKET_DATA_REQUEST, subscriberSubscribe);
         verify(marketState, times(1)).generateMarketTicks(GOOD_BANICA);
         verify(subscriberSubscribe, times(0)).onNext(tick1);
         verify(subscriberSubscribe, times(0)).onNext(tick2);
@@ -128,9 +124,7 @@ class MarketServiceImplTest {
         CatalogueRequest request = CatalogueRequest.newBuilder().build();
         marketService.requestCatalogue(request, subscriberRequest);
 
-        verify(subscriberRequest).onError(any(Status.UNIMPLEMENTED
-                .withDescription("Method aurora.AuroraService/request is unimplemented")
-                .asRuntimeException().getClass()));
+        verify(subscriberRequest).onError(any(Status.UNIMPLEMENTED.withDescription("Method aurora.AuroraService/request is unimplemented").asRuntimeException().getClass()));
 
     }
 
@@ -181,10 +175,8 @@ class MarketServiceImplTest {
         marketService.checkAvailability(secondAvailabilityRequest, calculatorAvailability);
 
         assertEquals(2, pendingOrders.get(GOOD_BANICA).size());
-        verify(marketState, times(1))
-                .removeItemFromState(GOOD_BANICA, AMOUNT, PRICE_1);
-        verify(marketState, times(1))
-                .removeItemFromState(GOOD_BANICA, AMOUNT, PRICE_2);
+        verify(marketState, times(1)).removeItemFromState(GOOD_BANICA, AMOUNT, PRICE_1);
+        verify(marketState, times(1)).removeItemFromState(GOOD_BANICA, AMOUNT, PRICE_2);
     }
 
     @Test

@@ -53,7 +53,6 @@ public class SubscribeMapper {
 
         if (destinationOfMessage.contains(MARKET)) {
             renderMarketMapping(incomingRequest, responseObserver, channelsWithPrefix);
-
         } else if (destinationOfMessage.contains(AURORA)) {
             renderAuroraMapping(incomingRequest, responseObserver, channelsWithPrefix);
         } else if (destinationOfMessage.contains(ORDERBOOK)) {
@@ -86,8 +85,13 @@ public class SubscribeMapper {
                 .build();
 
         channelsWithPrefix.forEach(channel -> stubManager.getMarketStub(channel.getValue())
-                .subscribeForItem(marketDataRequest
-                        , new MarketTickObserver(incomingRequest.getClientId(), responseObserver
-                                , openStreams, channel.getKey(), marketDataRequest.getGoodName())));
+                .subscribeForItem(
+                        marketDataRequest,
+                        new MarketTickObserver(
+                                incomingRequest.getClientId(),
+                                responseObserver,
+                                openStreams,
+                                channel.getKey(),
+                                marketDataRequest.getGoodName())));
     }
 }

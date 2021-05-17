@@ -69,7 +69,6 @@ public class JMXServiceImpl implements JMXServiceMBean {
 
         long result = productService.getProductQuantity(parentProductName, productName);
 
-
         LOGGER.debug("Quantity checked from JMX server for product {} with parent product {}", parentProductName, productName);
         return result;
     }
@@ -103,7 +102,6 @@ public class JMXServiceImpl implements JMXServiceMBean {
     public void deleteProductFromDatabase(String productName) {
         LOGGER.debug("In deleteProductFromDatabase method with parameters: productName {}", productName);
         LOGGER.info("DeleteProductFromDatabase called from JMX server");
-
 
         productService.deleteProductFromDatabase(productName);
 

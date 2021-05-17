@@ -135,17 +135,16 @@ public class JMXConfig {
                 .entrySet()
                 .forEach(entry -> builder.append(String.format("%s : %s \n",
                         entry.getKey(),
-                        entry.getValue().getState(false)))
-                );
+                        entry.getValue().getState(false))));
 
         return builder.toString();
     }
 
     @ManagedOperation
     public void refreshChannels() {
-        channels.getChannels().entrySet()
+        channels.getChannels()
+                .entrySet()
                 .forEach(entry -> entry.getValue().getState(true));
-
     }
 
 
@@ -184,8 +183,7 @@ public class JMXConfig {
                 return new ConcurrentHashMap<>();
             }
             return new ObjectMapper().readValue(input,
-                    new TypeReference<ConcurrentHashMap<String, ChannelProperty>>() {
-                    });
+                    new TypeReference<ConcurrentHashMap<String, ChannelProperty>>() {});
         } catch (IOException e) {
             LOGGER.error("Exception occurred during reading file {} with message : {}", channelsBackupUrl, e.getMessage());
         }

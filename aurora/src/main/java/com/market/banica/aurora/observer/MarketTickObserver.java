@@ -53,12 +53,10 @@ public class MarketTickObserver implements StreamObserver<TickResponse> {
                 forwardResponse.onNext(this.wrapReconnect(buildReconnect()));
             }
         }
-
         if (openStreams.decrementAndGet() == 0) {
             forwardResponse.onCompleted();
         }
     }
-
 
     @Override
     public void onCompleted() {

@@ -19,8 +19,7 @@ import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class MarketTickObserverTest {
-    private static final Aurora.AuroraResponse AURORA_RESPONSE_TO_FORWARD = Aurora.AuroraResponse
-            .newBuilder().setMessage(Any.pack(TickResponse.newBuilder().setGoodName("banica").build())).build();
+    private static final Aurora.AuroraResponse AURORA_RESPONSE_TO_FORWARD = Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(TickResponse.newBuilder().setGoodName("banica").build())).build();
 
     private static final Throwable THROWABLE = new Throwable("Error message.");
 

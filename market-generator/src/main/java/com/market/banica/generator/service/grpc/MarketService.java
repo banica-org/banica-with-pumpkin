@@ -58,8 +58,7 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
     public void buyProduct(ProductBuySellRequest request, StreamObserver<BuySellProductResponse> responseObserver) {
         cleanPendingOrdersCollection(request);
 
-        BuySellProductResponse buySellProductResponse = BuySellProductResponse
-                .newBuilder()
+        BuySellProductResponse buySellProductResponse = BuySellProductResponse.newBuilder()
                 .setMessage(String.format("Item with name %s was successfully bought from %s market.",
                         request.getItemName(),
                         request.getMarketName()))
@@ -75,8 +74,7 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
         cleanPendingOrdersCollection(request);
         marketState.addProductToMarketState(request.getItemName(), request.getItemPrice(), request.getItemQuantity());
 
-        BuySellProductResponse buySellProductResponse = BuySellProductResponse
-                .newBuilder()
+        BuySellProductResponse buySellProductResponse = BuySellProductResponse.newBuilder()
                 .setMessage(String.format("Item with name %s was successfully returned to market.",
                         request.getItemName()))
                 .build();

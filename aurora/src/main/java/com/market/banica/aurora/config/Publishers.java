@@ -102,9 +102,7 @@ public class Publishers {
                 LOGGER.info("File \"{}\" is empty, no publishers were loaded!", publishersFileName);
                 return new CopyOnWriteArrayList<>();
             }
-
-            return new ObjectMapper().readValue(input, new TypeReference<CopyOnWriteArrayList<String>>() {
-            });
+            return new ObjectMapper().readValue(input, new TypeReference<CopyOnWriteArrayList<String>>() {});
         } catch (IOException e) {
             LOGGER.error("Exception occurred during reading file {} with message : {}", publishersFileName, e.getMessage());
         }

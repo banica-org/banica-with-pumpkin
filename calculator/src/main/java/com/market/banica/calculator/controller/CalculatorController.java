@@ -29,7 +29,6 @@ public class CalculatorController {
     public List<ProductDto> getBestPriceForRecipe(@PathVariable("clientId") @NotBlank String clientId,
                                                   @PathVariable("itemName") @NotBlank String itemName,
                                                   @PathVariable("quantity") @Min(1) long quantity) throws ProductNotAvailableException {
-
         LOGGER.info("GET /calculator called.");
         return calculatorService.getProduct(clientId, itemName, quantity);
     }
@@ -38,7 +37,6 @@ public class CalculatorController {
     public List<ProductDto> buyProduct(@PathVariable("clientId") @NotBlank String clientId,
                                        @PathVariable("itemName") @NotBlank String itemName,
                                        @PathVariable("quantity") @Min(1) long quantity) throws ProductNotAvailableException {
-
         LOGGER.info("GET /calculator/buy/{clientId}/{itemName}/{quantity} method is called.");
         return transactionService.buyProduct(clientId, itemName, quantity);
     }
