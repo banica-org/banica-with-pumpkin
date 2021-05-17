@@ -72,7 +72,7 @@ public class Publishers {
     protected void writeBackUp() {
         try {
             lock.writeLock().lock();
-            LOGGER.info("Writing back-up to json");
+            LOGGER.debug("Writing back-up to json");
 
             ObjectWriter objectWriter = new ObjectMapper().writerWithDefaultPrettyPrinter();
 
@@ -82,7 +82,7 @@ public class Publishers {
 
                 output.write(jsonData);
 
-                LOGGER.info("Back-up written successfully");
+                LOGGER.debug("Back-up written successfully");
             } catch (IOException e) {
                 LOGGER.error("Exception thrown during writing back-up : {}", e.getMessage());
             }
@@ -93,7 +93,22 @@ public class Publishers {
 
     private CopyOnWriteArrayList<String> readPublishersFromFile() {
         LOGGER.debug("Reading channel property from file.");
+
         try (InputStream input = new FileInputStream(ApplicationDirectoryUtil.getConfigFile(publishersFileName))) {
+
+            if (!ApplicationDirectoryUtil.doesFileExist(publishersFileName)) {
+
+                LOGGER.info("Creating \"{}\" file!", publishersFileName);
+                ApplicationDirectoryUtil.getConfigFile(publishersFileName);
+
+                return new CopyOnWriteArrayList<>();
+
+            } else if (ApplicationDirectoryUtil.getConfigFile(publishersFileName).length() == 0) {
+
+                LOGGER.info("File \"{}\" is empty, no publishers were loaded!", publishersFileName);
+                return new CopyOnWriteArrayList<>();
+
+            }
 
             return new ObjectMapper().readValue(input,
                     new TypeReference<CopyOnWriteArrayList<String>>() {

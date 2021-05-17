@@ -2,13 +2,13 @@ package com.market.banica.aurora.service;
 
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
+import com.market.banica.aurora.handlers.RequestHandler;
 import com.market.banica.aurora.handlers.SubscribeHandler;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import com.market.banica.aurora.handlers.RequestHandler;
 
 
 @Service
@@ -36,4 +36,5 @@ public class AuroraServiceImpl extends AuroraServiceGrpc.AuroraServiceImplBase {
         LOGGER.info("Accepted subscribe from client {}", request.getClientId());
         subscribeHandler.handleSubscribe(request, responseObserver);
     }
+
 }

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.market.banica.calculator.controller.CalculatorController;
 import com.market.banica.calculator.dto.ProductDto;
 import com.market.banica.calculator.service.contract.CalculatorService;
+import com.market.banica.calculator.service.contract.TransactionService;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,7 +33,10 @@ import static org.mockito.BDDMockito.given;
 public class CalculatorControllerTest {
 
     @MockBean
-    CalculatorService service;
+    CalculatorService calculatorService;
+
+    @MockBean
+    TransactionService transactionService;
 
     @Autowired
     private MockMvc mockMvc;
@@ -55,18 +59,39 @@ public class CalculatorControllerTest {
     }
 
     @Test
-    void getRecipe() throws Exception {
+    void getRecipeShouldReturnTheRecipeWithBestPrice() throws Exception {
 
         List<ProductDto> productDtoList = new ArrayList<>();
         ProductDto dummyRecipe = getProductDto();
         productDtoList.add(dummyRecipe);
 
 
-        given(service.getProduct(clientId, product, quantity)).willReturn(productDtoList);
+        given(calculatorService.getProduct(clientId, product, quantity)).willReturn(productDtoList);
 
 
         MockHttpServletResponse response = mockMvc.perform(MockMvcRequestBuilders.get
                 ("/calculator/" + clientId + "/" + product + "/" + quantity)
+                .accept(MediaType.APPLICATION_JSON))
+                .andReturn().getResponse();
+
+
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
+        assertThat(response.getContentAsString()).isEqualTo(jacksonResponseProductDtoList.write(productDtoList).getJson());
+    }
+
+    @Test
+    void buyProductShouldReturnThePurchasedProductRecipe() throws Exception {
+
+        List<ProductDto> productDtoList = new ArrayList<>();
+        ProductDto dummyRecipe = getProductDto();
+        productDtoList.add(dummyRecipe);
+
+
+        given(transactionService.buyProduct(clientId, product, quantity)).willReturn(productDtoList);
+
+
+        MockHttpServletResponse response = mockMvc.perform(MockMvcRequestBuilders.get
+                ("/calculator/buy/" + clientId + "/" + product + "/" + quantity)
                 .accept(MediaType.APPLICATION_JSON))
                 .andReturn().getResponse();
 

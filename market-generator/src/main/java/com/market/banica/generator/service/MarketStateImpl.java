@@ -1,6 +1,7 @@
 package com.market.banica.generator.service;
 
 import com.market.TickResponse;
+import com.market.banica.common.exception.ProductNotAvailableException;
 import com.market.banica.generator.model.MarketTick;
 import com.market.banica.generator.util.PersistScheduler;
 import com.market.banica.generator.util.SnapshotPersistence;
@@ -55,6 +56,7 @@ public class MarketStateImpl implements MarketState {
         persistScheduler.scheduleSnapshot();
     }
 
+
     @Override
     public void addTickToMarket(MarketTick marketTick) {
         executorService.execute(() -> {
@@ -77,7 +79,6 @@ public class MarketStateImpl implements MarketState {
             }
         });
     }
-
     @Override
     public List<TickResponse> generateMarketTicks(String good) {
         try {
@@ -95,6 +96,44 @@ public class MarketStateImpl implements MarketState {
 
     public PersistScheduler getPersistScheduler() {
         return persistScheduler;
+    }
+
+    @Override
+    public MarketTick removeItemFromState(String itemName, long itemQuantity, double itemPrice) throws ProductNotAvailableException {
+        MarketTick desireProduct;
+        try {
+            marketDataLock.writeLock().lock();
+
+            Set<MarketTick> marketTicks = marketState.get(itemName);
+
+            List<MarketTick> marketTicksWihEqualPrices = marketTicks.stream().filter(marketTick -> marketTick.getPrice() == itemPrice).collect(Collectors.toList());
+
+            long marketStateTicksQuantity = getQuantityForMarketTicksWithSamePrice(marketTicksWihEqualPrices);
+
+            if (marketStateTicksQuantity < itemQuantity || marketTicksWihEqualPrices.size() == 0) {
+                throw new ProductNotAvailableException(String.format("Product with name %s, price %.2f and quantity %d doesn't exist.", itemName, itemPrice, itemQuantity));
+            }
+
+            MarketTick marketTick = new MarketTick(itemName, -itemQuantity, itemPrice, System.currentTimeMillis());
+
+            this.addTickToMarket(marketTick);
+
+            desireProduct = new MarketTick(itemName, itemQuantity, itemPrice, System.currentTimeMillis());
+        } finally {
+            marketDataLock.writeLock().unlock();
+        }
+        return desireProduct;
+    }
+
+    @Override
+    public void addProductToMarketState(String itemName, double itemPrice, long itemQuantity) {
+        MarketTick marketTick = new MarketTick(itemName, itemQuantity, itemPrice, System.currentTimeMillis());
+        addTickToMarket(marketTick);
+    }
+
+
+    private long getQuantityForMarketTicksWithSamePrice(List<MarketTick> marketTicks) {
+        return marketTicks.stream().mapToLong(MarketTick::getQuantity).sum();
     }
 
     private TickResponse convertMarketTickToTickResponse(MarketTick marketTick) {
@@ -119,5 +158,4 @@ public class MarketStateImpl implements MarketState {
             Thread.currentThread().interrupt();
         }
     }
-
 }

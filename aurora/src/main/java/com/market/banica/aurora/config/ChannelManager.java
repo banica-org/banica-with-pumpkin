@@ -75,7 +75,7 @@ public class ChannelManager {
     }
 
     protected void editChannel(String key, ChannelProperty value) {
-        LOGGER.info("Editing channel {} to map", key);
+        LOGGER.debug("Editing channel {} to map", key);
         Map.Entry<String, ManagedChannel> entry = this.convertPropertyToChannel(new AbstractMap.SimpleEntry<>(key, value));
 
         Optional<ManagedChannel> managedChannel = Optional.ofNullable(this.channels.remove(key));

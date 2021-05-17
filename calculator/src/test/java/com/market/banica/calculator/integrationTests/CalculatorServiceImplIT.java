@@ -8,23 +8,28 @@ import com.google.gson.Gson;
 import com.market.Origin;
 import com.market.banica.calculator.data.contract.ProductBase;
 import com.market.banica.calculator.dto.ProductDto;
-import com.market.banica.common.exception.ProductNotAvailableException;
 import com.market.banica.calculator.model.Product;
 import com.market.banica.calculator.service.CalculatorServiceImpl;
 import com.market.banica.calculator.service.contract.BackUpService;
 import com.market.banica.calculator.service.grpc.AuroraClientSideService;
+import com.market.banica.common.exception.ProductNotAvailableException;
+import com.market.banica.common.util.ApplicationDirectoryUtil;
 import com.orderbook.ItemOrderBookResponse;
 import com.orderbook.OrderBookLayer;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -53,6 +58,9 @@ public class CalculatorServiceImplIT {
 
     @MockBean
     private BackUpService backUpService;
+
+    @Value(value = "${database.backup.url}")
+    private String databaseBackupUrl;
 
 
     private String clientId;
@@ -116,6 +124,18 @@ public class CalculatorServiceImplIT {
         milkQuantity = 400;
         pumpkinQuantity = 600;
         banicaQuantity = 2;
+    }
+
+    @AfterEach
+    public void cleanUp() throws IOException {
+
+        productBase.getDatabase().clear();
+
+        File data = ApplicationDirectoryUtil.getConfigFile(databaseBackupUrl);
+
+        if (data.length() >= 0) {
+            data.delete();
+        }
     }
 
     @Test
