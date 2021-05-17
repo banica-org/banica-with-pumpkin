@@ -2,6 +2,7 @@ package com.market.banica.aurora.mapper;
 
 import com.aurora.Aurora;
 import com.market.MarketDataRequest;
+import com.market.banica.aurora.backpressure.BackPressureManager;
 import com.market.banica.aurora.config.ChannelManager;
 import com.market.banica.aurora.config.StubManager;
 import com.market.banica.aurora.observer.AuroraObserver;
@@ -24,19 +25,19 @@ public class SubscribeMapper {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SubscribeMapper.class);
 
-
     private final ChannelManager channelManager;
     private final StubManager stubManager;
+    private final BackPressureManager backPressureManager;
 
     public static final String ORDERBOOK = "orderbook";
     public static final String AURORA = "aurora";
     public static final String MARKET = "market";
 
     @Autowired
-    public SubscribeMapper(ChannelManager channelManager, StubManager stubManager) {
-
+    public SubscribeMapper(ChannelManager channelManager, StubManager stubManager, BackPressureManager backPressureManager) {
         this.channelManager = channelManager;
         this.stubManager = stubManager;
+        this.backPressureManager = backPressureManager;
     }
 
     public void renderSubscribe(Aurora.AuroraRequest incomingRequest, StreamObserver<Aurora.AuroraResponse> responseObserver) {
@@ -78,6 +79,7 @@ public class SubscribeMapper {
 
     private void renderMarketMapping(Aurora.AuroraRequest incomingRequest, StreamObserver<Aurora.AuroraResponse> responseObserver, List<Map.Entry<String, ManagedChannel>> channelsWithPrefix) {
         String itemForSubscribing = incomingRequest.getTopic().split("/")[1];
+        String orderBookIdentifier = incomingRequest.getTopic().split("/")[2];
         AtomicInteger openStreams = new AtomicInteger(channelsWithPrefix.size());
 
         MarketDataRequest marketDataRequest = MarketDataRequest.newBuilder()
@@ -86,8 +88,7 @@ public class SubscribeMapper {
                 .build();
 
         channelsWithPrefix.forEach(channel -> stubManager.getMarketStub(channel.getValue())
-                .subscribeForItem(marketDataRequest
-                        , new MarketTickObserver(incomingRequest.getClientId(), responseObserver
-                                , openStreams, channel.getKey(), marketDataRequest.getGoodName())));
+                .subscribeForItem(new MarketTickObserver(incomingRequest.getClientId(), responseObserver, openStreams,
+                        channel.getKey(), marketDataRequest.getGoodName(), marketDataRequest, backPressureManager, orderBookIdentifier)));
     }
 }
