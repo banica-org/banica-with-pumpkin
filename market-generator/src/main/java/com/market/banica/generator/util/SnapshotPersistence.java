@@ -38,7 +38,7 @@ public class SnapshotPersistence {
         Output output = new Output(new FileOutputStream(ApplicationDirectoryUtil.getConfigFile(stateFileName)));
         kryoHandle.writeClassAndObject(output, marketState);
         output.close();
-        LOGGER.info("Persisting market state!");
+        LOGGER.debug("Persisting market state!");
 
         marketSnapshot.clear();
         persistMarketSnapshot(marketSnapshot);

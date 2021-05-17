@@ -1,7 +1,8 @@
 package com.market.banica.generator.configuration;
 
+import com.market.banica.common.exception.NotFoundException;
 import com.market.banica.common.util.ApplicationDirectoryUtil;
-import com.market.banica.generator.exception.NotFoundException;
+
 import com.market.banica.generator.model.GoodSpecification;
 import com.market.banica.generator.service.MarketState;
 import com.market.banica.generator.service.TickGenerator;
@@ -93,8 +94,7 @@ public class MarketConfigurationImpl implements MarketConfiguration {
 
             if (!doesGoodExist(good)) {
                 LOGGER.warn("A good with name {} does not exist and it cannot be removed", good);
-                throw new NotFoundException(String.format("A good with name %s does " +
-                        "not exist and it cannot be removed", good));
+                throw new NotFoundException(String.format("A good with name %s does not exist and it cannot be removed", good));
             }
 
             Map<String, String> removedGoodSpecification = this.goods.remove(good).generateProperties();

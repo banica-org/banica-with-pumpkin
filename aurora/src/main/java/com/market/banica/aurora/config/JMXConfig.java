@@ -113,7 +113,7 @@ public class JMXConfig {
     public void editChannel(String channelPrefix, String host, String port) {
         try {
             this.lock.writeLock().lock();
-            LOGGER.info("Editing channel {} from  JMX server", channelPrefix);
+            LOGGER.debug("Editing channel {} from  JMX server", channelPrefix);
             if (!channelPropertyMap.containsKey(channelPrefix)) {
                 LOGGER.error("Channel with prefix {} does not exists", channelPrefix);
                 throw new IllegalArgumentException("Channel with this name does not exists");
@@ -159,7 +159,7 @@ public class JMXConfig {
     protected void writeBackUp() {
         try {
             lock.writeLock().lock();
-            LOGGER.info("Writing back-up to json");
+            LOGGER.debug("Writing back-up to json");
 
             ObjectWriter objectWriter = new ObjectMapper().writerWithDefaultPrettyPrinter();
 
@@ -169,7 +169,7 @@ public class JMXConfig {
 
                 output.write(jsonData);
 
-                LOGGER.info("Back-up written successfully");
+                LOGGER.debug("Back-up written successfully");
             } catch (IOException e) {
                 LOGGER.error("Exception thrown during writing back-up : {}", e.getMessage());
             }
@@ -186,6 +186,20 @@ public class JMXConfig {
     private ConcurrentHashMap<String, ChannelProperty> readChannelsConfigsFromFile() {
         LOGGER.debug("Reading channel property from file.");
         try (InputStream input = new FileInputStream(ApplicationDirectoryUtil.getConfigFile(channelsBackupUrl))) {
+
+            if (!ApplicationDirectoryUtil.doesFileExist(channelsBackupUrl)) {
+
+                LOGGER.info("Creating \"{}\" file!", channelsBackupUrl);
+                ApplicationDirectoryUtil.getConfigFile(channelsBackupUrl);
+
+                return new ConcurrentHashMap<>();
+
+            } else if (ApplicationDirectoryUtil.getConfigFile(channelsBackupUrl).length() == 0) {
+
+                LOGGER.info("File \"{}\" is empty, no channels were loaded!", channelsBackupUrl);
+                return new ConcurrentHashMap<>();
+
+            }
 
             return new ObjectMapper().readValue(input,
                     new TypeReference<ConcurrentHashMap<String, ChannelProperty>>() {

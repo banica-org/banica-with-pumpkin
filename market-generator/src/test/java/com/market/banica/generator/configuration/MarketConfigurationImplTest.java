@@ -1,7 +1,7 @@
 package com.market.banica.generator.configuration;
 
+import com.market.banica.common.exception.NotFoundException;
 import com.market.banica.common.util.ApplicationDirectoryUtil;
-import com.market.banica.generator.exception.NotFoundException;
 import com.market.banica.generator.model.GoodSpecification;
 import com.market.banica.generator.service.MarketState;
 import com.market.banica.generator.service.TickGenerator;

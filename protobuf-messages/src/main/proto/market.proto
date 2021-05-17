@@ -33,7 +33,30 @@ message CatalogueResponse{
   repeated string foodItems = 1;
 }
 
+message BuySellProductResponse {
+  string message = 1;
+}
+
+message AvailabilityResponse {
+  bool isAvailable = 1;
+  string itemName = 2;
+  double itemPrice = 3;
+  int64 itemQuantity = 4;
+  string marketName = 5;
+}
+
+message ProductBuySellRequest {
+  string itemName = 1;
+  double itemPrice = 2;
+  int64 itemQuantity = 3;
+  string marketName = 4;
+  int64 timestamp = 5;
+}
+
 service MarketService{
   rpc subscribeForItem(stream MarketDataRequest) returns (stream TickResponse);
   rpc requestCatalogue(CatalogueRequest) returns (CatalogueResponse);
+  rpc buyProduct (ProductBuySellRequest) returns (BuySellProductResponse);
+  rpc returnPendingProduct(ProductBuySellRequest) returns (BuySellProductResponse);
+  rpc checkAvailability (ProductBuySellRequest) returns (AvailabilityResponse);
 }

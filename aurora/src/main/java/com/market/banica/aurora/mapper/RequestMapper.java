@@ -4,6 +4,8 @@ package com.market.banica.aurora.mapper;
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
 import com.google.protobuf.Any;
+import com.market.MarketServiceGrpc;
+import com.market.ProductBuySellRequest;
 import com.market.banica.aurora.config.ChannelManager;
 import com.market.banica.aurora.config.StubManager;
 import com.orderbook.CancelSubscriptionRequest;
@@ -32,8 +34,8 @@ public class RequestMapper {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RequestMapper.class);
 
-    private  ChannelManager channelManager;
-    private  StubManager stubManager;
+    private ChannelManager channelManager;
+    private StubManager stubManager;
 
     public static final String SPLIT_SLASH_REGEX = "/+";
     public static final String SPLIT_EQUALS_REGEX = "=";
@@ -42,6 +44,9 @@ public class RequestMapper {
     public static final String ORDERBOOK = "orderbook";
     public static final String AURORA = "aurora";
     public static final String MARKET = "market";
+    public static final String AVAILABILITY_ACTION = "availability";
+    public static final String RETURN_ACTION = "return";
+    public static final String BUY_ACTION = "buy";
     public static final String BAD_PUBLISHER_REQUEST = "Unknown Publisher";
     public static final String IN_CANCEL_ITEM_SUBSCRIPTION = "Forwarding to orderbook - cancelItemSubscription.";
     public static final String IN_ANNOUNCE_ITEM_INTEREST = "Forwarding to orderbook - announceItemInterest.";
@@ -70,19 +75,19 @@ public class RequestMapper {
         if (destinationOfMessage.contains(ORDERBOOK)) {
             return this.renderOrderbookMapping(incomingRequest, channelByKey.get());
         } else if (destinationOfMessage.contains(AURORA)) {
-            return renderAuroraMapping(incomingRequest, channelByKey.get());
-        } else if (destinationOfMessage.contains(MARKET)){
-            throw new ServiceNotFoundException("Unimplemented publisher!");
+            return this.renderAuroraMapping(incomingRequest, channelByKey.get());
+        } else if (destinationOfMessage.contains(MARKET)) {
+            return this.renderMarketMapping(incomingRequest, channelByKey.get());
         }
 
         throw new ServiceNotFoundException(BAD_PUBLISHER_REQUEST + ". Requested publisher is: " + destinationOfMessage);
     }
 
     private Aurora.AuroraResponse renderAuroraMapping(Aurora.AuroraRequest incomingRequest, ManagedChannel channelByKey) {
-        LOGGER.info("Mapping request for aurora.");
+        LOGGER.debug("Mapping request for aurora.");
         AuroraServiceGrpc.AuroraServiceBlockingStub auroraBlockingStub = stubManager.getAuroraBlockingStub(channelByKey);
 
-        LOGGER.info(IN_AURORA_REQUEST);
+        LOGGER.debug(IN_AURORA_REQUEST);
         return auroraBlockingStub.request(incomingRequest);
     }
 
@@ -92,7 +97,7 @@ public class RequestMapper {
     }
 
     private Aurora.AuroraResponse renderOrderbookMapping(Aurora.AuroraRequest incomingRequest, ManagedChannel channelByKey) {
-        LOGGER.info("Mapping messages for orderbook.");
+        LOGGER.debug("Mapping messages for orderbook.");
         String[] topicSplit = incomingRequest.getTopic().split(SPLIT_SLASH_REGEX);
 
         try {
@@ -126,7 +131,6 @@ public class RequestMapper {
         return processCancelItemSubscriptionRequest(incomingRequest, orderbookStub, itemName);
     }
 
-
     private Aurora.AuroraResponse processCancelItemSubscriptionRequest(Aurora.AuroraRequest incomingRequest, OrderBookServiceGrpc.OrderBookServiceBlockingStub orderbookStub, String itemName) {
         CancelSubscriptionRequest build = CancelSubscriptionRequest.newBuilder()
                 .setClientId(incomingRequest.getClientId())
@@ -139,7 +143,6 @@ public class RequestMapper {
                 .setMessage(Any.pack(cancelSubscriptionResponse))
                 .build();
     }
-
 
     private Aurora.AuroraResponse processSubscribeForItemRequest(Aurora.AuroraRequest incomingRequest, OrderBookServiceGrpc.OrderBookServiceBlockingStub orderbookStub, String itemName) {
         LOGGER.info(IN_ANNOUNCE_ITEM_INTEREST);
@@ -169,5 +172,45 @@ public class RequestMapper {
                 .newBuilder()
                 .setMessage(Any.pack(orderBookItemLayers))
                 .build();
+    }
+
+    private Aurora.AuroraResponse renderMarketMapping(Aurora.AuroraRequest incomingRequest, ManagedChannel channelByKey) {
+        LOGGER.debug("Mapping messages for market.");
+
+        MarketServiceGrpc.MarketServiceBlockingStub marketStub = stubManager.getMarketBlockingStub(channelByKey);
+
+        String[] topicSplit = incomingRequest.getTopic().split(SPLIT_SLASH_REGEX);
+
+        String itemName = topicSplit[2];
+        double itemPrice = Double.parseDouble(topicSplit[3]);
+        long itemQuantity = Long.parseLong(topicSplit[4]);
+        String marketName = topicSplit[0].split("-")[1].toUpperCase(Locale.ROOT);
+
+        ProductBuySellRequest.Builder request = ProductBuySellRequest.newBuilder()
+                .setItemName(itemName)
+                .setItemPrice(itemPrice)
+                .setItemQuantity(itemQuantity)
+                .setMarketName(marketName);
+
+        String requestPrefix = topicSplit[1];
+
+        switch (requestPrefix) {
+            case AVAILABILITY_ACTION:
+                return Aurora.AuroraResponse.newBuilder()
+                        .setMessage(Any.pack(marketStub.checkAvailability(request.build())))
+                        .build();
+
+            case RETURN_ACTION:
+                return Aurora.AuroraResponse.newBuilder()
+                        .setMessage(Any.pack(marketStub.returnPendingProduct(request.build())))
+                        .build();
+
+            case BUY_ACTION:
+                return Aurora.AuroraResponse.newBuilder()
+                        .setMessage(Any.pack(marketStub.buyProduct(request.build())))
+                        .build();
+            default:
+                throw new IllegalArgumentException("Client requested an unsupported message from market. Message is: " + incomingRequest.getTopic());
+        }
     }
 }
