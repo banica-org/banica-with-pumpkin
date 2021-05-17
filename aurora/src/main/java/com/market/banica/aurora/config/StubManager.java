@@ -7,34 +7,30 @@ import com.orderbook.OrderBookServiceGrpc;
 import io.grpc.ManagedChannel;
 import org.springframework.context.annotation.Configuration;
 
-import java.lang.reflect.Method;
-import java.util.AbstractMap;
-import java.util.Map;
-
 @Configuration
 public class StubManager {
 
-    public Map.Entry<AuroraServiceGrpc.AuroraServiceStub, Method[]> getAuroraStub(ManagedChannel channel) {
 
-        AuroraServiceGrpc.AuroraServiceStub auroraServiceStub = AuroraServiceGrpc.newStub(channel);
-        Class auroraStub = auroraServiceStub.getClass();
-        return new AbstractMap.SimpleEntry<>(auroraServiceStub, auroraStub.getMethods());
 
+    public io.grpc.stub.AbstractStub<AuroraServiceGrpc.AuroraServiceStub> getAuroraStub(ManagedChannel channel) {
+
+        return AuroraServiceGrpc.newStub(channel);
     }
 
-    public Map.Entry<OrderBookServiceGrpc.OrderBookServiceBlockingStub, Method[]> getOrderbookBlockingStub(ManagedChannel channel) {
+    public io.grpc.stub.AbstractBlockingStub<OrderBookServiceGrpc.OrderBookServiceBlockingStub> getOrderbookBlockingStub(ManagedChannel channel) {
 
-        OrderBookServiceGrpc.OrderBookServiceBlockingStub orderBookServiceBlockingStub = OrderBookServiceGrpc.newBlockingStub(channel);
-        Class orderBookStub = orderBookServiceBlockingStub.getClass();
-        return new AbstractMap.SimpleEntry<>(orderBookServiceBlockingStub, orderBookStub.getMethods());
-
+        return OrderBookServiceGrpc.newBlockingStub(channel);
     }
 
-    public Map.Entry<MarketServiceGrpc.MarketServiceStub, Method[]> getMarketStub(ManagedChannel channel) {
 
-        MarketServiceGrpc.MarketServiceStub marketServiceStub = MarketServiceGrpc.newStub(channel);
-        Class marketStub = marketServiceStub.getClass();
-        return new AbstractMap.SimpleEntry<>(marketServiceStub, marketStub.getMethods());
+    public io.grpc.stub.AbstractStub<MarketServiceGrpc.MarketServiceStub> getMarketStub(ManagedChannel channel) {
+
+        return MarketServiceGrpc.newStub(channel);
+    }
+
+    public io.grpc.stub.AbstractBlockingStub<MarketServiceGrpc.MarketServiceBlockingStub> getMarketBlockingStub(ManagedChannel channel) {
+
+        return MarketServiceGrpc.newBlockingStub(channel);
     }
 
 }
