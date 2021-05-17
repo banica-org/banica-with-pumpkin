@@ -63,6 +63,18 @@ public class TransactionServiceImpl implements TransactionService {
         return purchaseProducts;
     }
 
+    @Override
+    public String sellProduct(List<ItemDto> itemsToSell) {
+        StringBuilder stringBuilder = new StringBuilder();
+
+        for (ItemDto item : itemsToSell) {
+            String responseMessage = this.auroraClientSideService.sellProductToMarket(item.getName(), item.getPrice().doubleValue(), item.getQuantity(), item.getLocation());
+            stringBuilder.append(responseMessage).append(System.lineSeparator());
+        }
+
+        return stringBuilder.toString().trim();
+    }
+
     private List<ProductDto> getNotCompoundProducts(List<ProductDto> purchaseProducts) {
         return purchaseProducts
                 .stream()

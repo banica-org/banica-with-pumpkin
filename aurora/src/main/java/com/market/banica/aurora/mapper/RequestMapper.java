@@ -47,6 +47,7 @@ public class RequestMapper {
     public static final String AVAILABILITY_ACTION = "availability";
     public static final String RETURN_ACTION = "return";
     public static final String BUY_ACTION = "buy";
+    public static final String SELL_ACTION = "sell";
     public static final String BAD_PUBLISHER_REQUEST = "Unknown Publisher";
     public static final String IN_CANCEL_ITEM_SUBSCRIPTION = "Forwarding to orderbook - cancelItemSubscription.";
     public static final String IN_ANNOUNCE_ITEM_INTEREST = "Forwarding to orderbook - announceItemInterest.";
@@ -75,54 +76,12 @@ public class RequestMapper {
         if (destinationOfMessage.contains(ORDERBOOK)) {
             return this.renderOrderbookMapping(incomingRequest, channelByKey.get());
         } else if (destinationOfMessage.contains(AURORA)) {
-            return renderAuroraMapping(incomingRequest, channelByKey.get());
+            return this.renderAuroraMapping(incomingRequest, channelByKey.get());
         } else if (destinationOfMessage.contains(MARKET)) {
-            return renderMarketMapping(incomingRequest, channelByKey.get());
+            return this.renderMarketMapping(incomingRequest, channelByKey.get());
         }
 
         throw new ServiceNotFoundException(BAD_PUBLISHER_REQUEST + ". Requested publisher is: " + destinationOfMessage);
-    }
-
-    private Aurora.AuroraResponse renderMarketMapping(Aurora.AuroraRequest incomingRequest, ManagedChannel channelByKey) {
-        LOGGER.debug("Mapping messages for market.");
-        String[] topicSplit = incomingRequest.getTopic().split(SPLIT_SLASH_REGEX);
-
-        MarketServiceGrpc.MarketServiceBlockingStub marketStub = stubManager.getMarketBlockingStub(channelByKey);
-
-        String itemName = topicSplit[2];
-        double itemPrice = Double.parseDouble(topicSplit[3]);
-        long itemQuantity = Long.parseLong(topicSplit[4]);
-        String marketName = topicSplit[5];
-
-        ProductBuySellRequest.Builder request = ProductBuySellRequest.newBuilder()
-                .setItemName(itemName)
-                .setItemPrice(itemPrice)
-                .setItemQuantity(itemQuantity)
-                .setMarketName(marketName);
-
-        String requestPrefix = topicSplit[1];
-
-        if (topicSplit.length == 6 && requestPrefix.equals(AVAILABILITY_ACTION)) {
-            return Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(marketStub.checkAvailability(request.build()))).build();
-        }
-
-        long timeStamp = Long.parseLong(topicSplit[6]);
-
-        request.setTimestamp(timeStamp);
-
-        if (topicSplit.length == 7 && requestPrefix.equals(RETURN_ACTION)) {
-            return Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(marketStub.returnPendingProduct(request.build()))).build();
-        }
-
-        if (topicSplit.length == 7 && requestPrefix.equals(BUY_ACTION)) {
-            return Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(marketStub.buyProduct(request.build()))).build();
-        }
-
-        if (topicSplit.length == 7 && requestPrefix.equals("sell")) {
-            return Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(marketStub.sellProduct(request.build()))).build();
-        }
-
-        throw new IllegalArgumentException("Client requested an unsupported message from market. Message is: " + incomingRequest.getTopic());
     }
 
     private Aurora.AuroraResponse renderAuroraMapping(Aurora.AuroraRequest incomingRequest, ManagedChannel channelByKey) {
@@ -173,7 +132,6 @@ public class RequestMapper {
         return processCancelItemSubscriptionRequest(incomingRequest, orderbookStub, itemName);
     }
 
-
     private Aurora.AuroraResponse processCancelItemSubscriptionRequest(Aurora.AuroraRequest incomingRequest, OrderBookServiceGrpc.OrderBookServiceBlockingStub orderbookStub, String itemName) {
         CancelSubscriptionRequest build = CancelSubscriptionRequest.newBuilder()
                 .setClientId(incomingRequest.getClientId())
@@ -186,7 +144,6 @@ public class RequestMapper {
                 .setMessage(Any.pack(cancelSubscriptionResponse))
                 .build();
     }
-
 
     private Aurora.AuroraResponse processSubscribeForItemRequest(Aurora.AuroraRequest incomingRequest, OrderBookServiceGrpc.OrderBookServiceBlockingStub orderbookStub, String itemName) {
         LOGGER.info(IN_ANNOUNCE_ITEM_INTEREST);
@@ -216,5 +173,49 @@ public class RequestMapper {
                 .newBuilder()
                 .setMessage(Any.pack(orderBookItemLayers))
                 .build();
+    }
+
+    private Aurora.AuroraResponse renderMarketMapping(Aurora.AuroraRequest incomingRequest, ManagedChannel channelByKey) {
+        LOGGER.debug("Mapping messages for market.");
+
+        MarketServiceGrpc.MarketServiceBlockingStub marketStub = stubManager.getMarketBlockingStub(channelByKey);
+
+        String[] topicSplit = incomingRequest.getTopic().split(SPLIT_SLASH_REGEX);
+
+        String itemName = topicSplit[2];
+        double itemPrice = Double.parseDouble(topicSplit[3]);
+        long itemQuantity = Long.parseLong(topicSplit[4]);
+        String marketName = topicSplit[0].split("-")[1].toUpperCase(Locale.ROOT);
+
+        ProductBuySellRequest.Builder request = ProductBuySellRequest.newBuilder()
+                .setItemName(itemName)
+                .setItemPrice(itemPrice)
+                .setItemQuantity(itemQuantity)
+                .setMarketName(marketName);
+
+        String requestPrefix = topicSplit[1];
+
+        switch (requestPrefix) {
+            case AVAILABILITY_ACTION:
+                return Aurora.AuroraResponse.newBuilder()
+                        .setMessage(Any.pack(marketStub.checkAvailability(request.build())))
+                        .build();
+
+            case RETURN_ACTION:
+                return Aurora.AuroraResponse.newBuilder()
+                        .setMessage(Any.pack(marketStub.returnPendingProduct(request.build())))
+                        .build();
+
+            case BUY_ACTION:
+                return Aurora.AuroraResponse.newBuilder()
+                        .setMessage(Any.pack(marketStub.buyProduct(request.build())))
+                        .build();
+            case SELL_ACTION:
+                return Aurora.AuroraResponse.newBuilder()
+                        .setMessage(Any.pack(marketStub.sellProduct(request.build())))
+                        .build();
+            default:
+                throw new IllegalArgumentException("Client requested an unsupported message from market. Message is: " + incomingRequest.getTopic());
+        }
     }
 }
