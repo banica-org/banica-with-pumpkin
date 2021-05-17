@@ -9,8 +9,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.lang.reflect.InvocationTargetException;
-
 @Service
 public class SubscribeHandler {
 
@@ -23,20 +21,17 @@ public class SubscribeHandler {
         this.subscribeMapper = subscribeMapper;
     }
 
-    public void handleSubscribe(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver)  {
-        try{
+    public void handleSubscribe(Aurora.AuroraRequest request, StreamObserver<Aurora.AuroraResponse> responseObserver) {
+        try {
             LOGGER.info("Handling subscribe from client {}", request.getClientId());
             subscribeMapper.renderSubscribe(request, responseObserver);
-        }catch (Exception e){
+        } catch (Exception e) {
+            //TODO : DO PROPER EXCEPTION HANDLING.
             LOGGER.warn("Exception called");
             responseObserver.onError(Status.INVALID_ARGUMENT
                     .withDescription("Request from client is invalid : " + e.getMessage())
                     .withCause(e.getCause())
                     .asException());
-            return;
         }
-
     }
-
-
 }

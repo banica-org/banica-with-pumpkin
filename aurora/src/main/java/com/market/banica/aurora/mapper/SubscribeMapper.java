@@ -10,6 +10,7 @@ import com.market.banica.aurora.observer.AuroraObserver;
 import com.market.banica.aurora.observer.MarketTickObserver;
 import io.grpc.ManagedChannel;
 import io.grpc.Status;
+import io.grpc.stub.AbstractStub;
 import io.grpc.stub.StreamObserver;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Service
 public class SubscribeMapper {
 
-
+    //TODO: CHANGE VARIABLES NAMES
     private final ChannelManager channelManager;
     private final StubManager stubManager;
 
@@ -43,6 +44,7 @@ public class SubscribeMapper {
 
     public void renderSubscribe(Aurora.AuroraRequest incomingRequest, StreamObserver<Aurora.AuroraResponse> responseObserver) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         String destinationOfMessage = incomingRequest.getTopic().split("/")[0];
+        log.info("Accepting render for destionation" + destinationOfMessage);
         List<Map.Entry<String, ManagedChannel>> channelsWithPrefix = channelManager.getAllChannelsContainingPrefix(destinationOfMessage);
         if (channelsWithPrefix.isEmpty()) {
             log.warn("Unsupported message have reached aurora.");
@@ -75,17 +77,17 @@ public class SubscribeMapper {
         AtomicInteger openStreams = new AtomicInteger(channelsWithPrefix.size());
 
         for (Map.Entry<String, ManagedChannel> channel : channelsWithPrefix) {
-            Map.Entry<AuroraServiceGrpc.AuroraServiceStub, Method[]> auroraStubMap = stubManager.getAuroraStub(channel.getValue());
-            Method[] auroraBlockingStubMethods = auroraStubMap.getValue();
-            Method auroraSubscribe = auroraBlockingStubMethods.getClass().getMethod("subscribe", Aurora.AuroraRequest.class, AuroraObserver.class);
+            AbstractStub<AuroraServiceGrpc.AuroraServiceStub> auroraStubMap = stubManager.getAuroraStub(channel.getValue());
+            Method auroraSubscribe = auroraStubMap.getClass().getMethod("subscribe", Aurora.AuroraRequest.class, StreamObserver.class);
 
-            auroraSubscribe.invoke(auroraStubMap.getKey(), incomingRequest, new AuroraObserver(incomingRequest, responseObserver, openStreams));
+            auroraSubscribe.invoke(auroraStubMap, incomingRequest, new AuroraObserver(incomingRequest, responseObserver, openStreams));
         }
 
     }
 
     private void renderMarketMapping(Aurora.AuroraRequest incomingRequest, StreamObserver<Aurora.AuroraResponse> responseObserver, List<Map.Entry<String, ManagedChannel>> channelsWithPrefix) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         String itemForSubscribing = incomingRequest.getTopic().split("/")[1];
+        log.info("Rendering subscribe for item: " + itemForSubscribing);
         AtomicInteger openStreams = new AtomicInteger(channelsWithPrefix.size());
 
         MarketDataRequest marketDataRequest = MarketDataRequest.newBuilder()
@@ -94,11 +96,11 @@ public class SubscribeMapper {
                 .build();
 
         for (Map.Entry<String, ManagedChannel> channel : channelsWithPrefix) {
-            Map.Entry<MarketServiceGrpc.MarketServiceStub, Method[]> marketStubMap = stubManager.getMarketStub(channel.getValue());
-            Method[] marketStubMethods = marketStubMap.getValue();
-            Method marketSubscribeForItem = marketStubMethods.getClass().getMethod("subscribeForItem", MarketDataRequest.class, MarketTickObserver.class);
+            AbstractStub<MarketServiceGrpc.MarketServiceStub> marketStubMap = stubManager.getMarketStub(channel.getValue());
 
-            marketSubscribeForItem.invoke(marketStubMap.getKey(), marketDataRequest, new MarketTickObserver(incomingRequest.getClientId(), responseObserver
+            Method marketSubscribeForItem = marketStubMap.getClass().getMethod("subscribeForItem", MarketDataRequest.class, StreamObserver.class);
+
+            marketSubscribeForItem.invoke(marketStubMap, marketDataRequest, new MarketTickObserver(incomingRequest.getClientId(), responseObserver
                     , openStreams, channel.getKey(), marketDataRequest.getGoodName()));
         }
 
