@@ -34,7 +34,6 @@ import java.util.regex.Pattern;
 @Service
 public class RequestMapper {
 
-    //TODO: CHANGE VARIABLES NAMES
     private static final Logger LOGGER = LoggerFactory.getLogger(RequestMapper.class);
 
     private ChannelManager channelManager;
@@ -85,14 +84,14 @@ public class RequestMapper {
 
     private Aurora.AuroraResponse renderAuroraMapping(Aurora.AuroraRequest incomingRequest, ManagedChannel channelByKey) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         LOGGER.info("Mapping request for aurora.");
-        AbstractStub<AuroraServiceGrpc.AuroraServiceStub> auroraStub = stubManager.getAuroraStub(channelByKey);
-        Method auroraRequest = auroraStub.getClass().getMethod("request", Aurora.AuroraRequest.class, ManagedChannel.class);
 
+        AbstractStub<AuroraServiceGrpc.AuroraServiceBlockingStub> auroraStub = stubManager.getAuroraBlockingStub(channelByKey);
+
+        Method auroraRequest = auroraStub.getClass().getMethod("request", Aurora.AuroraRequest.class);
 
         LOGGER.info(IN_AURORA_REQUEST);
-        return (Aurora.AuroraResponse) auroraRequest.invoke(auroraStub, incomingRequest, channelByKey);
+        return (Aurora.AuroraResponse) auroraRequest.invoke(auroraStub, incomingRequest);
     }
-
 
     private boolean isValidNumber(String number) {
         return NUMBER_CHECK_PATTERN.matcher(number).matches();
@@ -102,14 +101,14 @@ public class RequestMapper {
         LOGGER.info("Mapping messages for orderbook.");
         String[] topicSplit = incomingRequest.getTopic().split(SPLIT_SLASH_REGEX);
 
-        AbstractBlockingStub<OrderBookServiceGrpc.OrderBookServiceBlockingStub> orderbookBlockingStubMap = stubManager.getOrderbookBlockingStub(channelByKey);
+        AbstractBlockingStub<OrderBookServiceGrpc.OrderBookServiceBlockingStub> orderbookBlockingStub = stubManager.getOrderbookBlockingStub(channelByKey);
 
         try {
             if (topicSplit.length == 3 && isValidNumber(topicSplit[2])) {
-                return processItemOrderBookRequest(incomingRequest, orderbookBlockingStubMap, channelByKey, topicSplit);
+                return processItemOrderBookRequest(incomingRequest, orderbookBlockingStub, topicSplit);
 
             } else if (topicSplit.length == 2 && topicSplit[1].contains(SPLIT_EQUALS_REGEX)) {
-                return renderOrderbookRequestSubscribeRequest(incomingRequest, orderbookBlockingStubMap, channelByKey, topicSplit[1]);
+                return renderOrderbookRequestSubscribeRequest(incomingRequest, orderbookBlockingStub, topicSplit[1]);
             }
         } catch (Exception e) {
             RuntimeException runtimeException = new RuntimeException("Got error from orderbook with message " + e.getMessage());
@@ -120,20 +119,20 @@ public class RequestMapper {
         throw new IllegalArgumentException("Client requested an unsupported message from orderbook. Message is: " + incomingRequest.getTopic());
     }
 
-    private Aurora.AuroraResponse renderOrderbookRequestSubscribeRequest(Aurora.AuroraRequest incomingRequest, AbstractBlockingStub<OrderBookServiceGrpc.OrderBookServiceBlockingStub> orderBookServiceBlockingStub, ManagedChannel channelByKey, String s) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+    private Aurora.AuroraResponse renderOrderbookRequestSubscribeRequest(Aurora.AuroraRequest incomingRequest, AbstractBlockingStub<OrderBookServiceGrpc.OrderBookServiceBlockingStub> orderBookServiceBlockingStub, String s) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         String command = s.split(SPLIT_EQUALS_REGEX)[1].toLowerCase(Locale.ROOT);
         String itemName = s.split(SPLIT_EQUALS_REGEX)[0].toLowerCase(Locale.ROOT);
 
         if (command.equals(SUBSCRIBE)) {
-            return processSubscribeForItemRequest(incomingRequest, orderBookServiceBlockingStub, itemName, channelByKey);
+            return processSubscribeForItemRequest(incomingRequest, orderBookServiceBlockingStub, itemName);
         }
         LOGGER.info(IN_CANCEL_ITEM_SUBSCRIPTION);
 
-        return processCancelItemSubscriptionRequest(incomingRequest, orderBookServiceBlockingStub, itemName, channelByKey);
+        return processCancelItemSubscriptionRequest(incomingRequest, orderBookServiceBlockingStub, itemName);
     }
 
 
-    private Aurora.AuroraResponse processCancelItemSubscriptionRequest(Aurora.AuroraRequest incomingRequest, AbstractBlockingStub<OrderBookServiceGrpc.OrderBookServiceBlockingStub> orderBookServiceBlockingStub, String itemName, ManagedChannel channelByKey) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    private Aurora.AuroraResponse processCancelItemSubscriptionRequest(Aurora.AuroraRequest incomingRequest, AbstractBlockingStub<OrderBookServiceGrpc.OrderBookServiceBlockingStub> orderBookServiceBlockingStub, String itemName) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         CancelSubscriptionRequest build = CancelSubscriptionRequest.newBuilder()
                 .setClientId(incomingRequest.getClientId())
                 .setItemName(itemName)
@@ -148,7 +147,7 @@ public class RequestMapper {
     }
 
 
-    private Aurora.AuroraResponse processSubscribeForItemRequest(Aurora.AuroraRequest incomingRequest, AbstractBlockingStub<OrderBookServiceGrpc.OrderBookServiceBlockingStub> orderBookServiceBlockingStub, String itemName, ManagedChannel channelByKey) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    private Aurora.AuroraResponse processSubscribeForItemRequest(Aurora.AuroraRequest incomingRequest, AbstractBlockingStub<OrderBookServiceGrpc.OrderBookServiceBlockingStub> orderBookServiceBlockingStub, String itemName) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         LOGGER.info(IN_ANNOUNCE_ITEM_INTEREST);
 
         InterestsRequest interestsRequest = InterestsRequest.newBuilder()
@@ -164,9 +163,8 @@ public class RequestMapper {
                 .build();
     }
 
-    private Aurora.AuroraResponse processItemOrderBookRequest(Aurora.AuroraRequest incomingRequest, AbstractBlockingStub<OrderBookServiceGrpc.OrderBookServiceBlockingStub> orderBookServiceBlockingStub, ManagedChannel channelByKey, String[] topicSplit) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    private Aurora.AuroraResponse processItemOrderBookRequest(Aurora.AuroraRequest incomingRequest, AbstractBlockingStub<OrderBookServiceGrpc.OrderBookServiceBlockingStub> orderBookServiceBlockingStub, String[] topicSplit) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         LOGGER.info(IN_GET_ORDER_BOOK_ITEM_LAYERS);
-
 
         ItemOrderBookRequest build = ItemOrderBookRequest.newBuilder()
                 .setClientId(incomingRequest.getClientId())

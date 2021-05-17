@@ -27,7 +27,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Service
 public class SubscribeMapper {
 
-    //TODO: CHANGE VARIABLES NAMES
     private final ChannelManager channelManager;
     private final StubManager stubManager;
 
@@ -72,17 +71,15 @@ public class SubscribeMapper {
         }
     }
 
-
     private void renderAuroraMapping(Aurora.AuroraRequest incomingRequest, StreamObserver<Aurora.AuroraResponse> responseObserver, List<Map.Entry<String, ManagedChannel>> channelsWithPrefix) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         AtomicInteger openStreams = new AtomicInteger(channelsWithPrefix.size());
 
         for (Map.Entry<String, ManagedChannel> channel : channelsWithPrefix) {
-            AbstractStub<AuroraServiceGrpc.AuroraServiceStub> auroraStubMap = stubManager.getAuroraStub(channel.getValue());
-            Method auroraSubscribe = auroraStubMap.getClass().getMethod("subscribe", Aurora.AuroraRequest.class, StreamObserver.class);
+            AbstractStub<AuroraServiceGrpc.AuroraServiceStub> auroraStub = stubManager.getAuroraStub(channel.getValue());
+            Method auroraSubscribe = auroraStub.getClass().getMethod("subscribe", Aurora.AuroraRequest.class, StreamObserver.class);
 
-            auroraSubscribe.invoke(auroraStubMap, incomingRequest, new AuroraObserver(incomingRequest, responseObserver, openStreams));
+            auroraSubscribe.invoke(auroraStub, incomingRequest, new AuroraObserver(incomingRequest, responseObserver, openStreams));
         }
-
     }
 
     private void renderMarketMapping(Aurora.AuroraRequest incomingRequest, StreamObserver<Aurora.AuroraResponse> responseObserver, List<Map.Entry<String, ManagedChannel>> channelsWithPrefix) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
@@ -96,11 +93,11 @@ public class SubscribeMapper {
                 .build();
 
         for (Map.Entry<String, ManagedChannel> channel : channelsWithPrefix) {
-            AbstractStub<MarketServiceGrpc.MarketServiceStub> marketStubMap = stubManager.getMarketStub(channel.getValue());
+            AbstractStub<MarketServiceGrpc.MarketServiceStub> marketStub = stubManager.getMarketStub(channel.getValue());
 
-            Method marketSubscribeForItem = marketStubMap.getClass().getMethod("subscribeForItem", MarketDataRequest.class, StreamObserver.class);
+            Method marketSubscribeForItem = marketStub.getClass().getMethod("subscribeForItem", MarketDataRequest.class, StreamObserver.class);
 
-            marketSubscribeForItem.invoke(marketStubMap, marketDataRequest, new MarketTickObserver(incomingRequest.getClientId(), responseObserver
+            marketSubscribeForItem.invoke(marketStub, marketDataRequest, new MarketTickObserver(incomingRequest.getClientId(), responseObserver
                     , openStreams, channel.getKey(), marketDataRequest.getGoodName()));
         }
 

@@ -25,6 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import javax.management.ServiceNotFoundException;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.rmi.NoSuchObjectException;
 import java.util.Optional;
 import java.util.concurrent.Executors;
@@ -103,7 +104,7 @@ class RequestMapperTest {
     }
 
     @Test
-    void renderRequestWithRequestForOrderBookWithTopicSplitLengthOfThreeProcessesItemOrderBookRequest() throws IOException, ServiceNotFoundException {
+    void renderRequestWithRequestForOrderBookWithTopicSplitLengthOfThreeProcessesItemOrderBookRequest() throws IOException, ServiceNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         //Arrange
         when(channelManager.getChannelByKey(any())).thenReturn(Optional.ofNullable(DUMMY_MANAGED_CHANNEL));
         when(stubManager.getOrderbookBlockingStub(any())).thenReturn(orderBookBlockingStub);
@@ -118,7 +119,7 @@ class RequestMapperTest {
     }
 
     @Test
-    void renderRequestWithSubscribeRequestForOrderBookProcessesSubscribeForItem() throws IOException, ServiceNotFoundException {
+    void renderRequestWithSubscribeRequestForOrderBookProcessesSubscribeForItem() throws IOException, ServiceNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         //Arrange
         when(channelManager.getChannelByKey(any())).thenReturn(Optional.ofNullable(DUMMY_MANAGED_CHANNEL));
         when(stubManager.getOrderbookBlockingStub(any())).thenReturn(orderBookBlockingStub);
@@ -133,7 +134,7 @@ class RequestMapperTest {
     }
 
     @Test
-    void renderRequestWithUnsubscribeRequestForOrderBookProcessesCancelSubscription() throws IOException, ServiceNotFoundException {
+    void renderRequestWithUnsubscribeRequestForOrderBookProcessesCancelSubscription() throws IOException, ServiceNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         //Arrange
         when(channelManager.getChannelByKey(any())).thenReturn(Optional.ofNullable(DUMMY_MANAGED_CHANNEL));
         when(stubManager.getOrderbookBlockingStub(any())).thenReturn(orderBookBlockingStub);
@@ -147,16 +148,4 @@ class RequestMapperTest {
         assertEquals(expectedOrderBookResponse, actual.getMessage().unpack(CancelSubscriptionResponse.class));
     }
 
-    @Test
-    void renderRequestWithDestinationAuroraSendsRequestAndReceivesResponseFromFakeAuroraService() throws IOException, ServiceNotFoundException {
-        //Arrange
-        when(channelManager.getChannelByKey(any())).thenReturn(Optional.ofNullable(DUMMY_MANAGED_CHANNEL));
-        when(stubManager.getAuroraBlockingStub(any())).thenReturn(auroraBlockingStub);
-
-        //Act
-        Aurora.AuroraResponse actual = requestMapper.renderRequest(AURORA_REQUEST);
-
-        //Assert
-        assertEquals(AURORA_REQUEST, actual.getMessage().unpack(Aurora.AuroraRequest.class));
-    }
 }

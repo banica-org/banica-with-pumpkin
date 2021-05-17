@@ -22,6 +22,7 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.AbstractMap;
 import java.util.Collections;
 import java.util.Map;
@@ -74,7 +75,7 @@ class SubscribeMapperTest {
     @Spy
     private SubscribeMapper subscribeMapper;
 
-    private static Map.Entry<String,ManagedChannel> dummyEntry;
+    private static Map.Entry<String, ManagedChannel> dummyEntry;
 
     @BeforeAll
     static void setUp() throws IOException {
@@ -84,7 +85,7 @@ class SubscribeMapperTest {
         FakeServerGenerator.addChannel("auroraServerChannel", AURORA_SERVER_CHANNEL);
         FakeServerGenerator.addChannel("marketServerChannel", MARKET_SERVER_CHANNEL);
         FakeServerGenerator.addChannel("dummyChannel", DUMMY_MANAGED_CHANNEL);
-        dummyEntry =  new AbstractMap.SimpleEntry<>("dummyChannel",DUMMY_MANAGED_CHANNEL);
+        dummyEntry = new AbstractMap.SimpleEntry<>("dummyChannel", DUMMY_MANAGED_CHANNEL);
     }
 
     @AfterAll
@@ -93,28 +94,28 @@ class SubscribeMapperTest {
     }
 
     @Test
-    void renderSubscribeWithRequestForServiceWithNonExistentChannelInvokesOnError() {
+    void renderSubscribeWithRequestForServiceWithNonExistentChannelInvokesOnError() throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         when(channelManager.getAllChannelsContainingPrefix(any())).thenReturn(Collections.emptyList());
         subscribeMapper.renderSubscribe(INVALID_REQUEST, responseObserver);
         verify(responseObserver, times(1)).onError(any());
     }
 
     @Test
-    void renderSubscribeWithRequestForOrderBookInvokesOnError() {
+    void renderSubscribeWithRequestForOrderBookInvokesOnError() throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         when(channelManager.getAllChannelsContainingPrefix(any())).thenReturn(Collections.singletonList(dummyEntry));
         subscribeMapper.renderSubscribe(ORDERBOOK_REQUEST, responseObserver);
         verify(responseObserver, times(1)).onError(any());
     }
 
     @Test
-    void renderSubscribeWithRequestForUnsupportedServiceInvokesOnError() {
+    void renderSubscribeWithRequestForUnsupportedServiceInvokesOnError() throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         when(channelManager.getAllChannelsContainingPrefix(any())).thenReturn(Collections.singletonList(dummyEntry));
         subscribeMapper.renderSubscribe(INVALID_REQUEST, responseObserver);
         verify(responseObserver, times(1)).onError(any());
     }
 
     @Test
-    void renderSubscribeWithRequestForMarketServiceSubscribesResponseObserverAndCallsOnNextAndOnCompleted() throws InterruptedException {
+    void renderSubscribeWithRequestForMarketServiceSubscribesResponseObserverAndCallsOnNextAndOnCompleted() throws InterruptedException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         //Arrange
         when(channelManager.getAllChannelsContainingPrefix(any())).thenReturn(Collections.singletonList(dummyEntry));
         when(stubManager.getMarketStub(any())).thenReturn(marketStub);
@@ -131,7 +132,7 @@ class SubscribeMapperTest {
     }
 
     @Test
-    void renderSubscribeWithRequestForAuroraServiceSubscribesResponseObserverAndCallsOnNextAndOnCompleted() throws InterruptedException {
+    void renderSubscribeWithRequestForAuroraServiceSubscribesResponseObserverAndCallsOnNextAndOnCompleted() throws InterruptedException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         //Arrange
         when(channelManager.getAllChannelsContainingPrefix(any())).thenReturn(Collections.singletonList(dummyEntry));
         when(stubManager.getAuroraStub(any())).thenReturn(auroraStub);

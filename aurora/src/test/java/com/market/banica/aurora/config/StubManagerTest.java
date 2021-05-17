@@ -32,15 +32,8 @@ class StubManagerTest {
     }
 
     @Test
-    void getAuroraBlockingStubCreatesAndReturnsAuroraBlockingStubForSpecifiedChannel() {
-        Channel actualChannel = stubManager.getAuroraBlockingStub(DUMMY_MANAGED_CHANNEL).getChannel();
-        Channel expectedChannel = AuroraServiceGrpc.newBlockingStub(DUMMY_MANAGED_CHANNEL).getChannel();
-        assertEquals(expectedChannel,actualChannel);
-    }
-
-    @Test
     void getOrderbookStubCreatesAndReturnsOrderBookStubForSpecifiedChannel() {
-        Channel actualChannel = stubManager.getOrderbookStub(DUMMY_MANAGED_CHANNEL).getChannel();
+        Channel actualChannel = stubManager.getOrderbookBlockingStub(DUMMY_MANAGED_CHANNEL).getChannel();
         Channel expectedChannel = OrderBookServiceGrpc.newStub(DUMMY_MANAGED_CHANNEL).getChannel();
         assertEquals(expectedChannel,actualChannel);
     }

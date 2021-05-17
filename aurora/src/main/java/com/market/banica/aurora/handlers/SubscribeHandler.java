@@ -9,6 +9,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.lang.reflect.InvocationTargetException;
+
 @Service
 public class SubscribeHandler {
 
@@ -25,13 +27,25 @@ public class SubscribeHandler {
         try {
             LOGGER.info("Handling subscribe from client {}", request.getClientId());
             subscribeMapper.renderSubscribe(request, responseObserver);
+        } catch (NoSuchMethodException e) {
+            LOGGER.warn("There is no such method.");
+            responseObserver.onError(Status.NOT_FOUND
+                    .withDescription("Subscribe is invalid: " + e.getMessage())
+                    .withCause(e.getCause())
+                    .asException());
+        } catch (InvocationTargetException | IllegalAccessException e) {
+            LOGGER.warn("Couldn't invoke method.");
+            responseObserver.onError(Status.NOT_FOUND
+                    .withDescription("Subscribe is invalid: " + e.getMessage())
+                    .withCause(e.getCause())
+                    .asException());
         } catch (Exception e) {
-            //TODO : DO PROPER EXCEPTION HANDLING.
-            LOGGER.warn("Exception called");
+            LOGGER.warn("Unable to forward.");
             responseObserver.onError(Status.INVALID_ARGUMENT
-                    .withDescription("Request from client is invalid : " + e.getMessage())
+                    .withDescription("Subscribtion stopped with description: " + e.getMessage())
                     .withCause(e.getCause())
                     .asException());
         }
     }
+
 }
