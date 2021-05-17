@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.market.banica.aurora.handlers.RequestHandler;
 
+import java.lang.reflect.InvocationTargetException;
+
 
 @Service
 public class AuroraServiceImpl extends AuroraServiceGrpc.AuroraServiceImplBase {
