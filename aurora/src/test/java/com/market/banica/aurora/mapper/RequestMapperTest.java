@@ -158,7 +158,7 @@ class RequestMapperTest {
     }
 
     @Test
-    void renderRequestWithDestinationAuroraSendsRequestAndReceivesResponseFromFakeAuroraService() throws IOException, ServiceNotFoundException {
+    void renderRequestWithDestinationAuroraSendsRequestAndReceivesResponseFromFakeAuroraService() throws IOException, ServiceNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         //Arrange
         when(channelManager.getChannelByKey(any())).thenReturn(Optional.ofNullable(DUMMY_MANAGED_CHANNEL));
         when(stubManager.getAuroraBlockingStub(any())).thenReturn(auroraBlockingStub);
@@ -171,7 +171,7 @@ class RequestMapperTest {
     }
 
     @Test
-    void renderRequestWithAvailabilityRequestForMarketToChekIfProductExist() throws IOException, ServiceNotFoundException {
+    void renderRequestWithAvailabilityRequestForMarketToChekIfProductExist() throws IOException, ServiceNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         //Arrange
         when(channelManager.getChannelByKey(any())).thenReturn(Optional.ofNullable(DUMMY_MANAGED_CHANNEL));
         when(stubManager.getMarketBlockingStub(any())).thenReturn(marketBlockingStub);
@@ -187,7 +187,7 @@ class RequestMapperTest {
     }
 
     @Test
-    void renderRequestWithBuyProductRequestForMarketToBuyTheProductFromMarket() throws IOException, ServiceNotFoundException {
+    void renderRequestWithBuyProductRequestForMarketToBuyTheProductFromMarket() throws IOException, ServiceNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         //Arrange
         when(channelManager.getChannelByKey(any())).thenReturn(Optional.ofNullable(DUMMY_MANAGED_CHANNEL));
         when(stubManager.getMarketBlockingStub(any())).thenReturn(marketBlockingStub);
@@ -202,7 +202,7 @@ class RequestMapperTest {
     }
 
     @Test
-    void renderRequestWithReturnProductRequestForMarketToReturnTheProductFromMarket() throws IOException, ServiceNotFoundException {
+    void renderRequestWithReturnProductRequestForMarketToReturnTheProductFromMarket() throws IOException, ServiceNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         //Arrange
         when(channelManager.getChannelByKey(any())).thenReturn(Optional.ofNullable(DUMMY_MANAGED_CHANNEL));
         when(stubManager.getMarketBlockingStub(any())).thenReturn(marketBlockingStub);

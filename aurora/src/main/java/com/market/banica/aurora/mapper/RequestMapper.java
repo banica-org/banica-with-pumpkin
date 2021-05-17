@@ -4,6 +4,8 @@ package com.market.banica.aurora.mapper;
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
 import com.google.protobuf.Any;
+import com.market.AvailabilityResponse;
+import com.market.BuySellProductResponse;
 import com.market.MarketServiceGrpc;
 import com.market.ProductBuySellRequest;
 import com.market.banica.aurora.config.ChannelManager;
@@ -186,10 +188,10 @@ public class RequestMapper {
                 .build();
     }
 
-    private Aurora.AuroraResponse renderMarketMapping(Aurora.AuroraRequest incomingRequest, ManagedChannel channelByKey) {
+    private Aurora.AuroraResponse renderMarketMapping(Aurora.AuroraRequest incomingRequest, ManagedChannel channelByKey) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         LOGGER.debug("Mapping messages for market.");
 
-        MarketServiceGrpc.MarketServiceBlockingStub marketStub = stubManager.getMarketBlockingStub(channelByKey);
+        AbstractBlockingStub<MarketServiceGrpc.MarketServiceBlockingStub> marketBlockingStub = stubManager.getMarketBlockingStub(channelByKey);
 
         String[] topicSplit = incomingRequest.getTopic().split(SPLIT_SLASH_REGEX);
 
@@ -206,20 +208,24 @@ public class RequestMapper {
 
         String requestPrefix = topicSplit[1];
 
+        Method marketCheckAvailability = marketBlockingStub.getClass().getMethod("checkAvailability", ProductBuySellRequest.class);
+        Method marketReturnPendingProduct = marketBlockingStub.getClass().getMethod("returnPendingProduct", ProductBuySellRequest.class);
+        Method marketBuyProduct = marketBlockingStub.getClass().getMethod("buyProduct", ProductBuySellRequest.class);
+
         switch (requestPrefix) {
             case AVAILABILITY_ACTION:
                 return Aurora.AuroraResponse.newBuilder()
-                        .setMessage(Any.pack(marketStub.checkAvailability(request.build())))
+                        .setMessage(Any.pack((AvailabilityResponse) marketCheckAvailability.invoke(marketBlockingStub, request.build())))
                         .build();
 
             case RETURN_ACTION:
                 return Aurora.AuroraResponse.newBuilder()
-                        .setMessage(Any.pack(marketStub.returnPendingProduct(request.build())))
+                        .setMessage(Any.pack((BuySellProductResponse) marketReturnPendingProduct.invoke(marketBlockingStub, request.build())))
                         .build();
 
             case BUY_ACTION:
                 return Aurora.AuroraResponse.newBuilder()
-                        .setMessage(Any.pack(marketStub.buyProduct(request.build())))
+                        .setMessage(Any.pack((BuySellProductResponse) marketBuyProduct.invoke(marketBlockingStub, request.build())))
                         .build();
             default:
                 throw new IllegalArgumentException("Client requested an unsupported message from market. Message is: " + incomingRequest.getTopic());
