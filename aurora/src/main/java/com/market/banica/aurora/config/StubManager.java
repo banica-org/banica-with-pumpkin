@@ -6,30 +6,32 @@ import com.market.MarketServiceGrpc;
 import com.orderbook.OrderBookServiceGrpc;
 import io.grpc.ManagedChannel;
 import org.springframework.context.annotation.Configuration;
+import io.grpc.stub.AbstractStub;
+import io.grpc.stub.AbstractBlockingStub;
 
 @Configuration
 public class StubManager {
 
-    public io.grpc.stub.AbstractStub<AuroraServiceGrpc.AuroraServiceStub> getAuroraStub(ManagedChannel channel) {
+    public AbstractStub<AuroraServiceGrpc.AuroraServiceStub> getAuroraStub(ManagedChannel channel) {
 
         return AuroraServiceGrpc.newStub(channel);
     }
 
-    public io.grpc.stub.AbstractBlockingStub<AuroraServiceGrpc.AuroraServiceBlockingStub> getAuroraBlockingStub(ManagedChannel channel) {
+    public AbstractBlockingStub<AuroraServiceGrpc.AuroraServiceBlockingStub> getAuroraBlockingStub(ManagedChannel channel) {
         return AuroraServiceGrpc.newBlockingStub(channel);
     }
 
-    public io.grpc.stub.AbstractBlockingStub<OrderBookServiceGrpc.OrderBookServiceBlockingStub> getOrderbookBlockingStub(ManagedChannel channel) {
+    public AbstractBlockingStub<OrderBookServiceGrpc.OrderBookServiceBlockingStub> getOrderbookBlockingStub(ManagedChannel channel) {
 
         return OrderBookServiceGrpc.newBlockingStub(channel);
     }
 
-    public io.grpc.stub.AbstractStub<MarketServiceGrpc.MarketServiceStub> getMarketStub(ManagedChannel channel) {
+    public AbstractStub<MarketServiceGrpc.MarketServiceStub> getMarketStub(ManagedChannel channel) {
 
         return MarketServiceGrpc.newStub(channel);
     }
 
-    public io.grpc.stub.AbstractBlockingStub<MarketServiceGrpc.MarketServiceBlockingStub> getMarketBlockingStub(ManagedChannel channel) {
+    public AbstractBlockingStub<MarketServiceGrpc.MarketServiceBlockingStub> getMarketBlockingStub(ManagedChannel channel) {
 
         return MarketServiceGrpc.newBlockingStub(channel);
     }
