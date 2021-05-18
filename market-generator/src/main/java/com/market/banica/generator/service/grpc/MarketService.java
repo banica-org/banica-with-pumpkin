@@ -75,7 +75,8 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
     @Override
     public void sellProduct(ProductBuySellRequest request, StreamObserver<BuySellProductResponse> responseObserver) {
         marketState.addProductToMarketState(request.getItemName(), request.getItemPrice(), request.getItemQuantity());
-        BuySellProductResponse buySellProductResponse = BuySellProductResponse.newBuilder().setMessage(String.format("Item with name %s was successfully added to market.", request.getItemName())).build();
+
+        BuySellProductResponse buySellProductResponse = BuySellProductResponse.newBuilder().setMessage(String.format("Item with name %s was successfully returned to market.", request.getItemName())).build();
 
         responseObserver.onNext(buySellProductResponse);
         responseObserver.onCompleted();
