@@ -75,14 +75,13 @@ public class ItemMarket {
     }
 
     public List<OrderBookLayer> getRequestedItem(String itemName, long quantity) {
-
         LOGGER.info("Getting requested item: {} with quantity: {}", itemName, quantity);
-
         DataValidator.validateIncomingData(itemName);
 
         TreeSet<Item> items = this.allItems.get(itemName);
+        Long productQuantity = this.productsQuantity.get(itemName);
 
-        if (items == null || this.productsQuantity.get(itemName) < quantity) {
+        if (items == null || productQuantity < quantity) {
 
             return Collections.emptyList();
         }
@@ -90,9 +89,7 @@ public class ItemMarket {
         List<OrderBookLayer> layers;
         try {
             lock.readLock().lock();
-
             layers = new ArrayList<>();
-
             Iterator<Item> iterator = items.iterator();
             long itemLeft = quantity;
 
@@ -150,7 +147,6 @@ public class ItemMarket {
                     itemsIterator.remove();
                 }
             }
-
             productsQuantity.put(itemName, productsQuantity.get(itemName) - removedItemProductQuantity);
         } finally {
             lock.writeLock().unlock();

@@ -83,14 +83,25 @@ public class ItemProcessingTask implements Runnable {
 
             this.productsQuantity.merge(goodName, tickResponse.getQuantity(), Long::sum);
 
+            LOGGER.debug("Products data updated with value: {}" + tickResponse.toString());
+
             numberOfTicksToProcess.decrementAndGet();
 
-            if (itemSet.contains(item)) {
+        if (itemSet.contains(item)) {
+            Item presentItem = itemSet
+                    .stream()
+                    .filter(currentItem -> currentItem.compareTo(item) == 0)
+                    .findFirst()
+                    .get();
 
-                Item presentItem = itemSet.stream().filter(currentItem -> currentItem.compareTo(item) == 0).findFirst().get();
-                presentItem.setQuantity(presentItem.getQuantity() + item.getQuantity());
+            long quantity = presentItem.getQuantity() + item.getQuantity();
+            if (quantity == 0) {
+                itemSet.remove(presentItem);
                 return;
             }
+            presentItem.setQuantity(quantity);
+            return;
+        }
             itemSet.add(item);
 
         } finally {
