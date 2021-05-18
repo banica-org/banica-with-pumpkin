@@ -72,16 +72,23 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
     @Override
     public void returnPendingProduct(ProductBuySellRequest request, StreamObserver<BuySellProductResponse> responseObserver) {
         cleanPendingOrdersCollection(request);
-        sellProduct(request, responseObserver);
+
+        String sellMessage = String.format("Item with name %s was successfully returned to market.", request.getItemName());
+        addGoodToMarket(request, responseObserver, sellMessage);
     }
 
     @Override
     public void sellProduct(ProductBuySellRequest request, StreamObserver<BuySellProductResponse> responseObserver) {
+        String sellMessage = String.format("Item with name %s was successfully sold to market.", request.getItemName());
+        addGoodToMarket(request, responseObserver, sellMessage);
+    }
+
+
+    private void addGoodToMarket(ProductBuySellRequest request, StreamObserver<BuySellProductResponse> responseObserver, String message) {
         marketState.addProductToMarketState(request.getItemName(), request.getItemPrice(), request.getItemQuantity());
 
         BuySellProductResponse buySellProductResponse = BuySellProductResponse.newBuilder()
-                .setMessage(String.format("Item with name %s was successfully returned to market.",
-                        request.getItemName()))
+                .setMessage(message)
                 .build();
 
         responseObserver.onNext(buySellProductResponse);

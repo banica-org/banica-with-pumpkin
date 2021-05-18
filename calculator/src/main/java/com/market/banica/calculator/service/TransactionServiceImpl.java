@@ -63,10 +63,10 @@ public class TransactionServiceImpl implements TransactionService {
         StringBuilder stringBuilder = new StringBuilder();
 
         for (ItemDto item : itemsToSell) {
-            String responseMessage = this.auroraClientSideService.sellProductToMarket(item.getName(), item.getPrice().doubleValue(), item.getQuantity(), item.getLocation());
+            String responseMessage = this.auroraClientSideService
+                    .sellProductToMarket(item.getName(), item.getPrice().doubleValue(), item.getQuantity(), item.getLocation());
             stringBuilder.append(responseMessage).append(System.lineSeparator());
         }
-
         return stringBuilder.toString().trim();
     }
 

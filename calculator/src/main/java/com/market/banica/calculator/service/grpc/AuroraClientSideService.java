@@ -111,10 +111,8 @@ public class AuroraClientSideService {
     }
 
     public String sellProductToMarket(String itemName, double itemPrice, long itemQuantity, String itemOrigin) {
-
         String message = String.format(SELL_PRODUCT_PATTERN, itemOrigin.toLowerCase(Locale.ROOT), itemName, itemPrice, itemQuantity, itemOrigin);
         Aurora.AuroraResponse auroraResponse = getAuroraResponse(message);
-
         BuySellProductResponse buySellProductResponse = unpackAndValidateResponse(auroraResponse, BuySellProductResponse.class);
 
         LOGGER.info(buySellProductResponse.getMessage());
