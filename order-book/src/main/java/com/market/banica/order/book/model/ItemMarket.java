@@ -25,11 +25,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 @Component
 public class ItemMarket {
 
+    private static final Logger LOGGER = LogManager.getLogger(ItemMarket.class);
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private final Map<String, TreeSet<Item>> allItems;
     private final Map<String, Long> productsQuantity;
-
-    private static final Logger LOGGER = LogManager.getLogger(ItemMarket.class);
 
     @Autowired
     public ItemMarket() {
@@ -61,17 +60,14 @@ public class ItemMarket {
     }
 
     public void updateItem(Aurora.AuroraResponse response) {
-
         try {
             lock.writeLock().lock();
             TickResponse tickResponse;
-
             try {
                 tickResponse = response.getMessage().unpack(TickResponse.class);
             } catch (InvalidProtocolBufferException e) {
                 throw new IncorrectResponseException("Incorrect response! Response must be from TickResponse type.");
             }
-
             String goodName = tickResponse.getGoodName();
             DataValidator.validateIncomingData(goodName);
 
@@ -81,36 +77,32 @@ public class ItemMarket {
                 return;
             }
             Item item = populateItem(tickResponse);
-
             this.productsQuantity.merge(goodName, tickResponse.getQuantity(), Long::sum);
-
             LOGGER.debug("Products data updated with value: {}" + tickResponse.toString());
 
             if (itemSet.contains(item)) {
+                Item presentItem = itemSet
+                        .stream()
+                        .filter(currentItem -> currentItem.compareTo(item) == 0)
+                        .findFirst()
+                        .get();
 
-                Item presentItem = itemSet.stream().filter(currentItem -> currentItem.compareTo(item) == 0).findFirst().get();
                 long quantity = presentItem.getQuantity() + item.getQuantity();
-
                 if (quantity == 0) {
                     itemSet.remove(presentItem);
                     return;
                 }
-
                 presentItem.setQuantity(quantity);
                 return;
             }
             itemSet.add(item);
-
         } finally {
             lock.writeLock().unlock();
         }
-
     }
 
     public List<OrderBookLayer> getRequestedItem(String itemName, long quantity) {
-
         LOGGER.info("Getting requested item: {} with quantity: {}", itemName, quantity);
-
         DataValidator.validateIncomingData(itemName);
 
         TreeSet<Item> items = this.allItems.get(itemName);
@@ -124,9 +116,7 @@ public class ItemMarket {
         List<OrderBookLayer> layers;
         try {
             lock.readLock().lock();
-
             layers = new ArrayList<>();
-
             Iterator<Item> iterator = items.iterator();
             long itemLeft = quantity;
 
@@ -153,17 +143,14 @@ public class ItemMarket {
                 .setPrice(currentItem.getPrice());
 
         if (currentItem.getQuantity() > itemLeft) {
-
             currentLayer.setQuantity(itemLeft);
         } else {
-
             currentLayer.setQuantity(currentItem.getQuantity());
         }
         return currentLayer;
     }
 
     private Item populateItem(TickResponse tickResponse) {
-
         Item item = new Item();
         item.setPrice(tickResponse.getPrice());
         item.setQuantity(tickResponse.getQuantity());
@@ -186,11 +173,9 @@ public class ItemMarket {
                     itemsIterator.remove();
                 }
             }
-
             productsQuantity.put(itemName, productsQuantity.get(itemName) - removedItemProductQuantity);
         } finally {
             lock.writeLock().unlock();
         }
     }
-
 }

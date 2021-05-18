@@ -44,10 +44,12 @@ public class RequestMapper {
     public static final String ORDERBOOK = "orderbook";
     public static final String AURORA = "aurora";
     public static final String MARKET = "market";
+
     public static final String AVAILABILITY_ACTION = "availability";
     public static final String RETURN_ACTION = "return";
     public static final String BUY_ACTION = "buy";
     public static final String SELL_ACTION = "sell";
+
     public static final String BAD_PUBLISHER_REQUEST = "Unknown Publisher";
     public static final String IN_CANCEL_ITEM_SUBSCRIPTION = "Forwarding to orderbook - cancelItemSubscription.";
     public static final String IN_ANNOUNCE_ITEM_INTEREST = "Forwarding to orderbook - announceItemInterest.";
@@ -177,11 +179,9 @@ public class RequestMapper {
 
     private Aurora.AuroraResponse renderMarketMapping(Aurora.AuroraRequest incomingRequest, ManagedChannel channelByKey) {
         LOGGER.debug("Mapping messages for market.");
-
         MarketServiceGrpc.MarketServiceBlockingStub marketStub = stubManager.getMarketBlockingStub(channelByKey);
 
         String[] topicSplit = incomingRequest.getTopic().split(SPLIT_SLASH_REGEX);
-
         String itemName = topicSplit[2];
         double itemPrice = Double.parseDouble(topicSplit[3]);
         long itemQuantity = Long.parseLong(topicSplit[4]);
@@ -200,12 +200,10 @@ public class RequestMapper {
                 return Aurora.AuroraResponse.newBuilder()
                         .setMessage(Any.pack(marketStub.checkAvailability(request.build())))
                         .build();
-
             case RETURN_ACTION:
                 return Aurora.AuroraResponse.newBuilder()
                         .setMessage(Any.pack(marketStub.returnPendingProduct(request.build())))
                         .build();
-
             case BUY_ACTION:
                 return Aurora.AuroraResponse.newBuilder()
                         .setMessage(Any.pack(marketStub.buyProduct(request.build())))
