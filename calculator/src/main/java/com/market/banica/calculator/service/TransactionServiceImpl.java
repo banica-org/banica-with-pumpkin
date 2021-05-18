@@ -10,18 +10,27 @@ import com.market.banica.calculator.service.contract.TransactionService;
 import com.market.banica.calculator.service.grpc.AuroraClientSideService;
 import com.market.banica.common.exception.ProductNotAvailableException;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.validation.ConstraintViolation;
+import javax.validation.Validation;
+import javax.validation.Validator;
+import javax.validation.ValidatorFactory;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor(onConstructor = @__(@Autowired))
 public class TransactionServiceImpl implements TransactionService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TransactionServiceImpl.class);
+    
     private static final String PRODUCT_NOT_AVAILABLE_MESSAGE = "%s with quantity %d is currently not available on the %s market";
 
     private final CalculatorService calculatorService;
@@ -42,7 +51,7 @@ public class TransactionServiceImpl implements TransactionService {
                 Origin productOrigin = Origin.valueOf(productSpecification.getLocation().toUpperCase(Locale.ROOT));
 
                 AvailabilityResponse availabilityResponse = this.auroraClientSideService
-                                .checkAvailability(productName, productPrice.doubleValue(), productQuantity, productOrigin);
+                        .checkAvailability(productName, productPrice.doubleValue(), productQuantity, productOrigin);
 
                 if (!availabilityResponse.getIsAvailable()) {
                     returnPendingProducts(pendingItems);
@@ -60,6 +69,8 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     public String sellProduct(List<ItemDto> itemsToSell) {
+        validateData(itemsToSell);
+
         StringBuilder stringBuilder = new StringBuilder();
 
         for (ItemDto item : itemsToSell) {
@@ -68,6 +79,25 @@ public class TransactionServiceImpl implements TransactionService {
             stringBuilder.append(responseMessage).append(System.lineSeparator());
         }
         return stringBuilder.toString().trim();
+    }
+
+    private void validateData(List<ItemDto> itemsToSell) {
+        for (ItemDto itemDto : itemsToSell) {
+            ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory();
+            Validator validator = validatorFactory.getValidator();
+
+            Set<ConstraintViolation<ItemDto>> validate = validator.validate(itemDto);
+
+            if (!validate.isEmpty()) {
+                StringBuilder exceptionMessageBuilder = new StringBuilder();
+                for (ConstraintViolation<ItemDto> violation : validate) {
+                    String exceptionMessage = violation.getMessage();
+                    exceptionMessageBuilder.append(exceptionMessage).append(" ");
+                    LOGGER.error(exceptionMessage);
+                }
+                throw new IllegalArgumentException(String.format("Item is not valid: %s, ", exceptionMessageBuilder.toString().trim()));
+            }
+        }
     }
 
     private List<ProductDto> getNotCompoundProducts(List<ProductDto> purchaseProducts) {
