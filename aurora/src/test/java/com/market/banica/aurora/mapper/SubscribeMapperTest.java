@@ -9,6 +9,7 @@ import com.market.banica.aurora.util.FakeServerGenerator;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.inprocess.InProcessChannelBuilder;
+import io.grpc.stub.AbstractStub;
 import io.grpc.stub.StreamObserver;
 import io.grpc.testing.GrpcCleanupRule;
 import org.junit.Rule;
@@ -29,6 +30,8 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -56,26 +59,19 @@ class SubscribeMapperTest {
     private static final ManagedChannel MARKET_SERVER_CHANNEL = InProcessChannelBuilder
             .forName(MARKET_SERVER_NAME)
             .executor(Executors.newSingleThreadExecutor()).build();
-
-    private final MarketServiceGrpc.MarketServiceStub marketStub = MarketServiceGrpc.newStub(MARKET_SERVER_CHANNEL);
-    private final AuroraServiceGrpc.AuroraServiceStub auroraStub = AuroraServiceGrpc.newStub(AURORA_SERVER_CHANNEL);
-
-    private final StreamObserver<Aurora.AuroraResponse> responseObserver = mock(StreamObserver.class);
-
     @Rule
     public static GrpcCleanupRule grpcCleanup = new GrpcCleanupRule();
-
+    private static Map.Entry<String, ManagedChannel> dummyEntry;
+    private final AbstractStub<? extends AbstractStub<?>> marketStub = MarketServiceGrpc.newStub(MARKET_SERVER_CHANNEL);
+    private final AbstractStub<? extends AbstractStub<?>> auroraStub = AuroraServiceGrpc.newStub(AURORA_SERVER_CHANNEL);
+    private final StreamObserver<Aurora.AuroraResponse> responseObserver = mock(StreamObserver.class);
     @Mock
     private ChannelManager channelManager;
-
     @Mock
     private StubManager stubManager;
-
     @InjectMocks
     @Spy
     private SubscribeMapper subscribeMapper;
-
-    private static Map.Entry<String, ManagedChannel> dummyEntry;
 
     @BeforeAll
     static void setUp() throws IOException {
@@ -118,7 +114,8 @@ class SubscribeMapperTest {
     void renderSubscribeWithRequestForMarketServiceSubscribesResponseObserverAndCallsOnNextAndOnCompleted() throws InterruptedException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         //Arrange
         when(channelManager.getAllChannelsContainingPrefix(any())).thenReturn(Collections.singletonList(dummyEntry));
-        when(stubManager.getMarketStub(any())).thenReturn(marketStub);
+        String destination = "market";
+        doReturn(marketStub).when(stubManager).getStub(any(ManagedChannel.class), eq(destination));
 
         //Act
         subscribeMapper.renderSubscribe(MARKET_REQUEST, responseObserver);
@@ -126,7 +123,7 @@ class SubscribeMapperTest {
         Thread.sleep(1000);
 
         //Assert
-        verify(stubManager, times(1)).getMarketStub(any());
+        verify(stubManager, times(1)).getStub(any(ManagedChannel.class), eq(destination));
         verify(responseObserver, times(1)).onNext(any());
         verify(responseObserver, times(1)).onCompleted();
     }
@@ -135,7 +132,8 @@ class SubscribeMapperTest {
     void renderSubscribeWithRequestForAuroraServiceSubscribesResponseObserverAndCallsOnNextAndOnCompleted() throws InterruptedException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         //Arrange
         when(channelManager.getAllChannelsContainingPrefix(any())).thenReturn(Collections.singletonList(dummyEntry));
-        when(stubManager.getAuroraStub(any())).thenReturn(auroraStub);
+        String destination = "aurora";
+        doReturn(auroraStub).when(stubManager).getStub(any(ManagedChannel.class), eq(destination));
 
         //Act
         subscribeMapper.renderSubscribe(AURORA_REQUEST, responseObserver);
@@ -143,7 +141,7 @@ class SubscribeMapperTest {
         Thread.sleep(1000);
 
         //Assert
-        verify(stubManager, times(1)).getAuroraStub(any());
+        verify(stubManager, times(1)).getStub(any(ManagedChannel.class), eq(destination));
         verify(responseObserver, times(3)).onNext(any());
         verify(responseObserver, times(1)).onCompleted();
     }

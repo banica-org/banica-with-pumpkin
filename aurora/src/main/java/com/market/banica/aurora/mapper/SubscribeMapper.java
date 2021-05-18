@@ -1,9 +1,7 @@
 package com.market.banica.aurora.mapper;
 
 import com.aurora.Aurora;
-import com.aurora.AuroraServiceGrpc;
 import com.market.MarketDataRequest;
-import com.market.MarketServiceGrpc;
 import com.market.TickResponse;
 import com.market.banica.aurora.config.ChannelManager;
 import com.market.banica.aurora.config.StubManager;
@@ -27,12 +25,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Service
 public class SubscribeMapper {
 
-    private final ChannelManager channelManager;
-    private final StubManager stubManager;
-
     public static final String ORDERBOOK = "orderbook";
     public static final String AURORA = "aurora";
     public static final String MARKET = "market";
+    private final ChannelManager channelManager;
+    private final StubManager stubManager;
 
     @Autowired
     public SubscribeMapper(ChannelManager channelManager, StubManager stubManager) {
@@ -75,7 +72,8 @@ public class SubscribeMapper {
         AtomicInteger openStreams = new AtomicInteger(channelsWithPrefix.size());
 
         for (Map.Entry<String, ManagedChannel> channel : channelsWithPrefix) {
-            AbstractStub<AuroraServiceGrpc.AuroraServiceStub> auroraStub = stubManager.getAuroraStub(channel.getValue());
+            AbstractStub<? extends AbstractStub<?>> auroraStub = stubManager.getStub(channel.getValue(), AURORA);
+
             Method auroraSubscribe = auroraStub.getClass().getMethod("subscribe", Aurora.AuroraRequest.class, StreamObserver.class);
 
             auroraSubscribe.invoke(auroraStub, incomingRequest, new GenericObserver<TickResponse>(incomingRequest.getClientId(), responseObserver
@@ -93,14 +91,14 @@ public class SubscribeMapper {
                 .setGoodName(itemForSubscribing)
                 .build();
 
+
         for (Map.Entry<String, ManagedChannel> channel : channelsWithPrefix) {
-            AbstractStub<MarketServiceGrpc.MarketServiceStub> marketStub = stubManager.getMarketStub(channel.getValue());
+            AbstractStub<? extends AbstractStub<?>> marketStub = stubManager.getStub(channel.getValue(), MARKET);
 
             Method marketSubscribeForItem = marketStub.getClass().getMethod("subscribeForItem", MarketDataRequest.class, StreamObserver.class);
 
             marketSubscribeForItem.invoke(marketStub, marketDataRequest, new GenericObserver<TickResponse>(incomingRequest.getClientId(), responseObserver
                     , openStreams, channel.getKey(), marketDataRequest.getGoodName()));
         }
-
     }
 }
