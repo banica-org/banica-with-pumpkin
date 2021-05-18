@@ -41,9 +41,11 @@ public class RequestMapper {
     public static final String ORDERBOOK = "orderbook";
     public static final String AURORA = "aurora";
     public static final String MARKET = "market";
+
     public static final String AVAILABILITY_ACTION = "availability";
     public static final String RETURN_ACTION = "return";
     public static final String BUY_ACTION = "buy";
+
     public static final String BAD_PUBLISHER_REQUEST = "Unknown Publisher";
     public static final String IN_CANCEL_ITEM_SUBSCRIPTION = "Forwarding to orderbook - cancelItemSubscription.";
     public static final String IN_ANNOUNCE_ITEM_INTEREST = "Forwarding to orderbook - announceItemInterest.";
@@ -82,7 +84,7 @@ public class RequestMapper {
     }
 
     private Aurora.AuroraResponse renderAuroraMapping(Aurora.AuroraRequest incomingRequest, ManagedChannel channelByKey) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        LOGGER.info("Mapping request for aurora.");
+        LOGGER.debug("Mapping request for aurora.");
         AbstractStub<? extends AbstractBlockingStub<?>> auroraStub = stubManager.getBlockingStub(channelByKey, AURORA);
 
         Method auroraRequest = auroraStub.getClass().getMethod("request", Aurora.AuroraRequest.class);
@@ -145,7 +147,6 @@ public class RequestMapper {
                 .build();
     }
 
-
     private Aurora.AuroraResponse processSubscribeForItemRequest(Aurora.AuroraRequest incomingRequest, AbstractBlockingStub<? extends AbstractBlockingStub<?>> orderBookServiceBlockingStub, String itemName) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         LOGGER.info(IN_ANNOUNCE_ITEM_INTEREST);
 
@@ -186,7 +187,6 @@ public class RequestMapper {
         AbstractBlockingStub<? extends AbstractBlockingStub<?>> marketBlockingStub = stubManager.getBlockingStub(channelByKey, MARKET);
 
         String[] topicSplit = incomingRequest.getTopic().split(SPLIT_SLASH_REGEX);
-
         String itemName = topicSplit[2];
         double itemPrice = Double.parseDouble(topicSplit[3]);
         long itemQuantity = Long.parseLong(topicSplit[4]);
@@ -209,12 +209,10 @@ public class RequestMapper {
                 return Aurora.AuroraResponse.newBuilder()
                         .setMessage(Any.pack((AvailabilityResponse) marketCheckAvailability.invoke(marketBlockingStub, request.build())))
                         .build();
-
             case RETURN_ACTION:
                 return Aurora.AuroraResponse.newBuilder()
                         .setMessage(Any.pack((BuySellProductResponse) marketReturnPendingProduct.invoke(marketBlockingStub, request.build())))
                         .build();
-
             case BUY_ACTION:
                 return Aurora.AuroraResponse.newBuilder()
                         .setMessage(Any.pack((BuySellProductResponse) marketBuyProduct.invoke(marketBlockingStub, request.build())))

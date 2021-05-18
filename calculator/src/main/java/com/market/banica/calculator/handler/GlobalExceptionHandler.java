@@ -1,7 +1,6 @@
 package com.market.banica.calculator.handler;
 
 import com.market.banica.common.exception.IncorrectResponseException;
-import com.market.banica.common.exception.NotFoundException;
 import com.market.banica.common.exception.ProductNotAvailableException;
 import com.market.banica.common.exception.TrackingException;
 import org.modelmapper.spi.ErrorMessage;
@@ -30,6 +29,4 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<ErrorMessage> customExceptionHandler(Exception exception) {
         return new ResponseEntity<>(new ErrorMessage(exception.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
     }
-
-
 }

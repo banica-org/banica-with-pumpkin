@@ -54,12 +54,10 @@ public class GenericObserver<S extends AbstractMessage> implements StreamObserve
                 forwardResponse.onNext(this.wrapReconnect(buildReconnect()));
             }
         }
-
         if (openStreams.decrementAndGet() == 0) {
             forwardResponse.onCompleted();
         }
     }
-
 
     @Override
     public void onCompleted() {

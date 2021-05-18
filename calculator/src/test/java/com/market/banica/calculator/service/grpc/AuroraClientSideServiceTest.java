@@ -29,12 +29,18 @@ public class AuroraClientSideServiceTest {
     @Test
     public void unpackAndValidateResponseUnpacksAndReturnsValidResponseWithValidArguments() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         //Arrange
-        Method unpackAndValidateResponse = auroraClientSideService.getClass().getDeclaredMethod("unpackAndValidateResponse", Aurora.AuroraResponse.class, Class.class);
+        Method unpackAndValidateResponse = auroraClientSideService.getClass()
+                .getDeclaredMethod("unpackAndValidateResponse", Aurora.AuroraResponse.class, Class.class);
         unpackAndValidateResponse.setAccessible(true);
-        Aurora.AuroraResponse auroraResponse = Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(AvailabilityResponse.newBuilder().build())).build();
+        Aurora.AuroraResponse auroraResponse = Aurora.AuroraResponse.newBuilder()
+                .setMessage(Any.pack(AvailabilityResponse.newBuilder().build()))
+                .build();
         AvailabilityResponse availabilityResponse = AvailabilityResponse.newBuilder().build();
+
         //Act
-        Object actualResponse = unpackAndValidateResponse.invoke(auroraClientSideService, auroraResponse, AvailabilityResponse.class);
+        Object actualResponse = unpackAndValidateResponse
+                .invoke(auroraClientSideService, auroraResponse, AvailabilityResponse.class);
+
         //Assert
         assertEquals(availabilityResponse, actualResponse);
     }
@@ -45,11 +51,15 @@ public class AuroraClientSideServiceTest {
         Method unpackAndValidateResponse = auroraClientSideService.getClass().getDeclaredMethod("unpackAndValidateResponse",
                 Aurora.AuroraResponse.class, Class.class);
         unpackAndValidateResponse.setAccessible(true);
-        Aurora.AuroraResponse auroraResponse = Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(AvailabilityResponse.newBuilder().build())).build();
+        Aurora.AuroraResponse auroraResponse = Aurora.AuroraResponse.newBuilder()
+                .setMessage(Any.pack(AvailabilityResponse.newBuilder().build()))
+                .build();
         try {
+
             //Act
             unpackAndValidateResponse.invoke(auroraClientSideService, auroraResponse, BuySellProductResponse.class);
         } catch (IllegalAccessException | InvocationTargetException e) {
+
             //Assert
             assertThat(e.getCause(), instanceOf(IncorrectResponseException.class));
         }

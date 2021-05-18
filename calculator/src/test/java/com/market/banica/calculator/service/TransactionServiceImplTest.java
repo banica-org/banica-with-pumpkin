@@ -75,10 +75,23 @@ class TransactionServiceImplTest {
     @Test
     void buyProductShouldReturnPurchaseProductRecipe() throws ProductNotAvailableException {
         //Arrange
-        when(calculatorService.getProduct(CLIENT_ID, ITEM_NAME_BANICA, ITEM_QUANTITY)).thenReturn(purchaseProducts);
-        AvailabilityResponse eggsAvailabilityResponse = generateAvailabilityResponseForAvailableProduct(ITEM_NAME_EGGS, ITEM_PRICE.doubleValue(), ITEM_QUANTITY, Origin.AMERICA);
+        when(calculatorService.getProduct(
+                CLIENT_ID,
+                ITEM_NAME_BANICA,
+                ITEM_QUANTITY))
+                .thenReturn(purchaseProducts);
+        AvailabilityResponse eggsAvailabilityResponse = generateAvailabilityResponseForAvailableProduct(
+                ITEM_NAME_EGGS,
+                ITEM_PRICE.doubleValue(),
+                ITEM_QUANTITY,
+                Origin.AMERICA);
+
         when(auroraClientSideService.checkAvailability(ITEM_NAME_EGGS, ITEM_PRICE.doubleValue(), ITEM_QUANTITY, Origin.AMERICA)).thenReturn(eggsAvailabilityResponse);
-        AvailabilityResponse crustsAvailabilityResponse = generateAvailabilityResponseForAvailableProduct(ITEM_NAME_CRUSTS, ITEM_PRICE.doubleValue(), ITEM_QUANTITY, Origin.AMERICA);
+        AvailabilityResponse crustsAvailabilityResponse = generateAvailabilityResponseForAvailableProduct(
+                ITEM_NAME_CRUSTS,
+                ITEM_PRICE.doubleValue(),
+                ITEM_QUANTITY,
+                Origin.AMERICA);
         when(auroraClientSideService.checkAvailability(ITEM_NAME_CRUSTS, ITEM_PRICE.doubleValue(), ITEM_QUANTITY, Origin.AMERICA)).thenReturn(crustsAvailabilityResponse);
 
         //Act
@@ -96,9 +109,18 @@ class TransactionServiceImplTest {
         assertThrows(ProductNotAvailableException.class, () -> {
             //Arrange
             when(calculatorService.getProduct(CLIENT_ID, ITEM_NAME_BANICA, ITEM_QUANTITY)).thenReturn(purchaseProducts);
-            AvailabilityResponse eggsAvailabilityResponse = generateAvailabilityResponseForAvailableProduct(ITEM_NAME_EGGS, ITEM_PRICE.doubleValue(), ITEM_QUANTITY, Origin.AMERICA);
+            AvailabilityResponse eggsAvailabilityResponse = generateAvailabilityResponseForAvailableProduct(
+                    ITEM_NAME_EGGS,
+                    ITEM_PRICE.doubleValue(),
+                    ITEM_QUANTITY,
+                    Origin.AMERICA);
             when(auroraClientSideService.checkAvailability(ITEM_NAME_EGGS, ITEM_PRICE.doubleValue(), ITEM_QUANTITY, Origin.AMERICA)).thenReturn(eggsAvailabilityResponse);
-            AvailabilityResponse crustsAvailabilityResponse = generateAvailabilityResponseForUnavailableProduct(ITEM_NAME_CRUSTS, ITEM_PRICE.doubleValue(), ITEM_QUANTITY, Origin.AMERICA);
+
+            AvailabilityResponse crustsAvailabilityResponse = generateAvailabilityResponseForUnavailableProduct(
+                    ITEM_NAME_CRUSTS,
+                    ITEM_PRICE.doubleValue(),
+                    ITEM_QUANTITY,
+                    Origin.AMERICA);
             when(auroraClientSideService.checkAvailability(ITEM_NAME_CRUSTS, ITEM_PRICE.doubleValue(), ITEM_QUANTITY, Origin.AMERICA)).thenReturn(crustsAvailabilityResponse);
 
             //Act
@@ -141,5 +163,4 @@ class TransactionServiceImplTest {
                 .build();
 
     }
-
 }

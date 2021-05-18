@@ -56,10 +56,13 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
 
     @Override
     public void buyProduct(ProductBuySellRequest request, StreamObserver<BuySellProductResponse> responseObserver) {
-
         cleanPendingOrdersCollection(request);
 
-        BuySellProductResponse buySellProductResponse = BuySellProductResponse.newBuilder().setMessage(String.format("Item with name %s was successfully bought from %s market.", request.getItemName(), request.getMarketName())).build();
+        BuySellProductResponse buySellProductResponse = BuySellProductResponse.newBuilder()
+                .setMessage(String.format("Item with name %s was successfully bought from %s market.",
+                        request.getItemName(),
+                        request.getMarketName()))
+                .build();
 
         responseObserver.onNext(buySellProductResponse);
         responseObserver.onCompleted();
@@ -68,11 +71,13 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
 
     @Override
     public void returnPendingProduct(ProductBuySellRequest request, StreamObserver<BuySellProductResponse> responseObserver) {
-
         cleanPendingOrdersCollection(request);
         marketState.addProductToMarketState(request.getItemName(), request.getItemPrice(), request.getItemQuantity());
 
-        BuySellProductResponse buySellProductResponse = BuySellProductResponse.newBuilder().setMessage(String.format("Item with name %s was successfully returned to market.", request.getItemName())).build();
+        BuySellProductResponse buySellProductResponse = BuySellProductResponse.newBuilder()
+                .setMessage(String.format("Item with name %s was successfully returned to market.",
+                        request.getItemName()))
+                .build();
 
         responseObserver.onNext(buySellProductResponse);
         responseObserver.onCompleted();
@@ -87,7 +92,6 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
         double productPrice = request.getItemPrice();
         long productQuantity = request.getItemQuantity();
         String marketName = request.getMarketName();
-
 
         try {
             marketTick = marketState.removeItemFromState(productName, productQuantity, productPrice);
@@ -125,8 +129,11 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
 
             if (marketTick.getQuantity() > productQuantity) {
                 long newMarketTickQuantity = marketTick.getQuantity() - productQuantity;
-
-                MarketTick newMarketTick = new MarketTick(marketTick.getGood(), newMarketTickQuantity, marketTick.getPrice(), marketTick.getTimestamp());
+                MarketTick newMarketTick = new MarketTick(
+                        marketTick.getGood(),
+                        newMarketTickQuantity,
+                        marketTick.getPrice(),
+                        marketTick.getTimestamp());
 
                 pendingOrders.get(productName).put(productPrice, newMarketTick);
             } else {
@@ -167,5 +174,4 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
         }
         return true;
     }
-
 }

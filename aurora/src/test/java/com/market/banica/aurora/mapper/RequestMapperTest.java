@@ -73,11 +73,14 @@ class RequestMapperTest {
     private static final ManagedChannel MARKET_SERVER_CHANNEL = InProcessChannelBuilder
             .forName(MARKET_SERVER_NAME)
             .executor(Executors.newSingleThreadExecutor()).build();
+
+    private final OrderBookServiceGrpc.OrderBookServiceBlockingStub orderBookBlockingStub = OrderBookServiceGrpc.newBlockingStub(ORDER_BOOK_SERVER_CHANNEL);
+    private final AuroraServiceGrpc.AuroraServiceBlockingStub auroraBlockingStub = AuroraServiceGrpc.newBlockingStub(AURORA_SERVER_CHANNEL);
+    private final MarketServiceGrpc.MarketServiceBlockingStub marketBlockingStub = MarketServiceGrpc.newBlockingStub(MARKET_SERVER_CHANNEL);
+
     @Rule
     public static GrpcCleanupRule grpcCleanup = new GrpcCleanupRule();
-    private final AbstractBlockingStub<? extends AbstractBlockingStub<?>> orderBookBlockingStub = OrderBookServiceGrpc.newBlockingStub(ORDER_BOOK_SERVER_CHANNEL);
-    private final AbstractBlockingStub<? extends AbstractBlockingStub<?>> auroraBlockingStub = AuroraServiceGrpc.newBlockingStub(AURORA_SERVER_CHANNEL);
-    private final AbstractBlockingStub<? extends AbstractBlockingStub<?>> marketBlockingStub = MarketServiceGrpc.newBlockingStub(MARKET_SERVER_CHANNEL);
+
     @Mock
     private ChannelManager channelManager;
 
