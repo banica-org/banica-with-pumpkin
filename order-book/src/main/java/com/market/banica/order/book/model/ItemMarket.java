@@ -71,7 +71,7 @@ public class ItemMarket {
         LOGGER.debug("Processing AuroraResponse: {}", response);
         numberOfTicksToProcess.incrementAndGet();
         itemProcessingExecutor.execute(new ItemProcessingTask(response, allItems, productsQuantity,
-                numberOfTicksToProcess, managedChannel, backPressureStarted, orderBookGrpcPort));
+                numberOfTicksToProcess, managedChannel, backPressureStarted, orderBookGrpcPort, lock));
     }
 
     public List<OrderBookLayer> getRequestedItem(String itemName, long quantity) {
