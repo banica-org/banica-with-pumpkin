@@ -12,6 +12,7 @@ import com.market.banica.generator.model.MarketTick;
 import com.market.banica.generator.service.grpc.MarketService;
 import io.grpc.Status;
 import io.grpc.stub.ServerCallStreamObserver;
+import io.grpc.stub.StreamObserver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -52,7 +53,6 @@ class MarketServiceImplTest {
     private final double PRICE_2 = 2.0;
     private final long TIMESTAMP = System.currentTimeMillis();
 
-
     private final MarketDataRequest MARKET_DATA_REQUEST = MarketDataRequest.newBuilder()
             .setGoodName(GOOD_BANICA)
             .build();
@@ -89,9 +89,9 @@ class MarketServiceImplTest {
 
         when(marketState.generateMarketTicks(GOOD_BANICA)).thenReturn(ticks);
 
+        StreamObserver<MarketDataRequest> marketDataRequest = marketService.subscribeForItem(subscriberSubscribe);
 
-        marketService.subscribeForItem(MARKET_DATA_REQUEST, subscriberSubscribe);
-
+        marketDataRequest.onNext(MARKET_DATA_REQUEST);
 
         verify(marketSubscriptionServiceImpl, times(1))
                 .subscribe(MARKET_DATA_REQUEST, subscriberSubscribe);
@@ -116,18 +116,9 @@ class MarketServiceImplTest {
         when(marketState.generateMarketTicks(GOOD_BANICA)).thenReturn(ticks);
         when(subscriberSubscribe.isCancelled()).thenReturn(true);
 
-//        MarketDataRequest marketDataRequest = MarketDataRequest.newBuilder()
-//                .setClientId(incomingRequest.getClientId())
-//                .setGoodName(itemForSubscribing)
-//                .build();
-//
-//
-//                .subscribeForItem(new MarketTickObserver(incomingRequest.getClientId(), responseObserver, openStreams,
-//                        channel.getKey(), marketDataRequest.getGoodName(), marketDataRequest, backPressureManager, orderBookIdentifier)));
+        StreamObserver<MarketDataRequest> marketDataRequest = marketService.subscribeForItem(subscriberSubscribe);
 
-
-        marketService.subscribeForItem(MARKET_DATA_REQUEST, subscriberSubscribe);
-
+        marketDataRequest.onNext(MARKET_DATA_REQUEST);
 
         verify(marketSubscriptionServiceImpl, times(0))
                 .subscribe(MARKET_DATA_REQUEST, subscriberSubscribe);
