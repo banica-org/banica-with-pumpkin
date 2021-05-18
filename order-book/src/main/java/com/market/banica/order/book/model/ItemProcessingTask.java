@@ -36,13 +36,14 @@ public class ItemProcessingTask implements Runnable {
 
     private final Aurora.AuroraResponse response;
 
-    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private final ReentrantReadWriteLock lock;
 
     private final AtomicInteger numberOfTicksToProcess;
     private final AtomicBoolean backPressureStarted;
 
     public ItemProcessingTask(Aurora.AuroraResponse response, Map<String, TreeSet<Item>> allItems, Map<String, Long> productsQuantity,
-                              AtomicInteger numberOfTicksToProcess, ManagedChannel managedChannel, AtomicBoolean backPressureStarted, String orderBookGrpcPort) {
+                              AtomicInteger numberOfTicksToProcess, ManagedChannel managedChannel, AtomicBoolean backPressureStarted,
+                              String orderBookGrpcPort, ReentrantReadWriteLock lock) {
         this.response = response;
         this.allItems = allItems;
         this.productsQuantity = productsQuantity;
@@ -50,6 +51,7 @@ public class ItemProcessingTask implements Runnable {
         this.managedChannel = managedChannel;
         this.backPressureStarted = backPressureStarted;
         this.orderBookGrpcPort = orderBookGrpcPort;
+        this.lock = lock;
     }
 
     @Override
