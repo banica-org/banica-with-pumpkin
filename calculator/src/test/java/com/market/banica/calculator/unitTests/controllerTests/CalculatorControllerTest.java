@@ -51,7 +51,6 @@ public class CalculatorControllerTest {
     @BeforeEach
     private void setUp() {
         JacksonTester.initFields(this, new ObjectMapper());
-
         clientId = "dummyClient";
         product = "baklava";
         quantity = 100;
@@ -60,41 +59,40 @@ public class CalculatorControllerTest {
 
     @Test
     void getRecipeShouldReturnTheRecipeWithBestPrice() throws Exception {
-
         List<ProductDto> productDtoList = new ArrayList<>();
         ProductDto dummyRecipe = getProductDto();
         productDtoList.add(dummyRecipe);
 
-
         given(calculatorService.getProduct(clientId, product, quantity)).willReturn(productDtoList);
 
-
-        MockHttpServletResponse response = mockMvc.perform(MockMvcRequestBuilders.get
-                ("/calculator/" + clientId + "/" + product + "/" + quantity)
-                .accept(MediaType.APPLICATION_JSON))
-                .andReturn().getResponse();
-
+        MockHttpServletResponse response = mockMvc
+                .perform(MockMvcRequestBuilders
+                        .get("/calculator/" + clientId + "/" + product + "/" + quantity)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andReturn()
+                .getResponse();
 
         assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
-        assertThat(response.getContentAsString()).isEqualTo(jacksonResponseProductDtoList.write(productDtoList).getJson());
+        assertThat(response.getContentAsString())
+                .isEqualTo(jacksonResponseProductDtoList
+                        .write(productDtoList)
+                        .getJson());
     }
 
     @Test
     void buyProductShouldReturnThePurchasedProductRecipe() throws Exception {
-
         List<ProductDto> productDtoList = new ArrayList<>();
         ProductDto dummyRecipe = getProductDto();
         productDtoList.add(dummyRecipe);
 
-
         given(transactionService.buyProduct(clientId, product, quantity)).willReturn(productDtoList);
 
-
-        MockHttpServletResponse response = mockMvc.perform(MockMvcRequestBuilders.get
-                ("/calculator/buy/" + clientId + "/" + product + "/" + quantity)
-                .accept(MediaType.APPLICATION_JSON))
-                .andReturn().getResponse();
-
+        MockHttpServletResponse response = mockMvc
+                .perform(MockMvcRequestBuilders
+                        .get("/calculator/buy/" + clientId + "/" + product + "/" + quantity)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andReturn()
+                .getResponse();
 
         assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
         assertThat(response.getContentAsString()).isEqualTo(jacksonResponseProductDtoList.write(productDtoList).getJson());

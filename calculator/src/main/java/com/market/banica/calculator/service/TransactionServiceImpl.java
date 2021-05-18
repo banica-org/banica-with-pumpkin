@@ -30,22 +30,19 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     public List<ProductDto> buyProduct(String clientId, String itemName, long quantity) throws ProductNotAvailableException {
         List<ProductDto> purchaseProducts = this.calculatorService.getProduct(clientId, itemName, quantity);
-
         List<ProductDto> notCompoundProducts = getNotCompoundProducts(purchaseProducts);
-
         List<ItemDto> pendingItems = new ArrayList<>();
-
 
         for (ProductDto purchaseProduct : notCompoundProducts) {
             String productName = purchaseProduct.getItemName();
 
             for (ProductSpecification productSpecification : purchaseProduct.getProductSpecifications()) {
-
                 BigDecimal productPrice = productSpecification.getPrice();
                 Long productQuantity = productSpecification.getQuantity();
                 Origin productOrigin = Origin.valueOf(productSpecification.getLocation().toUpperCase(Locale.ROOT));
 
-                AvailabilityResponse availabilityResponse = this.auroraClientSideService.checkAvailability(productName, productPrice.doubleValue(), productQuantity, productOrigin);
+                AvailabilityResponse availabilityResponse = this.auroraClientSideService
+                                .checkAvailability(productName, productPrice.doubleValue(), productQuantity, productOrigin);
 
                 if (!availabilityResponse.getIsAvailable()) {
                     returnPendingProducts(pendingItems);
@@ -57,9 +54,7 @@ public class TransactionServiceImpl implements TransactionService {
                 pendingItems.add(new ItemDto(productName, productPrice, productOrigin.toString(), productQuantity));
             }
         }
-
         buyPendingProducts(pendingItems);
-
         return purchaseProducts;
     }
 

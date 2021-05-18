@@ -17,17 +17,12 @@ import static org.mockito.Mockito.times;
 @ExtendWith(MockitoExtension.class)
 class AuroraServiceImplTest {
 
-    private static final Aurora.AuroraRequest AURORA_REQUEST_BANICA = Aurora.AuroraRequest.newBuilder()
-            .setTopic("market/banica").setClientId("orderBook").build();
-
+    private static final Aurora.AuroraRequest AURORA_REQUEST_BANICA = Aurora.AuroraRequest.newBuilder().setTopic("market/banica").setClientId("orderBook").build();
+    private final StreamObserver<Aurora.AuroraResponse> responseObserver = mock(StreamObserver.class);
     @Mock
     private RequestHandler requestHandler;
-
     @Mock
     private SubscribeHandler subscribeHandler;
-
-    private final StreamObserver<Aurora.AuroraResponse> responseObserver = mock(StreamObserver.class);
-
     @InjectMocks
     private AuroraServiceImpl auroraService;
 
