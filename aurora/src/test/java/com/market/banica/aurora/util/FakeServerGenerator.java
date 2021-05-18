@@ -16,6 +16,7 @@ import com.orderbook.InterestsResponse;
 import com.orderbook.ItemOrderBookRequest;
 import com.orderbook.ItemOrderBookResponse;
 import com.orderbook.OrderBookServiceGrpc;
+import io.grpc.BindableService;
 import io.grpc.ManagedChannel;
 import io.grpc.inprocess.InProcessServerBuilder;
 import io.grpc.stub.StreamObserver;
@@ -33,7 +34,6 @@ public final class FakeServerGenerator {
     private static final Logger LOGGER = LoggerFactory.getLogger(FakeServerGenerator.class);
     private static final Map<String, ManagedChannel> channels = new ConcurrentHashMap<>();
 
-
     private static final String AURORA_SERVER_CHANNEL_NAME = "auroraServerChannel";
     private static final String ORDER_BOOK_SERVER_CHANNEL_NAME = "orderBookServerChannel";
     private static final String MARKET_SERVER_CHANNEL_NAME = "marketServerChannel";
@@ -44,26 +44,11 @@ public final class FakeServerGenerator {
 
     public static void createFakeServer(String serverName, GrpcCleanupRule grpcCleanup, ManagedChannel serverChannel) throws IOException {
         if (serverName.equalsIgnoreCase(AURORA_SERVER_NAME) && !channels.containsKey(AURORA_SERVER_CHANNEL_NAME)) {
-            grpcCleanup.register(InProcessServerBuilder
-                    .forName(serverName)
-                    .directExecutor()
-                    .addService(fakeReceivingAuroraService())
-                    .build()
-                    .start());
+            registerFakeServer(serverName, grpcCleanup, fakeReceivingAuroraService());
         } else if (serverName.equalsIgnoreCase(ORDER_BOOK_SERVER_NAME) && !channels.containsKey(ORDER_BOOK_SERVER_CHANNEL_NAME)) {
-            grpcCleanup.register(InProcessServerBuilder
-                    .forName(serverName)
-                    .directExecutor()
-                    .addService(fakeReceivingOrderBookService())
-                    .build()
-                    .start());
+            registerFakeServer(serverName, grpcCleanup, fakeReceivingOrderBookService());
         } else if (serverName.equalsIgnoreCase(MARKET_SERVER_NAME) && !channels.containsKey(MARKET_SERVER_CHANNEL_NAME)) {
-            grpcCleanup.register(InProcessServerBuilder
-                    .forName(serverName)
-                    .directExecutor()
-                    .addService(fakeReceivingMarketService())
-                    .build()
-                    .start());
+            registerFakeServer(serverName, grpcCleanup, fakeReceivingMarketService());
         } else {
             LOGGER.debug("Server with such name does not exist!");
             return;
@@ -71,6 +56,15 @@ public final class FakeServerGenerator {
 
         grpcCleanup.register(serverChannel);
         serverChannel.getState(true);
+    }
+
+    private static void registerFakeServer(String serverName, GrpcCleanupRule grpcCleanup, BindableService bindableService) throws IOException {
+        grpcCleanup.register(InProcessServerBuilder
+                .forName(serverName)
+                .directExecutor()
+                .addService(bindableService)
+                .build()
+                .start());
     }
 
     public static void addChannel(String key, ManagedChannel value) {
@@ -123,10 +117,26 @@ public final class FakeServerGenerator {
     private static MarketServiceGrpc.MarketServiceImplBase fakeReceivingMarketService() {
         return new MarketServiceGrpc.MarketServiceImplBase() {
             @Override
-            public void subscribeForItem(MarketDataRequest request, StreamObserver<TickResponse> responseObserver) {
-                responseObserver.onNext(TickResponse.newBuilder().build());
+            public StreamObserver<MarketDataRequest> subscribeForItem(StreamObserver<TickResponse> responseObserver) {
+                responseObserver.onNext(TickResponse.newBuilder().setGoodName("banica").build());
                 responseObserver.onCompleted();
-            };
+                return new StreamObserver<MarketDataRequest>() {
+                    @Override
+                    public void onNext(MarketDataRequest marketDataRequest) {
+
+                    }
+
+                    @Override
+                    public void onError(Throwable throwable) {
+
+                    }
+
+                    @Override
+                    public void onCompleted() {
+
+                    }
+                };
+            }
 
             @Override
             public void buyProduct(ProductBuySellRequest request, StreamObserver<BuySellProductResponse> responseObserver) {

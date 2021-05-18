@@ -358,7 +358,7 @@ class AuroraComponentIT {
         receiverChannel.getState(true);
         channelManager.addChannel(currentPublisher, receiverChannel);
 
-        Aurora.AuroraRequest request = Aurora.AuroraRequest.newBuilder().setTopic("market/eggs").build();
+        Aurora.AuroraRequest request = Aurora.AuroraRequest.newBuilder().setTopic("market/eggs/9091").build();
 
         ArrayList<TickResponse> expectedResponses = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
@@ -469,7 +469,7 @@ class AuroraComponentIT {
         receiverChannel.getState(true);
         channelManager.addChannel(currentPublisher, receiverChannel);
 
-        Aurora.AuroraRequest request = Aurora.AuroraRequest.newBuilder().setTopic("market/eggs").build();
+        Aurora.AuroraRequest request = Aurora.AuroraRequest.newBuilder().setTopic("market/eggs/9090").build();
 
         ArrayList<TickResponse> expectedResponses = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
@@ -710,35 +710,74 @@ class AuroraComponentIT {
 
     private MarketServiceGrpc.MarketServiceImplBase fakeReplyingMarketService() {
         return new MarketServiceGrpc.MarketServiceImplBase() {
+
             @Override
-            public void subscribeForItem(MarketDataRequest request, StreamObserver<TickResponse> responseObserver) {
-                for (int i = 0; i < 5; i++) {
-                    TickResponse response = TickResponse.newBuilder()
-                            .setGoodName(request.getGoodName())
-                            .build();
-                    responseObserver.onNext(response);
-                }
-                responseObserver.onCompleted();
+            public StreamObserver<MarketDataRequest> subscribeForItem(StreamObserver<TickResponse> responseObserver) {
+
+
+                return new StreamObserver<MarketDataRequest>() {
+                    @Override
+                    public void onNext(MarketDataRequest marketDataRequest) {
+                        for (int i = 0; i < 5; i++) {
+                            TickResponse response = TickResponse.newBuilder()
+                                    .setGoodName("eggs")
+                                    .build();
+                            responseObserver.onNext(response);
+                        }
+                        responseObserver.onCompleted();
+                    }
+
+                    @Override
+                    public void onError(Throwable throwable) {
+
+                    }
+
+                    @Override
+                    public void onCompleted() {
+
+                    }
+                };
             }
         };
+
+
     }
 
     MarketServiceGrpc.MarketServiceImplBase fakeErrorReplyingMarketService() {
         return new MarketServiceGrpc.MarketServiceImplBase() {
+
             @Override
-            public void subscribeForItem(MarketDataRequest request, StreamObserver<TickResponse> responseObserver) {
-                for (int i = 0; i < 5; i++) {
-                    if (i == 3) {
-                        responseObserver.onError(Status.ABORTED
-                                .withDescription("Aborting subscribe.")
-                                .asException());
-                        break;
+            public StreamObserver<MarketDataRequest> subscribeForItem(StreamObserver<TickResponse> responseObserver) {
+
+
+                return new StreamObserver<MarketDataRequest>() {
+                    @Override
+                    public void onNext(MarketDataRequest marketDataRequest) {
+                        for (int i = 0; i < 5; i++) {
+                            if (i == 3) {
+                                responseObserver.onError(Status.ABORTED
+                                        .withDescription("Aborting subscribe.")
+                                        .asException());
+                                break;
+                            }
+                            TickResponse response = TickResponse.newBuilder()
+                                    .setGoodName("eggs")
+                                    .build();
+                            responseObserver.onNext(response);
+                        }
+                        responseObserver.onCompleted();
                     }
-                    TickResponse response = TickResponse.newBuilder()
-                            .setGoodName(request.getGoodName())
-                            .build();
-                    responseObserver.onNext(response);
-                }
+
+                    @Override
+                    public void onError(Throwable throwable) {
+
+                    }
+
+                    @Override
+                    public void onCompleted() {
+
+                    }
+                };
             }
         };
     }

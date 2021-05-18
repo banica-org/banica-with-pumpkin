@@ -2,9 +2,12 @@ package com.market.banica.aurora.mapper;
 
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
+import com.market.MarketDataRequest;
 import com.market.MarketServiceGrpc;
+import com.market.banica.aurora.backpressure.BackPressureManager;
 import com.market.banica.aurora.config.ChannelManager;
 import com.market.banica.aurora.config.StubManager;
+import com.market.banica.aurora.observer.MarketTickObserver;
 import com.market.banica.aurora.util.FakeServerGenerator;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -26,6 +29,7 @@ import java.util.AbstractMap;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -63,6 +67,9 @@ class SubscribeMapperTest {
 
     @Rule
     public static GrpcCleanupRule grpcCleanup = new GrpcCleanupRule();
+
+    @Spy
+    private BackPressureManager backPressureManager;
 
     @Mock
     private ChannelManager channelManager;
