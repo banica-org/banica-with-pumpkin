@@ -128,8 +128,6 @@ public final class FakeServerGenerator {
                 responseObserver.onCompleted();
             }
 
-            ;
-
             @Override
             public void buyProduct(ProductBuySellRequest request, StreamObserver<BuySellProductResponse> responseObserver) {
                 responseObserver.onNext(BuySellProductResponse.newBuilder().build());
