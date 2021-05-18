@@ -4,10 +4,10 @@ import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
 import com.market.MarketDataRequest;
 import com.market.MarketServiceGrpc;
+import com.market.TickResponse;
 import com.market.banica.aurora.config.ChannelManager;
 import com.market.banica.aurora.config.StubManager;
-import com.market.banica.aurora.observer.AuroraObserver;
-import com.market.banica.aurora.observer.MarketTickObserver;
+import com.market.banica.aurora.observer.GenericObserver;
 import io.grpc.ManagedChannel;
 import io.grpc.Status;
 import io.grpc.stub.AbstractStub;
@@ -61,7 +61,7 @@ public class SubscribeMapper {
         } else if (destinationOfMessage.contains(ORDERBOOK)) {
             log.warn("Unsupported mapping have reached aurora.");
             responseObserver.onError(Status.NOT_FOUND
-                    .withDescription("No provided mapping for odrerbook streaming messages. " + incomingRequest.getTopic())
+                    .withDescription("No provided mapping for orderbook streaming messages. " + incomingRequest.getTopic())
                     .asException());
         } else {
             log.warn("Unsupported mapping have reached aurora.");
@@ -78,7 +78,8 @@ public class SubscribeMapper {
             AbstractStub<AuroraServiceGrpc.AuroraServiceStub> auroraStub = stubManager.getAuroraStub(channel.getValue());
             Method auroraSubscribe = auroraStub.getClass().getMethod("subscribe", Aurora.AuroraRequest.class, StreamObserver.class);
 
-            auroraSubscribe.invoke(auroraStub, incomingRequest, new AuroraObserver(incomingRequest, responseObserver, openStreams));
+            auroraSubscribe.invoke(auroraStub, incomingRequest, new GenericObserver<TickResponse>(incomingRequest.getClientId(), responseObserver
+                    , openStreams, channel.getKey(), "aurora requests"));
         }
     }
 
@@ -97,7 +98,7 @@ public class SubscribeMapper {
 
             Method marketSubscribeForItem = marketStub.getClass().getMethod("subscribeForItem", MarketDataRequest.class, StreamObserver.class);
 
-            marketSubscribeForItem.invoke(marketStub, marketDataRequest, new MarketTickObserver(incomingRequest.getClientId(), responseObserver
+            marketSubscribeForItem.invoke(marketStub, marketDataRequest, new GenericObserver<TickResponse>(incomingRequest.getClientId(), responseObserver
                     , openStreams, channel.getKey(), marketDataRequest.getGoodName()));
         }
 
