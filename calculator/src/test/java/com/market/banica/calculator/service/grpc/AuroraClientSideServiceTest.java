@@ -36,9 +36,11 @@ public class AuroraClientSideServiceTest {
                 .setMessage(Any.pack(AvailabilityResponse.newBuilder().build()))
                 .build();
         AvailabilityResponse availabilityResponse = AvailabilityResponse.newBuilder().build();
+
         //Act
         Object actualResponse = unpackAndValidateResponse
                 .invoke(auroraClientSideService, auroraResponse, AvailabilityResponse.class);
+
         //Assert
         assertEquals(availabilityResponse, actualResponse);
     }
@@ -53,9 +55,11 @@ public class AuroraClientSideServiceTest {
                 .setMessage(Any.pack(AvailabilityResponse.newBuilder().build()))
                 .build();
         try {
+
             //Act
             unpackAndValidateResponse.invoke(auroraClientSideService, auroraResponse, BuySellProductResponse.class);
         } catch (IllegalAccessException | InvocationTargetException e) {
+
             //Assert
             assertThat(e.getCause(), instanceOf(IncorrectResponseException.class));
         }
