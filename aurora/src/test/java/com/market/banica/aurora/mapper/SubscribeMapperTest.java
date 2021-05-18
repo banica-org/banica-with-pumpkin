@@ -45,20 +45,13 @@ class SubscribeMapperTest {
     private static final Aurora.AuroraRequest ORDERBOOK_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("orderbook/eggs/10").build();
     private static final Aurora.AuroraRequest INVALID_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("invalid/request").build();
 
-    private static final ManagedChannel DUMMY_MANAGED_CHANNEL = ManagedChannelBuilder
-            .forAddress("localhost", 1010)
-            .usePlaintext()
-            .build();
+    private static final ManagedChannel DUMMY_MANAGED_CHANNEL = ManagedChannelBuilder.forAddress("localhost", 1010).usePlaintext().build();
 
     private static final String AURORA_SERVER_NAME = "auroraServer";
     private static final String MARKET_SERVER_NAME = "marketServer";
 
-    private static final ManagedChannel AURORA_SERVER_CHANNEL = InProcessChannelBuilder
-            .forName(AURORA_SERVER_NAME)
-            .executor(Executors.newSingleThreadExecutor()).build();
-    private static final ManagedChannel MARKET_SERVER_CHANNEL = InProcessChannelBuilder
-            .forName(MARKET_SERVER_NAME)
-            .executor(Executors.newSingleThreadExecutor()).build();
+    private static final ManagedChannel AURORA_SERVER_CHANNEL = InProcessChannelBuilder.forName(AURORA_SERVER_NAME).executor(Executors.newSingleThreadExecutor()).build();
+    private static final ManagedChannel MARKET_SERVER_CHANNEL = InProcessChannelBuilder.forName(MARKET_SERVER_NAME).executor(Executors.newSingleThreadExecutor()).build();
 
     private final MarketServiceGrpc.MarketServiceStub marketStub = MarketServiceGrpc.newStub(MARKET_SERVER_CHANNEL);
     private final AuroraServiceGrpc.AuroraServiceStub auroraStub = AuroraServiceGrpc.newStub(AURORA_SERVER_CHANNEL);
@@ -128,7 +121,6 @@ class SubscribeMapperTest {
 
         //Act
         subscribeMapper.renderSubscribe(MARKET_REQUEST, responseObserver);
-
         Thread.sleep(1000);
 
         //Assert
@@ -145,7 +137,6 @@ class SubscribeMapperTest {
 
         //Act
         subscribeMapper.renderSubscribe(AURORA_REQUEST, responseObserver);
-
         Thread.sleep(1000);
 
         //Assert

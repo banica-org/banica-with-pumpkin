@@ -100,7 +100,6 @@ public class MarketTickObserver implements ClientResponseObserver<MarketDataRequ
                 forwardResponse.onNext(this.wrapReconnect(buildReconnect()));
             }
         }
-
         if (openStreams.decrementAndGet() == 0) {
             forwardResponse.onCompleted();
         }
