@@ -120,5 +120,4 @@ public class ChannelManager {
                 .maxRetryAttempts(MAX_RETRY_ATTEMPTS)
                 .build();
     }
-
 }

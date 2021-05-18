@@ -95,10 +95,7 @@ public class CalculatorControllerTest {
                 .getResponse();
 
         assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
-        assertThat(response.getContentAsString())
-                .isEqualTo(jacksonResponseProductDtoList
-                        .write(productDtoList)
-                        .getJson());
+        assertThat(response.getContentAsString()).isEqualTo(jacksonResponseProductDtoList.write(productDtoList).getJson());
     }
 
     @NotNull

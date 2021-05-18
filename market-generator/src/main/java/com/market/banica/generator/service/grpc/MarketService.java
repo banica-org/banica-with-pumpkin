@@ -174,5 +174,4 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
         }
         return true;
     }
-
 }

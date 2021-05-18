@@ -99,7 +99,6 @@ public class ItemMarket {
         } finally {
             lock.writeLock().unlock();
         }
-
     }
 
     public List<OrderBookLayer> getRequestedItem(String itemName, long quantity) {
@@ -179,5 +178,4 @@ public class ItemMarket {
             lock.writeLock().unlock();
         }
     }
-
 }

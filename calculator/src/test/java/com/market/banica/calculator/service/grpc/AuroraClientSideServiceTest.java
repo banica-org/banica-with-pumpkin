@@ -29,12 +29,10 @@ public class AuroraClientSideServiceTest {
     @Test
     public void unpackAndValidateResponseUnpacksAndReturnsValidResponseWithValidArguments() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         //Arrange
-        Method unpackAndValidateResponse = auroraClientSideService
-                .getClass()
+        Method unpackAndValidateResponse = auroraClientSideService.getClass()
                 .getDeclaredMethod("unpackAndValidateResponse", Aurora.AuroraResponse.class, Class.class);
         unpackAndValidateResponse.setAccessible(true);
-        Aurora.AuroraResponse auroraResponse = Aurora.AuroraResponse
-                .newBuilder()
+        Aurora.AuroraResponse auroraResponse = Aurora.AuroraResponse.newBuilder()
                 .setMessage(Any.pack(AvailabilityResponse.newBuilder().build()))
                 .build();
         AvailabilityResponse availabilityResponse = AvailabilityResponse.newBuilder().build();
@@ -51,8 +49,7 @@ public class AuroraClientSideServiceTest {
         Method unpackAndValidateResponse = auroraClientSideService.getClass().getDeclaredMethod("unpackAndValidateResponse",
                 Aurora.AuroraResponse.class, Class.class);
         unpackAndValidateResponse.setAccessible(true);
-        Aurora.AuroraResponse auroraResponse = Aurora.AuroraResponse
-                .newBuilder()
+        Aurora.AuroraResponse auroraResponse = Aurora.AuroraResponse.newBuilder()
                 .setMessage(Any.pack(AvailabilityResponse.newBuilder().build()))
                 .build();
         try {

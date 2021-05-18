@@ -41,8 +41,7 @@ public class TransactionServiceImpl implements TransactionService {
                 Long productQuantity = productSpecification.getQuantity();
                 Origin productOrigin = Origin.valueOf(productSpecification.getLocation().toUpperCase(Locale.ROOT));
 
-                AvailabilityResponse availabilityResponse =
-                        this.auroraClientSideService
+                AvailabilityResponse availabilityResponse = this.auroraClientSideService
                                 .checkAvailability(productName, productPrice.doubleValue(), productQuantity, productOrigin);
 
                 if (!availabilityResponse.getIsAvailable()) {

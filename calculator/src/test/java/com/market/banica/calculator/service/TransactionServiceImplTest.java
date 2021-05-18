@@ -86,23 +86,13 @@ class TransactionServiceImplTest {
                 ITEM_QUANTITY,
                 Origin.AMERICA);
 
-        when(auroraClientSideService.checkAvailability(
-                ITEM_NAME_EGGS,
-                ITEM_PRICE.doubleValue(),
-                ITEM_QUANTITY,
-                Origin.AMERICA))
-                .thenReturn(eggsAvailabilityResponse);
+        when(auroraClientSideService.checkAvailability(ITEM_NAME_EGGS, ITEM_PRICE.doubleValue(), ITEM_QUANTITY, Origin.AMERICA)).thenReturn(eggsAvailabilityResponse);
         AvailabilityResponse crustsAvailabilityResponse = generateAvailabilityResponseForAvailableProduct(
                 ITEM_NAME_CRUSTS,
                 ITEM_PRICE.doubleValue(),
                 ITEM_QUANTITY,
                 Origin.AMERICA);
-        when(auroraClientSideService.checkAvailability(
-                ITEM_NAME_CRUSTS,
-                ITEM_PRICE.doubleValue(),
-                ITEM_QUANTITY,
-                Origin.AMERICA))
-                .thenReturn(crustsAvailabilityResponse);
+        when(auroraClientSideService.checkAvailability(ITEM_NAME_CRUSTS, ITEM_PRICE.doubleValue(), ITEM_QUANTITY, Origin.AMERICA)).thenReturn(crustsAvailabilityResponse);
 
         //Act
         List<ProductDto> purchaseProducts = transactionService.buyProduct(CLIENT_ID, ITEM_NAME_BANICA, ITEM_QUANTITY);
@@ -124,23 +114,14 @@ class TransactionServiceImplTest {
                     ITEM_PRICE.doubleValue(),
                     ITEM_QUANTITY,
                     Origin.AMERICA);
-            when(auroraClientSideService.checkAvailability(
-                    ITEM_NAME_EGGS,
-                    ITEM_PRICE.doubleValue(),
-                    ITEM_QUANTITY,
-                    Origin.AMERICA))
-                    .thenReturn(eggsAvailabilityResponse);
+            when(auroraClientSideService.checkAvailability(ITEM_NAME_EGGS, ITEM_PRICE.doubleValue(), ITEM_QUANTITY, Origin.AMERICA)).thenReturn(eggsAvailabilityResponse);
 
             AvailabilityResponse crustsAvailabilityResponse = generateAvailabilityResponseForUnavailableProduct(
                     ITEM_NAME_CRUSTS,
                     ITEM_PRICE.doubleValue(),
                     ITEM_QUANTITY,
                     Origin.AMERICA);
-            when(auroraClientSideService.checkAvailability(
-                    ITEM_NAME_CRUSTS,
-                    ITEM_PRICE.doubleValue(),
-                    ITEM_QUANTITY, Origin.AMERICA))
-                    .thenReturn(crustsAvailabilityResponse);
+            when(auroraClientSideService.checkAvailability(ITEM_NAME_CRUSTS, ITEM_PRICE.doubleValue(), ITEM_QUANTITY, Origin.AMERICA)).thenReturn(crustsAvailabilityResponse);
 
             //Act
             transactionService.buyProduct(CLIENT_ID, ITEM_NAME_BANICA, ITEM_QUANTITY);
@@ -182,5 +163,4 @@ class TransactionServiceImplTest {
                 .build();
 
     }
-
 }

@@ -119,6 +119,4 @@ public class JMXServiceImpl implements JMXServiceMBean {
         LOGGER.debug("Product deleted from JMX server for parent product {} and product {}"
                 , parentProductName, productName);
     }
-
-
 }

@@ -86,5 +86,4 @@ public class MarketTickObserver implements StreamObserver<TickResponse> {
                 .setMessage(Any.pack(reconnectionResponse))
                 .build();
     }
-
 }
