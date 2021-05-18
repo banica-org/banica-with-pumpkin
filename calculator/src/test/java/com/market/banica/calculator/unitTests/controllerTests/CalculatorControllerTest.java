@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.market.banica.calculator.controller.CalculatorController;
 import com.market.banica.calculator.dto.ItemDto;
 import com.market.banica.calculator.dto.ProductDto;
-import com.market.banica.calculator.model.Product;
 import com.market.banica.calculator.service.contract.CalculatorService;
 import com.market.banica.calculator.service.contract.TransactionService;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +23,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -55,7 +53,7 @@ public class CalculatorControllerTest {
     private static final String SELL_PRODUCT_MESSAGE = "Item with name %s was successfully sold to market.";
 
     private JacksonTester<List<ProductDto>> jacksonResponseProductDtoList;
-    private JacksonTester<List<ItemDto>> jsonResponseListProduct;
+    private JacksonTester<List<ItemDto>> jsonResponseItemDtoList;
 
 
     @BeforeEach
@@ -115,14 +113,14 @@ public class CalculatorControllerTest {
         List<ItemDto> itemsToSell = new ArrayList<>();
         itemsToSell.add(new ItemDto(product, BigDecimal.valueOf(productPrice), location, quantity));
 
-        String sellProductBaklavaMessage = String.format("Item with name %s was successfully sold to market.", product);
+        String sellProductBaklavaMessage = String.format(SELL_PRODUCT_MESSAGE, product);
 
         given(transactionService.sellProduct(itemsToSell)).willReturn(sellProductBaklavaMessage);
 
         MockHttpServletResponse response = mockMvc
                 .perform(post("/calculator/sell/" + clientId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(jsonResponseListProduct.write(itemsToSell).getJson())
+                        .content(jsonResponseItemDtoList.write(itemsToSell).getJson())
                         .accept(MediaType.APPLICATION_JSON))
                 .andReturn()
                 .getResponse();
