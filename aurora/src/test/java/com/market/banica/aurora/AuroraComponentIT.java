@@ -8,6 +8,7 @@ import com.market.MarketDataRequest;
 import com.market.MarketServiceGrpc;
 import com.market.TickResponse;
 import com.market.banica.aurora.config.ChannelManager;
+import com.market.banica.aurora.config.GrpcClassProvider;
 import com.market.banica.aurora.config.JMXConfig;
 import com.market.banica.aurora.config.Publishers;
 import com.market.banica.aurora.model.ChannelProperty;
@@ -73,6 +74,9 @@ class AuroraComponentIT {
     private Publishers publishers;
 
     @Autowired
+    GrpcClassProvider provider;
+
+    @Autowired
     private JMXConfig jmxConfig;
 
     @Autowired
@@ -95,6 +99,7 @@ class AuroraComponentIT {
 
     private static String channelsBackupUrl;
     private static String publishersBackupUrl;
+    private static String grpcClassNamesUrl;
 
     private static final Set<String> channelNames = new HashSet<>();
 
@@ -102,10 +107,11 @@ class AuroraComponentIT {
 
 
     @BeforeAll
-    public static void getFilePath(@Value("${aurora.channels.file.name}") String channels, @Value("${aurora.channels.publishers}") String publishersFileName) {
+    public static void getFilePath(@Value("${aurora.channels.file.name}") String channels, @Value("${aurora.channels.publishers}") String publishersFileName,
+                                   @Value("${aurora.grpc.classes.filenames}") String grpcClassNamesFiles) {
         channelsBackupUrl = channels;
         publishersBackupUrl = publishersFileName;
-
+        grpcClassNamesUrl = grpcClassNamesFiles;
     }
 
 
@@ -113,11 +119,12 @@ class AuroraComponentIT {
     public static void cleanUp() throws IOException {
         ApplicationDirectoryUtil.getConfigFile(channelsBackupUrl).delete();
         ApplicationDirectoryUtil.getConfigFile(publishersBackupUrl).delete();
+        ApplicationDirectoryUtil.getConfigFile(grpcClassNamesUrl).delete();
     }
 
 
     @BeforeEach
-    public void setup() {
+    public void setup() throws ClassNotFoundException {
         senderName = InProcessServerBuilder.generateName();
         senderChannel = InProcessChannelBuilder
                 .forName(senderName)
@@ -131,12 +138,19 @@ class AuroraComponentIT {
 
         channelNames.add(receiverChannelName);
 
+        provider.addClass("aurora","com.aurora.AuroraServiceGrpc");
+        provider.addClass("orderbook","com.orderbook.OrderBookServiceGrpc");
+        provider.addClass("market","com.market.MarketServiceGrpc");
+
     }
 
     @AfterEach
-    public void tearDown() {
+    public void tearDown()  {
         publishers.deletePublisher(currentPublisher);
         channelManager.removeChannel(currentPublisher);
+        provider.removeClass("aurora");
+        provider.removeClass("orderbook");
+        provider.removeClass("market");
     }
 
 

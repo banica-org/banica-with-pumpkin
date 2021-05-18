@@ -19,6 +19,7 @@ public class AuroraApplicationTest {
 
     private static String channelsBackupUrl;
     private static String publishersBackupUrl;
+    private static String grpcClassNamesUrl;
 
 
     @Test
@@ -26,15 +27,17 @@ public class AuroraApplicationTest {
     }
 
     @BeforeAll
-    public static void getFilePath(@Value("${aurora.channels.file.name}") String channels, @Value("${aurora.channels.publishers}") String publishersFileName) {
+    public static void getFilePath(@Value("${aurora.channels.file.name}") String channels, @Value("${aurora.channels.publishers}") String publishersFileName,
+                                   @Value("${aurora.grpc.classes.filenames}") String grpcClassNamesFiles) {
         channelsBackupUrl = channels;
         publishersBackupUrl = publishersFileName;
-
+        grpcClassNamesUrl = grpcClassNamesFiles;
     }
 
     @AfterAll
     public static void cleanUp() throws IOException {
         ApplicationDirectoryUtil.getConfigFile(channelsBackupUrl).delete();
         ApplicationDirectoryUtil.getConfigFile(publishersBackupUrl).delete();
+        ApplicationDirectoryUtil.getConfigFile(grpcClassNamesUrl).delete();
     }
 }
