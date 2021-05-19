@@ -11,6 +11,7 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -38,7 +39,7 @@ class SubscribeHandlerTest {
     private static SubscribeHandler subscribeHandler;
 
     @Test
-    void handleSubscribeVerifiesRenderSubscribeMethod() {
+    void handleSubscribeVerifiesRenderSubscribeMethod() throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         //Arrange
         when(channels.getAllChannelsContainingPrefix(TOPIC_PREFIX)).thenReturn(new ArrayList<>());
 

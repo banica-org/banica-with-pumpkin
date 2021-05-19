@@ -11,7 +11,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(MockitoExtension.class)
 class StubManagerTest {
@@ -26,36 +26,43 @@ class StubManagerTest {
 
     @Test
     void getAuroraStubCreatesAndReturnsAuroraStubForSpecifiedChannel() {
-        Channel actualChannel = stubManager.getAuroraStub(DUMMY_MANAGED_CHANNEL).getChannel();
+        Channel actualChannel = stubManager.getStub(DUMMY_MANAGED_CHANNEL, "aurora").getChannel();
         Channel expectedChannel = AuroraServiceGrpc.newStub(DUMMY_MANAGED_CHANNEL).getChannel();
-        assertEquals(expectedChannel,actualChannel);
+        assertEquals(expectedChannel, actualChannel);
     }
 
     @Test
-    void getAuroraBlockingStubCreatesAndReturnsAuroraBlockingStubForSpecifiedChannel() {
-        Channel actualChannel = stubManager.getAuroraBlockingStub(DUMMY_MANAGED_CHANNEL).getChannel();
+    void getAuroraBlockingStubCreatesAndReturnsAuroraStubForSpecifiedChannel() {
+        Channel actualChannel = stubManager.getBlockingStub(DUMMY_MANAGED_CHANNEL, "aurora").getChannel();
         Channel expectedChannel = AuroraServiceGrpc.newBlockingStub(DUMMY_MANAGED_CHANNEL).getChannel();
-        assertEquals(expectedChannel,actualChannel);
+        assertEquals(expectedChannel, actualChannel);
     }
 
     @Test
     void getOrderbookStubCreatesAndReturnsOrderBookStubForSpecifiedChannel() {
-        Channel actualChannel = stubManager.getOrderbookStub(DUMMY_MANAGED_CHANNEL).getChannel();
+        Channel actualChannel = stubManager.getStub(DUMMY_MANAGED_CHANNEL, "orderbook").getChannel();
         Channel expectedChannel = OrderBookServiceGrpc.newStub(DUMMY_MANAGED_CHANNEL).getChannel();
-        assertEquals(expectedChannel,actualChannel);
+        assertEquals(expectedChannel, actualChannel);
     }
 
     @Test
     void getOrderbookBlockingStubCreatesAndReturnsOrderBookBlockingStubForSpecifiedChannel() {
-        Channel actualChannel = stubManager.getOrderbookBlockingStub(DUMMY_MANAGED_CHANNEL).getChannel();
+        Channel actualChannel = stubManager.getBlockingStub(DUMMY_MANAGED_CHANNEL, "orderbook").getChannel();
         Channel expectedChannel = OrderBookServiceGrpc.newBlockingStub((DUMMY_MANAGED_CHANNEL)).getChannel();
-        assertEquals(expectedChannel,actualChannel);
+        assertEquals(expectedChannel, actualChannel);
     }
 
     @Test
     void getMarketStubCreatesAndReturnsMarketStubForSpecifiedChannel() {
-        Channel actualChannel = stubManager.getMarketStub(DUMMY_MANAGED_CHANNEL).getChannel();
+        Channel actualChannel = stubManager.getStub(DUMMY_MANAGED_CHANNEL, "market").getChannel();
         Channel expectedChannel = MarketServiceGrpc.newStub(DUMMY_MANAGED_CHANNEL).getChannel();
-        assertEquals(expectedChannel,actualChannel);
+        assertEquals(expectedChannel, actualChannel);
+    }
+
+    @Test
+    void getMarketBlockingStubCreatesAndReturnsMarketStubForSpecifiedChannel() {
+        Channel actualChannel = stubManager.getBlockingStub(DUMMY_MANAGED_CHANNEL, "market").getChannel();
+        Channel expectedChannel = MarketServiceGrpc.newBlockingStub(DUMMY_MANAGED_CHANNEL).getChannel();
+        assertEquals(expectedChannel, actualChannel);
     }
 }
