@@ -229,10 +229,12 @@ class RequestMapperTest {
     }
 
     @Test
-    void renderRequestWithSellProductRequestForMarketToSellTheProductToMarket() throws IOException, ServiceNotFoundException {
+    void renderRequestWithSellProductRequestForMarketToSellTheProductToMarket() throws IOException, ServiceNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         //Arrange
         when(channelManager.getChannelByKey(any())).thenReturn(Optional.ofNullable(DUMMY_MANAGED_CHANNEL));
-        when(stubManager.getMarketBlockingStub(any())).thenReturn(marketBlockingStub);
+        String destination = "market";
+        doReturn(marketBlockingStub).when(stubManager).getBlockingStub(any(ManagedChannel.class), eq(destination));
+
         BuySellProductResponse buySellProductResponse = BuySellProductResponse.newBuilder().build();
 
         //Act
