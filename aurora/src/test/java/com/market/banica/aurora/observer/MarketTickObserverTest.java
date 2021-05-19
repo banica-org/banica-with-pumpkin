@@ -1,6 +1,7 @@
 package com.market.banica.aurora.observer;
 
 import com.aurora.Aurora;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.Any;
 import com.market.MarketDataRequest;
 import com.market.MarketServiceGrpc;
@@ -18,11 +19,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -45,7 +44,7 @@ class MarketTickObserverTest {
 
     private static final ManagedChannel MARKET_SERVER_CHANNEL = InProcessChannelBuilder
             .forName(MARKET_SERVER_NAME)
-            .executor(Executors.newSingleThreadExecutor()).build();
+            .executor(MoreExecutors.directExecutor()).build();
 
     private final MarketServiceGrpc.MarketServiceStub marketStub = MarketServiceGrpc.newStub(MARKET_SERVER_CHANNEL);
 
@@ -63,7 +62,6 @@ class MarketTickObserverTest {
 
     @Mock
     private BackPressureManager backPressureManager;
-
 
     @Mock
     private MarketTickObserver marketTickObserver;
@@ -92,14 +90,6 @@ class MarketTickObserverTest {
     @Test
     void onNextForwardsResponseToResponseObserver() {
         marketStub.subscribeForItem(marketTickObserver);
-
-        try {
-            Thread.sleep(10);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-
         verify(forwardResponse, times(1)).onNext(AURORA_RESPONSE_TO_FORWARD);
     }
 
