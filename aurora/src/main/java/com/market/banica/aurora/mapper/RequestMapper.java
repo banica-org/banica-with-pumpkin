@@ -204,6 +204,7 @@ public class RequestMapper {
         Method marketCheckAvailability = marketBlockingStub.getClass().getMethod("checkAvailability", ProductBuySellRequest.class);
         Method marketReturnPendingProduct = marketBlockingStub.getClass().getMethod("returnPendingProduct", ProductBuySellRequest.class);
         Method marketBuyProduct = marketBlockingStub.getClass().getMethod("buyProduct", ProductBuySellRequest.class);
+        Method marketSellProduct = marketBlockingStub.getClass().getMethod("sellProduct", ProductBuySellRequest.class);
 
         switch (requestPrefix) {
             case AVAILABILITY_ACTION:
@@ -220,7 +221,7 @@ public class RequestMapper {
                         .build();
             case SELL_ACTION:
                 return Aurora.AuroraResponse.newBuilder()
-                        .setMessage(Any.pack(marketStub.sellProduct(request.build())))
+                        .setMessage(Any.pack((BuySellProductResponse) marketSellProduct.invoke(marketBlockingStub, request.build())))
                         .build();
             default:
                 throw new IllegalArgumentException("Client requested an unsupported message from market. Message is: " + incomingRequest.getTopic());
