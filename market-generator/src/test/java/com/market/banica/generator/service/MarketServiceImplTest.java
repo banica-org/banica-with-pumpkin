@@ -54,8 +54,6 @@ class MarketServiceImplTest {
 
 
     private final MarketDataRequest MARKET_DATA_REQUEST = MarketDataRequest.newBuilder().setGoodName(GOOD_BANICA).build();
-    private final ProductBuySellRequest MARKET_SELL_PRODUCT_REQUEST = ProductBuySellRequest.newBuilder().setItemName(GOOD_BANICA).setItemPrice(PRICE_1).setItemQuantity(AMOUNT).build();
-
     private final Map<String, Map<Double, MarketTick>> pendingOrders = new HashMap<>();
 
     @BeforeEach
@@ -229,11 +227,13 @@ class MarketServiceImplTest {
 
     @Test
     public void sellProductSellProductSuccessfullyToMarket() {
-        this.marketService.sellProduct(MARKET_SELL_PRODUCT_REQUEST, sellProductStreamObserver);
+        ProductBuySellRequest request = populateBuySellRequest(GOOD_BANICA, 6, PRICE_1);
 
+        marketService.sellProduct(request,sellProductStreamObserver);
+
+        verify(marketState,times(1)).addProductToMarketState(request.getItemName(), request.getItemPrice(), request.getItemQuantity());
         verify(sellProductStreamObserver, times(1)).onNext(any());
         verify(sellProductStreamObserver, times(1)).onCompleted();
-
     }
 
     private ProductBuySellRequest populateBuySellRequest(String goodName, long amount, double price) {
