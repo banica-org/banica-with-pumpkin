@@ -187,8 +187,10 @@ class TransactionServiceImplTest {
         ItemDto item = new ItemDto(ITEM_NAME_CRUSTS, ITEM_PRICE, ITEM_ORIGIN, ITEM_QUANTITY);
         when(auroraClientSideService.sellProductToMarket(item.getName(), item.getPrice().doubleValue(), item.getQuantity(), item.getLocation())).thenThrow(IllegalArgumentException.class);
 
+        //Act
         String message = transactionService.sellProduct(Collections.singletonList(item));
 
+        //Assert
         assertEquals(UNSUCCESSFUL_SELL_MESSAGE, message);
     }
 
