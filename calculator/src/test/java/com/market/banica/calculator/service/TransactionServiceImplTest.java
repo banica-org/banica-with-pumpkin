@@ -2,6 +2,7 @@ package com.market.banica.calculator.service;
 
 import com.market.AvailabilityResponse;
 import com.market.Origin;
+import com.market.banica.calculator.dto.ItemDto;
 import com.market.banica.calculator.dto.ProductDto;
 import com.market.banica.calculator.dto.ProductSpecification;
 import com.market.banica.calculator.service.contract.CalculatorService;
@@ -32,6 +33,9 @@ class TransactionServiceImplTest {
     public static final String ITEM_ORIGIN = "america";
     public static final long ITEM_QUANTITY = 2L;
     public static final BigDecimal ITEM_PRICE = BigDecimal.valueOf(2);
+    public static final BigDecimal NEGATIVE_ITEM_PRICE = BigDecimal.valueOf(-1);
+    public static final String SUCCESSFUL_SELL_MESSAGE = "Congratulations your sale was successful!";
+    public static final String UNSUCCESSFUL_SELL_MESSAGE = String.format("Sorry, you can't sell your items because america market is closed.");
 
     @Mock
     private CalculatorService calculatorService;
@@ -141,6 +145,60 @@ class TransactionServiceImplTest {
             transactionService.buyProduct(CLIENT_ID, ITEM_NAME_BANICA, ITEM_QUANTITY);
         });
     }
+
+    @Test
+    void sellProductShouldSellAllProductsToAppropriateMarketAndReturnSuccessfulMessage() {
+        //Arrange
+        ItemDto item = new ItemDto(ITEM_NAME_CRUSTS, ITEM_PRICE, ITEM_ORIGIN, ITEM_QUANTITY);
+
+        //Act
+        String message = transactionService.sellProduct(Collections.singletonList(item));
+
+        //Assert
+        assertEquals(SUCCESSFUL_SELL_MESSAGE, message);
+    }
+
+    @Test
+    void sellProductShouldThrowIllegalArgumentExceptionIfQuantityIsLessOrEqualZero() {
+
+        //Assert
+        assertThrows(IllegalArgumentException.class, () -> {
+
+            //Arrange
+            ItemDto itemDto = new ItemDto(ITEM_NAME_CRUSTS, ITEM_PRICE, ITEM_ORIGIN, -ITEM_QUANTITY);
+
+            //Act
+
+            transactionService.sellProduct(Collections.singletonList(itemDto));
+        });
+    }
+
+    @Test
+    void sellProductShouldThrowIllegalArgumentExceptionIfPriceIsLessOrEqualZero() {
+
+        //Assert
+        assertThrows(IllegalArgumentException.class, () -> {
+
+            //Arrange
+            ItemDto itemDto = new ItemDto(ITEM_NAME_CRUSTS, NEGATIVE_ITEM_PRICE, ITEM_ORIGIN, ITEM_QUANTITY);
+
+            //Act
+
+            transactionService.sellProduct(Collections.singletonList(itemDto));
+        });
+    }
+
+    @Test
+    void sellProductShouldUnsuccessfulMessageIfMarketIsClose() {
+        //Arrange
+        ItemDto item = new ItemDto(ITEM_NAME_CRUSTS, ITEM_PRICE, ITEM_ORIGIN, ITEM_QUANTITY);
+        when(auroraClientSideService.sellProductToMarket(item.getName(), item.getPrice().doubleValue(), item.getQuantity(), item.getLocation())).thenThrow(IllegalArgumentException.class);
+
+        String message = transactionService.sellProduct(Collections.singletonList(item));
+
+        assertEquals(UNSUCCESSFUL_SELL_MESSAGE, message);
+    }
+
 
     private AvailabilityResponse generateAvailabilityResponseForAvailableProduct(String itemName, double price, long quantity, Origin origin) {
         return AvailabilityResponse.newBuilder()
