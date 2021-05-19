@@ -54,7 +54,6 @@ class MarketServiceImplTest {
 
 
     private final MarketDataRequest MARKET_DATA_REQUEST = MarketDataRequest.newBuilder().setGoodName(GOOD_BANICA).build();
-
     private final Map<String, Map<Double, MarketTick>> pendingOrders = new HashMap<>();
 
     @BeforeEach
@@ -70,6 +69,8 @@ class MarketServiceImplTest {
     private final ServerCallStreamObserver<AvailabilityResponse> calculatorAvailability = mock(ServerCallStreamObserver.class);
     @SuppressWarnings("unchecked")
     private final ServerCallStreamObserver<BuySellProductResponse> calculatorReturnProduct = mock(ServerCallStreamObserver.class);
+    @SuppressWarnings("unchecked")
+    private final ServerCallStreamObserver<BuySellProductResponse> sellProductStreamObserver = mock(ServerCallStreamObserver.class);
 
     @Test
     void subscribe_ValidRequest_BootstrapAndAddSubscriber() {
@@ -222,6 +223,17 @@ class MarketServiceImplTest {
 
         assertEquals(1, pendingOrders.size());
         assertEquals(expectedQuantity, pendingOrders.get(GOOD_BANICA).get(PRICE_1).getQuantity());
+    }
+
+    @Test
+    public void sellProductSellProductSuccessfullyToMarket() {
+        ProductBuySellRequest request = populateBuySellRequest(GOOD_BANICA, 6, PRICE_1);
+
+        marketService.sellProduct(request,sellProductStreamObserver);
+
+        verify(marketState,times(1)).addProductToMarketState(request.getItemName(), request.getItemPrice(), request.getItemQuantity());
+        verify(sellProductStreamObserver, times(1)).onNext(any());
+        verify(sellProductStreamObserver, times(1)).onCompleted();
     }
 
     private ProductBuySellRequest populateBuySellRequest(String goodName, long amount, double price) {

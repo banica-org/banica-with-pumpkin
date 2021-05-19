@@ -46,6 +46,7 @@ class RequestMapperTest {
 
     public static final Aurora.AuroraRequest MARKET_AVAILABILITY_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("market-europe/availability/eggs/2.50/2").build();
     public static final Aurora.AuroraRequest MARKET_RETURN_PENDING_PRODUCT_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("market-europe/return/eggs/2.50/2").build();
+    public static final Aurora.AuroraRequest MARKET_SELL_PRODUCT_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("market-europe/sell/eggs/2.50/2").build();
     public static final Aurora.AuroraRequest MARKET_BUY_PRODUCT_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("market-europe/buy/eggs/2.50/2").build();
     private static final Aurora.AuroraRequest AURORA_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("aurora/eggs/10").build();
     private static final Aurora.AuroraRequest ORDERBOOK_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("orderbook/eggs/10").build();
@@ -222,6 +223,22 @@ class RequestMapperTest {
 
         //Act
         Aurora.AuroraResponse actual = requestMapper.renderRequest(MARKET_RETURN_PENDING_PRODUCT_REQUEST);
+
+        //Assert
+        assertEquals(buySellProductResponse, actual.getMessage().unpack(BuySellProductResponse.class));
+    }
+
+    @Test
+    void renderRequestWithSellProductRequestForMarketToSellTheProductToMarket() throws IOException, ServiceNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+        //Arrange
+        when(channelManager.getChannelByKey(any())).thenReturn(Optional.ofNullable(DUMMY_MANAGED_CHANNEL));
+        String destination = "market";
+        doReturn(marketBlockingStub).when(stubManager).getBlockingStub(any(ManagedChannel.class), eq(destination));
+
+        BuySellProductResponse buySellProductResponse = BuySellProductResponse.newBuilder().build();
+
+        //Act
+        Aurora.AuroraResponse actual = requestMapper.renderRequest(MARKET_SELL_PRODUCT_REQUEST);
 
         //Assert
         assertEquals(buySellProductResponse, actual.getMessage().unpack(BuySellProductResponse.class));

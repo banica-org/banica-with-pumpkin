@@ -2,6 +2,7 @@ package com.market.banica.calculator.unitTests.controllerTests;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.market.banica.calculator.controller.CalculatorController;
+import com.market.banica.calculator.dto.ItemDto;
 import com.market.banica.calculator.dto.ProductDto;
 import com.market.banica.calculator.service.contract.CalculatorService;
 import com.market.banica.calculator.service.contract.TransactionService;
@@ -27,6 +28,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(CalculatorController.class)
@@ -43,18 +45,26 @@ public class CalculatorControllerTest {
 
     private String clientId;
     private String product;
-    private int quantity;
+    private String location;
+    private long quantity;
     private int totalPrice;
+    private int productPrice;
+
+    private static final String SELL_PRODUCT_MESSAGE = "Item with name %s was successfully sold to market.";
 
     private JacksonTester<List<ProductDto>> jacksonResponseProductDtoList;
+    private JacksonTester<List<ItemDto>> jsonResponseItemDtoList;
+
 
     @BeforeEach
     private void setUp() {
         JacksonTester.initFields(this, new ObjectMapper());
         clientId = "dummyClient";
         product = "baklava";
+        location = "Europe";
         quantity = 100;
         totalPrice = 10;
+        productPrice = 3;
     }
 
     @Test
@@ -96,6 +106,27 @@ public class CalculatorControllerTest {
 
         assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
         assertThat(response.getContentAsString()).isEqualTo(jacksonResponseProductDtoList.write(productDtoList).getJson());
+    }
+
+    @Test
+    void sellProductShouldSellTheSpecifiedProduct() throws Exception {
+        List<ItemDto> itemsToSell = new ArrayList<>();
+        itemsToSell.add(new ItemDto(product, BigDecimal.valueOf(productPrice), location, quantity));
+
+        String sellProductBaklavaMessage = String.format(SELL_PRODUCT_MESSAGE, product);
+
+        given(transactionService.sellProduct(itemsToSell)).willReturn(sellProductBaklavaMessage);
+
+        MockHttpServletResponse response = mockMvc
+                .perform(post("/calculator/sell/" + clientId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonResponseItemDtoList.write(itemsToSell).getJson())
+                        .accept(MediaType.APPLICATION_JSON))
+                .andReturn()
+                .getResponse();
+
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
+        assertThat(response.getContentAsString()).isEqualTo(sellProductBaklavaMessage);
     }
 
     @NotNull

@@ -126,7 +126,7 @@ public final class FakeServerGenerator {
             public void subscribeForItem(MarketDataRequest request, StreamObserver<TickResponse> responseObserver) {
                 responseObserver.onNext(TickResponse.newBuilder().build());
                 responseObserver.onCompleted();
-            };
+            }
 
             @Override
             public void buyProduct(ProductBuySellRequest request, StreamObserver<BuySellProductResponse> responseObserver) {
@@ -143,6 +143,12 @@ public final class FakeServerGenerator {
             @Override
             public void checkAvailability(ProductBuySellRequest request, StreamObserver<AvailabilityResponse> responseObserver) {
                 responseObserver.onNext(AvailabilityResponse.newBuilder().build());
+                responseObserver.onCompleted();
+            }
+
+            @Override
+            public void sellProduct(ProductBuySellRequest request, StreamObserver<BuySellProductResponse> responseObserver) {
+                responseObserver.onNext(BuySellProductResponse.newBuilder().build());
                 responseObserver.onCompleted();
             }
         };
