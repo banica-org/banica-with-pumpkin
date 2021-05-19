@@ -13,11 +13,12 @@ import io.grpc.inprocess.InProcessChannelBuilder;
 import io.grpc.stub.StreamObserver;
 import io.grpc.testing.GrpcCleanupRule;
 import org.junit.Rule;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
@@ -63,7 +64,8 @@ class MarketTickObserverTest {
     @Mock
     private BackPressureManager backPressureManager;
 
-    @InjectMocks
+
+    @Mock
     private MarketTickObserver marketTickObserver;
 
     @BeforeEach
@@ -82,9 +84,21 @@ class MarketTickObserverTest {
                 "TEST", ITEM_NAME, marketDataRequest, backPressureManager, ORDER_BOOK_GRPC_IDENTIFIER);
     }
 
+    @AfterAll
+    public static void shutDownChannels() {
+        FakeServerGenerator.shutDownAllChannels();
+    }
+
     @Test
     void onNextForwardsResponseToResponseObserver() {
         marketStub.subscribeForItem(marketTickObserver);
+
+        try {
+            Thread.sleep(10);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
 
         verify(forwardResponse, times(1)).onNext(AURORA_RESPONSE_TO_FORWARD);
     }
