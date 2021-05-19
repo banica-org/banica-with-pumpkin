@@ -137,7 +137,6 @@ class TransactionServiceImplTest {
     void buyProductShouldThrowProductNotAvailableException() {
         //Assert
         assertThrows(ProductNotAvailableException.class, () -> {
-
             //Arrange
             when(calculatorService.getProduct(CLIENT_ID, ITEM_NAME_BANICA, ITEM_QUANTITY)).thenThrow(ProductNotAvailableException.class);
 
@@ -160,30 +159,24 @@ class TransactionServiceImplTest {
 
     @Test
     void sellProductShouldThrowIllegalArgumentExceptionIfQuantityIsLessOrEqualZero() {
-
         //Assert
         assertThrows(IllegalArgumentException.class, () -> {
-
             //Arrange
             ItemDto itemDto = new ItemDto(ITEM_NAME_CRUSTS, ITEM_PRICE, ITEM_ORIGIN, -ITEM_QUANTITY);
 
             //Act
-
             transactionService.sellProduct(Collections.singletonList(itemDto));
         });
     }
 
     @Test
     void sellProductShouldThrowIllegalArgumentExceptionIfPriceIsLessOrEqualZero() {
-
         //Assert
         assertThrows(IllegalArgumentException.class, () -> {
-
             //Arrange
             ItemDto itemDto = new ItemDto(ITEM_NAME_CRUSTS, NEGATIVE_ITEM_PRICE, ITEM_ORIGIN, ITEM_QUANTITY);
 
             //Act
-
             transactionService.sellProduct(Collections.singletonList(itemDto));
         });
     }
