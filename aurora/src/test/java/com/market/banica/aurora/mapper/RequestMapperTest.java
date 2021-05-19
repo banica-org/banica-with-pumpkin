@@ -15,6 +15,7 @@ import com.orderbook.OrderBookServiceGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.inprocess.InProcessChannelBuilder;
+import io.grpc.stub.AbstractBlockingStub;
 import io.grpc.testing.GrpcCleanupRule;
 import org.junit.Rule;
 import org.junit.jupiter.api.AfterAll;
@@ -28,6 +29,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import javax.management.ServiceNotFoundException;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.rmi.NoSuchObjectException;
 import java.util.Optional;
 import java.util.concurrent.Executors;
@@ -35,6 +37,8 @@ import java.util.concurrent.Executors;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -50,21 +54,34 @@ class RequestMapperTest {
     private static final Aurora.AuroraRequest ORDERBOOK_UNSUBSCRIBE_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("orderbook/eggs=unsubscribe").build();
     private static final Aurora.AuroraRequest INVALID_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("market/banica").build();
 
-    private static final ManagedChannel DUMMY_MANAGED_CHANNEL = ManagedChannelBuilder.forAddress("localhost", 1010).usePlaintext().build();
+    private static final ManagedChannel DUMMY_MANAGED_CHANNEL = ManagedChannelBuilder
+            .forAddress("localhost", 1010)
+            .usePlaintext()
+            .build();
 
     private static final String AURORA_SERVER_NAME = "auroraServer";
     private static final String ORDER_BOOK_SERVER_NAME = "orderBookServer";
     private static final String MARKET_SERVER_NAME = "marketServer";
 
-    private static final ManagedChannel AURORA_SERVER_CHANNEL = InProcessChannelBuilder.forName(AURORA_SERVER_NAME).executor(Executors.newSingleThreadExecutor()).build();
-    private static final ManagedChannel ORDER_BOOK_SERVER_CHANNEL = InProcessChannelBuilder.forName(ORDER_BOOK_SERVER_NAME).executor(Executors.newSingleThreadExecutor()).build();
-    private static final ManagedChannel MARKET_SERVER_CHANNEL = InProcessChannelBuilder.forName(MARKET_SERVER_NAME).executor(Executors.newSingleThreadExecutor()).build();
+    private static final ManagedChannel AURORA_SERVER_CHANNEL = InProcessChannelBuilder
+            .forName(AURORA_SERVER_NAME)
+            .executor(Executors.newSingleThreadExecutor()).build();
 
-    @Rule
-    public static GrpcCleanupRule grpcCleanup = new GrpcCleanupRule();
+    private static final ManagedChannel ORDER_BOOK_SERVER_CHANNEL = InProcessChannelBuilder
+            .forName(ORDER_BOOK_SERVER_NAME)
+            .executor(Executors.newSingleThreadExecutor()).build();
+
+    private static final ManagedChannel MARKET_SERVER_CHANNEL = InProcessChannelBuilder
+            .forName(MARKET_SERVER_NAME)
+            .executor(Executors.newSingleThreadExecutor()).build();
+
     private final OrderBookServiceGrpc.OrderBookServiceBlockingStub orderBookBlockingStub = OrderBookServiceGrpc.newBlockingStub(ORDER_BOOK_SERVER_CHANNEL);
     private final AuroraServiceGrpc.AuroraServiceBlockingStub auroraBlockingStub = AuroraServiceGrpc.newBlockingStub(AURORA_SERVER_CHANNEL);
     private final MarketServiceGrpc.MarketServiceBlockingStub marketBlockingStub = MarketServiceGrpc.newBlockingStub(MARKET_SERVER_CHANNEL);
+
+    @Rule
+    public static GrpcCleanupRule grpcCleanup = new GrpcCleanupRule();
+
     @Mock
     private ChannelManager channelManager;
 
@@ -99,10 +116,12 @@ class RequestMapperTest {
     }
 
     @Test
-    void renderRequestWithRequestForOrderBookWithTopicSplitLengthOfThreeProcessesItemOrderBookRequest() throws IOException, ServiceNotFoundException {
+    void renderRequestWithRequestForOrderBookWithTopicSplitLengthOfThreeProcessesItemOrderBookRequest() throws IOException, ServiceNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         //Arrange
         when(channelManager.getChannelByKey(any())).thenReturn(Optional.ofNullable(DUMMY_MANAGED_CHANNEL));
-        when(stubManager.getOrderbookBlockingStub(any())).thenReturn(orderBookBlockingStub);
+        String destination = "orderbook";
+        doReturn(orderBookBlockingStub).when(stubManager).getBlockingStub(any(ManagedChannel.class), eq(destination));
+
         ItemOrderBookResponse expectedOrderBookResponse = ItemOrderBookResponse.newBuilder().setItemName("eggs").build();
 
         //Act
@@ -113,10 +132,12 @@ class RequestMapperTest {
     }
 
     @Test
-    void renderRequestWithSubscribeRequestForOrderBookProcessesSubscribeForItem() throws IOException, ServiceNotFoundException {
+    void renderRequestWithSubscribeRequestForOrderBookProcessesSubscribeForItem() throws IOException, ServiceNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         //Arrange
         when(channelManager.getChannelByKey(any())).thenReturn(Optional.ofNullable(DUMMY_MANAGED_CHANNEL));
-        when(stubManager.getOrderbookBlockingStub(any())).thenReturn(orderBookBlockingStub);
+        String destination = "orderbook";
+        doReturn(orderBookBlockingStub).when(stubManager).getBlockingStub(any(ManagedChannel.class), eq(destination));
+
         InterestsResponse expectedOrderBookResponse = InterestsResponse.newBuilder().build();
 
         //Act
@@ -127,10 +148,13 @@ class RequestMapperTest {
     }
 
     @Test
-    void renderRequestWithUnsubscribeRequestForOrderBookProcessesCancelSubscription() throws IOException, ServiceNotFoundException {
+    void renderRequestWithUnsubscribeRequestForOrderBookProcessesCancelSubscription() throws IOException, ServiceNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         //Arrange
         when(channelManager.getChannelByKey(any())).thenReturn(Optional.ofNullable(DUMMY_MANAGED_CHANNEL));
-        when(stubManager.getOrderbookBlockingStub(any())).thenReturn(orderBookBlockingStub);
+
+        String destination = "orderbook";
+        doReturn(orderBookBlockingStub).when(stubManager).getBlockingStub(any(ManagedChannel.class), eq(destination));
+
         CancelSubscriptionResponse expectedOrderBookResponse = CancelSubscriptionResponse.newBuilder().build();
 
         //Act
@@ -141,10 +165,12 @@ class RequestMapperTest {
     }
 
     @Test
-    void renderRequestWithDestinationAuroraSendsRequestAndReceivesResponseFromFakeAuroraService() throws IOException, ServiceNotFoundException {
+    void renderRequestWithDestinationAuroraSendsRequestAndReceivesResponseFromFakeAuroraService() throws IOException, ServiceNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         //Arrange
         when(channelManager.getChannelByKey(any())).thenReturn(Optional.ofNullable(DUMMY_MANAGED_CHANNEL));
-        when(stubManager.getAuroraBlockingStub(any())).thenReturn(auroraBlockingStub);
+
+        String destination = "aurora";
+        doReturn(auroraBlockingStub).when(stubManager).getBlockingStub(any(ManagedChannel.class), eq(destination));
 
         //Act
         Aurora.AuroraResponse actual = requestMapper.renderRequest(AURORA_REQUEST);
@@ -154,10 +180,13 @@ class RequestMapperTest {
     }
 
     @Test
-    void renderRequestWithAvailabilityRequestForMarketToChekIfProductExist() throws IOException, ServiceNotFoundException {
+    void renderRequestWithAvailabilityRequestForMarketToChekIfProductExist() throws IOException, ServiceNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         //Arrange
         when(channelManager.getChannelByKey(any())).thenReturn(Optional.ofNullable(DUMMY_MANAGED_CHANNEL));
-        when(stubManager.getMarketBlockingStub(any())).thenReturn(marketBlockingStub);
+        String destination = "market";
+        doReturn(marketBlockingStub).when(stubManager).getBlockingStub(any(ManagedChannel.class), eq(destination));
+
+
         AvailabilityResponse availabilityResponse = AvailabilityResponse.newBuilder().build();
 
         //Act
@@ -168,10 +197,12 @@ class RequestMapperTest {
     }
 
     @Test
-    void renderRequestWithBuyProductRequestForMarketToBuyTheProductFromMarket() throws IOException, ServiceNotFoundException {
+    void renderRequestWithBuyProductRequestForMarketToBuyTheProductFromMarket() throws IOException, ServiceNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         //Arrange
         when(channelManager.getChannelByKey(any())).thenReturn(Optional.ofNullable(DUMMY_MANAGED_CHANNEL));
-        when(stubManager.getMarketBlockingStub(any())).thenReturn(marketBlockingStub);
+        String destination = "market";
+        doReturn(marketBlockingStub).when(stubManager).getBlockingStub(any(ManagedChannel.class), eq(destination));
+
         BuySellProductResponse buySellProductResponse = BuySellProductResponse.newBuilder().build();
 
         //Act
@@ -182,10 +213,12 @@ class RequestMapperTest {
     }
 
     @Test
-    void renderRequestWithReturnProductRequestForMarketToReturnTheProductFromMarket() throws IOException, ServiceNotFoundException {
+    void renderRequestWithReturnProductRequestForMarketToReturnTheProductFromMarket() throws IOException, ServiceNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         //Arrange
         when(channelManager.getChannelByKey(any())).thenReturn(Optional.ofNullable(DUMMY_MANAGED_CHANNEL));
-        when(stubManager.getMarketBlockingStub(any())).thenReturn(marketBlockingStub);
+        String destination = "market";
+        doReturn(marketBlockingStub).when(stubManager).getBlockingStub(any(ManagedChannel.class), eq(destination));
+
         BuySellProductResponse buySellProductResponse = BuySellProductResponse.newBuilder().build();
 
         //Act
