@@ -5,34 +5,36 @@ import com.aurora.AuroraServiceGrpc;
 import com.market.MarketServiceGrpc;
 import com.orderbook.OrderBookServiceGrpc;
 import io.grpc.ManagedChannel;
+import io.grpc.stub.AbstractBlockingStub;
+import io.grpc.stub.AbstractStub;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class StubManager {
 
-    public AuroraServiceGrpc.AuroraServiceStub getAuroraStub(ManagedChannel channel){
-        return AuroraServiceGrpc.newStub(channel);
+    public AbstractBlockingStub<? extends AbstractBlockingStub<?>> getBlockingStub(ManagedChannel channel, String prefix) {
+
+        if (prefix.toLowerCase().contains("aurora")) {
+            return AuroraServiceGrpc.newBlockingStub(channel);
+        } else if (prefix.toLowerCase().contains("orderbook")) {
+            return OrderBookServiceGrpc.newBlockingStub(channel);
+        } else if (prefix.toLowerCase().contains("market")) {
+            return MarketServiceGrpc.newBlockingStub(channel);
+        }
+
+        throw new RuntimeException("No supported stub.");
     }
 
-    public AuroraServiceGrpc.AuroraServiceBlockingStub getAuroraBlockingStub(ManagedChannel channel){
-        return AuroraServiceGrpc.newBlockingStub(channel);
+    public AbstractStub<? extends AbstractStub<?>> getStub(ManagedChannel channel, String prefix) {
+
+        if (prefix.toLowerCase().contains("aurora")) {
+            return AuroraServiceGrpc.newStub(channel);
+        } else if (prefix.toLowerCase().contains("orderbook")) {
+            return OrderBookServiceGrpc.newStub(channel);
+        } else if (prefix.toLowerCase().contains("market")) {
+            return MarketServiceGrpc.newStub(channel);
+        }
+
+        throw new RuntimeException("No supported stub.");
     }
-
-
-    public OrderBookServiceGrpc.OrderBookServiceStub getOrderbookStub(ManagedChannel channel){
-        return OrderBookServiceGrpc.newStub(channel);
-    }
-
-    public OrderBookServiceGrpc.OrderBookServiceBlockingStub getOrderbookBlockingStub(ManagedChannel channel){
-        return OrderBookServiceGrpc.newBlockingStub(channel);
-    }
-
-    public MarketServiceGrpc.MarketServiceStub getMarketStub(ManagedChannel channel){
-        return MarketServiceGrpc.newStub(channel);
-    }
-
-    public MarketServiceGrpc.MarketServiceBlockingStub getMarketBlockingStub(ManagedChannel channel){
-        return MarketServiceGrpc.newBlockingStub(channel);
-    }
-
 }

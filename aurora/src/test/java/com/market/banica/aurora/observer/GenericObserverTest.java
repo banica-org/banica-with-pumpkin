@@ -1,6 +1,8 @@
 package com.market.banica.aurora.observer;
 
 import com.aurora.Aurora;
+import com.google.protobuf.Any;
+import com.market.TickResponse;
 import io.grpc.stub.StreamObserver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,11 +18,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
-class AuroraObserverTest {
-
-    private static final Aurora.AuroraRequest AURORA_REQUEST_BANICA = Aurora.AuroraRequest.newBuilder().setTopic("market/banica").setClientId("orderBook").build();
-
-    private static final Aurora.AuroraResponse AURORA_RESPONSE_TO_FORWARD = Aurora.AuroraResponse.newBuilder().build();
+class GenericObserverTest {
+    private static final Aurora.AuroraResponse AURORA_RESPONSE_TO_FORWARD = Aurora.AuroraResponse
+            .newBuilder().setMessage(Any.pack(TickResponse.newBuilder().setGoodName("banica").build())).build();
 
     private static final Throwable THROWABLE = new Throwable("Error message.");
 
@@ -28,32 +28,34 @@ class AuroraObserverTest {
 
     private final StreamObserver<Aurora.AuroraResponse> forwardResponse = mock(StreamObserver.class);
 
+    private final String CLIENT_ID = "aurora";
+
     @InjectMocks
-    private AuroraObserver auroraObserver;
+    private GenericObserver<TickResponse> marketTickObserver;
 
     @BeforeEach
     public void setUp() {
-        auroraObserver = new AuroraObserver(AURORA_REQUEST_BANICA, forwardResponse, activeStreamsCounter);
+        marketTickObserver = new GenericObserver<TickResponse>(CLIENT_ID, forwardResponse, activeStreamsCounter, "TEST", "banica");
     }
 
     @Test
-    void onNextForwardsResponseToResponseObserver() {
-        auroraObserver.onNext(AURORA_RESPONSE_TO_FORWARD);
+    void onNextForwardsResponseToResponseObserver() throws InterruptedException {
+        marketTickObserver.onNext(TickResponse.newBuilder().setGoodName("banica").build());
         verify(forwardResponse, times(1)).onNext(AURORA_RESPONSE_TO_FORWARD);
     }
 
     @Test
     void onErrorDecrementsOpenStreams() {
         assertEquals(1, activeStreamsCounter.get());
-        auroraObserver.onError(THROWABLE);
+        marketTickObserver.onError(THROWABLE);
 
         assertEquals(0, activeStreamsCounter.get());
     }
 
     @Test
-    void onErrorWhenNoOpenStreamsThenInvokesResponseObserversOnComplete() {
+    void onErrorWhenNoOpenStreamsThenInvokesForwardResponseOnComplete() {
         assertEquals(1, activeStreamsCounter.get());
-        auroraObserver.onError(THROWABLE);
+        marketTickObserver.onError(THROWABLE);
 
         assertEquals(0, activeStreamsCounter.get());
         verify(forwardResponse, times(1)).onCompleted();
@@ -62,15 +64,15 @@ class AuroraObserverTest {
     @Test
     void onCompleteDecrementsOpenStreams() {
         assertEquals(1, activeStreamsCounter.get());
-        auroraObserver.onCompleted();
+        marketTickObserver.onCompleted();
 
         assertEquals(0, activeStreamsCounter.get());
     }
 
     @Test
-    void onCompletedWhenNoOpenStreamsThenInvokesResponseObserversOnComplete() {
+    void onCompletedWhenNoOpenStreamsThenInvokesForwardResponseOnComplete() {
         assertEquals(1, activeStreamsCounter.get());
-        auroraObserver.onCompleted();
+        marketTickObserver.onCompleted();
 
         assertEquals(0, activeStreamsCounter.get());
         verify(forwardResponse, times(1)).onCompleted();
