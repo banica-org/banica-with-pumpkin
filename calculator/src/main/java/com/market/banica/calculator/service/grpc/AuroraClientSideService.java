@@ -115,7 +115,7 @@ public class AuroraClientSideService {
         Aurora.AuroraResponse auroraResponse = getAuroraResponse(message);
         BuySellProductResponse buySellProductResponse = unpackAndValidateResponse(auroraResponse, BuySellProductResponse.class);
 
-        LOGGER.info(buySellProductResponse.getMessage());
+        LOGGER.debug(buySellProductResponse.getMessage());
 
         return buySellProductResponse.getMessage();
     }
