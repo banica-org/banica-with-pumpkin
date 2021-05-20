@@ -1,6 +1,8 @@
 package com.market.banica.aurora.observer;
 
+
 import com.aurora.Aurora;
+import com.google.protobuf.AbstractMessage;
 import com.google.protobuf.Any;
 import com.market.MarketDataRequest;
 import com.market.TickResponse;
@@ -17,9 +19,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class MarketTickObserver implements ClientResponseObserver<MarketDataRequest, TickResponse> {
+public class GenericObserver<S extends AbstractMessage> implements StreamObserver<S> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(MarketTickObserver.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(GenericObserver.class);
 
     private final AtomicInteger openStreams;
 
@@ -27,6 +29,7 @@ public class MarketTickObserver implements ClientResponseObserver<MarketDataRequ
     private final String destinationOfMessages;
     private final String item;
     private final String orderBookIdentifier;
+    private final String typeOfMessage;
 
     private final StreamObserver<Aurora.AuroraResponse> forwardResponse;
 
@@ -65,10 +68,11 @@ public class MarketTickObserver implements ClientResponseObserver<MarketDataRequ
                 requestStream.onNext(marketDataRequest);
             }
         });
+        this.typeOfMessage = typeOfMessage;
     }
 
     @Override
-    public void onNext(TickResponse tickResponse) {
+    public void onNext(S response) {
         LOGGER.debug("Forwarding response to client {}", client);
 
         Aurora.AuroraResponse response = this.wrapResponse(tickResponse);
@@ -95,7 +99,7 @@ public class MarketTickObserver implements ClientResponseObserver<MarketDataRequ
         LOGGER.error(throwable.getMessage());
 
         if (Status.fromThrowable(throwable).getCode().equals(Status.Code.UNAVAILABLE)) {
-            LOGGER.warn("Market server: {} has suddenly became offline.", destinationOfMessages);
+            LOGGER.warn("Publisher server: {} has suddenly became offline.", destinationOfMessages);
             synchronized (forwardResponse) {
                 forwardResponse.onNext(this.wrapReconnect(buildReconnect()));
             }
@@ -125,14 +129,14 @@ public class MarketTickObserver implements ClientResponseObserver<MarketDataRequ
         return ReconnectionResponse.newBuilder()
                 .setClientId(client)
                 .setDestination(destinationOfMessages)
-                .setItemName(item)
+                .setItemName(typeOfMessage)
                 .build();
 
     }
 
-    private Aurora.AuroraResponse wrapResponse(TickResponse tickResponse) {
+    private Aurora.AuroraResponse wrapResponse(S response) {
         return Aurora.AuroraResponse.newBuilder()
-                .setMessage(Any.pack(tickResponse))
+                .setMessage(Any.pack(response))
                 .build();
     }
 

@@ -57,6 +57,7 @@ service MarketService{
   rpc subscribeForItem(stream MarketDataRequest) returns (stream TickResponse);
   rpc requestCatalogue(CatalogueRequest) returns (CatalogueResponse);
   rpc buyProduct (ProductBuySellRequest) returns (BuySellProductResponse);
+  rpc sellProduct (ProductBuySellRequest) returns (BuySellProductResponse);
   rpc returnPendingProduct(ProductBuySellRequest) returns (BuySellProductResponse);
   rpc checkAvailability (ProductBuySellRequest) returns (AvailabilityResponse);
 }

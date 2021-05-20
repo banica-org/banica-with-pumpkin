@@ -34,6 +34,7 @@ public final class FakeServerGenerator {
     private static final Logger LOGGER = LoggerFactory.getLogger(FakeServerGenerator.class);
     private static final Map<String, ManagedChannel> channels = new ConcurrentHashMap<>();
 
+
     private static final String AURORA_SERVER_CHANNEL_NAME = "auroraServerChannel";
     private static final String ORDER_BOOK_SERVER_CHANNEL_NAME = "orderBookServerChannel";
     private static final String MARKET_SERVER_CHANNEL_NAME = "marketServerChannel";
@@ -153,6 +154,12 @@ public final class FakeServerGenerator {
             @Override
             public void checkAvailability(ProductBuySellRequest request, StreamObserver<AvailabilityResponse> responseObserver) {
                 responseObserver.onNext(AvailabilityResponse.newBuilder().build());
+                responseObserver.onCompleted();
+            }
+
+            @Override
+            public void sellProduct(ProductBuySellRequest request, StreamObserver<BuySellProductResponse> responseObserver) {
+                responseObserver.onNext(BuySellProductResponse.newBuilder().build());
                 responseObserver.onCompleted();
             }
         };

@@ -30,7 +30,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
-class MarketTickObserverTest {
+class GenericObserverTest {
+    private static final Aurora.AuroraResponse AURORA_RESPONSE_TO_FORWARD = Aurora.AuroraResponse
+            .newBuilder().setMessage(Any.pack(TickResponse.newBuilder().setGoodName("banica").build())).build();
 
     private static final String MARKET_SERVER_NAME = "marketServer";
     private static final String CLIENT_ID = "aurora";
@@ -48,14 +50,14 @@ class MarketTickObserverTest {
 
     private final MarketServiceGrpc.MarketServiceStub marketStub = MarketServiceGrpc.newStub(MARKET_SERVER_CHANNEL);
 
-    private static final Aurora.AuroraResponse AURORA_RESPONSE_TO_FORWARD = Aurora.AuroraResponse
-            .newBuilder().setMessage(Any.pack(TickResponse.newBuilder().setGoodName("banica").build())).build();
-
     private static final Throwable THROWABLE = new Throwable("Error message.");
 
     private final AtomicInteger activeStreamsCounter = new AtomicInteger(1);
 
     private final StreamObserver<Aurora.AuroraResponse> forwardResponse = mock(StreamObserver.class);
+
+
+    private final String CLIENT_ID = "aurora";
 
     @Rule
     public static GrpcCleanupRule grpcCleanup = new GrpcCleanupRule();
@@ -63,8 +65,9 @@ class MarketTickObserverTest {
     @Mock
     private BackPressureManager backPressureManager;
 
-    @Mock
-    private MarketTickObserver marketTickObserver;
+
+    @InjectMocks
+    private GenericObserver<TickResponse> marketTickObserver;
 
     @BeforeEach
     public void setUp() throws IOException {
