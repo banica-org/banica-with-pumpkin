@@ -1,9 +1,10 @@
 package com.market.banica.aurora.backpressure;
 
 import com.aurora.Aurora;
+import com.google.protobuf.AbstractMessage;
 import com.google.protobuf.Any;
 import com.market.MarketDataRequest;
-import com.market.banica.aurora.observer.MarketTickObserver;
+import com.market.banica.aurora.observer.GenericObserver;
 import io.grpc.stub.StreamObserver;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,7 +26,7 @@ public class BackPressureManager {
 
     private int numberOfMessagesToBeRequested = 1;
 
-    private final Map<String, Set<MarketTickObserver>> marketTickObservers = new ConcurrentHashMap<>();
+    private final Map<String, Set<GenericObserver<? extends AbstractMessage,? extends AbstractMessage>>> marketTickObservers = new ConcurrentHashMap<>();
 
     public void activateBackPressure(String orderBookIdentifier, StreamObserver<Aurora.AuroraResponse> responseObserver) {
         LOGGER.debug("Activating backpressure for orderbook with gRPC port --> {}", orderBookIdentifier);
@@ -35,16 +36,16 @@ public class BackPressureManager {
 
     public void deActivateBackPressure(String orderBookIdentifier, StreamObserver<Aurora.AuroraResponse> responseObserver) {
         LOGGER.debug("Deactivating backpressure for orderbook with gRPC port --> {}", orderBookIdentifier);
-        for (MarketTickObserver marketTickObserver : marketTickObservers.get(orderBookIdentifier)) {
-            marketTickObserver.setBackPressureForTick(false);
-            marketTickObserver.getCountDownLatch().countDown();
+        for (GenericObserver<? extends AbstractMessage,? extends AbstractMessage> genericObserver : marketTickObservers.get(orderBookIdentifier)) {
+            genericObserver.setBackPressureForTick(false);
+            genericObserver.getCountDownLatch().countDown();
         }
         notifyBackpressureObserver(orderBookIdentifier + "/off", responseObserver);
     }
 
-    public void addMarketTickObserver(MarketTickObserver marketTickObserver, String orderBookIdentifier) {
+    public void addMarketTickObserver(GenericObserver<? extends AbstractMessage, ? extends AbstractMessage> genericObserver, String orderBookIdentifier) {
         marketTickObservers.putIfAbsent(orderBookIdentifier, ConcurrentHashMap.newKeySet());
-        marketTickObservers.get(orderBookIdentifier).add(marketTickObserver);
+        marketTickObservers.get(orderBookIdentifier).add(genericObserver);
     }
 
     private void notifyBackpressureObserver(String orderBookIdentifier, StreamObserver<Aurora.AuroraResponse> responseObserver) {
@@ -57,3 +58,4 @@ public class BackPressureManager {
         responseObserver.onNext(Aurora.AuroraResponse.newBuilder().setMessage(Any.pack(marketDataRequest)).build());
     }
 }
+

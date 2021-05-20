@@ -12,6 +12,8 @@ import io.grpc.Status;
 import io.grpc.stub.AbstractStub;
 import io.grpc.stub.StreamObserver;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -33,10 +35,8 @@ public class SubscribeMapper {
     private final BackPressureManager backPressureManager;
 
     public static final String ORDERBOOK = "orderbook";
-    public static final String AURORA = "aurora";
+
     public static final String MARKET = "market";
-    private final ChannelManager channelManager;
-    private final StubManager stubManager;
 
     @Autowired
     public SubscribeMapper(ChannelManager channelManager, StubManager stubManager, BackPressureManager backPressureManager) {
@@ -60,8 +60,6 @@ public class SubscribeMapper {
         if (destinationOfMessage.contains(MARKET)) {
             renderMarketMapping(incomingRequest, responseObserver, channelsWithPrefix);
 
-        } else if (destinationOfMessage.contains(AURORA)) {
-            renderAuroraMapping(incomingRequest, responseObserver, channelsWithPrefix);
         } else if (destinationOfMessage.contains(ORDERBOOK)) {
             log.warn("Unsupported mapping have reached aurora.");
             responseObserver.onError(Status.NOT_FOUND
@@ -75,22 +73,8 @@ public class SubscribeMapper {
         }
     }
 
-    private void renderAuroraMapping(Aurora.AuroraRequest incomingRequest, StreamObserver<Aurora.AuroraResponse> responseObserver, List<Map.Entry<String, ManagedChannel>> channelsWithPrefix) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        AtomicInteger openStreams = new AtomicInteger(channelsWithPrefix.size());
-
-        for (Map.Entry<String, ManagedChannel> channel : channelsWithPrefix) {
-            AbstractStub<? extends AbstractStub<?>> auroraStub = stubManager.getStub(channel.getValue(), AURORA);
-
-            Method auroraSubscribe = auroraStub.getClass().getMethod("subscribe", Aurora.AuroraRequest.class, StreamObserver.class);
-
-            auroraSubscribe.invoke(auroraStub, incomingRequest, new GenericObserver<TickResponse>(incomingRequest.getClientId(), responseObserver
-                    , openStreams, channel.getKey(), "aurora requests"));
-        }
-    }
-
     private void renderMarketMapping(Aurora.AuroraRequest incomingRequest, StreamObserver<Aurora.AuroraResponse> responseObserver, List<Map.Entry<String, ManagedChannel>> channelsWithPrefix) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         String itemForSubscribing = incomingRequest.getTopic().split("/")[1];
-        log.info("Rendering subscribe for item: " + itemForSubscribing);
         String orderBookIdentifier = incomingRequest.getTopic().split("/")[2];
         AtomicInteger openStreams = new AtomicInteger(channelsWithPrefix.size());
 
@@ -99,14 +83,13 @@ public class SubscribeMapper {
                 .setGoodName(itemForSubscribing)
                 .build();
 
-
         for (Map.Entry<String, ManagedChannel> channel : channelsWithPrefix) {
             AbstractStub<? extends AbstractStub<?>> marketStub = stubManager.getStub(channel.getValue(), MARKET);
 
-            Method marketSubscribeForItem = marketStub.getClass().getMethod("subscribeForItem", MarketDataRequest.class, StreamObserver.class);
+            Method marketSubscribeForItem = marketStub.getClass().getMethod("subscribeForItem", StreamObserver.class);
 
-            marketSubscribeForItem.invoke(marketStub, marketDataRequest, new GenericObserver<TickResponse>(incomingRequest.getClientId(), responseObserver
-                    , openStreams, channel.getKey(), marketDataRequest.getGoodName()));
+            marketSubscribeForItem.invoke(marketStub, new GenericObserver<MarketDataRequest, TickResponse>(incomingRequest.getClientId(), responseObserver, openStreams,
+                    channel.getKey(), marketDataRequest.getGoodName(), marketDataRequest, backPressureManager, orderBookIdentifier));
         }
     }
 }

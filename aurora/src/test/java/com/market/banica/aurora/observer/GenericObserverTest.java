@@ -18,6 +18,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -56,9 +57,6 @@ class GenericObserverTest {
 
     private final StreamObserver<Aurora.AuroraResponse> forwardResponse = mock(StreamObserver.class);
 
-
-    private final String CLIENT_ID = "aurora";
-
     @Rule
     public static GrpcCleanupRule grpcCleanup = new GrpcCleanupRule();
 
@@ -67,7 +65,7 @@ class GenericObserverTest {
 
 
     @InjectMocks
-    private GenericObserver<TickResponse> marketTickObserver;
+    private GenericObserver<MarketDataRequest,TickResponse> marketTickObserver;
 
     @BeforeEach
     public void setUp() throws IOException {
@@ -81,7 +79,7 @@ class GenericObserverTest {
                 .setGoodName(ITEM_NAME)
                 .build();
 
-        marketTickObserver = new MarketTickObserver(CLIENT_ID, forwardResponse, activeStreamsCounter,
+        marketTickObserver = new GenericObserver(CLIENT_ID, forwardResponse, activeStreamsCounter,
                 "TEST", ITEM_NAME, marketDataRequest, backPressureManager, ORDER_BOOK_GRPC_IDENTIFIER);
     }
 

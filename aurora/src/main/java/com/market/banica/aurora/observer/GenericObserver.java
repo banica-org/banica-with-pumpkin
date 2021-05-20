@@ -4,7 +4,6 @@ package com.market.banica.aurora.observer;
 import com.aurora.Aurora;
 import com.google.protobuf.AbstractMessage;
 import com.google.protobuf.Any;
-import com.market.MarketDataRequest;
 import com.market.TickResponse;
 import com.market.banica.aurora.backpressure.BackPressureManager;
 import com.orderbook.ReconnectionResponse;
@@ -15,11 +14,12 @@ import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Date;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class GenericObserver<S extends AbstractMessage> implements StreamObserver<S> {
+public class GenericObserver<S extends AbstractMessage, T extends AbstractMessage> implements ClientResponseObserver<S, T> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GenericObserver.class);
 
@@ -29,11 +29,10 @@ public class GenericObserver<S extends AbstractMessage> implements StreamObserve
     private final String destinationOfMessages;
     private final String item;
     private final String orderBookIdentifier;
-    private final String typeOfMessage;
 
     private final StreamObserver<Aurora.AuroraResponse> forwardResponse;
 
-    private final MarketDataRequest marketDataRequest;
+    private final S marketDataRequest;
 
     private final BackPressureManager backPressureManager;
 
@@ -43,8 +42,8 @@ public class GenericObserver<S extends AbstractMessage> implements StreamObserve
 
     private CountDownLatch countDownLatch = new CountDownLatch(1);
 
-    public MarketTickObserver(String client, StreamObserver<Aurora.AuroraResponse> forwardResponse, AtomicInteger openStreams, String destinationOfMessages,
-                              String item, MarketDataRequest marketDataRequest, BackPressureManager backPressureManager, String orderBookIdentifier) {
+    public GenericObserver(String client, StreamObserver<Aurora.AuroraResponse> forwardResponse, AtomicInteger openStreams, String destinationOfMessages,
+                              String item, S marketDataRequest, BackPressureManager backPressureManager, String orderBookIdentifier) {
         this.client = client;
         this.forwardResponse = forwardResponse;
         this.openStreams = openStreams;
@@ -68,13 +67,14 @@ public class GenericObserver<S extends AbstractMessage> implements StreamObserve
                 requestStream.onNext(marketDataRequest);
             }
         });
-        this.typeOfMessage = typeOfMessage;
     }
 
     @Override
-    public void onNext(S response) {
+    public void onNext(T incomingResponse) {
         LOGGER.debug("Forwarding response to client {}", client);
 
+        TickResponse tickResponse = (TickResponse) incomingResponse;
+        System.out.println("Received TickResponse with time of creation: " + tickResponse.getTimestamp() + " CURRENT TIME ---> " + new Date().getTime());
         Aurora.AuroraResponse response = this.wrapResponse(tickResponse);
 
         synchronized (forwardResponse) {
@@ -92,6 +92,7 @@ public class GenericObserver<S extends AbstractMessage> implements StreamObserve
             requestStream.request(backPressureManager.getNumberOfMessagesToBeRequested());
         }
     }
+
 
     @Override
     public void onError(Throwable throwable) {
@@ -129,12 +130,12 @@ public class GenericObserver<S extends AbstractMessage> implements StreamObserve
         return ReconnectionResponse.newBuilder()
                 .setClientId(client)
                 .setDestination(destinationOfMessages)
-                .setItemName(typeOfMessage)
+                .setItemName(item)
                 .build();
 
     }
 
-    private Aurora.AuroraResponse wrapResponse(S response) {
+    private Aurora.AuroraResponse wrapResponse(TickResponse response) {
         return Aurora.AuroraResponse.newBuilder()
                 .setMessage(Any.pack(response))
                 .build();

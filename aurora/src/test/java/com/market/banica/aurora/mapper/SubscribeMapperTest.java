@@ -131,22 +131,4 @@ class SubscribeMapperTest {
         verify(responseObserver, times(1)).onNext(any());
         verify(responseObserver, times(1)).onCompleted();
     }
-
-    @Test
-    void renderSubscribeWithRequestForAuroraServiceSubscribesResponseObserverAndCallsOnNextAndOnCompleted() throws InterruptedException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-        //Arrange
-        when(channelManager.getAllChannelsContainingPrefix(any())).thenReturn(Collections.singletonList(dummyEntry));
-        String destination = "aurora";
-        doReturn(auroraStub).when(stubManager).getStub(any(ManagedChannel.class), eq(destination));
-
-        //Act
-        subscribeMapper.renderSubscribe(AURORA_REQUEST, responseObserver);
-
-        Thread.sleep(1000);
-
-        //Assert
-        verify(stubManager, times(1)).getStub(any(ManagedChannel.class), eq(destination));
-        verify(responseObserver, times(3)).onNext(any());
-        verify(responseObserver, times(1)).onCompleted();
-    }
 }
