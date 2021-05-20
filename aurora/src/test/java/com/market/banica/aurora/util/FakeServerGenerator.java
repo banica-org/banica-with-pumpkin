@@ -155,6 +155,12 @@ public final class FakeServerGenerator {
                 responseObserver.onNext(AvailabilityResponse.newBuilder().build());
                 responseObserver.onCompleted();
             }
+
+            @Override
+            public void sellProduct(ProductBuySellRequest request, StreamObserver<BuySellProductResponse> responseObserver) {
+                responseObserver.onNext(BuySellProductResponse.newBuilder().build());
+                responseObserver.onCompleted();
+            }
         };
     }
 

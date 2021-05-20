@@ -60,7 +60,6 @@ public class GenericObserver<S extends AbstractMessage, T extends AbstractMessag
     @Override
     public void onNext(T objectTickResponse) {
         TickResponse tickResponse = (TickResponse) objectTickResponse;
-        System.out.println("Received TickResponse with time of creation: " + tickResponse.getTimestamp() + " CURRENT TIME ---> " + new Date().getTime());
         LOGGER.debug("Forwarding response to client {}", client);
         Aurora.AuroraResponse response = this.wrapResponse(tickResponse);
         synchronized (forwardResponse) {
