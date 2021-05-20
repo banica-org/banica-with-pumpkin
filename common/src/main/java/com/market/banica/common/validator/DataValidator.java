@@ -26,6 +26,15 @@ public class DataValidator {
 
     }
 
+    public static void validateItemPriceAndQuantity(String itemName, String marketName, double price, long quantity) {
+        if (price <= 0.0) {
+            throw new IllegalArgumentException(String.format("Sorry, you can't sell %s to %s market because price should be grater than 0,0.", itemName, marketName));
+        }
+        if (quantity <= 0) {
+            throw new IllegalArgumentException(String.format("Sorry, you can't sell %s to %s market because quantity should be grater than 0.", itemName, marketName));
+        }
+    }
+
     private static void checkIngredientName(String ingredientName) {
         if (!ingredientName.matches(INGREDIENT_NAME_PATTERN)) {
             throw new IllegalArgumentException("Ingredient name must contains only letters.");

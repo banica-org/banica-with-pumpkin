@@ -27,6 +27,7 @@ import io.grpc.inprocess.InProcessChannelBuilder;
 import io.grpc.inprocess.InProcessServerBuilder;
 import io.grpc.stub.StreamObserver;
 import io.grpc.testing.GrpcCleanupRule;
+import lombok.SneakyThrows;
 import org.junit.Rule;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -321,9 +322,11 @@ class AuroraComponentIT {
         AuroraServiceGrpc
                 .newStub(senderChannel)
                 .subscribe(request, new StreamObserver<Aurora.AuroraResponse>() {
+                    @SneakyThrows
                     @Override
                     public void onNext(Aurora.AuroraResponse response) {
-                        receivedResponses.add(response);
+                        Aurora.AuroraResponse unpack = response.getMessage().unpack(Aurora.AuroraResponse.class);
+                        receivedResponses.add(unpack);
                     }
 
                     @Override
@@ -647,7 +650,7 @@ class AuroraComponentIT {
         for (int i = 0; i < 3; i++) {
             //do assert.
             assertTrue(statusReport.contains("aurora" + i));
-            jmxConfig.deleteChannel("aurora"+i);
+            jmxConfig.deleteChannel("aurora" + i);
         }
 
         assertFalse(statusReport.contains("aurora3"));

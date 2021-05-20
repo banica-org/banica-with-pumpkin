@@ -9,7 +9,10 @@ import com.market.banica.calculator.service.contract.CalculatorService;
 import com.market.banica.calculator.service.contract.TransactionService;
 import com.market.banica.calculator.service.grpc.AuroraClientSideService;
 import com.market.banica.common.exception.ProductNotAvailableException;
+import com.market.banica.common.validator.DataValidator;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +25,8 @@ import java.util.stream.Collectors;
 @Service
 @AllArgsConstructor(onConstructor = @__(@Autowired))
 public class TransactionServiceImpl implements TransactionService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TransactionServiceImpl.class);
+
     private static final String PRODUCT_NOT_AVAILABLE_MESSAGE = "%s with quantity %d is currently not available on the %s market";
 
     private final CalculatorService calculatorService;
@@ -42,7 +47,7 @@ public class TransactionServiceImpl implements TransactionService {
                 Origin productOrigin = Origin.valueOf(productSpecification.getLocation().toUpperCase(Locale.ROOT));
 
                 AvailabilityResponse availabilityResponse = this.auroraClientSideService
-                                .checkAvailability(productName, productPrice.doubleValue(), productQuantity, productOrigin);
+                        .checkAvailability(productName, productPrice.doubleValue(), productQuantity, productOrigin);
 
                 if (!availabilityResponse.getIsAvailable()) {
                     returnPendingProducts(pendingItems);
@@ -56,6 +61,36 @@ public class TransactionServiceImpl implements TransactionService {
         }
         buyPendingProducts(pendingItems);
         return purchaseProducts;
+    }
+
+    @Override
+    public String sellProduct(List<ItemDto> itemsToSell) {
+        validateData(itemsToSell);
+
+        StringBuilder stringBuilder = new StringBuilder();
+        List<ItemDto> soldItems = new ArrayList<>();
+        String lastUsedMarket = "";
+
+        try {
+            for (ItemDto item : itemsToSell) {
+                lastUsedMarket = item.getLocation();
+                this.auroraClientSideService.sellProductToMarket(item.getName(), item.getPrice().doubleValue(), item.getQuantity(), item.getLocation());
+                soldItems.add(item);
+            }
+            stringBuilder.append("Congratulations your sale was successful!");
+        } catch (Exception e) {
+            for (ItemDto item : soldItems) {
+                this.auroraClientSideService.sellProductToMarket(item.getName(), item.getPrice().doubleValue(), -item.getQuantity(), item.getLocation());
+            }
+            stringBuilder.append(String.format("Sorry, you can't sell your items because %s market is closed.", lastUsedMarket));
+        }
+        return stringBuilder.toString().trim();
+    }
+
+    private void validateData(List<ItemDto> itemsToSell) {
+        for (ItemDto itemDto : itemsToSell) {
+            DataValidator.validateItemPriceAndQuantity(itemDto.getName(), itemDto.getLocation(), itemDto.getPrice().doubleValue(), itemDto.getQuantity());
+        }
     }
 
     private List<ProductDto> getNotCompoundProducts(List<ProductDto> purchaseProducts) {

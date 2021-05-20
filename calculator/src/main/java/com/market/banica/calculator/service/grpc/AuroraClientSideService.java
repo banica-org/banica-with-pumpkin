@@ -29,6 +29,7 @@ public class AuroraClientSideService {
     public static final String GET_INGREDIENT_PATTERN = "%s/%s/%d";
     public static final String AVAILABILITY_REQUEST_PATTERN = "market-%s/availability/%s/%f/%d";
     public static final String RETURN_PENDING_PRODUCT_PATTERN = "market-%s/return/%s/%f/%d";
+    public static final String SELL_PRODUCT_PATTERN = "market-%s/sell/%s/%f/%d/%s";
     public static final String BUY_PRODUCT_PATTERN = "market-%s/buy/%s/%f/%d";
 
     public static final String INCORRECT_RESPONSE_MESSAGE = "Incorrect response! Response must be from %s type.";
@@ -107,6 +108,16 @@ public class AuroraClientSideService {
         BuySellProductResponse buySellProductResponse = unpackAndValidateResponse(auroraResponse, BuySellProductResponse.class);
 
         LOGGER.debug(buySellProductResponse.getMessage());
+    }
+
+    public String sellProductToMarket(String itemName, double itemPrice, long itemQuantity, String itemOrigin) {
+        String message = String.format(SELL_PRODUCT_PATTERN, itemOrigin.toLowerCase(Locale.ROOT), itemName, itemPrice, itemQuantity, itemOrigin);
+        Aurora.AuroraResponse auroraResponse = getAuroraResponse(message);
+        BuySellProductResponse buySellProductResponse = unpackAndValidateResponse(auroraResponse, BuySellProductResponse.class);
+
+        LOGGER.debug(buySellProductResponse.getMessage());
+
+        return buySellProductResponse.getMessage();
     }
 
     @SuppressWarnings("unchecked")

@@ -12,6 +12,7 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import javax.management.ServiceNotFoundException;
+import java.lang.reflect.InvocationTargetException;
 import java.rmi.NoSuchObjectException;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -33,7 +34,7 @@ class RequestHandlerTest {
     private static RequestHandler requestHandler;
 
     @Test
-    void handleRequestWithLegalResponseFromRenderRequestInvokesOnNextAndOnCompleted() throws NoSuchObjectException, ServiceNotFoundException {
+    void handleRequestWithLegalResponseFromRenderRequestInvokesOnNextAndOnCompleted() throws NoSuchObjectException, ServiceNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         //Arrange
         Mockito.when(requestMapper.renderRequest(AURORA_REQUEST_BANICA)).thenReturn(Aurora.AuroraResponse.newBuilder().build());
 
