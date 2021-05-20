@@ -3,6 +3,7 @@ package com.market.banica.aurora.mapper;
 import com.aurora.Aurora;
 import com.aurora.AuroraServiceGrpc;
 import com.market.MarketServiceGrpc;
+import com.market.banica.aurora.backpressure.BackPressureManager;
 import com.market.banica.aurora.config.ChannelManager;
 import com.market.banica.aurora.config.StubManager;
 import com.market.banica.aurora.util.FakeServerGenerator;
@@ -41,7 +42,6 @@ import static org.mockito.Mockito.when;
 class SubscribeMapperTest {
 
     private static final Aurora.AuroraRequest MARKET_REQUEST = Aurora.AuroraRequest.newBuilder().setClientId("1").setTopic("market/eggs/10").build();
-    private static final Aurora.AuroraRequest AURORA_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("aurora/eggs/10").build();
     private static final Aurora.AuroraRequest ORDERBOOK_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("orderbook/eggs/10").build();
     private static final Aurora.AuroraRequest INVALID_REQUEST = Aurora.AuroraRequest.newBuilder().setTopic("invalid/request").build();
 
@@ -65,6 +65,9 @@ class SubscribeMapperTest {
     private final AbstractStub<? extends AbstractStub<?>> marketStub = MarketServiceGrpc.newStub(MARKET_SERVER_CHANNEL);
     private final AbstractStub<? extends AbstractStub<?>> auroraStub = AuroraServiceGrpc.newStub(AURORA_SERVER_CHANNEL);
     private final StreamObserver<Aurora.AuroraResponse> responseObserver = mock(StreamObserver.class);
+    @Mock
+    private BackPressureManager backPressureManager;
+
     @Mock
     private ChannelManager channelManager;
     @Mock
@@ -128,21 +131,5 @@ class SubscribeMapperTest {
         verify(responseObserver, times(1)).onCompleted();
     }
 
-    @Test
-    void renderSubscribeWithRequestForAuroraServiceSubscribesResponseObserverAndCallsOnNextAndOnCompleted() throws InterruptedException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-        //Arrange
-        when(channelManager.getAllChannelsContainingPrefix(any())).thenReturn(Collections.singletonList(dummyEntry));
-        String destination = "aurora";
-        doReturn(auroraStub).when(stubManager).getStub(any(ManagedChannel.class), eq(destination));
 
-        //Act
-        subscribeMapper.renderSubscribe(AURORA_REQUEST, responseObserver);
-
-        Thread.sleep(1000);
-
-        //Assert
-        verify(stubManager, times(1)).getStub(any(ManagedChannel.class), eq(destination));
-        verify(responseObserver, times(3)).onNext(any());
-        verify(responseObserver, times(1)).onCompleted();
-    }
 }

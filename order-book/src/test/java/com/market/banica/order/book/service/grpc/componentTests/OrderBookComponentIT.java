@@ -124,6 +124,7 @@ class OrderBookComponentIT {
 
     private final static String DELIMITER = "/";
     private final static String AURORA_CLIENT = "auroraClient";
+    private final static String ORDER_BOOK_GRPC_PORT = "9201";
     private final static String EGGS_GOOD = "eggs";
 
     private final static int MAX_RETRY_ATTEMPTS = 20;
@@ -296,7 +297,7 @@ class OrderBookComponentIT {
 
         // Assert
         verify(server).subscribe(requestCaptor.capture(), ArgumentMatchers.any());
-        assertEquals(marketTopicPrefix + productName, requestCaptor.getValue().getTopic());
+        assertEquals(marketTopicPrefix + productName + "/" + ORDER_BOOK_GRPC_PORT, requestCaptor.getValue().getTopic());
         assertTrue(response.isInitialized());
     }
 
@@ -381,7 +382,7 @@ class OrderBookComponentIT {
                                 .build();
 
                         MarketServiceGrpc.newStub(marketChannel)
-                                .subscribeForItem(marketDataRequest, new StreamObserver<TickResponse>() {
+                                .subscribeForItem(new StreamObserver<TickResponse>() {
                                     @Override
                                     public void onNext(TickResponse tickResponse) {
                                         tickResponses.add(tickResponse);
@@ -422,19 +423,18 @@ class OrderBookComponentIT {
                 grpcCleanup.register(InProcessServerBuilder
                         .forName(serverNameMarket).directExecutor().addService(new MarketServiceGrpc.MarketServiceImplBase() {
                             @Override
-                            public void subscribeForItem(MarketDataRequest request, StreamObserver<TickResponse> responseObserver) {
-
+                            public StreamObserver<MarketDataRequest> subscribeForItem(StreamObserver<TickResponse> responseObserver) {
                                 for (int i = 0; i < numberOfTickResponses; i++) {
                                     TickResponse tickResponse = TickResponse.newBuilder()
-                                            .setGoodName(request.getGoodName())
+                                            .setGoodName("request.getGoodName()")
                                             .setQuantity(i + productQuantity)
                                             .setPrice(i + productPrice)
                                             .setTimestamp(System.currentTimeMillis())
                                             .setOrigin(Origin.forNumber((i % 4))).build();
                                     responseObserver.onNext(tickResponse);
                                 }
+                                return super.subscribeForItem(responseObserver);
                             }
-
                         }).build().start());
             } catch (InterruptedException | IOException e) {
                 e.printStackTrace();
@@ -480,5 +480,4 @@ class OrderBookComponentIT {
                 .build();
         return auroraResponse;
     }
-
 }

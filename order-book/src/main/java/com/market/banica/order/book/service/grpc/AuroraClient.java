@@ -39,6 +39,7 @@ public class AuroraClient {
     private static final int MAX_RETRY_ATTEMPTS = 1000;
     private static final String MARKET_PREFIX = "market/";
 
+    private final int orderBookGrpcPort;
     private final ItemMarket itemMarket;
     private final ManagedChannel managedChannel;
     private final Map<String, Set<Context.CancellableContext>> cancellableStubs;
@@ -47,7 +48,8 @@ public class AuroraClient {
     @Autowired
     AuroraClient(ItemMarket itemMarket,
                  @Value("${aurora.server.host}") final String host,
-                 @Value("${aurora.server.port}") final int port) {
+                 @Value("${aurora.server.port}") final int port,
+                 @Value("${orderbook.server.port}") final int orderBookGrpcPort) {
 
         managedChannel = ManagedChannelBuilder.forAddress(host, port)
                 .usePlaintext()
@@ -56,8 +58,10 @@ public class AuroraClient {
                 .maxRetryAttempts(MAX_RETRY_ATTEMPTS)
                 .build();
 
+
         this.itemMarket = itemMarket;
         this.cancellableStubs = new ConcurrentHashMap<>();
+        this.orderBookGrpcPort = orderBookGrpcPort;
 
     }
 
@@ -68,7 +72,7 @@ public class AuroraClient {
         }
 
         final Aurora.AuroraRequest request = Aurora.AuroraRequest.newBuilder()
-                .setTopic(MARKET_PREFIX + requestedItem)
+                .setTopic(MARKET_PREFIX + requestedItem + "/" + orderBookGrpcPort)
                 .setClientId(clientId)
                 .build();
 
@@ -134,6 +138,7 @@ public class AuroraClient {
     private void startMarketStream(Aurora.AuroraRequest request) {
         final AuroraServiceGrpc.AuroraServiceStub asynchronousStub = getAsynchronousStub();
 
+
         asynchronousStub.subscribe(request, new AuroraStreamObserver(itemMarket, this));
     }
 
@@ -146,5 +151,4 @@ public class AuroraClient {
         managedChannel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
         LOGGER.info("Server is terminated!");
     }
-
 }

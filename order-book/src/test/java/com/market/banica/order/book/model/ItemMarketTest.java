@@ -1,6 +1,7 @@
 package com.market.banica.order.book.model;
 
 import com.aurora.Aurora;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.Any;
 import com.market.Origin;
 import com.market.TickResponse;
@@ -32,7 +33,7 @@ public class ItemMarketTest {
     private static final String ALL_ITEMS_FIELD = "allItems";
     private static final String PRODUCTS_QUANTITY_FIELD = "productsQuantity";
 
-    private final ItemMarket itemMarket = new ItemMarket();
+    private final ItemMarket itemMarket = new ItemMarket( "localhost", 9101, 9201);
     private final Map<String, TreeSet<Item>> allItems = new ConcurrentHashMap<>();
     private final Map<String, Long> productsQuantity = new ConcurrentHashMap<>();
 
@@ -43,6 +44,7 @@ public class ItemMarketTest {
         allItems.put(EGGS_ITEM_NAME, items);
         allItems.put(RICE_ITEM_NAME, new TreeSet<>());
 
+        ReflectionTestUtils.setField(itemMarket, "itemProcessingExecutor", MoreExecutors.newDirectExecutorService());
         ReflectionTestUtils.setField(itemMarket, ALL_ITEMS_FIELD, allItems);
         ReflectionTestUtils.setField(itemMarket, PRODUCTS_QUANTITY_FIELD, productsQuantity);
     }

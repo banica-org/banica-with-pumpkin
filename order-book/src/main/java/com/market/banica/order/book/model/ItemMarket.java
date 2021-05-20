@@ -1,14 +1,16 @@
 package com.market.banica.order.book.model;
 
 import com.aurora.Aurora;
-import com.google.protobuf.InvalidProtocolBufferException;
-import com.market.TickResponse;
-import com.market.banica.common.exception.IncorrectResponseException;
+
+import com.market.banica.common.channel.ChannelRPCConfig;
 import com.market.banica.common.validator.DataValidator;
 import com.orderbook.OrderBookLayer;
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -20,89 +22,59 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @Component
 public class ItemMarket {
 
     private static final Logger LOGGER = LogManager.getLogger(ItemMarket.class);
-    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private static final int MAX_RETRY_ATTEMPTS = 1000;
+    private final String orderBookGrpcPort;
+
+    private final ManagedChannel managedChannel;
+
     private final Map<String, TreeSet<Item>> allItems;
     private final Map<String, Long> productsQuantity;
 
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private final AtomicInteger numberOfTicksToProcess = new AtomicInteger(0);
+
+    private final AtomicBoolean backPressureStarted = new AtomicBoolean(false);
+
+    private final ExecutorService itemProcessingExecutor;
+
     @Autowired
-    public ItemMarket() {
+    public ItemMarket(@Value("${aurora.server.host}") final String host,
+                      @Value("${aurora.server.port}") final int port,
+                      @Value("${orderbook.server.port}") final int orderBookGrpcPort) {
+
         this.allItems = new ConcurrentHashMap<>();
         this.productsQuantity = new ConcurrentHashMap<>();
-    }
+        this.itemProcessingExecutor = Executors.newSingleThreadExecutor();
 
+        managedChannel = ManagedChannelBuilder.forAddress(host, port)
+                .usePlaintext()
+                .defaultServiceConfig(ChannelRPCConfig.getInstance().getServiceConfig())
+                .enableRetry()
+                .maxRetryAttempts(MAX_RETRY_ATTEMPTS)
+                .build();
 
-    public Optional<Set<Item>> getItemSetByName(String itemName) {
-        return Optional.ofNullable(this.allItems.get(itemName));
-    }
-
-    public Set<String> getItemNameSet() {
-        return this.allItems.keySet();
-    }
-
-    public Map<String, Long> getProductsQuantity() {
-        return productsQuantity;
-    }
-
-    public void addTrackedItem(String itemName) {
-        this.allItems.put(itemName, new TreeSet<>());
-        this.productsQuantity.put(itemName, 0L);
-    }
-
-    public void removeUntrackedItem(String itemName) {
-        this.allItems.remove(itemName);
-        this.productsQuantity.remove(itemName);
+        this.orderBookGrpcPort = String.valueOf(orderBookGrpcPort);
     }
 
     public void updateItem(Aurora.AuroraResponse response) {
-        try {
-            lock.writeLock().lock();
-            TickResponse tickResponse;
-            try {
-                tickResponse = response.getMessage().unpack(TickResponse.class);
-            } catch (InvalidProtocolBufferException e) {
-                throw new IncorrectResponseException("Incorrect response! Response must be from TickResponse type.");
-            }
-            String goodName = tickResponse.getGoodName();
-            DataValidator.validateIncomingData(goodName);
-
-            Set<Item> itemSet = this.allItems.get(goodName);
-            if (itemSet == null) {
-                LOGGER.error("Item: {} is not being tracked and cannot be added to itemMarket!", goodName);
-                return;
-            }
-            Item item = populateItem(tickResponse);
-            this.productsQuantity.merge(goodName, tickResponse.getQuantity(), Long::sum);
-            LOGGER.debug("Products data updated with value: {}" + tickResponse.toString());
-
-            if (itemSet.contains(item)) {
-                Item presentItem = itemSet
-                        .stream()
-                        .filter(currentItem -> currentItem.compareTo(item) == 0)
-                        .findFirst()
-                        .get();
-
-                long quantity = presentItem.getQuantity() + item.getQuantity();
-                if (quantity == 0) {
-                    itemSet.remove(presentItem);
-                    return;
-                }
-                presentItem.setQuantity(quantity);
-                return;
-            }
-            itemSet.add(item);
-        } finally {
-            lock.writeLock().unlock();
-        }
+        LOGGER.debug("Processing AuroraResponse: {}", response);
+        numberOfTicksToProcess.incrementAndGet();
+        itemProcessingExecutor.execute(new ItemProcessingTask(response, allItems, productsQuantity,
+                numberOfTicksToProcess, managedChannel, backPressureStarted, orderBookGrpcPort, lock));
     }
 
     public List<OrderBookLayer> getRequestedItem(String itemName, long quantity) {
-        LOGGER.info("Getting requested item: {} with quantity: {}", itemName, quantity);
+        LOGGER.debug("Getting requested item: {} with quantity: {}", itemName, quantity);
         DataValidator.validateIncomingData(itemName);
 
         TreeSet<Item> items = this.allItems.get(itemName);
@@ -138,25 +110,26 @@ public class ItemMarket {
         return layers;
     }
 
-    private OrderBookLayer.Builder populateItemLayer(long itemLeft, Item currentItem) {
-        OrderBookLayer.Builder currentLayer = OrderBookLayer.newBuilder()
-                .setPrice(currentItem.getPrice());
-
-        if (currentItem.getQuantity() > itemLeft) {
-            currentLayer.setQuantity(itemLeft);
-        } else {
-            currentLayer.setQuantity(currentItem.getQuantity());
-        }
-        return currentLayer;
+    public Map<String, Long> getProductsQuantity() {
+        return productsQuantity;
     }
 
-    private Item populateItem(TickResponse tickResponse) {
-        Item item = new Item();
-        item.setPrice(tickResponse.getPrice());
-        item.setQuantity(tickResponse.getQuantity());
-        item.setOrigin(tickResponse.getOrigin());
+    public Optional<Set<Item>> getItemSetByName(String itemName) {
+        return Optional.ofNullable(this.allItems.get(itemName));
+    }
 
-        return item;
+    public Set<String> getItemNameSet() {
+        return this.allItems.keySet();
+    }
+
+    public void addTrackedItem(String itemName) {
+        this.allItems.put(itemName, new TreeSet<>());
+        this.productsQuantity.put(itemName, 0L);
+    }
+
+    public void removeUntrackedItem(String itemName) {
+        this.allItems.remove(itemName);
+        this.productsQuantity.remove(itemName);
     }
 
     public void zeroingMarketProductsFromMarket(String marketDestination, String itemName) {
@@ -177,5 +150,13 @@ public class ItemMarket {
         } finally {
             lock.writeLock().unlock();
         }
+    }
+
+    private OrderBookLayer.Builder populateItemLayer(long itemLeft, Item currentItem) {
+        OrderBookLayer.Builder currentLayer = OrderBookLayer.newBuilder()
+                .setPrice(currentItem.getPrice());
+
+        currentLayer.setQuantity(Math.min(currentItem.getQuantity(), itemLeft));
+        return currentLayer;
     }
 }

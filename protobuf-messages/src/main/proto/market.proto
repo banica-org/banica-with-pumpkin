@@ -54,7 +54,7 @@ message ProductBuySellRequest {
 }
 
 service MarketService{
-  rpc subscribeForItem(MarketDataRequest) returns (stream TickResponse);
+  rpc subscribeForItem(stream MarketDataRequest) returns (stream TickResponse);
   rpc requestCatalogue(CatalogueRequest) returns (CatalogueResponse);
   rpc buyProduct (ProductBuySellRequest) returns (BuySellProductResponse);
   rpc sellProduct (ProductBuySellRequest) returns (BuySellProductResponse);
