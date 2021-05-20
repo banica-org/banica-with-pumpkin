@@ -48,14 +48,13 @@ public class ItemMarket {
     private final ExecutorService itemProcessingExecutor;
 
     @Autowired
-    public ItemMarket(@Value("${item.processing.executor.pool.size}") final int poolSize,
-                      @Value("${aurora.server.host}") final String host,
+    public ItemMarket(@Value("${aurora.server.host}") final String host,
                       @Value("${aurora.server.port}") final int port,
                       @Value("${orderbook.server.port}") final int orderBookGrpcPort) {
 
         this.allItems = new ConcurrentHashMap<>();
         this.productsQuantity = new ConcurrentHashMap<>();
-        this.itemProcessingExecutor = Executors.newFixedThreadPool(poolSize);
+        this.itemProcessingExecutor = Executors.newSingleThreadExecutor();
 
         managedChannel = ManagedChannelBuilder.forAddress(host, port)
                 .usePlaintext()
