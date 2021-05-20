@@ -15,7 +15,6 @@ import com.orderbook.OrderBookServiceGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.inprocess.InProcessChannelBuilder;
-import io.grpc.stub.AbstractBlockingStub;
 import io.grpc.testing.GrpcCleanupRule;
 import org.junit.Rule;
 import org.junit.jupiter.api.AfterAll;

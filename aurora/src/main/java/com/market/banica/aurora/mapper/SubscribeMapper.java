@@ -2,7 +2,6 @@ package com.market.banica.aurora.mapper;
 
 import com.aurora.Aurora;
 import com.market.MarketDataRequest;
-import com.market.TickResponse;
 import com.market.banica.aurora.backpressure.BackPressureManager;
 import com.market.banica.aurora.config.ChannelManager;
 import com.market.banica.aurora.config.StubManager;
