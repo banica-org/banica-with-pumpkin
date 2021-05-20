@@ -1,6 +1,5 @@
 package com.market.banica.aurora.observer;
 
-
 import com.aurora.Aurora;
 import com.google.protobuf.AbstractMessage;
 import com.google.protobuf.Any;
@@ -20,30 +19,21 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class GenericObserver<S extends AbstractMessage, T extends AbstractMessage> implements ClientResponseObserver<S, T> {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(GenericObserver.class);
-
     private final AtomicInteger openStreams;
-
     private final String client;
     private final String destinationOfMessages;
     private final String item;
     private final String orderBookIdentifier;
-
     private final StreamObserver<Aurora.AuroraResponse> forwardResponse;
-
     private final S marketDataRequest;
-
     private final BackPressureManager backPressureManager;
-
-    private final AtomicBoolean backPressureActivated = new AtomicBoolean(false);
-
     private ClientCallStreamObserver<Aurora.AuroraRequest> requestStream;
-
+    private final AtomicBoolean backPressureActivated = new AtomicBoolean(false);
     private CountDownLatch countDownLatch = new CountDownLatch(1);
 
     public GenericObserver(String client, StreamObserver<Aurora.AuroraResponse> forwardResponse, AtomicInteger openStreams, String destinationOfMessages,
-                              String item, S marketDataRequest, BackPressureManager backPressureManager, String orderBookIdentifier) {
+                           String item, S marketDataRequest, BackPressureManager backPressureManager, String orderBookIdentifier) {
         this.client = client;
         this.forwardResponse = forwardResponse;
         this.openStreams = openStreams;
@@ -59,9 +49,7 @@ public class GenericObserver<S extends AbstractMessage, T extends AbstractMessag
         LOGGER.debug("Initializing before start");
         this.requestStream = requestStream;
         backPressureManager.addMarketTickObserver(this, orderBookIdentifier);
-
         requestStream.disableAutoRequestWithInitial(1);
-
         requestStream.setOnReadyHandler(() -> {
             if (requestStream.isReady()) {
                 requestStream.onNext(marketDataRequest);
@@ -70,13 +58,10 @@ public class GenericObserver<S extends AbstractMessage, T extends AbstractMessag
     }
 
     @Override
-    public void onNext(T incomingResponse) {
+    public void onNext(T objectTickResponse) {
+        TickResponse tickResponse = (TickResponse) objectTickResponse;
         LOGGER.debug("Forwarding response to client {}", client);
-
-        TickResponse tickResponse = (TickResponse) incomingResponse;
-        System.out.println("Received TickResponse with time of creation: " + tickResponse.getTimestamp() + " CURRENT TIME ---> " + new Date().getTime());
         Aurora.AuroraResponse response = this.wrapResponse(tickResponse);
-
         synchronized (forwardResponse) {
             forwardResponse.onNext(response);
             if (backPressureActivated.get()) {
@@ -93,14 +78,12 @@ public class GenericObserver<S extends AbstractMessage, T extends AbstractMessag
         }
     }
 
-
     @Override
     public void onError(Throwable throwable) {
         LOGGER.warn("Unable to forward.");
         LOGGER.error(throwable.getMessage());
-
         if (Status.fromThrowable(throwable).getCode().equals(Status.Code.UNAVAILABLE)) {
-            LOGGER.warn("Publisher server: {} has suddenly became offline.", destinationOfMessages);
+            LOGGER.warn("Market server: {} has suddenly became offline.", destinationOfMessages);
             synchronized (forwardResponse) {
                 forwardResponse.onNext(this.wrapReconnect(buildReconnect()));
             }
@@ -132,12 +115,11 @@ public class GenericObserver<S extends AbstractMessage, T extends AbstractMessag
                 .setDestination(destinationOfMessages)
                 .setItemName(item)
                 .build();
-
     }
 
-    private Aurora.AuroraResponse wrapResponse(TickResponse response) {
+    private Aurora.AuroraResponse wrapResponse(TickResponse tickResponse) {
         return Aurora.AuroraResponse.newBuilder()
-                .setMessage(Any.pack(response))
+                .setMessage(Any.pack(tickResponse))
                 .build();
     }
 
@@ -147,3 +129,4 @@ public class GenericObserver<S extends AbstractMessage, T extends AbstractMessag
                 .build();
     }
 }
+

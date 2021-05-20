@@ -53,9 +53,8 @@ class MarketServiceImplTest {
     private final double PRICE_2 = 2.0;
     private final long TIMESTAMP = System.currentTimeMillis();
 
-    private final MarketDataRequest MARKET_DATA_REQUEST = MarketDataRequest.newBuilder()
-            .setGoodName(GOOD_BANICA)
-            .build();
+
+    private final MarketDataRequest MARKET_DATA_REQUEST = MarketDataRequest.newBuilder().setGoodName(GOOD_BANICA).build();
 
     private final Map<String, Map<Double, MarketTick>> pendingOrders = new HashMap<>();
 
@@ -77,7 +76,6 @@ class MarketServiceImplTest {
 
     @Test
     void subscribe_ValidRequest_BootstrapAndAddSubscriber() {
-
         TickResponse tick1 = TickResponse.newBuilder()
                 .setGoodName(GOOD_BANICA)
                 .setTimestamp(new Date().getTime() - 1000)
@@ -100,7 +98,6 @@ class MarketServiceImplTest {
         verify(marketState, times(1)).generateMarketTicks(GOOD_BANICA);
         verify(subscriberSubscribe, times(1)).onNext(tick1);
         verify(subscriberSubscribe, times(1)).onNext(tick2);
-
     }
 
     @Test
@@ -132,22 +129,16 @@ class MarketServiceImplTest {
 
     @Test
     void request_ReturnSuperRequest() {
-
         CatalogueRequest request = CatalogueRequest.newBuilder().build();
-
         marketService.requestCatalogue(request, subscriberRequest);
 
-        verify(subscriberRequest).onError(any(Status.UNIMPLEMENTED
-                .withDescription("Method aurora.AuroraService/request is unimplemented")
-                .asRuntimeException().getClass()));
+        verify(subscriberRequest).onError(any(Status.UNIMPLEMENTED.withDescription("Method aurora.AuroraService/request is unimplemented").asRuntimeException().getClass()));
 
     }
 
     @Test
     public void checkAvailabilityAddsNewRecordInEmptyPendingOrders() throws ProductNotAvailableException {
-
         ProductBuySellRequest availabilityRequest = populateBuySellRequest(GOOD_BANICA, AMOUNT, PRICE_1);
-
         MarketTick marketTick = new MarketTick(GOOD_BANICA, AMOUNT, PRICE_1, TIMESTAMP);
 
         when(marketState.removeItemFromState(GOOD_BANICA, AMOUNT, PRICE_1)).thenReturn(marketTick);
@@ -163,9 +154,7 @@ class MarketServiceImplTest {
 
     @Test
     public void checkAvailabilityIncreasesPreviousRecordQuantityInPendingOrders() throws ProductNotAvailableException {
-
         ProductBuySellRequest availabilityRequest = populateBuySellRequest(GOOD_BANICA, AMOUNT, PRICE_1);
-
         MarketTick marketTick = new MarketTick(GOOD_BANICA, AMOUNT, PRICE_1, TIMESTAMP);
 
         when(marketState.removeItemFromState(GOOD_BANICA, AMOUNT, PRICE_1)).thenReturn(marketTick);
@@ -182,10 +171,8 @@ class MarketServiceImplTest {
 
     @Test
     public void checkAvailabilityAddsSecondRecordInPendingOrders() throws ProductNotAvailableException {
-
         ProductBuySellRequest availabilityRequest = populateBuySellRequest(GOOD_BANICA, AMOUNT, PRICE_1);
         ProductBuySellRequest secondAvailabilityRequest = populateBuySellRequest(GOOD_BANICA, AMOUNT, PRICE_2);
-
         MarketTick marketTick = new MarketTick(GOOD_BANICA, AMOUNT, PRICE_1, TIMESTAMP);
         MarketTick secondMarketTick = new MarketTick(GOOD_BANICA, AMOUNT, PRICE_2, TIMESTAMP);
 
@@ -202,9 +189,7 @@ class MarketServiceImplTest {
 
     @Test
     public void returnPendingProductClearsPendingOrders() {
-
         MarketTick marketTick = new MarketTick(GOOD_BANICA, 10, PRICE_1, TIMESTAMP);
-
         pendingOrders.put(GOOD_BANICA, new TreeMap<>());
         pendingOrders.get(GOOD_BANICA).put(PRICE_1, marketTick);
 
@@ -217,12 +202,9 @@ class MarketServiceImplTest {
 
     @Test
     public void returnPendingProductRemovesMarketTickFromPendingOrders() {
-
         long amount = 10;
-
         MarketTick marketTick = new MarketTick(GOOD_BANICA, amount, PRICE_1, TIMESTAMP);
         MarketTick secondMarketTick = new MarketTick(GOOD_BANICA, amount, PRICE_2, TIMESTAMP);
-
         pendingOrders.put(GOOD_BANICA, new TreeMap<>());
         pendingOrders.get(GOOD_BANICA).put(PRICE_1, marketTick);
         pendingOrders.get(GOOD_BANICA).put(PRICE_2, secondMarketTick);
@@ -238,9 +220,7 @@ class MarketServiceImplTest {
     @Test
     public void returnPendingProductDecreasesMarketTickFromPendingOrders() {
         long expectedQuantity = 4;
-
         MarketTick marketTick = new MarketTick(GOOD_BANICA, 10, PRICE_1, TIMESTAMP);
-
         pendingOrders.put(GOOD_BANICA, new TreeMap<>());
         pendingOrders.get(GOOD_BANICA).put(PRICE_1, marketTick);
 

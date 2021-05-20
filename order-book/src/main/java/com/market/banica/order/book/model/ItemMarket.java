@@ -75,7 +75,7 @@ public class ItemMarket {
     }
 
     public List<OrderBookLayer> getRequestedItem(String itemName, long quantity) {
-        LOGGER.info("Getting requested item: {} with quantity: {}", itemName, quantity);
+        LOGGER.debug("Getting requested item: {} with quantity: {}", itemName, quantity);
         DataValidator.validateIncomingData(itemName);
 
         TreeSet<Item> items = this.allItems.get(itemName);

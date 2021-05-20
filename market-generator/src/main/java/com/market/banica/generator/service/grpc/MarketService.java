@@ -116,6 +116,7 @@ public class MarketService extends MarketServiceGrpc.MarketServiceImplBase {
         responseObserver.onNext(buySellProductResponse);
         responseObserver.onCompleted();
 
+
     }
 
     @Override

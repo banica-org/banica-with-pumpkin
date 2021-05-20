@@ -67,7 +67,7 @@ public class OrderBookService extends OrderBookServiceGrpc.OrderBookServiceImplB
                         .addAllOrderbookLayers(requestedItem).build());
         responseObserver.onCompleted();
 
-        LOGGER.info("Get orderbook item layers by client id: {}", request.getClientId());
+        LOGGER.debug("Get orderbook item layers by client id: {}", request.getClientId());
 
     }
 

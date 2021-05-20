@@ -131,4 +131,6 @@ class SubscribeMapperTest {
         verify(responseObserver, times(1)).onNext(any());
         verify(responseObserver, times(1)).onCompleted();
     }
+
+
 }
