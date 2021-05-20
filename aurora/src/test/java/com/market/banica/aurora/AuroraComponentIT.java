@@ -287,63 +287,6 @@ class AuroraComponentIT {
 
     }
 
-    @Test
-    void subscribe_Should_ForwardToReceiverResponses_When_ReceiverIsRegistered() throws IOException, InterruptedException {
-        //Arrange
-        currentPublisher = "aurora-test";
-        publishers.addPublisher(currentPublisher);
-
-        createFakeReplyingServer();
-        createFakeSender();
-
-
-        grpcCleanup.register(senderChannel);
-        grpcCleanup.register(receiverChannel);
-
-        receiverChannel.getState(true);
-        channelManager.addChannel(currentPublisher, receiverChannel);
-
-        Aurora.AuroraRequest request = getAuroraRequest();
-
-        ArrayList<Aurora.AuroraResponse> expectedResponses = new ArrayList<>();
-        for (int i = 0; i < 5; i++) {
-            Aurora.AuroraResponse response = Aurora.AuroraResponse
-                    .newBuilder()
-                    .setMessage(Any.pack(request))
-                    .build();
-
-            expectedResponses.add(response);
-        }
-
-        ArrayList<Aurora.AuroraResponse> receivedResponses = new ArrayList<>();
-        CountDownLatch latch = new CountDownLatch(1);
-
-        //Act
-        AuroraServiceGrpc
-                .newStub(senderChannel)
-                .subscribe(request, new StreamObserver<Aurora.AuroraResponse>() {
-                    @SneakyThrows
-                    @Override
-                    public void onNext(Aurora.AuroraResponse response) {
-                        Aurora.AuroraResponse unpack = response.getMessage().unpack(Aurora.AuroraResponse.class);
-                        receivedResponses.add(unpack);
-                    }
-
-                    @Override
-                    public void onError(Throwable throwable) {
-                        latch.countDown();
-                    }
-
-                    @Override
-                    public void onCompleted() {
-                        latch.countDown();
-                    }
-                });
-
-        //Assert
-        latch.await();
-        assertEquals(expectedResponses, receivedResponses);
-    }
 
     @Test
     void subscribeToMarket_Should_ForwardToReceiverResponse_When_MarketIsRegistered() throws IOException, InterruptedException {
@@ -520,61 +463,7 @@ class AuroraComponentIT {
         assertEquals(3, unpackedResponses.size());
     }
 
-    @Test
-    void subscribe_Should_ForwardToReceiverLessResponses_When_ReceiverSendsErrorDuringStream() throws IOException, InterruptedException {
-        //Arrange
-        currentPublisher = "aurora";
-        publishers.addPublisher(currentPublisher);
 
-        createFakeErrorServer();
-        createFakeSender();
-
-
-        grpcCleanup.register(senderChannel);
-        grpcCleanup.register(receiverChannel);
-
-        receiverChannel.getState(true);
-        channelManager.addChannel(currentPublisher, receiverChannel);
-
-        Aurora.AuroraRequest request = getAuroraRequest();
-
-        ArrayList<Aurora.AuroraResponse> expectedResponses = new ArrayList<>();
-        for (int i = 0; i < 5; i++) {
-            Aurora.AuroraResponse response = Aurora.AuroraResponse
-                    .newBuilder()
-                    .setMessage(Any.pack(request))
-                    .build();
-
-            expectedResponses.add(response);
-        }
-
-        ArrayList<Aurora.AuroraResponse> receivedResponses = new ArrayList<>();
-
-        CountDownLatch latch = new CountDownLatch(1);
-        //Act
-        newStub(senderChannel)
-                .subscribe(request, new StreamObserver<Aurora.AuroraResponse>() {
-                    @Override
-                    public void onNext(Aurora.AuroraResponse response) {
-                        receivedResponses.add(response);
-                    }
-
-                    @Override
-                    public void onError(Throwable throwable) {
-                        latch.countDown();
-                    }
-
-                    @Override
-                    public void onCompleted() {
-                        latch.countDown();
-                    }
-                });
-
-        //Assert
-        latch.await();
-        assertNotEquals(expectedResponses, receivedResponses);
-        assertEquals(3, receivedResponses.size());
-    }
 
     @Test
     void subscribe_Should_ForwardToReceiverNoResponses_When_NoExistingChannel() throws IOException, InterruptedException {

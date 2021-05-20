@@ -3,6 +3,7 @@ package com.market.banica.aurora.mapper;
 import com.aurora.Aurora;
 import com.market.MarketDataRequest;
 import com.market.TickResponse;
+import com.market.banica.aurora.backpressure.BackPressureManager;
 import com.market.banica.aurora.config.ChannelManager;
 import com.market.banica.aurora.config.StubManager;
 import com.market.banica.aurora.observer.GenericObserver;
@@ -24,8 +25,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 @Service
 public class SubscribeMapper {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(SubscribeMapper.class);
 
 
     private final ChannelManager channelManager;
@@ -59,6 +58,11 @@ public class SubscribeMapper {
         if (destinationOfMessage.contains(MARKET)) {
             renderMarketMapping(incomingRequest, responseObserver, channelsWithPrefix);
 
+        } else if (destinationOfMessage.contains(AURORA)) {
+            log.warn("Unsupported mapping have reached aurora.");
+            responseObserver.onError(Status.NOT_FOUND
+                    .withDescription("No provided mapping for odrerbook streaming messages. " + incomingRequest.getTopic())
+                    .asException());
         } else if (destinationOfMessage.contains(ORDERBOOK)) {
             log.warn("Unsupported mapping have reached aurora.");
             responseObserver.onError(Status.NOT_FOUND
@@ -75,6 +79,7 @@ public class SubscribeMapper {
 
     private void renderMarketMapping(Aurora.AuroraRequest incomingRequest, StreamObserver<Aurora.AuroraResponse> responseObserver, List<Map.Entry<String, ManagedChannel>> channelsWithPrefix) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         String itemForSubscribing = incomingRequest.getTopic().split("/")[1];
+        String orderBookIdentifier = incomingRequest.getTopic().split("/")[2];
         AtomicInteger openStreams = new AtomicInteger(channelsWithPrefix.size());
 
         MarketDataRequest marketDataRequest = MarketDataRequest.newBuilder()
@@ -86,10 +91,12 @@ public class SubscribeMapper {
         for (Map.Entry<String, ManagedChannel> channel : channelsWithPrefix) {
             AbstractStub<? extends AbstractStub<?>> marketStub = stubManager.getStub(channel.getValue(), MARKET);
 
-            Method marketSubscribeForItem = marketStub.getClass().getMethod("subscribeForItem", MarketDataRequest.class, StreamObserver.class);
+            Method marketSubscribeForItem = marketStub.getClass().getMethod("subscribeForItem", StreamObserver.class);
 
-            marketSubscribeForItem.invoke(marketStub, marketDataRequest, new GenericObserver<TickResponse>(incomingRequest.getClientId(), responseObserver
-                    , openStreams, channel.getKey(), marketDataRequest.getGoodName()));
+            System.out.println("calling observer.");
+            marketSubscribeForItem.invoke(marketStub, new GenericObserver<>(incomingRequest.getClientId(), responseObserver, openStreams,
+                    channel.getKey(), marketDataRequest.getGoodName(), marketDataRequest, backPressureManager, orderBookIdentifier));
+
         }
     }
 }

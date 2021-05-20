@@ -12,6 +12,7 @@ import com.market.banica.generator.model.MarketTick;
 import com.market.banica.generator.service.grpc.MarketService;
 import io.grpc.Status;
 import io.grpc.stub.ServerCallStreamObserver;
+import io.grpc.stub.StreamObserver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -70,6 +71,8 @@ class MarketServiceImplTest {
     private final ServerCallStreamObserver<AvailabilityResponse> calculatorAvailability = mock(ServerCallStreamObserver.class);
     @SuppressWarnings("unchecked")
     private final ServerCallStreamObserver<BuySellProductResponse> calculatorReturnProduct = mock(ServerCallStreamObserver.class);
+    @SuppressWarnings("unchecked")
+    private final ServerCallStreamObserver<BuySellProductResponse> sellProductStreamObserver = mock(ServerCallStreamObserver.class);
 
     @Test
     void subscribe_ValidRequest_BootstrapAndAddSubscriber() {
@@ -86,18 +89,20 @@ class MarketServiceImplTest {
 
         when(marketState.generateMarketTicks(GOOD_BANICA)).thenReturn(ticks);
 
-        marketService.subscribeForItem(MARKET_DATA_REQUEST, subscriberSubscribe);
+        StreamObserver<MarketDataRequest> marketDataRequest = marketService.subscribeForItem(subscriberSubscribe);
+
+        marketDataRequest.onNext(MARKET_DATA_REQUEST);
 
         verify(marketSubscriptionServiceImpl, times(1))
                 .subscribe(MARKET_DATA_REQUEST, subscriberSubscribe);
         verify(marketState, times(1)).generateMarketTicks(GOOD_BANICA);
         verify(subscriberSubscribe, times(1)).onNext(tick1);
         verify(subscriberSubscribe, times(1)).onNext(tick2);
-
     }
 
     @Test
     void subscribe_StreamCancelled_BootstrapFailAndNoAddedSubscriber() {
+
         TickResponse tick1 = TickResponse.newBuilder()
                 .setGoodName(GOOD_BANICA)
                 .build();
@@ -110,9 +115,12 @@ class MarketServiceImplTest {
         when(marketState.generateMarketTicks(GOOD_BANICA)).thenReturn(ticks);
         when(subscriberSubscribe.isCancelled()).thenReturn(true);
 
-        marketService.subscribeForItem(MARKET_DATA_REQUEST, subscriberSubscribe);
+        StreamObserver<MarketDataRequest> marketDataRequest = marketService.subscribeForItem(subscriberSubscribe);
 
-        verify(marketSubscriptionServiceImpl, times(0)).subscribe(MARKET_DATA_REQUEST, subscriberSubscribe);
+        marketDataRequest.onNext(MARKET_DATA_REQUEST);
+
+        verify(marketSubscriptionServiceImpl, times(0))
+                .subscribe(MARKET_DATA_REQUEST, subscriberSubscribe);
         verify(marketState, times(1)).generateMarketTicks(GOOD_BANICA);
         verify(subscriberSubscribe, times(0)).onNext(tick1);
         verify(subscriberSubscribe, times(0)).onNext(tick2);
